@@ -8,8 +8,14 @@
   [filename]
   (FileContent/createForExternalFileLocation filename))
 
-(defn translation-unit
-  [filename]
+;; (defn compilation-unit [filename]
+;;   (let [parser (ASTParser/newParser AST/JLS3)
+;;         source (file-content filename)]
+;;     (.setSource parser source)
+;;     (.setKind parser ASTParser/K_COMPILATION_UNIT)
+;;     (.createAST parser null)))
+
+(defn translation-unit [filename]
   (let [definedSymbols {}
         includePaths (make-array String 0)
         info (new ScannerInfo definedSymbols includePaths)
@@ -25,19 +31,34 @@
   [filename]    
     (.getIncludeDirectives (translation-unit filename)))
 
-;; (defn ast-visitor []
-;;   (reify ASTVisitor
-;;     (visit [this name]
-;;       (printf "name: %s\n" name))))
-
 (defmacro set-all! [obj m]
     `(do ~@(map (fn [e] `(set! (. ~obj ~(key e)) ~(val e))) m) ~obj))
 
-(defn ast-visitor []
+(gen-class :name atom-finder.core.AtomVisitor
+           :prefix "av-"
+           :extends ASTVisitor)
+
+(defn av-visit [name] (printf "name1: %s\n" name) true)
+
+;;(atom-finder.core.AtomVisitor.)
+
+;; (defn ast-visitor-gen-class []
+;;   
+;;   (atom-finder.core/set-all! (atom-finder.AtomVisitor.) {
+;;             shouldVisitNames        true
+;;             shouldVisitDeclarations false
+;;             shouldVisitDeclarators  true
+;;             shouldVisitAttributes   true
+;;             shouldVisitStatements   false
+;;             shouldVisitTypeIds      true})
+;;   )
+
+(defn ast-visitor-proxy []
   (->
    (proxy [ASTVisitor] []
-    (visit [name]
-      (printf "name: %s\n" name) 3))
+    (visit [name] (printf "name1: %s\n" name) true)
+    (endVisit [name] (printf "name2: %s\n" name))
+    )
 
     (set-all! {shouldVisitNames        true
                shouldVisitDeclarations false
@@ -46,10 +67,13 @@
                shouldVisitStatements   false
                shouldVisitTypeIds      true})))
 
-(defn file-ast
+(defn visit-ast
   [filename]
-  (let [visitor (ast-visitor)]
-    (.accept (translation-unit filename) visitor)))
+  (let [visitor (ast-visitor-proxy)
+        node (translation-unit filename)]
+    (.accept node visitor)
+    ;;(.startVisit visitor node)
+    ))
 
 (defn print-tree [node index]
   (let [children (.getChildren node)
@@ -77,7 +101,7 @@
   (prn (file-content filename))
   (for [incld (file-includes filename)] (printf "include - %s\n" (.getName incld)))
 
-  (file-ast filename)
-  (ast-visitor)
+  (visit-ast filename)
+  (ast-visitor-proxy)
   (print-tree (translation-unit filename) 1)
   )
