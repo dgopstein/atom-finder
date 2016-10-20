@@ -8,13 +8,6 @@
   [filename]
   (FileContent/createForExternalFileLocation filename))
 
-;; (defn compilation-unit [filename]
-;;   (let [parser (ASTParser/newParser AST/JLS3)
-;;         source (file-content filename)]
-;;     (.setSource parser source)
-;;     (.setKind parser ASTParser/K_COMPILATION_UNIT)
-;;     (.createAST parser null)))
-
 (defn translation-unit [filename]
   (let [definedSymbols {}
         includePaths (make-array String 0)
@@ -34,41 +27,20 @@
 (defmacro set-all! [obj m]
     `(do ~@(map (fn [e] `(set! (. ~obj ~(key e)) ~(val e))) m) ~obj))
 
-(gen-class :name atom-finder.core.AtomVisitor
-           :prefix "av-"
-           :extends ASTVisitor)
-
-(defn av-visit [name] (printf "name1: %s\n" name) true)
-
-;;(atom-finder.core.AtomVisitor.)
-
-;; (defn ast-visitor-gen-class []
-;;   
-;;   (atom-finder.core/set-all! (atom-finder.AtomVisitor.) {
-;;             shouldVisitNames        true
-;;             shouldVisitDeclarations false
-;;             shouldVisitDeclarators  true
-;;             shouldVisitAttributes   true
-;;             shouldVisitStatements   false
-;;             shouldVisitTypeIds      true})
-;;   )
-
 (defn ast-visitor-proxy []
   (->
    (proxy [ASTVisitor] []
-    (visit [name] (printf "name1: %s\n" name) true)
-    (endVisit [name] (printf "name2: %s\n" name))
-    )
+     (visit [name] (printf "name1: %s\n" name) true)
+     (endVisit [name] (printf "name2: %s\n" name)))
 
-    (set-all! {shouldVisitNames        true
-               shouldVisitDeclarations false
-               shouldVisitDeclarators  true
-               shouldVisitAttributes   true
-               shouldVisitStatements   false
-               shouldVisitTypeIds      true})))
+   (set-all! {shouldVisitNames        true
+              shouldVisitDeclarations true
+              shouldVisitDeclarators  true
+              shouldVisitAttributes   true
+              shouldVisitStatements   true
+              shouldVisitTypeIds      true})))
 
-(defn visit-ast
-  [filename]
+(defn visit-ast [filename]
   (let [visitor (ast-visitor-proxy)
         node (translation-unit filename)]
     (.accept node visitor)
