@@ -1,35 +1,12 @@
-(eq (substring-freq "aaa")  ([\a 3 ([\a 2 ([\a 1])])]))
-(eq (substring-freq "aab")  ([\a 2 ([\a 1] [\b 1])] [\b 1]))
-(eq (substring-freq "abc")  ([\a 1]))
+(defn all-subs [str m]
+  (let [str-len (count str)]
+    (for [start (range 0 str-len)
+          end   (range (+ start 1) (min (+ start m 1) (+ str-len 1)))]
+      (do
+        (prn [start end])
+        (subs str start end)))))
 
-(defrecord FreqNode [element count children])
+(defn subs-freq [str max-len]
+  (into (sorted-map) (frequencies (all-subs str max-len))))
 
-
-(def test-node (->FreqNode \a 2 {\a (->FreqNode \a 1 {})}))
-(-> test-node
-    :children
-    \a
-    :children)
-
-
-
-(defn inc-add
-  "If a child exists, increment it, other wise add it"
-  [node element]
-  (update-in node [:children element] #(if (nil? (:count %1)) (->FreqNode element 1 {}) (update %1 :count inc))))
-
-(inc-add (inc-add test-node \a) \a)
-
-(defn substring-freq
-  "Count the occurences of every substring below length m in string s"
-  ([str m]
-   (substring-freq (rest str) m
-                   (let [root (->FreqNode (first str) 1 {})]
-                     (for [lifetime (range 50)] [lifetime root]))))
-   
-  ([str m nodes]
-   (for [char str
-         node nodes]
-     (:children node)
-    
-     )))
+(subs-freq "aabc" 8)
