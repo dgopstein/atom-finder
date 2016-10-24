@@ -47,26 +47,45 @@
     ;;(.startVisit visitor node)
     ))
 
-(defn print-tree [node index]
-  (let [children (.getChildren node)
-        print-contents? (and (not (instance? CPPASTTranslationUnit node))
-                             (< (-> node .getFileLocation .getNodeLength) 30))
-        offset (format " (offset: %s, %s)"
-                       (-> node .getFileLocation .getNodeOffset)
-                       (-> node .getFileLocation .getNodeLength))]
+(defn arg-count [f]
+  (let [m (first (.getDeclaredMethods (class f)))
+        p (.getParameterTypes m)]
+        (alength p)))
 
-    (printf "%s -%s %s -> %s\n"
-            (apply str (repeat index "  "))
-            (-> node .getClass .getSimpleName)
-            offset
-            (if print-contents?
-              (-> node .getRawSignature (.replaceAll "\n" " \\ "))
-              (-> node .getRawSignature (.subSequence 0 5))))
+(defn pre-tree
+  ([f node] (pre-tree f node 1))
+  ([f node index]
+
+   (let [children (.getChildren node)
+         ret (case (arg-count f)
+                   1 (f node)
+                   2 (f node index))]
+
+     (conj 
+           (for [iast-node (.getChildren node)]
+             (pre-tree f iast-node (inc index)))
+           ret))))
+
+(defn print-tree [node]
+  (letfn 
+      [(f [node index]
+         (let [print-contents? (and (not (instance? CPPASTTranslationUnit node))
+                                    (< (-> node .getFileLocation .getNodeLength) 30))
+               offset (format " (offset: %s, %s)"
+                              (-> node .getFileLocation .getNodeOffset)
+                              (-> node .getFileLocation .getNodeLength))]
+           
+           (printf "%s -%s %s -> %s\n"
+                   (apply str (repeat index "  "))
+                   (-> node .getClass .getSimpleName)
+                   offset
+                   (if print-contents?
+                     (-> node .getRawSignature (.replaceAll "\n" " \\ "))
+                     (-> node .getRawSignature (.subSequence 0 5))))))]
     
-    (for [iast-node children]
-      (print-tree iast-node (inc index)))))
+     (pre-tree f node)))
 
-(def filename "/home/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
+(def filename "/Users/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
 
 (defn -main
   [& args]
@@ -75,5 +94,6 @@
 
   (visit-ast filename)
   (ast-visitor-proxy)
-  (print-tree (translation-unit filename) 1)
+  (print-tree (translation-unit filename))
+  (pre-tree #(-> % .getClass .getSimpleName) (translation-unit filename))
   )
