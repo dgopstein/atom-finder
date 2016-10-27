@@ -53,17 +53,19 @@
         p (.getParameterTypes m)]
         (alength p)))
 
+(defn children [node] (.getChildren node))
+
 (defn pre-tree
   ([f node] (pre-tree f node 1))
   ([f node index]
 
-   (let [children (.getChildren node)
+   (let [children (children node)
          ret (case (arg-count f)
                    1 (f node)
                    2 (f node index))]
 
      (conj 
-           (for [iast-node (.getChildren node)]
+           (for [iast-node (children node)]
              (pre-tree f iast-node (inc index)))
            ret))))
 
@@ -90,33 +92,17 @@
   (inc
    (apply max 0
           (map depth
-               (.getChildren node)))))
+               (children node)))))
 
-(defn leaf? [node] (empty? (.getChildren node)))
+(defn leaf? [node] (empty? (children node)))
 
 (defn leaves [node]
   (if (leaf? node)
     node
-    (flatten (map leaves (.getChildren node)))))
+    (flatten (map leaves (children node)))))
 
-(defn node-str
-  "Convert single node to string"
-  [node]
-  (if (nil? node)
-    "nil1"
-    (let [stx (.getSyntax node)]
-      (if (nil? stx)
-        "nil2"
-        (.getImage stx)))))
-
-(map node-str (leaves root))
-
-(defn write [node]
-  (let [writer (ASTWriter.)]
-    (.write writer node)))
-
-(print (write (ancestor 2 (nth (leaves root) 11))))
-(println "\n\n")
+(def writer (ASTWriter.))
+(defn write [node] (.write writer node))
 
 (defn stringify
   "Convert multiple tree to string"
@@ -130,28 +116,28 @@
 (defn ancestor
   "Get the nth grandparent of the node"
   [n node]
-  (fn-pow #(.getParent %) node n))
+  (fn-pow #(.getParent %) node (dec n)))
 
-(defn filter-size
+(defn filter-depth
   "Return every sub-tree of size n"
   [n node]
-  (distinct (map #(ancestor n %) (leaves node))))
+  ;; start from the leaves of the tree and walk upwards n generations
+  (let [candidates (distinct (map #(ancestor n %) (leaves node)))]
+    ;; candidates may still have deeper branches than the one we came up from
+    (filter #(= n (depth %)) candidates)))
 
-(node-str (nth (filter-size 2 root) 3))
-(map node-str (.getChildren (nth (filter-size 2 root) 3)))
+(defn type [node]
+  (let [name (-> node .getClass .getSimpleName)]
+    (nth (re-find #"CPPAST(.*)" name) 1)))
 
-  
 
 (def filename "/Users/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
 (def root (translation-unit filename))
 
 (defn -main
   [& args]
-  (prn (file-content filename))
-  (for [incld (file-includes filename)] (printf "include - %s\n" (.getName incld)))
 
-  (visit-ast filename)
-  (ast-visitor-proxy)
-  (print-tree root)
-  (pre-tree #(-> % .getClass .getSimpleName) root)
+  (doseq [ancestor (filter-depth 1 root)]
+    (println (type ancestor) (write ancestor) "\n-----------------\n\n"))
+
   )
