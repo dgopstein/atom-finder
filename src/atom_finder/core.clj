@@ -83,9 +83,50 @@
                      (-> node .getRawSignature (.replaceAll "\n" " \\ "))
                      (-> node .getRawSignature (.subSequence 0 5))))))]
     
-     (pre-tree f node)))
+    (pre-tree f node)))
+
+(defn depth [node]
+  (inc
+   (apply max 0
+          (map depth
+               (.getChildren node)))))
+
+(defn leaf? [node] (empty? (.getChildren node)))
+
+(defn leaves [node]
+  (if (leaf? node)
+    node
+    (flatten (map leaves (.getChildren node)))))
+
+(defn node-str [node]
+  (let [stx (.getSyntax node)]
+        (if (nil? stx)
+          "nil"
+          (.getImage stx))))
+
+(map node-str (leaves root))
+
+;; http://stackoverflow.com/questions/23178750/iteratively-apply-function-to-its-result-without-generating-a-seq
+(defn fn-pow
+  [f x n]
+    (nth (iterate f x) n))
+
+(defn ancestor
+  "Get the nth grandparent of the node"
+  [n node]
+  (fn-pow #(.getParent %) node n))
+
+(defn filter-size
+  "Return every sub-tree of size n"
+  [n node]
+
+  (distinct (map #(ancestor n %) (leaves node))))
+
+(filter-size 3 root)
+  
 
 (def filename "/Users/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
+(def root (translation-unit filename))
 
 (defn -main
   [& args]
@@ -94,6 +135,6 @@
 
   (visit-ast filename)
   (ast-visitor-proxy)
-  (print-tree (translation-unit filename))
-  (pre-tree #(-> % .getClass .getSimpleName) (translation-unit filename))
+  (print-tree root)
+  (pre-tree #(-> % .getClass .getSimpleName) root)
   )
