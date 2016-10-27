@@ -1,7 +1,8 @@
 (ns atom-finder.core
   (:import [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
-           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]))
+           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
+           [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
 (defn file-content
   "read in source file to be analyzed"
@@ -98,13 +99,28 @@
     node
     (flatten (map leaves (.getChildren node)))))
 
-(defn node-str [node]
-  (let [stx (.getSyntax node)]
-        (if (nil? stx)
-          "nil"
-          (.getImage stx))))
+(defn node-str
+  "Convert single node to string"
+  [node]
+  (if (nil? node)
+    "nil1"
+    (let [stx (.getSyntax node)]
+      (if (nil? stx)
+        "nil2"
+        (.getImage stx)))))
 
 (map node-str (leaves root))
+
+(defn write [node]
+  (let [writer (ASTWriter.)]
+    (.write writer node)))
+
+(print (write (ancestor 2 (nth (leaves root) 11))))
+(println "\n\n")
+
+(defn stringify
+  "Convert multiple tree to string"
+  [node])
 
 ;; http://stackoverflow.com/questions/23178750/iteratively-apply-function-to-its-result-without-generating-a-seq
 (defn fn-pow
@@ -119,10 +135,11 @@
 (defn filter-size
   "Return every sub-tree of size n"
   [n node]
-
   (distinct (map #(ancestor n %) (leaves node))))
 
-(filter-size 3 root)
+(node-str (nth (filter-size 2 root) 3))
+(map node-str (.getChildren (nth (filter-size 2 root) 3)))
+
   
 
 (def filename "/Users/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
