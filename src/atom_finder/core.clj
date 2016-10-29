@@ -80,8 +80,6 @@
       (flatten (conj ret kids-ret))
       kids-ret)))
 
-(filter-tree root (fn [x] true))
-
 (defn print-tree [node]
   (letfn 
       [(f [node index]
@@ -138,15 +136,15 @@
     ;; candidates may still have deeper branches than the one we came up from
     (filter #(= n (depth %)) candidates)))
 
-(defn type [node]
+(defn typename [node]
   (let [name (-> node .getClass .getSimpleName)]
     (nth (re-find #"CPPAST(.*)" name) 1)))
 
 
 ;(def filename "/Users/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
-(def filename "/Users/dgopstein/nyu/confusion/atom-finder/src/atom_finder/macro-in-expression.c")
+;(def filename "/Users/dgopstein/nyu/confusion/atom-finder/src/atom_finder/macro-in-expression.c")
 
-(def root (translation-unit filename))
+;(def root (translation-unit (.getPath (clojure.java.io/resource "macro-in-expression.c"))))
 
 (defn get-in-tree
   "Find a value in the AST by indexes"
@@ -154,35 +152,40 @@
   (if (empty? indices)
     node
     (recur (nth (children node) (first indices)) (rest indices))))
-  
+
+(defn find-atoms-in-file
+  "Find every example of each of the given atoms in the given file"
+  [atom filename]
+  (let [root (translation-unit filename)]
+    (atom root)))
 
 (defn -main
   [& args]
 
-  (print-tree root)
+  ;(print-tree root)
   ;;(get-in-tree root [0 2 1 0 1]) ;; "%d %d\n""
-  (.getLeadingSyntax (get-in-tree root [0 2 0 0 1 1 0 1]))
-  (fn-pow #(.getNext %) (.getTrailingSyntax (get-in-tree root [0 2 0 0 1 1 0 0])) 5)
-  (write (get-in-tree root [0 2 0 0 1 1 0 1]))
-  (.getExpansionLocation (nth (.getMacroDefinitions root) 0))
-  (.getNodeOffset (.getExpansionLocation (nth (.getMacroDefinitions root) 0)))
-  (.getNodeLength (.getExpansionLocation (nth (.getMacroDefinitions root) 0)))
-  (map #(.getNodeOffset %) (.getNodeLocations (get-in-tree root [0 2 0 0 1 1 0 ])))
-  (map #(.getNodeLength %) (.getNodeLocations (get-in-tree root [0 2 0 0 1 1 0 ])))
-  (map #(.getNodeLength %) (.getNodeLocations (get-in-tree root [0 2 0 0])))
-  (write (get-in-tree root [0 2 1 ]))
+  ;(.getLeadingSyntax (get-in-tree root [0 2 0 0 1 1 0 1]))
+  ;(fn-pow #(.getNext %) (.getTrailingSyntax (get-in-tree root [0 2 0 0 1 1 0 0])) 5)
+  ;(write (get-in-tree root [0 2 0 0 1 1 0 1]))
+  ;(.getExpansionLocation (nth (.getMacroDefinitions root) 0))
+  ;(.getNodeOffset (.getExpansionLocation (nth (.getMacroDefinitions root) 0)))
+  ;(.getNodeLength (.getExpansionLocation (nth (.getMacroDefinitions root) 0)))
+  ;(map #(.getNodeOffset %) (.getNodeLocations (get-in-tree root [0 2 0 0 1 1 0 ])))
+  ;(map #(.getNodeLength %) (.getNodeLocations (get-in-tree root [0 2 0 0 1 1 0 ])))
+  ;(map #(.getNodeLength %) (.getNodeLocations (get-in-tree root [0 2 0 0])))
+  ;(write (get-in-tree root [0 2 1 ]))
 
-  (def nine+seven-node (get-in-tree root [0 2 0 0 1 1 0 ]))
-  (def printf-node (get-in-tree root [0 2 1 ]))
-
-
-  (contains-location? root 41 1)
-  (contains-location? nine+seven-node 41 1)
-  (contains-location? printf-node 41 1)
-  (write (location-parent root 41 1))
+  ;(def nine+seven-node (get-in-tree root [0 2 0 0 1 1 0 ]))
+  ;(def printf-node (get-in-tree root [0 2 1 ]))
 
 
-  (doseq [ancestor (filter-depth 3 root)]
-    (println (type ancestor) (write ancestor) "\n-----------------\n"))
+  ;(contains-location? root 41 1)
+  ;(contains-location? nine+seven-node 41 1)
+  ;(contains-location? printf-node 41 1)
+  ;(write (location-parent root 41 1))
+
+
+  ;(doseq [ancestor (filter-depth 3 root)]
+  ;  (println (typename ancestor) (write ancestor) "\n-----------------\n"))
 
   )
