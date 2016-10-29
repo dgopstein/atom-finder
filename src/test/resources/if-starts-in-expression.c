@@ -1,3 +1,5 @@
+int V0;
+
 #if 0
 #else
 #endif

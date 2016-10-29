@@ -144,7 +144,12 @@
 ;(def filename "/Users/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
 ;(def filename "/Users/dgopstein/nyu/confusion/atom-finder/src/atom_finder/macro-in-expression.c")
 
-;(def root (translation-unit (.getPath (clojure.java.io/resource "macro-in-expression.c"))))
+(defn resource-path
+  "Find the path to a resource"
+  [filename]
+  (.getPath (clojure.java.io/resource filename)))
+
+;(def root (translation-unit (resource-path "if-starts-in-expression.c")))
 
 (defn get-in-tree
   "Find a value in the AST by indexes"
@@ -162,7 +167,7 @@
 (defn -main
   [& args]
 
-  ;(print-tree root)
+  ;(print-tree root) 
   ;;(get-in-tree root [0 2 1 0 1]) ;; "%d %d\n""
   ;(.getLeadingSyntax (get-in-tree root [0 2 0 0 1 1 0 1]))
   ;(fn-pow #(.getNext %) (.getTrailingSyntax (get-in-tree root [0 2 0 0 1 1 0 0])) 5)
