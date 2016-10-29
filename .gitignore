@@ -18,3 +18,5 @@ pom.xml.asc
 auto-save-list
 tramp
 .\#*
+
+.DS_Store
