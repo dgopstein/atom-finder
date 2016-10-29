@@ -1,5 +1,5 @@
 (ns atom-finder.core
-  (:import [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor]
+  (:import [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
@@ -59,22 +59,33 @@
   ([f node] (pre-tree f node 1))
   ([f node index]
 
-   (let [children (children node)
+   (let [kids (children node)
          ret (case (arg-count f)
                    1 (f node)
                    2 (f node index))]
 
      (conj 
-           (for [iast-node (children node)]
+           (doseq [iast-node kids]
              (pre-tree f iast-node (inc index)))
            ret))))
+
+(defn filter-tree
+  [node f]
+  (let [kids  (children node)
+        ret       (f node)
+        kids-ret (for [iast-node kids]
+                    (filter-tree iast-node f))]
+        
+    (if ret
+      (flatten (conj ret kids-ret))
+      kids-ret)))
+
+(filter-tree root (fn [x] true))
 
 (defn print-tree [node]
   (letfn 
       [(f [node index]
-         (let [print-contents? (and (not (instance? CPPASTTranslationUnit node))
-                                    (< (-> node .getFileLocation .getNodeLength) 30))
-               offset (format " (offset: %s, %s)"
+         (let [offset (format " (offset: %s, %s)"
                               (-> node .getFileLocation .getNodeOffset)
                               (-> node .getFileLocation .getNodeLength))]
            
@@ -82,9 +93,10 @@
                    (apply str (repeat index "  "))
                    (-> node .getClass .getSimpleName)
                    offset
-                   (if print-contents?
-                     (-> node .getRawSignature (.replaceAll "\n" " \\ "))
-                     (-> node .getRawSignature (.subSequence 0 5))))))]
+                   (-> node .getRawSignature
+                       (str "           ")
+                       (.subSequence 0 10)
+                       (.replaceAll "\n" " \\ ")))))]
     
     (pre-tree f node)))
 
@@ -131,13 +143,46 @@
     (nth (re-find #"CPPAST(.*)" name) 1)))
 
 
-(def filename "/Users/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
+;(def filename "/Users/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
+(def filename "/Users/dgopstein/nyu/confusion/atom-finder/src/atom_finder/macro-in-expression.c")
+
 (def root (translation-unit filename))
+
+(defn get-in-tree
+  "Find a value in the AST by indexes"
+  [node indices]
+  (if (empty? indices)
+    node
+    (recur (nth (children node) (first indices)) (rest indices))))
+  
 
 (defn -main
   [& args]
 
-  (doseq [ancestor (filter-depth 1 root)]
-    (println (type ancestor) (write ancestor) "\n-----------------\n\n"))
+  (print-tree root)
+  ;;(get-in-tree root [0 2 1 0 1]) ;; "%d %d\n""
+  (.getLeadingSyntax (get-in-tree root [0 2 0 0 1 1 0 1]))
+  (fn-pow #(.getNext %) (.getTrailingSyntax (get-in-tree root [0 2 0 0 1 1 0 0])) 5)
+  (write (get-in-tree root [0 2 0 0 1 1 0 1]))
+  (.getExpansionLocation (nth (.getMacroDefinitions root) 0))
+  (.getNodeOffset (.getExpansionLocation (nth (.getMacroDefinitions root) 0)))
+  (.getNodeLength (.getExpansionLocation (nth (.getMacroDefinitions root) 0)))
+  (map #(.getNodeOffset %) (.getNodeLocations (get-in-tree root [0 2 0 0 1 1 0 ])))
+  (map #(.getNodeLength %) (.getNodeLocations (get-in-tree root [0 2 0 0 1 1 0 ])))
+  (map #(.getNodeLength %) (.getNodeLocations (get-in-tree root [0 2 0 0])))
+  (write (get-in-tree root [0 2 1 ]))
+
+  (def nine+seven-node (get-in-tree root [0 2 0 0 1 1 0 ]))
+  (def printf-node (get-in-tree root [0 2 1 ]))
+
+
+  (contains-location? root 41 1)
+  (contains-location? nine+seven-node 41 1)
+  (contains-location? printf-node 41 1)
+  (write (location-parent root 41 1))
+
+
+  (doseq [ancestor (filter-depth 3 root)]
+    (println (type ancestor) (write ancestor) "\n-----------------\n"))
 
   )
