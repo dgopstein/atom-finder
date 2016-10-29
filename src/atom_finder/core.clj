@@ -164,6 +164,17 @@
   (let [root (translation-unit filename)]
     (atom root)))
 
+(defn c-files
+  "Search directory structure for C-like files"
+  [dirname]
+  (let [dirfile  (clojure.java.io/file dirname)
+        files (map #(.getPath %) (file-seq dirfile))
+        exts #{"c" "cc" "cpp" "c++" "h" "hh" "hpp" "h++"}]
+
+    (filter
+     #(exts (nth (re-find #".*\.([^.]+)" %) 1 nil))
+     files)))
+         
 (defn -main
   [& args]
 
