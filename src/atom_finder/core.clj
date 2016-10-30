@@ -172,14 +172,24 @@
         exts #{"c" "cc" "cpp" "c++" "h" "hh" "hpp" "h++"}]
 
     (filter
-     #(exts (nth (re-find #".*\.([^.]+)" (.getName %)) 1 nil))
+     (fn [file]
+       (and
+        (exts (nth (re-find #".*\.([^.]+)" (.getName file)) 1 nil))
+        (.isFile file))
+       )
      files)))
 
 (comment
+
 (time
- (prn (count (for [filename (map #(.getPath %) (c-files "/Users/dgopstein/opt/src/mono"))]
-     (let [root (translation-unit filename)]
-       (prn [(count (atom-finder.find-atom/macros-in-contexts root)) filename]))))))
+ ; (prn (count (for [filename (map #(.getPath %) (c-files "/Users/dgopstein/opt/src/mono"))]
+ (prn (count (for [filename (map #(.getPath %) (c-files "/Users/dgopstein/opt/src/gcc"))]
+               (try
+                 (let [root (translation-unit filename)]
+                   (prn [(count (atom-finder.find-atom/macros-in-contexts root)) filename]))
+                 (catch Exception e
+                   (printf "-- error parsing file: \"%s\"\n" filename)
+                     ))))))
 
 )
 
