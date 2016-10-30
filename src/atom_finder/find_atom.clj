@@ -24,22 +24,29 @@
 (defn contains-offset?
   "Does this node contain the given offset"
   [root offset]
-  (let [root-loc (.getFileLocation root)
-        root-offset (.getNodeOffset root-loc)
-        root-length (.getNodeLength root-loc)]
+  (let [root-loc (.getFileLocation root)]
+    (if (nil? root-loc)
+      false
+      (let [root-offset (.getNodeOffset root-loc)
+            root-length (.getNodeLength root-loc)]
+        
+        (and (<=    root-offset              offset)
+             (>= (+ root-offset root-length) offset))))))
 
-    (and (<=    root-offset              offset)
-         (>= (+ root-offset root-length) offset))))
-
-(defn location-parent
-  "Find the AST node that contains the whole location offset/length
-   Assumes that no children of a single parent overlap in terms of offset/location"
+(defn offset-parent
+  "Find the AST node that contains the whole location offset
+   Assumes that no children of a single parent overlap in terms of offset"
   [root offset]
   (let [kids      (children root)
         container (first (filter #(contains-offset? % offset) kids))]
     (if (nil? container)
       root
       (recur container offset))))
+
+(defn toplevel-offset?
+  "Check if an offset lives in the top level or if it's inside some other node"
+  [root offset]
+  (not-any? #(contains-offset? % offset) (children root)))
 
 (defn macro-in-contexts
   "find a single macro in the given AST"
@@ -48,13 +55,12 @@
                 offset (.getNodeOffset loc)
                 length (.getNodeLength loc)
                 line   (.getStartingLineNumber loc)
-                in-expr?  (not (instance? IASTTranslationUnit (location-parent root offset)))
+               ;in-expr?  (not (instance? IASTTranslationUnit (offset-parent root offset)))
+                in-expr?  (not (toplevel-offset? root offset))
                 ret {:line line :offset offset :length length}
                 ]
             
-            [ret in-expr?]
-            )
-  )
+            [ret in-expr?]))
 
   (defn macros-in-contexts
   "return a list of all macros that are defined inside of expressiosn"

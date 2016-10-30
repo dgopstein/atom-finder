@@ -168,13 +168,25 @@
   "Search directory structure for C-like files"
   [dirname]
   (let [dirfile  (clojure.java.io/file dirname)
-        files (map #(.getPath %) (file-seq dirfile))
+        files (file-seq dirfile)
         exts #{"c" "cc" "cpp" "c++" "h" "hh" "hpp" "h++"}]
 
     (filter
-     #(exts (nth (re-find #".*\.([^.]+)" %) 1 nil))
+     #(exts (nth (re-find #".*\.([^.]+)" (.getName %)) 1 nil))
      files)))
-         
+
+(comment
+(time
+ (prn (count (for [filename (map #(.getPath %) (c-files "/Users/dgopstein/opt/src/mono"))]
+     (let [root (translation-unit filename)]
+       (prn [(count (atom-finder.find-atom/macros-in-contexts root)) filename]))))))
+
+)
+
+;(atom-finder.find-atom/macros-in-contexts (translation-unit "/Users/dgopstein/opt/src/mono/libgc/cord/cordbscs.c"))
+;(atom-finder.find-atom/macros-in-contexts (translation-unit (resource-path "union.c")))
+;(get-in-tree  (translation-unit (resource-path "union.c")) [0 0 0])
+
 (defn -main
   [& args]
 
