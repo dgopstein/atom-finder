@@ -23,19 +23,21 @@
   [dirname]
 (time
  ; (prn (count (for [filename (map #(.getPath %) (c-files "/Users/dgopstein/opt/src/mono"))]
- (prn (count (map
+ (prn (count (pmap
 
               (fn [file]
-                (try
-                  (let [filename (.getPath file)
-                        root (translation-unit filename)]
-                    (printf "%03d %s\n" (count (atom-finder.find-atom/macros-in-contexts root)) filename)))
-                (catch Exception e
-                  (printf "-- error parsing file: \"%s\"\n" filename)
-                  ))
+                (let [filename (.getPath file)]
+                  (try
+                    (let [root (translation-unit filename)]
+                      (printf "%03d %s\n" (count (atom-finder.find-atom/macros-in-contexts root)) filename))
+                    (catch Exception e
+                      (printf "-- exception parsing file: \"%s\"\n" filename))
+                    (catch Error e
+                      (printf "-- error parsing file: \"%s\"\n" filename))
+                      )))
 
               (c-files dirname)
-              ))))
+              )))))
 
 ; (preprocessor-in-dir "/Users/dgopstein/opt/src/gcc")
 
