@@ -1,5 +1,5 @@
 (ns atom-finder.find-atom
-  (:require [atom-finder.core :refer :all])
+  (:require [atom-finder.util :refer :all])
   (:import
            [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
