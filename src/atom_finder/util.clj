@@ -5,6 +5,9 @@
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
+(defmacro %w [& words]
+    `(list ~@(map str (vec words))))
+
 (defn file-content
   "read in source file to be analyzed"
   [filename]
@@ -98,6 +101,23 @@
 (defn typename [node]
   (let [name (-> node .getClass .getSimpleName)]
     (nth (re-find #"CPPAST(.*)" name) 1)))
+
+(defn c-files
+  "Search directory structure for C-like files"
+  [dirname]
+  (let [dirfile  (clojure.java.io/file dirname)
+        files (file-seq dirfile)
+        exts #{"c" "cc" "cpp" "c++" "h" "hh" "hpp" "h++"}]
+
+    (filter
+     (fn [file]
+       (and
+        (exts (nth (re-find #".*\.([^.]+)" (.getName file)) 1 nil))
+        (.isFile file))
+       )
+     files)))
+
+(clojure.java.io/resource "*")
 
 (defn resource-path
   "Find the path to a resource"

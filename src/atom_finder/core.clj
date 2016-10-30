@@ -18,21 +18,6 @@
   (let [root (translation-unit filename)]
     (atom root)))
 
-(defn c-files
-  "Search directory structure for C-like files"
-  [dirname]
-  (let [dirfile  (clojure.java.io/file dirname)
-        files (file-seq dirfile)
-        exts #{"c" "cc" "cpp" "c++" "h" "hh" "hpp" "h++"}]
-
-    (filter
-     (fn [file]
-       (and
-        (exts (nth (re-find #".*\.([^.]+)" (.getName file)) 1 nil))
-        (.isFile file))
-       )
-     files)))
-
 (defn preprocessor-in-dir
   "Find all preprocessor directives not at the top level in directory"
   [dirname]

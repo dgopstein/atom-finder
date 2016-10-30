@@ -5,9 +5,19 @@
             [atom-finder.core :refer :all]
             ))
 
-;(deftest a-test
-;  (testing "FIXME, I fail."
-;    (is (= 0 1))))
+
+(deftest hard-compilation
+  (testing "Files that are difficult to compile"
+    (let [files (%w
+                 if-starts-in-expression.c
+                 limits-declparen.c
+                 macro-in-expression.c
+                 typedef_union_struct.c
+                 union.c
+                 wdate-time.c)]
+      (doseq [filename files]
+       (is (instance? org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTTranslationUnit (translation-unit (resource-path filename))) (format "Parsing file: %s" filename))
+    ))))
 
 (deftest macros-in-context-test
   (testing "Macro entirely in context"
