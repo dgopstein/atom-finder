@@ -27,11 +27,12 @@
   (let [root-loc (.getFileLocation root)]
     (if (nil? root-loc)
       false
-      (let [root-offset (.getNodeOffset root-loc)
-            root-length (.getNodeLength root-loc)]
-        
-        (and (<=    root-offset              offset)
-             (>= (+ root-offset root-length) offset))))))
+      (let [root-offset (.getNodeOffset root-loc)]
+        ; (According to VisualVM) The dispatch on these methods
+        ; is a CPU killer. Try to short-circuit if possible.
+        (if (> root-offset offset)
+          false
+          (>= (+ root-offset (.getNodeLength root-loc)) offset))))))
 
 (defn offset-parent
   "Find the AST node that contains the whole location offset
