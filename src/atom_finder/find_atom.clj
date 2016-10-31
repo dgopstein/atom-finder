@@ -1,10 +1,10 @@
 (ns atom-finder.find-atom
   (:require [atom-finder.util :refer :all])
   (:import
-           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit]
-           [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
-           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
-           [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
+   [org.eclipse.cdt.core.dom.ast IASTExpression IASTStatement IASTTranslationUnit IASTPreprocessorMacroDefinition]
+   [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
+   [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]
+   [org.eclipse.cdt.internal.core.parser.scanner ASTMacroDefinition]))
 
 (defmulti side-effecting? class)
 (defmethod side-effecting? :default [node] false)
@@ -51,28 +51,66 @@
 
 (defn macro-in-contexts
   "find a single macro in the given AST"
-  [root macro]
+  [root macro classifier]
   (let [loc    (.getFileLocation macro)
-                offset (.getNodeOffset loc)
-                length (.getNodeLength loc)
-                line   (.getStartingLineNumber loc)
+        offset (.getNodeOffset loc)
+        length (.getNodeLength loc)
+        line   (.getStartingLineNumber loc)
                ;in-expr?  (not (instance? IASTTranslationUnit (offset-parent root offset)))
-                in-expr?  (not (toplevel-offset? root offset))
-                ret {:line line :offset offset :length length}
+                                        ;in-expr?  (not (toplevel-offset? root offset))
+        parent (offset-parent root offset)
+        in-expr? (classifier parent)
+        ret {:line line :offset offset :length length}
                 ]
             
             [ret in-expr?]))
 
-  (defn macros-in-contexts
-  "return a list of all macros that are defined inside of expressiosn"
-  [root]
+(defn preprocessors-in-contexts
+  "return a list of all preprocessor directives inside of various contexts"
+  [root classifier]
     (keep (fn [[md in-expr?]] (if in-expr? md)) 
           (for [md (.getAllPreprocessorStatements root)]
-            (macro-in-contexts root md))))
+            (macro-in-contexts root md classifier))))
 
-;(for [[md in-expr?] (macro-in-expressions root)]
-;  [(.getStartingLineNumber (.getExpansionLocation md)) (.getRawSignature md) in-expr?])
+(defn define-in-contexts
+  "return a list of all macros that are defined inside of expressiosn"
+  [root classifier]
+    (keep (fn [[md in-expr?]] (if in-expr? md)) 
+          (for [md (filter #(instance? IASTPreprocessorMacroDefinition %) (.getAllPreprocessorStatements root))]
+            (macro-in-contexts root md classifier))))
 
+(defn non-toplevel-classifier
+  [parent]
+  (not (instance? IASTTranslationUnit parent)))
 
-;(macros-in-contexts (translation-unit (resource-path "if-starts-in-expression.c")))
-;(count (.getAllPreprocessorStatements root))
+(defn statement-expression-classifier
+  [parent]
+  (or (instance? IASTExpression parent)
+      (instance? IASTStatement parent)))
+
+(defn expression-classifier
+  [parent]
+  (instance? IASTExpression parent))
+
+;(defn preprocessor-in-expression-if-loop
+;  "Match exactly the cases we tested in the snippet study"
+;  [root macro]
+;
+;  (let [loc    (.getFileLocation macro)
+;        offset (.getNodeOffset loc)
+;        length (.getNodeLength loc)
+;        line   (.getStartingLineNumber loc)
+;        parent (offset-parent root offset)
+;        in-expr?  (or (instance? IASTExpression parent)
+;                      (instance? IASTStatement parent))
+;        
+;        ret {:line line :offset offset :length length}]
+;            
+;    [ret in-expr?]))
+
+;(defn preprocessors-in-statement-expression
+;  "return a list of all macros that are defined inside of expression or statement"
+;  [root]
+;    (keep (fn [[md in-expr?]] (if in-expr? md)) 
+;          (for [md (.getAllPreprocessorStatements root)]
+;            (preprocessor-in-expression-if-loop root md))))

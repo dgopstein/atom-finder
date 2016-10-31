@@ -27,27 +27,36 @@
 
               (fn [file]
                 (let [filename (.getPath file)]
-                  (try
+;                  (try
                     (let [root (translation-unit filename)]
-                      (printf "%03d %s\n" (count (atom-finder.find-atom/macros-in-contexts root)) filename))
-                    (catch Exception e
-                      (printf "-- exception parsing file: \"%s\"\n" filename))
-                    (catch Error e
-                      (printf "-- error parsing file: \"%s\"\n" filename))
-                      )))
+;                      (printf "%03d %s\n" (count (atom-finder.find-atom/macros-in-contexts root)) filename))
+;                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-statement-expression root)) filename))
+                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-contexts root expression-classifier)) filename))
+;                      (printf "%03d %s\n" (count (atom-finder.find-atom/define-in-contexts root expression-classifier)) filename))
+ ;                     (catch Exception e
+  ;                    (printf "-- exception parsing file: \"%s\"\n" filename))
+                    ;(catch Error e
+                     ; (printf "-- error parsing file: \"%s\"\n" filename))
+                ;    )
+                ))
 
               (c-files dirname)
               )))))
 
 ; (preprocessor-in-dir "/Users/dgopstein/opt/src/gcc")
-
 ; (preprocessor-in-dir "/Users/dgopstein/opt/src/gcc/gcc/testsuite/c-c++-common")
+; (preprocessor-in-dir "/Users/dgopstein/nyu/confusion/atom-finder/src/test/resources")
 
-; (atom-finder.find-atom/macros-in-contexts (translation-unit "/Users/dgopstein/opt/src/gcc/gcc/testsuite/c-c++-common/wdate-time.c"))
+; (atom-finder.find-atom/define-in-contexts (translation-unit "/Users/dgopstein/opt/src/gcc/gcc/testsuite/gcc.dg/c90-array-lval-4.c") expression-classifier)
 
-;(atom-finder.find-atom/macros-in-contexts (translation-unit "/Users/dgopstein/opt/src/mono/libgc/cord/cordbscs.c"))
+(require '[clojure.contrib.repl-utils :as ru])
+                                        ;(map #(-> % .getClass .getSimpleName) (.getAllPreprocessorStatements (translation-unit (resource-path "define-in-if-loop.c"))))
+(.getRawSignature (first (.getAllPreprocessorStatements (translation-unit (resource-path "define-in-if-loop.c")))))
+(instance? org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroDefinition  (first (.getAllPreprocessorStatements (translation-unit (resource-path "define-in-if-loop.c")))))
 ;(atom-finder.find-atom/macros-in-contexts (translation-unit (resource-path "union.c")))
 ;(get-in-tree  (translation-unit (resource-path "union.c")) [0 0 0])
+
+(print-tree (translation-unit (resource-path "define-in-if-loop.c")))
 
 (defn -main
   [& args]
