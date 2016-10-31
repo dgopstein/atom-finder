@@ -1,7 +1,7 @@
 (ns atom-finder.find-atom
   (:require [atom-finder.util :refer :all])
   (:import
-   [org.eclipse.cdt.core.dom.ast IASTExpression IASTStatement IASTTranslationUnit IASTPreprocessorMacroDefinition]
+   [org.eclipse.cdt.core.dom.ast IASTExpression IASTStatement IASTTranslationUnit IASTPreprocessorMacroDefinition IASTIfStatement]
    [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
    [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]
    [org.eclipse.cdt.internal.core.parser.scanner ASTMacroDefinition]))
@@ -91,4 +91,6 @@
 (defn expression-classifier [parent]
   (instance? IASTExpression parent))
 
-;(defn if-body-classifier)
+;; Technically we should see if any of the ancestors are If's, because it could be nested inside somehting else inside an if-statement
+(defn if-body-classifier [parent]
+  (instance? IASTIfStatement parent))

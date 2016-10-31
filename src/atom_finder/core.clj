@@ -32,7 +32,8 @@
 ;                      (printf "%03d %s\n" (count (atom-finder.find-atom/macros-in-contexts root)) filename))
 ;                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-statement-expression root)) filename))
 ;                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-contexts root expression-classifier)) filename))
-                      (printf "%03d %s\n" (count (atom-finder.find-atom/define-in-contexts root expression-classifier)) filename))
+                                        ;                      (printf "%03d %s\n" (count (atom-finder.find-atom/define-in-contexts root expression-classifier)) filename))
+                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-contexts define-only if-body-classifier root)) filename))
                      (catch Exception e
                     (printf "-- exception parsing file: \"%s\"\n" filename))
                     (catch Error e
@@ -49,6 +50,7 @@
 
 ;(atom-finder.find-atom/preprocessors-in-contexts define-only expression-classifier (tu "/Users/dgopstein/opt/src/gcc/gcc/testsuite/gcc.target/aarch64/aapcs64/abitest.h"))
 ; (atom-finder.find-atom/define-in-contexts (translation-unit "/Users/dgopstein/opt/src/gcc/gcc/testsuite/gcc.c-torture/compile/limits-exprparen.c") expression-classifier)
+(atom-finder.find-atom/preprocessors-in-context define-only if-body-classifier (tu "/Users/dgopstein/opt/src/gcc/gcc/fortran/resolve.c"))
 
 ;(require '[clojure.contrib.repl-utils :as ru])
                                         ;(map #(-> % .getClass .getSimpleName) (.getAllPreprocessorStatements (translation-unit (resource-path "define-in-if-loop.c"))))
@@ -57,7 +59,7 @@
 ;(atom-finder.find-atom/macros-in-contexts (translation-unit (resource-path "union.c")))
 ;(get-in-tree  (translation-unit (resource-path "union.c")) [0 0 0])
 
-;(print-tree (translation-unit (resource-path "define-in-if-loop.c")))
+(print-tree (translation-unit (resource-path "define-in-if-loop.c")))
 
 (defn -main
   [& args]
