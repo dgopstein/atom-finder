@@ -24,6 +24,8 @@
     (.getASTTranslationUnit (GPPLanguage/getDefault)
                             (file-content filename) info emptyIncludes nil opts log)))
 
+(def tu translation-unit)
+
 (defn arg-count [f]
   (let [m (first (.getDeclaredMethods (class f)))
         p (.getParameterTypes m)]

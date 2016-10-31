@@ -67,17 +67,17 @@
 
 (defn preprocessors-in-contexts
   "return a list of all preprocessor directives inside of various contexts"
-  [root classifier]
+  [preprocessor-type context-classifier root]
     (keep (fn [[md in-expr?]] (if in-expr? md)) 
-          (for [md (.getAllPreprocessorStatements root)]
-            (macro-in-contexts root md classifier))))
+          (for [md (preprocessor-type root)]
+            (macro-in-contexts root md context-classifier))))
+
+(defn all-preprocessor [root] (.getAllPreprocessorStatements root))
+(defn define-only [root] (filter #(instance? IASTPreprocessorMacroDefinition %) (all-preprocessor root)))
 
 (defn define-in-contexts
-  "return a list of all macros that are defined inside of expressiosn"
-  [root classifier]
-    (keep (fn [[md in-expr?]] (if in-expr? md)) 
-          (for [md (filter #(instance? IASTPreprocessorMacroDefinition %) (.getAllPreprocessorStatements root))]
-            (macro-in-contexts root md classifier))))
+  [context-classifier root]
+  (preprocessors-in-contexts define-only context-classifier root))
 
 (defn non-toplevel-classifier
   [parent]
@@ -88,29 +88,7 @@
   (or (instance? IASTExpression parent)
       (instance? IASTStatement parent)))
 
-(defn expression-classifier
-  [parent]
+(defn expression-classifier [parent]
   (instance? IASTExpression parent))
 
-;(defn preprocessor-in-expression-if-loop
-;  "Match exactly the cases we tested in the snippet study"
-;  [root macro]
-;
-;  (let [loc    (.getFileLocation macro)
-;        offset (.getNodeOffset loc)
-;        length (.getNodeLength loc)
-;        line   (.getStartingLineNumber loc)
-;        parent (offset-parent root offset)
-;        in-expr?  (or (instance? IASTExpression parent)
-;                      (instance? IASTStatement parent))
-;        
-;        ret {:line line :offset offset :length length}]
-;            
-;    [ret in-expr?]))
-
-;(defn preprocessors-in-statement-expression
-;  "return a list of all macros that are defined inside of expression or statement"
-;  [root]
-;    (keep (fn [[md in-expr?]] (if in-expr? md)) 
-;          (for [md (.getAllPreprocessorStatements root)]
-;            (preprocessor-in-expression-if-loop root md))))
+;(defn if-body-classifier)
