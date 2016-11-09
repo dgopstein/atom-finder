@@ -91,6 +91,5 @@
 (defn expression-classifier [parent]
   (instance? IASTExpression parent))
 
-;; Technically we should see if any of the ancestors are If's, because it could be nested inside somehting else inside an if-statement
 (defn if-body-classifier [parent]
-  (instance? IASTIfStatement parent))
+  (ancestral-instance? IASTIfStatement parent))

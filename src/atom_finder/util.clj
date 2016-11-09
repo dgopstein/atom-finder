@@ -92,6 +92,15 @@
   [n node]
   (fn-pow #(.getParent %) node (dec n)))
 
+(defn ancestral-instance?
+  "Check whether any of this nodes ancestry are of the type listed"
+  [type parent]
+  (if (nil? parent)
+    false
+    (if (instance? type parent)
+      true
+      (ancestral-instance? type (.getParent parent)))))
+
 (defn filter-depth
   "Return every sub-tree of size n"
   [n node]

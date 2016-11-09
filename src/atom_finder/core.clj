@@ -33,7 +33,7 @@
 ;                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-statement-expression root)) filename))
 ;                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-contexts root expression-classifier)) filename))
                                         ;                      (printf "%03d %s\n" (count (atom-finder.find-atom/define-in-contexts root expression-classifier)) filename))
-                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-contexts define-only if-body-classifier root)) filename))
+                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-contexts define-only expression-classifier root)) filename))
                      (catch Exception e
                     (printf "-- exception parsing file: \"%s\"\n" filename))
                     (catch Error e
@@ -45,12 +45,13 @@
               )))))
 
 ; (preprocessor-in-dir "/Users/dgopstein/opt/src/gcc")
+; (preprocessor-in-dir "/Users/dgopstein/opt/src/linux")
 ; (preprocessor-in-dir "/Users/dgopstein/opt/src/gcc/gcc/testsuite/c-c++-common")
 ; (preprocessor-in-dir "/Users/dgopstein/nyu/confusion/atom-finder/src/test/resources")
 
 ;(atom-finder.find-atom/preprocessors-in-contexts define-only expression-classifier (tu "/Users/dgopstein/opt/src/gcc/gcc/testsuite/gcc.target/aarch64/aapcs64/abitest.h"))
 ; (atom-finder.find-atom/define-in-contexts (translation-unit "/Users/dgopstein/opt/src/gcc/gcc/testsuite/gcc.c-torture/compile/limits-exprparen.c") expression-classifier)
-(atom-finder.find-atom/preprocessors-in-context define-only if-body-classifier (tu "/Users/dgopstein/opt/src/gcc/gcc/fortran/resolve.c"))
+(atom-finder.find-atom/preprocessors-in-contexts define-only if-body-classifier (tu "/Users/dgopstein/opt/src/linux/drivers/scsi/hpsa.c"))
 
 ;(require '[clojure.contrib.repl-utils :as ru])
                                         ;(map #(-> % .getClass .getSimpleName) (.getAllPreprocessorStatements (translation-unit (resource-path "define-in-if-loop.c"))))
