@@ -7,11 +7,6 @@
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
 
-;(def filename "/Users/dgopstein/nyu/confusion/atoms/simplifications/2000-natori/nonconfusing.c")
-;(def filename "/Users/dgopstein/nyu/confusion/atom-finder/src/atom_finder/macro-in-expression.c")
-
-;(def root (translation-unit (resource-path "if-starts-in-expression.c")))
-
 (defn find-atoms-in-file
   "Find every example of each of the given atoms in the given file"
   [atom filename]
@@ -22,7 +17,6 @@
   "Find all preprocessor directives not at the top level in directory"
   [dirname]
 (time
- ; (prn (count (for [filename (map #(.getPath %) (c-files "/Users/dgopstein/opt/src/mono"))]
  (prn (count (pmap
 
               (fn [file]
@@ -44,51 +38,41 @@
               (c-files dirname)
               )))))
 
-; (preprocessor-in-dir "/Users/dgopstein/opt/src/gcc")
-; (preprocessor-in-dir "/Users/dgopstein/opt/src/linux")
-; (preprocessor-in-dir "/Users/dgopstein/opt/src/gcc/gcc/testsuite/c-c++-common")
-; (preprocessor-in-dir "/Users/dgopstein/nyu/confusion/atom-finder/src/test/resources")
 
-;(atom-finder.find-atom/preprocessors-in-contexts define-only expression-classifier (tu "/Users/dgopstein/opt/src/gcc/gcc/testsuite/gcc.target/aarch64/aapcs64/abitest.h"))
-; (atom-finder.find-atom/define-in-contexts (translation-unit "/Users/dgopstein/opt/src/gcc/gcc/testsuite/gcc.c-torture/compile/limits-exprparen.c") expression-classifier)
-(atom-finder.find-atom/preprocessors-in-contexts define-only if-body-classifier (tu "/Users/dgopstein/opt/src/linux/drivers/scsi/hpsa.c"))
+(def ^:private running-jar
+    "Resolves the path to the current running jar file."
+  (-> :keyword class (.. getProtectionDomain getCodeSource getLocation getPath)))
 
-;(require '[clojure.contrib.repl-utils :as ru])
-                                        ;(map #(-> % .getClass .getSimpleName) (.getAllPreprocessorStatements (translation-unit (resource-path "define-in-if-loop.c"))))
-;(.getRawSignature (first (.getAllPreprocessorStatements (translation-unit (resource-path "define-in-if-loop.c")))))
-;(instance? org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroDefinition  (first (.getAllPreprocessorStatements (translation-unit (resource-path "define-in-if-loop.c")))))
-;(atom-finder.find-atom/macros-in-contexts (translation-unit (resource-path "union.c")))
-;(get-in-tree  (translation-unit (resource-path "union.c")) [0 0 0])
-
-(print-tree (translation-unit (resource-path "define-in-if-loop.c")))
+(defn list-resources [path]
+  (let [jar (java.util.jar.JarFile. path)
+        entries (.entries jar)]
+    (loop [result  []]
+      (if (.hasMoreElements entries)
+        (recur (conj result (.. entries nextElement getName)))
+                result))))
 
 (defn -main
   [& args]
 
-  ;(print-tree root) 
-  ;;(get-in-tree root [0 2 1 0 1]) ;; "%d %d\n""
-  ;(.getLeadingSyntax (get-in-tree root [0 2 0 0 1 1 0 1]))
-  ;(fn-pow #(.getNext %) (.getTrailingSyntax (get-in-tree root [0 2 0 0 1 1 0 0])) 5)
-  ;(write (get-in-tree root [0 2 0 0 1 1 0 1]))
-  ;(.getExpansionLocation (nth (.getMacroDefinitions root) 0))
-  ;(.getNodeOffset (.getExpansionLocation (nth (.getMacroDefinitions root) 0)))
-  ;(.getNodeLength (.getExpansionLocation (nth (.getMacroDefinitions root) 0)))
-  ;(map #(.getNodeOffset %) (.getNodeLocations (get-in-tree root [0 2 0 0 1 1 0 ])))
-  ;(map #(.getNodeLength %) (.getNodeLocations (get-in-tree root [0 2 0 0 1 1 0 ])))
-  ;(map #(.getNodeLength %) (.getNodeLocations (get-in-tree root [0 2 0 0])))
-  ;(write (get-in-tree root [0 2 1 ]))
+  ;(def root (translation-unit (resource-path "if-starts-in-expression.c")))
 
-  ;(def nine+seven-node (get-in-tree root [0 2 0 0 1 1 0 ]))
-  ;(def printf-node (get-in-tree root [0 2 1 ]))
+  ;; the place where all test-files live
+  (def resource-dir (.getParent (java.io.File. (resource-path "define-in-if-loop.c"))))
 
+  (defn PRINTLN [s]
+    (println
+     "\n==============================================================="
+     s
+     "\n==============================================================="))
 
-  ;(contains-location? root 41 1)
-  ;(contains-location? nine+seven-node 41 1)
-  ;(contains-location? printf-node 41 1)
-  ;(write (location-parent root 41 1))
+  (PRINTLN "\nCount how many \"Preprocessor in Statement\" atoms are in the resource directory files")
+  (preprocessor-in-dir resource-dir)
 
+  (PRINTLN "\nPrint the AST of the file containing the atom")
+  (print-tree (translation-unit (resource-path "macro-in-expression.c")))
 
-  ;(doseq [ancestor (filter-depth 3 root)]
-  ;  (println (typename ancestor) (write ancestor) "\n-----------------\n"))
+  (PRINTLN "\nPrint the line of the atom in the file")
+  (println (atom-finder.find-atom/preprocessors-in-contexts define-only expression-classifier (tu (resource-path "macro-in-expression.c"))))
 
+  (System/exit 0)
   )
