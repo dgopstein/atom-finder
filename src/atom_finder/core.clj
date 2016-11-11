@@ -1,5 +1,5 @@
 (ns atom-finder.core
-  (:require [atom-finder.find-atom :refer :all]
+  (:require [atom-finder.classifier :refer :all]
             [atom-finder.util :refer :all])
   (:import [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
@@ -23,11 +23,11 @@
                 (let [filename (.getPath file)]
                   (try
                     (let [root (translation-unit filename)]
-;                      (printf "%03d %s\n" (count (atom-finder.find-atom/macros-in-contexts root)) filename))
-;                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-statement-expression root)) filename))
-;                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-contexts root expression-classifier)) filename))
-                                        ;                      (printf "%03d %s\n" (count (atom-finder.find-atom/define-in-contexts root expression-classifier)) filename))
-                      (printf "%03d %s\n" (count (atom-finder.find-atom/preprocessors-in-contexts define-only expression-classifier root)) filename))
+;                      (printf "%03d %s\n" (count (atom-finder.classifier/macros-in-contexts root)) filename))
+;                      (printf "%03d %s\n" (count (atom-finder.classifier/preprocessors-in-statement-expression root)) filename))
+;                      (printf "%03d %s\n" (count (atom-finder.classifier/preprocessors-in-contexts root expression-classifier)) filename))
+                                        ;                      (printf "%03d %s\n" (count (atom-finder.classifier/define-in-contexts root expression-classifier)) filename))
+                      (printf "%03d %s\n" (count (atom-finder.classifier/preprocessors-in-contexts define-only expression-classifier root)) filename))
                      (catch Exception e
                     (printf "-- exception parsing file: \"%s\"\n" filename))
                     (catch Error e
@@ -72,7 +72,7 @@
   (print-tree (translation-unit (resource-path "macro-in-expression.c")))
 
   (PRINTLN "\nPrint the line of the atom in the file")
-  (println (atom-finder.find-atom/preprocessors-in-contexts define-only expression-classifier (tu (resource-path "macro-in-expression.c"))))
+  (println (atom-finder.classifier/preprocessors-in-contexts define-only expression-classifier (tu (resource-path "macro-in-expression.c"))))
 
   (System/exit 0)
   )

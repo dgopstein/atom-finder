@@ -1,4 +1,4 @@
-(ns atom-finder.find-atom
+(ns atom-finder.classifier
   (:require [atom-finder.util :refer :all])
   (:import
    [org.eclipse.cdt.core.dom.ast IASTExpression IASTStatement IASTTranslationUnit IASTPreprocessorMacroDefinition IASTIfStatement]
