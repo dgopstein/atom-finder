@@ -142,4 +142,7 @@
     node
     (recur (nth (children node) (first indices)) (rest indices))))
 
-
+(defn expand-home [s]
+  (if (.startsWith s "~")
+    (clojure.string/replace-first s "~" (System/getProperty "user.home"))
+        s))
