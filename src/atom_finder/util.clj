@@ -101,6 +101,10 @@
       true
       (ancestral-instance? type (.getParent parent)))))
 
+(defn typename [node]
+  (let [name (-> node .getClass .getSimpleName)]
+    (nth (re-find #"CPPAST(.*)" name) 1)))
+
 (defn filter-depth
   "Return every sub-tree of size n"
   [n node]
@@ -109,9 +113,13 @@
     ;; candidates may still have deeper branches than the one we came up from
     (filter #(= n (depth %)) candidates)))
 
-(defn typename [node]
-  (let [name (-> node .getClass .getSimpleName)]
-    (nth (re-find #"CPPAST(.*)" name) 1)))
+(defn filter-type
+  "Return every example of type"
+  [type node]
+  (let [kids        (children node)
+        kid-matches (mapcat (partial filter-type type) kids)
+        matches     (filter #(= (typename %) type) kids)]
+    (concat matches kid-matches)))
 
 (defn c-files
   "Search directory structure for C-like files"
