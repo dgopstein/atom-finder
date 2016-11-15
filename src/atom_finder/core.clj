@@ -73,32 +73,9 @@
   [& args]
 
   (def root (tu (resource-path "if-starts-in-expression.c")))
-  (def root (tu (expand-home "~/opt/src/gcc/libgcc/memmove.c")))
-  (def root (tu (expand-home "~/opt/src/gcc/libgcc/unwind-dw2.c")))
-  (def root (tu (expand-home "~/opt/src/emscripten/system/include/EGL/egl.h")))
 
   (def github-top-c (map #(.getPath %) (.listFiles (io/file (expand-home "~/opt/src/github-top-c")))))
 
-  (pprint (map write (filter-type "IdExpression" root)))
-  (pprint (map write (filter-type "Name" root)))
-  (pprint (map write (filter-type "ExpressionStatement" root)))
-  (pprint (map write (filter-type "FieldReference" root)))
-  (pprint (map write (filter-type "SimpleDeclSpecifier" root)))
-  (pprint (map write (filter-type "Declarator" root)))
-  (pprint (map write (filter-type "SimpleDeclaration" root)))
-  (pprint (map write (filter-type "NamedTypeSpecifier" root)))
-  (pprint (map write (filter-type "ParameterDeclaration" root)))
-  (pprint (map write (filter-type "CompoundStatement" root)))
-  (pprint (map #(->> % .getFileLocation .getStartingLineNumber) (filter-type "Problem" root)))
-
-  (->> (mapcat #(do (prn %1) (->> %1 .getPath tu (filter-type "Problem")))
-               (c-files (expand-home "~/opt/src/emscripten/")))
-       (map #(.getContainingFilename %))
-       (take 10)
-       )
-
-  ; (time (count-nodes-in-dirs github-top-c))
-  
   ;; the place where all test-files live
   (def resource-dir (.getParent (java.io.File. (resource-path "define-in-if-loop.c"))))
 
