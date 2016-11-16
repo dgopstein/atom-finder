@@ -130,11 +130,21 @@
        (map parent)
        distinct))
 
-;(defn filter-ancestral-instance-parent
-;  [type node]
-;jj  ancestral-instance?
-;  asfdlakjsflkasjl;fdkasjdf;lkjasfjdkaajsfd
-;  ;TODO fix this up
+(defn filter-instance
+  [type node]
+  ancestral-instance?
+  (let [kids        (children node)
+        kid-matches (mapcat (partial filter-instance type) kids)
+        matches     (filter (partial instance? type) kids)]
+    (concat matches kid-matches)))
+
+(defn filter-instance-parent
+  "Return the parent of each type"
+  [type node]
+  (->> node
+       (filter-instance type)
+       (map parent)
+       distinct))
 
 (defn c-files
   "Search directory structure for C-like files"

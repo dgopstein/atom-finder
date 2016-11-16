@@ -3,6 +3,8 @@
             [clojure.data.csv :as csv]
             [clojure.java.io  :as io]
             [clojure.string   :as string]
+            )
+  (:import [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression]
             ))
 
 (defn count-nodes
@@ -59,7 +61,10 @@
   "Count node structures with expressions as children"
   [root]
   (->> root
-       (filter-type-parent "Name")
+       (filter-instance-parent IASTExpression)
+       ; (filter #(= (depth %) 3))
+       ; (map astr)
+       (map typename)
        frequencies))
 
 (defn count-in-dir
