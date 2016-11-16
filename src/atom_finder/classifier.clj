@@ -93,3 +93,13 @@
 
 (defn if-body-classifier [parent]
   (ancestral-instance? IASTIfStatement parent))
+
+(defn preprocessor-in-dir
+  "Find all preprocessor directives not at the top level in directory"
+  [dirname]
+  (time (prn (count
+              (pmap-dir-nodes
+               (fn [root]
+                 (printf "%03d %s\n"
+                         (count (preprocessors-in-contexts define-only expression-classifier root))
+                         (.getFilePath root))) dirname)))))

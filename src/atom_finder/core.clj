@@ -11,68 +11,13 @@
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
-
-(defn find-atoms-in-file
-  "Find every example of each of the given atoms in the given file"
-  [atom filename]
-  (let [root (translation-unit filename)]
-    (atom root)))
-
-(defn preprocessor-in-dir
-  "Find all preprocessor directives not at the top level in directory"
-  [dirname]
-(time
- (prn (count (pmap
-
-              (fn [file]
-                (let [filename (.getPath file)]
-                  (try
-                    (let [root (translation-unit filename)]
-;                      (printf "%03d %s\n" (count (atom-finder.classifier/macros-in-contexts root)) filename))
-;                      (printf "%03d %s\n" (count (atom-finder.classifier/preprocessors-in-statement-expression root)) filename))
-;                      (printf "%03d %s\n" (count (atom-finder.classifier/preprocessors-in-contexts root expression-classifier)) filename))
-                                        ;                      (printf "%03d %s\n" (count (atom-finder.classifier/define-in-contexts root expression-classifier)) filename))
-                      (printf "%03d %s\n" (count (atom-finder.classifier/preprocessors-in-contexts define-only expression-classifier root)) filename))
-                     (catch Exception e
-                    (printf "-- exception parsing file: \"%s\"\n" filename))
-                    (catch Error e
-                      (printf "-- error parsing file: \"%s\"\n" filename))
-                    )
-                ))
-
-              (c-files dirname)
-              )))))
-
-(defn count-nodes-in-dir
-  "Find all preprocessor directives not at the top level in directory"
-  [dirname]
-  ;(time
-  (reduce (partial merge-with +)
-          (pmap
-           (fn [file]
-             (let [filename (.getPath file)]
-               (try
-                 (count-nodes (tu filename))
-                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
-                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
-                 )))
-
-           (c-files dirname)
-           )))
-;)
-
-(defn count-nodes-in-dirs
-  [dirs]
-  (csv/write-csv *out*
-    (apply concat (for [dir dirs]
-      (let [name (.getName (io/file dir))]
-        (map #(cons name %) (count-nodes-in-dir dir))
-        )))))
-
 (defn -main
   [& args]
 
   (def root (tu (resource-path "if-starts-in-expression.c")))
+  (println (count-expression-parents resource-dir))
+  (pprint (map reverse (sort-by last > (count-nodes-of-depth-in-dir 3 (expand-home "~/opt/src/the_silver_searcher/")))))
+  (pprint (map reverse (sort-by last > (count-expression-parents-in-dir (expand-home "~/opt/src/the_silver_searcher/")))))
 
   (def github-top-c (map #(.getPath %) (.listFiles (io/file (expand-home "~/opt/src/github-top-c")))))
 

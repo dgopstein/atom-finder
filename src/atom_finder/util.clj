@@ -33,6 +33,7 @@
 
 
 (defn children [node] (.getChildren node))
+(defn parent [node] (.getParent node))
 
 (defn pre-tree
   ([f node] (pre-tree f node 1))
@@ -90,16 +91,16 @@
 (defn ancestor
   "Get the nth grandparent of the node"
   [n node]
-  (fn-pow #(.getParent %) node (dec n)))
+  (fn-pow parent node (dec n)))
 
 (defn ancestral-instance?
   "Check whether any of this nodes ancestry are of the type listed"
-  [type parent]
-  (if (nil? parent)
+  [type node]
+  (if (nil? node)
     false
-    (if (instance? type parent)
+    (if (instance? type node)
       true
-      (ancestral-instance? type (.getParent parent)))))
+      (ancestral-instance? type (parent node)))))
 
 (defn typename [node]
   (let [name (-> node .getClass .getSimpleName)]
@@ -120,6 +121,20 @@
         kid-matches (mapcat (partial filter-type type) kids)
         matches     (filter #(= (typename %) type) kids)]
     (concat matches kid-matches)))
+
+(defn filter-type-parent
+  "Return the parent of each type"
+  [type node]
+  (->> node
+       (filter-type type)
+       (map parent)
+       distinct))
+
+;(defn filter-ancestral-instance-parent
+;  [type node]
+;jj  ancestral-instance?
+;  asfdlakjsflkasjl;fdkasjdf;lkjasfjdkaajsfd
+;  ;TODO fix this up
 
 (defn c-files
   "Search directory structure for C-like files"
@@ -154,3 +169,17 @@
   (if (.startsWith s "~")
     (clojure.string/replace-first s "~" (System/getProperty "user.home"))
         s))
+
+(defn pmap-dir-nodes
+  "Apply a function to the AST of every c file in a directory"
+  [f dirname]
+          (pmap
+           (fn [file]
+             (let [filename (.getPath file)]
+               (try
+                 (f (tu filename))
+                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
+                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
+                 )))
+
+           (c-files dirname)))
