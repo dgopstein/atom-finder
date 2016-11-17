@@ -2,6 +2,7 @@
   (:require [atom-finder.classifier :refer :all]
             [atom-finder.count-subtrees :refer :all]
             [atom-finder.util :refer :all]
+            [clojure.pprint :refer [pprint]]
             [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [clojure.string :as string]
@@ -15,10 +16,9 @@
   [& args]
 
   (def root (tu (resource-path "if-starts-in-expression.c")))
-  (map astr (filter-instance IASTExpression root))
-  (println (count-expression-parents resource-dir))
-  (pprint (map reverse (sort-by last > (count-nodes-of-depth-in-dir 3 (expand-home "~/opt/src/the_silver_searcher/")))))
-  (pprint (map reverse (sort-by last > (count-expression-parents-in-dir (expand-home "~/opt/src/github-top-c")))))
+  (println (count-expression-parents 2 root))
+  ;(pprint (map reverse (sort-by last > (count-nodes-of-depth-in-dir 3 (expand-home "~/opt/src/the_silver_searcher/")))))
+  ;(time (pprint (map reverse (sort-by last > (count-expression-parents-in-dir 3 (expand-home "~/opt/src/github-top-c"))))))
 
   (def github-top-c (map #(.getPath %) (.listFiles (io/file (expand-home "~/opt/src/github-top-c")))))
 

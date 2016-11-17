@@ -33,7 +33,9 @@
 
 
 (defn children [node] (.getChildren node))
-(defn parent [node] (.getParent node))
+(defn parent [node]
+  (prn node)
+  (or (.getParent node) node))
 
 (defn pre-tree
   ([f node] (pre-tree f node 1))

@@ -58,12 +58,12 @@
        frequencies))
 
 (defn count-expression-parents
-  "Count node structures with expressions as children"
-  [root]
+  "Count node structures with expressions as their d'th depth children"
+  [d root]
   (->> root
-       (filter-instance-parent IASTExpression)
-       ; (filter #(= (depth %) 3))
-       ; (map astr)
+       (filter-instance IASTExpression)
+       (map (ancestor d))
+       (distinct)
        (map typename)
        frequencies))
 
@@ -77,8 +77,8 @@
 (defn count-nodes-of-depth-in-dir [d dirname]
   (count-in-dir (partial count-nodes-of-depth d) dirname))
 
-(defn count-expression-parents-in-dir [dirname]
-  (count-in-dir count-expression-parents dirname))
+(defn count-expression-parents-in-dir [d dirname]
+  (count-in-dir (partial count-expression-parents d) dirname))
   
 (defn count-nodes-in-dirs
   [dirs]
