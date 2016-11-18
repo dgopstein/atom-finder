@@ -62,7 +62,7 @@
   [d root]
   (->> root
        (filter-instance IASTExpression)
-       (map (ancestor d))
+       (map (partial ancestor d))
        (distinct)
        (map typename)
        frequencies))
