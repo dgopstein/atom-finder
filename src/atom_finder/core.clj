@@ -16,6 +16,7 @@
   [& args]
 
   (def root (tu (resource-path "if-starts-in-expression.c")))
+  (pprint (map write (filter-type "ExpressionStatement" (tu "/Users/dgopstein/opt/src/gcc/libgcc/unwind-dw2.c"))))
   (println (count-expression-parents 2 root))
   ;(pprint (map reverse (sort-by last > (count-nodes-of-depth-in-dir 3 (expand-home "~/opt/src/the_silver_searcher/")))))
   ;(time (pprint (map reverse (sort-by last > (count-expression-parents-in-dir 3 (expand-home "~/opt/src/github-top-c"))))))

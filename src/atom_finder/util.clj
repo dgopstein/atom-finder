@@ -8,12 +8,9 @@
 (defmacro %w [& words]
     `(list ~@(map str (vec words))))
 
-(defn file-content
-  "read in source file to be analyzed"
-  [filename]
-  (FileContent/createForExternalFileLocation filename))
-
-(defn translation-unit [filename]
+(defmulti translation-unit class)
+(defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))
+(defmethod translation-unit String [filename]
   (let [definedSymbols {}
         includePaths (make-array String 0)
         info (new ScannerInfo definedSymbols includePaths)
@@ -22,7 +19,8 @@
         opts 8]
 
     (.getASTTranslationUnit (GPPLanguage/getDefault)
-                            (file-content filename) info emptyIncludes nil opts log)))
+                            (FileContent/createForExternalFileLocation filename)
+                            info emptyIncludes nil opts log)))
 
 (def tu translation-unit)
 
@@ -195,3 +193,31 @@
                  )))
 
            (c-files dirname)))
+
+(defn write-tempfile
+  [content]
+  ; https://github.com/clojure-cookbook/clojure-cookbook/blob/master/04_local-io/4-10_using-temp-files.asciidoc
+  (let [my-temp-file (java.io.File/createTempFile "filename" ".txt")]
+    (with-open [file (clojure.java.io/writer my-temp-file)]
+      (binding [*out* file]
+        (print content)))
+
+    my-temp-file))
+
+(defn parse
+  "Turn a string of C source code into an AST"
+  [code]
+  (->> code write-tempfile tu))
+
+(defn parse-expr
+  "Turn a single C expression into an AST"
+  [code]
+  (-> (str "int main() {\n" code ";\n}\n")
+    parse
+    children
+    (nth 0)
+    children
+    (nth 2)
+    children
+    (nth 0)
+  ))
