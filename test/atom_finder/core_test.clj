@@ -1,7 +1,7 @@
 (ns atom-finder.core-test
   (:require [clojure.test :refer :all]
             [atom-finder.util :refer :all]
-            [atom-finder.find-atom :refer :all]
+            [atom-finder.classifier :refer :all]
             [atom-finder.core :refer :all]
             ))
 
