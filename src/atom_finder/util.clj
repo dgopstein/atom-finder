@@ -213,11 +213,5 @@
   "Turn a single C expression into an AST"
   [code]
   (-> (str "int main() {\n" code ";\n}\n")
-    parse
-    children
-    (nth 0)
-    children
-    (nth 2)
-    children
-    (nth 0)
-  ))
+      parse
+      (get-in-tree [0 2 0 0]))) 
