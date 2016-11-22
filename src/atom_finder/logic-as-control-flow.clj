@@ -1,13 +1,6 @@
 (in-ns 'atom-finder.classifier)
 (import '(org.eclipse.cdt.core.dom.ast IASTBinaryExpression IASTUnaryExpression))
 
-(defn short-circuitable-op?
-  "is this operator short-circuitable?"
-  [op]
-  (let [op-code (.getOperator op)]
-    (or (= op-code IASTBinaryExpression/op_logicalOr)
-        (= op-code IASTBinaryExpression/op_logicalAnd))))
-
 (defn mutatable-op?
   "can this AST node change program state?"
   [node]
@@ -35,10 +28,19 @@
     (mutatable-op? node) true
     :else (some? (some mutatable-expr? (children node)))))
 
+(defn short-circuitable-op?
+  "is this operator short-circuitable?"
+  [node]
+  (and (instance? IASTBinaryExpression node)
+       (let [op-code (.getOperator node)]
+         (or (= op-code IASTBinaryExpression/op_logicalOr)
+             (= op-code IASTBinaryExpression/op_logicalAnd)))))
+
 ;; IEEE 9899 6.5.3.4.2 claims that sizeof does conditional evaluation as well.
 (defn short-circuitable-expr?
   "can this AST node short-circuit?"
   [node]
+  ;(prn (write (get-in-tree node [1])))
   (and (short-circuitable-op? node)
        (mutatable-expr? (get-in-tree node [1]))))
 
