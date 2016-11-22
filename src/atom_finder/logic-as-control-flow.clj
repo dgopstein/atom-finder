@@ -44,8 +44,11 @@
   (and (short-circuitable-op? node)
        (mutatable-expr? (get-in-tree node [1]))))
 
-(defn logic-as-control-flow?
-  "test whether an individual AST node represents this atom"
+(defn logic-as-control-flow-atoms
+  "Return all instances of logic-as-control-flow in an AST"
   [node]
-  )
+  (cond
+    (leaf? node) nil
+    (short-circuitable-expr? node) [node]
+    :else (mapcat logic-as-control-flow-atoms (children node))))
   

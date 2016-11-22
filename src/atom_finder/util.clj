@@ -215,3 +215,12 @@
   (-> (str "int main() {\n" code ";\n}\n")
       parse
       (get-in-tree [0 2 0 0]))) 
+
+(defn loc
+  "Get location information about an AST node"
+  [node]
+  (let [loc    (.getFileLocation node)
+        offset (.getNodeOffset loc)
+        length (.getNodeLength loc)
+        line   (.getStartingLineNumber loc)]
+    {:line line :offset offset :length length}))

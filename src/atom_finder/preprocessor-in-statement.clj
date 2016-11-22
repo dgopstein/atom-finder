@@ -1,7 +1,3 @@
-(defmulti side-effecting? class)
-(defmethod side-effecting? :default [node] false)
-(defmethod side-effecting? :default [node] false)
-
 (defn contains-location?
   "Does this node contain the given offset/length"
   [root offset length]
@@ -44,16 +40,11 @@
 (defn macro-in-contexts
   "find a single macro in the given AST"
   [root macro classifier]
-  (let [loc    (.getFileLocation macro)
-        offset (.getNodeOffset loc)
-        length (.getNodeLength loc)
-        line   (.getStartingLineNumber loc)
+  (let [ret (loc macro)
                ;in-expr?  (not (instance? IASTTranslationUnit (offset-parent root offset)))
                                         ;in-expr?  (not (toplevel-offset? root offset))
-        parent (offset-parent root offset)
-        in-expr? (classifier parent)
-        ret {:line line :offset offset :length length}
-                ]
+        parent (offset-parent root (ret :offset))
+        in-expr? (classifier parent)]
             
             [ret in-expr?]))
 
