@@ -32,7 +32,6 @@
 
 (defn children [node] (.getChildren node))
 (defn parent [node]
-  (prn node)
   (or (.getParent node) node))
 
 (defn pre-tree
@@ -91,7 +90,7 @@
 (defn ancestor
   "Get the nth grandparent of the node"
   [n node]
-  (fn-pow parent node (dec n)))
+    (fn-pow parent node n))
 
 (defn ancestral-instance?
   "Check whether any of this nodes ancestry are of the type listed"
@@ -114,13 +113,18 @@
     ;; candidates may still have deeper branches than the one we came up from
     (filter #(= n (depth %)) candidates)))
 
+(defn filter-tree
+  "Return every example of type"
+  [func node]
+  (let [kids        (children node)
+        kid-matches (mapcat (partial filter-tree func) kids)
+        matches     (filter func kids)]
+    (concat matches kid-matches)))
+
 (defn filter-type
   "Return every example of type"
   [type node]
-  (let [kids        (children node)
-        kid-matches (mapcat (partial filter-type type) kids)
-        matches     (filter #(= (typename %) type) kids)]
-    (concat matches kid-matches)))
+  (filter-tree #(= (typename %) type) node))
 
 (defn filter-type-parent
   "Return the parent of each type"

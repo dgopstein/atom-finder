@@ -4,7 +4,9 @@
             [clojure.java.io  :as io]
             [clojure.string   :as string]
             )
-  (:import [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression]
+  (:import [org.eclipse.cdt.core.dom.ast IASTExpression]
+           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTIdExpression CPPASTName CPPASTLiteralExpression CPPASTPointer CPPASTSimpleDeclSpecifier CPPASTDeclarator CPPASTNullStatement CPPASTArrayModifier CPPASTDefaultStatement CPPASTProblem CPPASTProblemStatement CPPASTCompoundStatement CPPASTExpressionStatement
+            ]
             ))
 
 (defn count-nodes
@@ -57,7 +59,7 @@
        (map astr)
        frequencies))
 
-(defn count-expression-parents
+(defn count-all-expression-parents
   "Count node structures with expressions as their d'th depth children"
   [d root]
   (->> root
@@ -66,6 +68,38 @@
        (distinct)
        (map typename)
        frequencies))
+
+; CPPASTPointer only appears in declarations
+(def trivial-types #{CPPASTIdExpression CPPASTName CPPASTLiteralExpression CPPASTPointer CPPASTSimpleDeclSpecifier CPPASTDeclarator CPPASTNullStatement CPPASTArrayModifier CPPASTDefaultStatement CPPASTProblem CPPASTProblemStatement})
+
+(defn non-trivial?
+  "Find AST nodes that aren't simply literals or identifiers (non-terminal)"
+  [node]
+  (not (trivial-types (class node))))
+
+(def collapsible-types #{CPPASTExpressionStatement}) ; CPPASTCompoundStatement})
+
+(defn collapse-types
+  "For any node that's only a container for it's next-higher ancestor, return that ancestor instead"
+  [node]
+  (if (not (collapsible-types (class node)))
+    node
+    (recur (parent node))))
+
+
+(defn count-non-trivial-expression-parents
+  "Count non-trivial (non-leaf) node structures with expressions as their d'th depth children"
+  [d root]
+  (->> root
+       (filter-instance IASTExpression)
+       (filter non-trivial?)
+       (map (partial ancestor d))
+       (map collapse-types)
+       distinct
+       (map typename)
+       frequencies
+       ))
+       
 
 (defn count-in-dir
   [f dirname]
@@ -78,7 +112,7 @@
   (count-in-dir (partial count-nodes-of-depth d) dirname))
 
 (defn count-expression-parents-in-dir [d dirname]
-  (count-in-dir (partial count-expression-parents d) dirname))
+  (count-in-dir (partial count-non-trivial-expression-parents d) dirname))
   
 (defn count-nodes-in-dirs
   [dirs]

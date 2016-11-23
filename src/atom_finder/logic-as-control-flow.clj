@@ -1,5 +1,6 @@
 (in-ns 'atom-finder.classifier)
 (import '(org.eclipse.cdt.core.dom.ast IASTBinaryExpression IASTUnaryExpression))
+(require '[clojure.spec :as s])
 
 (defn mutatable-op?
   "can this AST node change program state?"
@@ -51,4 +52,14 @@
     (leaf? node) nil
     (short-circuitable-expr? node) [node]
     :else (mapcat logic-as-control-flow-atoms (children node))))
+
+(defn preprocessor-in-dir
+  "Find all preprocessor directives not at the top level in directory"
+  [dirname]
+  (time (prn (count
+              (pmap-dir-nodes
+               (fn [root]
+                 (printf "%03d %s\n"
+                         (count (preprocessors-in-contexts define-only expression-classifier root))
+                         (.getFilePath root))) dirname)))))
   
