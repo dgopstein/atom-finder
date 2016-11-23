@@ -38,6 +38,7 @@
              (= op-code IASTBinaryExpression/op_logicalAnd)))))
 
 ;; IEEE 9899 6.5.3.4.2 claims that sizeof does conditional evaluation as well.
+
 (defn short-circuitable-expr?
   "can this AST node short-circuit?"
   [node]

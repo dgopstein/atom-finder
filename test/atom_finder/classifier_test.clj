@@ -30,8 +30,8 @@
 
     (doseq [[code sc?] cases]
       (testing (str "Is short-circuitable? - " code " - " sc?)
-        (is (= (short-circuitable-expr? (parse-expr code)) sc?)))
-      )))
+        (is (= (short-circuitable-expr? (parse-expr code)) sc?))))
+      ))
 
 (deftest test-mutatable?
   (let [cases 
@@ -58,3 +58,14 @@
         (testing (str "Is mutatable? - " code " - " sc?)
         (is (= (mutatable-expr? (parse-expr code)) sc?)))
       )))
+
+(deftest test-logic-as-control-flow-atoms?
+  (testing "logic-as-control-flow-atoms finds all atoms in snippet study code"
+    (let [lines  (->> (resource-path "logic-as-control-flow.c")
+                      tu
+                      logic-as-control-flow-atoms
+                      (map loc)
+                      (map :line))]
+
+      (is (= lines [5 30 51]))
+    )))
