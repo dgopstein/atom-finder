@@ -1,6 +1,7 @@
 library(data.table)
 
 # project, node, count
+write.csv(read.csv('../data/github-top-c.csv'))
 github.top.c <- data.table(read.csv('../data/github-top-c.csv'))
 
 project.size <- github.top.c[, .(count = sum(count)), by=project][order(-count)]

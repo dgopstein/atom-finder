@@ -1,6 +1,7 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTBinaryExpression IASTUnaryExpression))
-(require '[clojure.spec :as s])
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression))
+(require '[clojure.spec :as s]
+         '[clojure.spec.gen :as gen])
 
 (defn mutatable-op?
   "can this AST node change program state?"
@@ -45,6 +46,17 @@
   ;(prn (write (get-in-tree node [1])))
   (and (short-circuitable-op? node)
        (mutatable-expr? (get-in-tree node [1]))))
+
+(defn ast-node? [node] (instance? IASTNode node))
+(s/def ::ast-node ast-node?)
+(s/fdef logic-as-control-flow-atoms :args ::ast-node :ret (s/coll-of ::ast-node))
+;(s/exercise logic-as-control-flow-atoms)
+;(gen/generate (s/gen ::ast-node))
+
+;(s/valid? ::ast-node atom-finder.classifier/root)
+;(s/valid? (s/coll-of ::ast-node) [atom-finder.classifier/root])
+;
+;(ast-node? atom-finder.classifier/root)
 
 (defn logic-as-control-flow-atoms
   "Return all instances of logic-as-control-flow in an AST"
