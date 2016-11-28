@@ -19,7 +19,7 @@
 
 (->> rlist
      (map (fn [rev] [rev (changed-files-with-patch repo rev)]))
-     (take 20)
+     (take 200)
      (map (fn [[rev patch]]
        (prn [(-> rev .name) (context-lines patch)])
        ))

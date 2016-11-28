@@ -21,6 +21,8 @@
         type-conv
     ))
 
-
-(defn removed [patch]
+(defn removed-lines
+  "Which lines are removed in this patch"
+  [patch]
+    
   )
