@@ -1,9 +1,41 @@
 (ns atom-finder.util
+  (:require [clojure.reflect :as r])
+  (:use     [clojure.pprint :only [pprint print-table]])
   (:import
            [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
+
+;; print methods of java object
+;; http://stackoverflow.com/questions/5821286/how-can-i-get-the-methods-of-a-java-class-from-clojure
+(defn java-methods
+  "list methods of java object"
+  [obj]
+  (->> obj
+       r/reflect
+       (:members)
+       (filter :exception-types)
+       (map #(dissoc % :exception-types))
+       (map #(dissoc % :declaring-class))
+       (sort-by :name)
+       ))
+
+(defn public-methods
+  "list public methods of java object"
+  [obj]
+  (->> obj
+       (java-methods)
+       (filter #(:public (:flags %)))
+       ))
+
+(defn ppublic-methods
+  "print public methods of java object"
+  [obj]
+  (->> obj
+       (public-methods)
+       (print-table)
+       ))
 
 (defmacro %w [& words]
     `(list ~@(map str (vec words))))

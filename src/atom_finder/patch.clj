@@ -1,25 +1,35 @@
 (ns atom-finder.patch
   (:require
+   [atom-finder.util :refer :all]
    [clojure.pprint :refer [pprint]]
-   [clojure.string :as string]
+   [clojure.string :as string])
+  (:import 
+   [java.io ByteArrayInputStream StringReader]
+   [com.zutubi.diff PatchFileParser unified.UnifiedPatchParser git.GitPatchParser]
    ))
 
-;; Parse a .diff/.patch file for the lines of changes
+(def parser (PatchFileParser. (GitPatchParser.)))
+
+(defn parse-diff
+  [patch]
+  (.parse parser (StringReader. patch)))
+
+(def patch (->> "97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" resource-path slurp))
+(parse-diff patch)
 
 (defn context-lines
   "Which lines are contained in this patch"
   [patch]
-  ; @@ -1 +1 @@
-  ; @@ -298,9 +298,23 @@
-  (let [regex     #"@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@"
-        captures  (->> patch (re-seq regex) (map rest))
-        type-conv (map (partial map (fn [int-str]
-                                      (case int-str
-                                        "" 1
-                                        (Integer/parseInt int-str)))) captures)
-        ]
-        type-conv
-    ))
+  (->> patch
+       parse-diff
+      .getPatches
+      (mapcat #(.getHunks %))
+      (map (fn [hunk] [(.getOldOffset hunk) (.getOldLength hunk) (.getNewOffset hunk) (.getNewLength hunk)] ))
+  ))
+
+(context-lines patch)
+
+;; Parse a .diff/.patch file for the lines of changes
 
 (defn removed-lines
   "Which lines are removed in this patch"
