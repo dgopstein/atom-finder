@@ -1,0 +1,154 @@
+From bf8e44c9e49d658635b5a2ea4905333fa8845d1f Mon Sep 17 00:00:00 2001
+From: rguenth <rguenth@138bc75d-0d04-0410-961f-82ee72b054a4>
+Date: Mon, 24 Oct 2016 11:57:27 +0000
+Subject: [PATCH] 2016-10-24  Ximin Luo  <infinity0@pwned.gg>
+
+	PR debug/77985
+	* dwarf2out.c (file_table_relative_p): Remove.
+	(gen_compile_unit_die, dwarf2out_early_finish): Emit DW_AT_comp_dir
+	also for absolute paths.
+	* doc/tm.texi: Update.
+	* doc/tm.texi.in (SDB and DWARF) <TARGET_FORCE_AT_COMP_DIR>: Remove.
+	* target.def (force_at_comp_dir): Remove hook.
+	* config/darwin.h (TARGET_FORCE_AT_COMP_DIR): Remove define.
+
+
+git-svn-id: svn+ssh://gcc.gnu.org/svn/gcc/trunk@241473 138bc75d-0d04-0410-961f-82ee72b054a4
+---
+ gcc/ChangeLog       | 11 +++++++++++
+ gcc/config/darwin.h |  2 --
+ gcc/doc/tm.texi     |  4 ----
+ gcc/doc/tm.texi.in  |  2 --
+ gcc/dwarf2out.c     | 26 ++------------------------
+ gcc/target.def      |  7 -------
+ 6 files changed, 13 insertions(+), 39 deletions(-)
+
+diff --git a/gcc/ChangeLog b/gcc/ChangeLog
+index e8ddeb0..f050a17 100644
+--- a/gcc/ChangeLog
++++ b/gcc/ChangeLog
+@@ -1,3 +1,14 @@
++2016-10-24  Ximin Luo  <infinity0@pwned.gg>
++
++	PR debug/77985
++	* dwarf2out.c (file_table_relative_p): Remove.
++	(gen_compile_unit_die, dwarf2out_early_finish): Emit DW_AT_comp_dir
++	also for absolute paths.
++	* doc/tm.texi: Update.
++	* doc/tm.texi.in (SDB and DWARF) <TARGET_FORCE_AT_COMP_DIR>: Remove.
++	* target.def (force_at_comp_dir): Remove hook.
++	* config/darwin.h (TARGET_FORCE_AT_COMP_DIR): Remove define.
++
+ 2016-10-24  Richard Biener  <rguenther@suse.de>
+ 
+ 	* tree-vrp.c (evrp_dom_walker::before_dom_children): Ignore
+diff --git a/gcc/config/darwin.h b/gcc/config/darwin.h
+index b16fec8..98d2382 100644
+--- a/gcc/config/darwin.h
++++ b/gcc/config/darwin.h
+@@ -424,8 +424,6 @@ extern GTY(()) int darwin_ms_struct;
+ 
+ #define TARGET_WANT_DEBUG_PUB_SECTIONS true
+ 
+-#define TARGET_FORCE_AT_COMP_DIR true
+-
+ /* When generating stabs debugging, use N_BINCL entries.  */
+ 
+ #define DBX_USE_BINCL
+diff --git a/gcc/doc/tm.texi b/gcc/doc/tm.texi
+index 29dc73b..cffcfe9 100644
+--- a/gcc/doc/tm.texi
++++ b/gcc/doc/tm.texi
+@@ -9784,10 +9784,6 @@ tables, and hence is desirable if it works.
+ True if the @code{.debug_pubtypes} and @code{.debug_pubnames} sections should be emitted.  These sections are not used on most platforms, and in particular GDB does not use them.
+ @end deftypevr
+ 
+-@deftypevr {Target Hook} bool TARGET_FORCE_AT_COMP_DIR
+-True if the @code{DW_AT_comp_dir} attribute should be emitted for each  compilation unit.  This attribute is required for the darwin linker  to emit debug information.
+-@end deftypevr
+-
+ @deftypevr {Target Hook} bool TARGET_DELAY_SCHED2
+ True if sched2 is not to be run at its normal place.
+ This usually means it will be run as part of machine-specific reorg.
+diff --git a/gcc/doc/tm.texi.in b/gcc/doc/tm.texi.in
+index efcd741..d2dd45f 100644
+--- a/gcc/doc/tm.texi.in
++++ b/gcc/doc/tm.texi.in
+@@ -7084,8 +7084,6 @@ tables, and hence is desirable if it works.
+ 
+ @hook TARGET_WANT_DEBUG_PUB_SECTIONS
+ 
+-@hook TARGET_FORCE_AT_COMP_DIR
+-
+ @hook TARGET_DELAY_SCHED2
+ 
+ @hook TARGET_DELAY_VARTRACK
+diff --git a/gcc/dwarf2out.c b/gcc/dwarf2out.c
+index 4683e1c..b059ed2 100644
+--- a/gcc/dwarf2out.c
++++ b/gcc/dwarf2out.c
+@@ -22005,7 +22005,7 @@ gen_compile_unit_die (const char *filename)
+     {
+       add_name_attribute (die, filename);
+       /* Don't add cwd for <built-in>.  */
+-      if (!IS_ABSOLUTE_PATH (filename) && filename[0] != '<')
++      if (filename[0] != '<')
+ 	add_comp_dir_attribute (die);
+     }
+ 
+@@ -26368,20 +26368,6 @@ prune_unused_types (void)
+     prune_unmark_dies (ctnode->root_die);
+ }
+ 
+-/* Set the parameter to true if there are any relative pathnames in
+-   the file table.  */
+-int
+-file_table_relative_p (dwarf_file_data **slot, bool *p)
+-{
+-  struct dwarf_file_data *d = *slot;
+-  if (!IS_ABSOLUTE_PATH (d->filename))
+-    {
+-      *p = true;
+-      return 0;
+-    }
+-  return 1;
+-}
+-
+ /* Helpers to manipulate hash table of comdat type units.  */
+ 
+ struct comdat_type_hasher : nofree_ptr_hash <comdat_type_node>
+@@ -28195,15 +28181,7 @@ dwarf2out_early_finish (const char *filename)
+   /* Add the name for the main input file now.  We delayed this from
+      dwarf2out_init to avoid complications with PCH.  */
+   add_name_attribute (comp_unit_die (), remap_debug_filename (filename));
+-  if (!IS_ABSOLUTE_PATH (filename) || targetm.force_at_comp_dir)
+-    add_comp_dir_attribute (comp_unit_die ());
+-  else if (get_AT (comp_unit_die (), DW_AT_comp_dir) == NULL)
+-    {
+-      bool p = false;
+-      file_table->traverse<bool *, file_table_relative_p> (&p);
+-      if (p)
+-	add_comp_dir_attribute (comp_unit_die ());
+-    }
++  add_comp_dir_attribute (comp_unit_die ());
+ 
+   /* With LTO early dwarf was really finished at compile-time, so make
+      sure to adjust the phase after annotating the LTRANS CU DIE.  */
+diff --git a/gcc/target.def b/gcc/target.def
+index 29d1f81..20def24 100644
+--- a/gcc/target.def
++++ b/gcc/target.def
+@@ -6057,13 +6057,6 @@ DEFHOOKPOD
+  bool, false)
+ 
+ DEFHOOKPOD
+-(force_at_comp_dir,
+- "True if the @code{DW_AT_comp_dir} attribute should be emitted for each \
+- compilation unit.  This attribute is required for the darwin linker \
+- to emit debug information.",
+- bool, false)
+-
+-DEFHOOKPOD
+ (delay_sched2, "True if sched2 is not to be run at its normal place.\n\
+ This usually means it will be run as part of machine-specific reorg.",
+ bool, false)

@@ -1,35 +1,66 @@
 (ns atom-finder.source-versions
   (:require
-   [clj-jgit.porcelain :refer :all]
-   [clj-jgit.querying :refer :all]
+   [clj-jgit.internal  :as giti]
+   [clj-jgit.porcelain :as gitp]
+   [clj-jgit.querying  :as gitq]
    [atom-finder.patch :refer :all]
    [atom-finder.util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    ))
 
-(def repo (load-repo (expand-home "~/opt/src/gcc")))
+(def repo (gitp/load-repo (expand-home "~/opt/src/gcc")))
 
 ;; Log
-(def rlog (git-log repo))
+(def rlog (gitp/git-log repo))
 
-(def rev-walk (new-rev-walk repo))
+(def rlist (gitq/rev-list repo))
 
-(def rlist (rev-list repo))
+(defn bugzilla-ids
+  [rev-commit]
+  (->> rev-commit
+       ;(#(string/join (.getShortMessage %1) (.getFullMessage %1)))
+       .getFullMessage
+       ;(prn)
+       (re-seq #"(?:PR|pr).*?(?:(\S+)/)?(\d{5,})")
+       (#(for [[match branch id] %]
+          [branch (Integer/parseInt id)]))
+       set
+  ))
 
-(->> rlist
-     (map (fn [rev] [rev (changed-files-with-patch repo rev)]))
-     (take 200)
-     (map (fn [[rev patch]]
-       (prn [(-> rev .name) (context-lines patch)])
-       ))
-     )
+;(bugzilla-ids (find-commit repo "98103e4a9e8ae9e52751c9e96ec46e6095181b69"))
 
-(->> rlist
-     (map (fn [rev] [rev (changed-files-with-patch repo rev)]))
-     ;(some #(when (= (.name (first %1)) "36e1b0b39d209ff952526929dad4b230b94c29f7") %1))
-     (take 4)
-     (map println)
-     )
+(defn find-commit
+  [repo commit-ish]
+  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-ish))
+  
 
-(changed-files rev)
+;(doseq [revc (take 20 rlist)]
+;  (println (.name revc))
+;  (println (.getShortMessage revc))
+;  (println "-----------------")
+;  ;(println (.getFullMessage revc))
+;  (println "\n\n\n")
+;  )
+
+;(pprint ;(filter #(> (count (last (prn %))) 0)
+;                (take 2 (map #(vector (.name %1) (.getShortMessage %1)
+;                                                                    ;(.getFullMessage %1)
+;                                      (bugzilla-id %1)) rlist)))
+;)
+
+;(->> rlist
+;     (map (fn [rev] [rev (gitq/changed-files-with-patch repo rev)]))
+;     (take 200)
+;     (map (fn [[rev patch]]
+;       (prn [(-> rev .name) (context-lines patch)])
+;       ))
+;     )
+
+;(->> rlist
+;     (map (fn [rev] [rev (changed-files-with-patch repo rev)]))
+;     ;(some #(when (= (.name (first %1)) "36e1b0b39d209ff952526929dad4b230b94c29f7") %1))
+;     (take 4)
+;     (map println)
+;     )
+

@@ -1,0 +1,185 @@
+From 98103e4a9e8ae9e52751c9e96ec46e6095181b69 Mon Sep 17 00:00:00 2001
+From: pault <pault@138bc75d-0d04-0410-961f-82ee72b054a4>
+Date: Mon, 24 Oct 2016 12:14:52 +0000
+Subject: [PATCH] 2016-10-24  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/61420
+	PR fortran/78013
+	* resolve.c (resolve_variable): Obtain the typespec for a
+	variable expression, when the variable is a function result
+	that is a procedure pointer.
+
+2016-10-24  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/61420
+	PR fortran/78013
+	* gfortran.dg/proc_ptr_49.f90: New test.
+
+
+git-svn-id: svn+ssh://gcc.gnu.org/svn/gcc/branches/gcc-5-branch@241474 138bc75d-0d04-0410-961f-82ee72b054a4
+---
+ gcc/fortran/ChangeLog                     | 21 +++++++++----
+ gcc/fortran/resolve.c                     |  5 ++++
+ gcc/testsuite/ChangeLog                   |  7 +++++
+ gcc/testsuite/gfortran.dg/proc_ptr_49.f90 | 50 +++++++++++++++++++++++++++++++
+ 4 files changed, 77 insertions(+), 6 deletions(-)
+ create mode 100644 gcc/testsuite/gfortran.dg/proc_ptr_49.f90
+
+diff --git a/gcc/fortran/ChangeLog b/gcc/fortran/ChangeLog
+index 1cc2f67..cc3254a 100644
+--- a/gcc/fortran/ChangeLog
++++ b/gcc/fortran/ChangeLog
+@@ -1,3 +1,12 @@
++2016-10-24  Paul Thomas  <pault@gcc.gnu.org>
++
++	Backport from trunk
++	PR fortran/61420
++	PR fortran/78013
++	* resolve.c (resolve_variable): Obtain the typespec for a
++	variable expression, when the variable is a function result
++	that is a procedure pointer.
++
+ 2016-10-17  Steven G. Kargl  <kargl@gcc.gnu.org>
+ 
+ 	Backport from trunk
+@@ -20,7 +29,7 @@
+ 	PR fortran/77391
+ 	* resolve.c (deferred_requirements): New function to check F2008:C402.
+ 	(resolve_fl_variable,resolve_fl_parameter): Use it.
+- 
++
+ 2016-09-30  Steven G. Kargl  <kargl@gcc.gnu.org>
+ 
+ 	Backport from trunk
+@@ -45,7 +54,7 @@
+ 	subroutine as an actual argument when numeric argument is expected.
+ 
+ 2016-09-30  Steven G. Kargl  <kargl@gcc.gnu.org>
+- 
++
+ 	Backport of trunk
+ 
+ 	PR fortran/69867
+@@ -66,7 +75,7 @@
+ 2016-09-30  Steven G. Kargl  <kargl@gcc.gnu.org>
+ 
+ 	Backport from trunk
+- 
++
+ 	PR fortran/68566
+ 	* check.c (gfc_check_reshape): Check for constant expression.
+ 
+@@ -79,7 +88,7 @@
+ 	not ICE.
+ 
+ 2016-09-30  Steven G. Kargl  <kargl@gcc.gnu.org>
+- 
++
+ 	Backport from trunk
+ 
+ 	PR fortran/70006
+@@ -123,7 +132,7 @@
+ 	Backport from trunk
+ 	PR fortran/69514
+ 	* array.c (gfc_match_array_constructor):  If type-spec is present,
+-	walk the array constructor performing possible conversions for 
++	walk the array constructor performing possible conversions for
+ 	numeric types.
+ 
+ 2016-09-28  Steven G. Kargl  <kargl@gcc.gnu.org>
+@@ -134,7 +143,7 @@
+ 	gfc_reduce_init_expr().
+ 
+ 	PR fortran/77612
+-	* decl.c (char_len_param_value): Check parent namespace for 
++	* decl.c (char_len_param_value): Check parent namespace for
+ 	seen_implicit_none.
+ 
+ 2016-09-28  Steven G. Kargl  <kargl@gcc.gnu.org>
+diff --git a/gcc/fortran/resolve.c b/gcc/fortran/resolve.c
+index 381b060..988fa12 100644
+--- a/gcc/fortran/resolve.c
++++ b/gcc/fortran/resolve.c
+@@ -5015,6 +5015,11 @@ resolve_variable (gfc_expr *e)
+ 
+   if (sym->ts.type != BT_UNKNOWN)
+     gfc_variable_attr (e, &e->ts);
++  else if (sym->attr.flavor == FL_PROCEDURE
++	   && sym->attr.function && sym->result
++	   && sym->result->ts.type != BT_UNKNOWN
++	   && sym->result->attr.proc_pointer)
++    e->ts = sym->result->ts;
+   else
+     {
+       /* Must be a simple variable reference.  */
+diff --git a/gcc/testsuite/ChangeLog b/gcc/testsuite/ChangeLog
+index b97119d..050a77f 100644
+--- a/gcc/testsuite/ChangeLog
++++ b/gcc/testsuite/ChangeLog
+@@ -1,3 +1,10 @@
++2016-10-24  Paul Thomas  <pault@gcc.gnu.org>
++
++	Backport from trunk
++	PR fortran/61420
++	PR fortran/78013
++	* gfortran.dg/proc_ptr_49.f90: New test.
++
+ 2016-10-23  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+ 
+ 	Backport from mainline
+diff --git a/gcc/testsuite/gfortran.dg/proc_ptr_49.f90 b/gcc/testsuite/gfortran.dg/proc_ptr_49.f90
+new file mode 100644
+index 0000000..cb540a4
+--- /dev/null
++++ b/gcc/testsuite/gfortran.dg/proc_ptr_49.f90
+@@ -0,0 +1,50 @@
++! { dg-do compile }
++!
++! Tests the fix for PRs 78013 and 61420, both of which gave a
++! no IMPLICIT type message for the procedure pointer at assignment.
++!
++module m
++
++  implicit none
++
++  abstract interface
++    function I_f() result( r )
++      real :: r
++    end function I_f
++  end interface
++
++  type, abstract :: a_t
++    private
++    procedure(I_f), nopass, pointer :: m_f => null()
++  contains
++    private
++    procedure, pass(this), public :: f => get_f
++  end type a_t
++
++contains
++
++  function get_f( this ) result( f_ptr )  ! Error message here.
++    class(a_t), intent(in)  :: this
++    procedure(I_f), pointer :: f_ptr
++    f_ptr => this%m_f                     ! Error here :-)
++  end function get_f
++
++end module m
++
++module test
++  implicit none
++
++  type functions
++  contains
++    procedure, nopass :: get_pf => get_it ! Error here
++  end type
++
++  class(functions), allocatable :: f
++
++contains
++
++  function get_it()                      ! Error message here.
++    procedure (real), pointer :: get_it
++  end function
++
++end module
