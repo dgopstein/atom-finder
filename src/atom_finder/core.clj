@@ -15,4 +15,25 @@
   (def big-root (tu (expand-home "~/opt/src/github-top-c/php-src/ext/sqlite3/libsqlite/sqlite3.c")))
   (def github-top-c (expand-home "~/opt/src/github-top-c"))
 
+
+  (->> big-root
+       (filter-type "FieldReference")
+       first
+       (pap write)
+       children
+       (pap write)
+       first
+       pap
+       write
   )
+
+  (->> big-root
+       (non-trivial-expression-parents 1)
+       (filter #(instance? org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTFieldReference %))
+       (map write)
+       frequencies
+       (sort-by last)
+       pprint
+       )
+
+)

@@ -86,15 +86,22 @@
     node
     (recur (parent node))))
 
-
-(defn count-non-trivial-expression-parents
-  "Count non-trivial (non-leaf) node structures with expressions as their d'th depth children"
+(defn non-trivial-expression-parents
+  "find non-trivial (non-leaf) node structures with expressions as their d'th depth children"
   [d root]
   (->> root
        (filter-instance IASTExpression)
        (filter non-trivial?)
        (map (partial ancestor d))
        (map collapse-types)
+       ))
+
+
+(defn count-non-trivial-expression-parents
+  "Count non-trivial (non-leaf) node structures with expressions as their d'th depth children"
+  [d root]
+  (->> root
+       (non-trivial-expression-parents d)
        distinct
        (map typename)
        frequencies

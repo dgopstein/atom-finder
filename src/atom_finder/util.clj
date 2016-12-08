@@ -15,7 +15,7 @@
   (->> obj
        r/reflect
        (:members)
-       (filter :exception-types)
+       ;(filter :exception-types)
        (map #(dissoc % :exception-types))
        (map #(dissoc % :declaring-class))
        (sort-by :name)
@@ -39,6 +39,9 @@
 
 (defmacro %w [& words]
     `(list ~@(map str (vec words))))
+
+(defn tap [f x] (f x) x)
+(defn pap [x] (tap prn x))
 
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))
