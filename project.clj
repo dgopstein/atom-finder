@@ -9,6 +9,7 @@
                  [org.eclipse.core/org.eclipse.core.resources "3.6.0.v20100526-0737"]
                  [com.ibm.icu/icu4j "58.1"]
                  [clj-jgit "0.8.9"]
+                 [org.slf4j/slf4j-nop "1.7.13"] ; suprress version-mismatch warning from jgit https://github.com/sbt/sbt-git/pull/105/files
                  ;[org.wickedsource/diffparser "1.2"]
                  ]
   :resource-paths ["resources/org.eclipse.cdt.core_5.6.0.201402142303.jar"
