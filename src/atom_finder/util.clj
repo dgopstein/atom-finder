@@ -43,6 +43,11 @@
 (defn tap [f x] (f x) x)
 (defn pap [x] (tap prn x))
 
+(def range-from (partial iterate inc))
+
+(defn map-values [f m]
+  (reduce merge (map (fn [[k v]] {k (f v)}) m)))
+
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))
 (defmethod translation-unit String [filename]

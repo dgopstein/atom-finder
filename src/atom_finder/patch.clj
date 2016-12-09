@@ -48,36 +48,22 @@
          (map vector (range-from old-offset))
               )))
        
+(defn deleted-lines-hunk
+  "Return [line-num UnifiedHunk$Line] for every deleted line in a hunk"
+  [hunk]
+  (->> (hunk-lines-old-lines hunk)
+       (filter (fn [[line-num line]]
+                 (= UnifiedHunk$LineType/DELETED (.getType line))))))
 
 (defn removed-lines
   "Which lines are removed in this patch"
   [patch]
-  (->>
-   (for [ptch (->> patch parse-diff .getPatches pap)
-         hunk (.getHunks ptch)]
-      (->> (hunk-lines-old-lines hunk)
-           (filter (fn [[line-num line]]
-                     (= UnifiedHunk$LineType/DELETED (.getType line))))
-           (map #(vector (.getOldFile ptch) (first %)))
-           
-           )
-     )
-   ;(group-by first)
-   ;(map-values (partial map last))
-   )
-  )
+  (reduce merge
+          (for [ptch (->> patch parse-diff .getPatches)]
+            { (.getOldFile ptch)
+             (->> ptch .getHunks
+                  (map deleted-lines-hunk)
+                  (mapcat #(map first %))
+                  )})))
 
 (->> patch removed-lines)
-
-(->> patch
-     parse-diff
-     .getPatches
-     (into [])
-     (#(nth % 0))
-     .getHunks
-     (into [])
-     (#(nth % 1))
-     ;first
-     hunk-lines-old-lines
-     pprint
-     )

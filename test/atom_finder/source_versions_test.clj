@@ -12,7 +12,7 @@
     (let [patch (->> "97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" resource-path slurp)
           rl    (removed-lines patch)]
       
-      (is (= rl {"gcc/ChangeLog" [[] [16] [26 27 28 29]] "gcc/config/sparc/sparc.c" []}))
+      (is (= rl {"gcc/ChangeLog" [16 26 27 28 29] "gcc/config/sparc/sparc.c" []}))
       )))
 
 (deftest bugzilla-id-test
