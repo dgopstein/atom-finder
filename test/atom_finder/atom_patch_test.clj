@@ -1,8 +1,10 @@
-(ns atom-finder.source-versions-test
+(ns atom-finder.atom-patch-test
   (:require [clojure.test :refer :all]
             [atom-finder.util :refer :all]
             [atom-finder.patch :refer :all]
+            [atom-finder.atom-patch :refer :all]
             [atom-finder.source-versions :refer :all]
+            [atom-finder.classifier :refer :all]
             [clj-jgit.porcelain  :as gitp]
             ))
 
@@ -16,7 +18,7 @@
       )))
 
 (deftest bugzilla-id-test
-  (let [repo    (gitp/load-repo (expand-home "~/opt/src/gcc"))
+  (let [gcc-repo    (gitp/load-repo (expand-home "~/opt/src/gcc"))
         results 
           [["97574c57cf26ace9b8609575bbab66465924fef7" #{}]
            ["98103e4a9e8ae9e52751c9e96ec46e6095181b69" #{["fortran" 61420] ["fortran" 78013]}]
@@ -26,5 +28,12 @@
 
     (doseq [[revstr expected] results]
       (testing (str "Which bugzilla id corresponds to commit " revstr)
-        (is (= expected (bugzilla-ids (find-commit repo revstr))))
+        (is (= expected (bugzilla-ids (find-commit gcc-repo revstr))))
         ))))
+
+(deftest atom-removed-in-commit?-test
+  (testing "See if commits remove atoms"
+    (let [gcc-repo    (gitp/load-repo (expand-home "~/opt/src/gcc"))]
+      (is (= true (atom-removed-in-commit? gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" conditional-atom?)))
+      (is (= false (atom-removed-in-commit? gcc-repo "97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" conditional-atom?)))
+      )))

@@ -17,12 +17,12 @@
   [patch]
   (.parse parser (StringReader. patch)))
 
-(def patch (->>
-            "97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
-            ;"98103e4a9e8ae9e52751c9e96ec46e6095181b69.patch"
-            ;"b9db1ed4a901e9c0af7ac8cc5d4d933b5b9fd4b5.patch"
-            ;"bf8e44c9e49d658635b5a2ea4905333fa8845d1f.patch"
-            resource-path slurp))
+;(def patch (->>
+;            "97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
+;            ;"98103e4a9e8ae9e52751c9e96ec46e6095181b69.patch"
+;            ;"b9db1ed4a901e9c0af7ac8cc5d4d933b5b9fd4b5.patch"
+;            ;"bf8e44c9e49d658635b5a2ea4905333fa8845d1f.patch"
+;            resource-path slurp))
 
 (defn context-lines
   "Which lines are contained in this patch"
@@ -33,10 +33,6 @@
       (mapcat #(.getHunks %))
       (map (fn [hunk] [(.getOldOffset hunk) (.getOldLength hunk) (.getNewOffset hunk) (.getNewLength hunk)] ))
   ))
-
-(context-lines patch)
-
-;; Parse a .diff/.patch file for the lines of changes
 
 (defn hunk-lines-old-lines
   "Pair each Hunk$Line with the file line number that goes with it"
@@ -65,5 +61,3 @@
                   (map deleted-lines-hunk)
                   (mapcat #(map first %))
                   )})))
-
-(->> patch removed-lines)
