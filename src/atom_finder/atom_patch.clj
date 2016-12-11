@@ -105,22 +105,25 @@
 
 (defn atom-removed-all-commits
   [repo atom-classifier]
+  (pmap
+   (fn [rev-commit]
+     (let [commit-hash (.name rev-commit)]
+     (try
+       [commit-hash
+        (atom-removed-in-commit? repo rev-commit atom-classifier)
+        (bugzilla-ids rev-commit)
+        ]
+       (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
+       (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
+       )))
+   (gitq/rev-list repo)))
 
-  (->> repo
-       gitq/rev-list
-       (pmap #(vector (.name %1)
-                      (atom-removed-in-commit? repo %1 atom-classifier)
-                      (bugzilla-ids %1)
-                      ))
-       )
-  )
-
-;(time (pprint (atom-removed-all-commits ag-repo conditional-atom?)))
-
-;(binding [*out* (clojure.java.io/writer "gcc-conditional-commits.txt")]
-;  (->> conditional-atom?
-;       (atom-removed-all-commits gcc-repo)
-;       (take 10)
-;       (map println)
-;       dorun
-;       time))
+(defn log-atom-removed-all-commits
+  []
+  (binding [*out* (clojure.java.io/writer "gcc-conditional-commits.txt")]
+    (->> conditional-atom?
+         (atom-removed-all-commits gcc-repo)
+         (take 10)
+         (map println)
+         dorun
+         time)))
