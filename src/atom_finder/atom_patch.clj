@@ -95,9 +95,31 @@
 (defn atoms-removed-in-commit
   [repo commit-hash atom-classifier]
   (into {}
-  (map #(vector %1 (atom-removed-in-commit-file? repo commit-hash %1 atom-classifier))
-         (edited-files repo commit-hash))))
+        (map #(vector %1 (atom-removed-in-commit-file? repo commit-hash %1 atom-classifier))
+             (edited-files repo commit-hash))))
 
 (defn atom-removed-in-commit?
   [repo commit-hash atom-classifier]
   (any-true? #(true? (last %)) (atoms-removed-in-commit repo commit-hash atom-classifier)))
+
+
+(defn atom-removed-all-commits
+  [repo atom-classifier]
+
+  (->> repo
+       gitq/rev-list
+       (pmap #(vector (.name %1)
+                      (atom-removed-in-commit? repo %1 atom-classifier)
+                      (bugzilla-ids %1)
+                      ))
+       )
+  )
+
+(time (pprint (atom-removed-all-commits ag-repo conditional-atom?)))
+
+(binding [*out* (clojure.java.io/writer "gcc-conditional-commits.txt")]
+  (->> conditional-atom?
+       (atom-removed-all-commits gcc-repo)
+       (take 10)
+       (doall (map println))
+       time))
