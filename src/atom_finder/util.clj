@@ -207,8 +207,6 @@
        )
      files)))
 
-(clojure.java.io/resource "*")
-
 (defn resource-path
   "Find the path to a resource"
   [filename]

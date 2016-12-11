@@ -115,12 +115,12 @@
        )
   )
 
-(time (pprint (atom-removed-all-commits ag-repo conditional-atom?)))
+;(time (pprint (atom-removed-all-commits ag-repo conditional-atom?)))
 
-(binding [*out* (clojure.java.io/writer "gcc-conditional-commits.txt")]
-  (->> conditional-atom?
-       (atom-removed-all-commits gcc-repo)
-       (take 10)
-       (map println)
-       dorun
-       time))
+;(binding [*out* (clojure.java.io/writer "gcc-conditional-commits.txt")]
+;  (->> conditional-atom?
+;       (atom-removed-all-commits gcc-repo)
+;       (take 10)
+;       (map println)
+;       dorun
+;       time))

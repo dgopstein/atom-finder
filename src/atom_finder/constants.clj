@@ -1,7 +1,6 @@
 (ns atom-finder.constants
   (:require [atom-finder.util :refer :all]
             [clj-jgit.porcelain :as gitp]))
-nil
 
 (def gcc-path (expand-home "~/opt/src/gcc"))
 (def gcc-repo (gitp/load-repo gcc-path))
