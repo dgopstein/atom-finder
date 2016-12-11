@@ -43,6 +43,8 @@
 (defn tap [f x] (f x) x)
 (defn pap [x] (tap prn x))
 
+(def any-true? (comp boolean some))
+
 (def range-from (partial iterate inc))
 
 (defn map-values [f m]
