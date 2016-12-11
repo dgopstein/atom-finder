@@ -121,5 +121,6 @@
   (->> conditional-atom?
        (atom-removed-all-commits gcc-repo)
        (take 10)
-       (doall (map println))
+       (map println)
+       dorun
        time))
