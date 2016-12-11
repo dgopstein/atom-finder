@@ -69,3 +69,29 @@
 
       (is (= lines [5 30 51]))
     )))
+
+(map println (map write (atoms-in-tree conditional-atom? (tu (resource-path "conditional.c")))))
+(conditional-atom? (tu (resource-path "conditional.c")))
+
+(deftest test-conditional-atom?
+  (testing "conditional-atom? finds all atoms in snippet study code"
+    (is (= true 
+           (-> "conditional.c" resource-path tu
+               (get-in-tree [0 2 1 0 1 1 0])
+               conditional-atom?
+               )))
+
+    (is (= false
+           (-> "conditional.c" resource-path tu
+               (get-in-tree [0 2 1 0 1 1])
+               conditional-atom?
+               )))
+
+    (let [lines  (->> (resource-path "conditional.c")
+                      tu
+                      (atoms-in-tree conditional-atom?)
+                      (map loc)
+                      (map :line))]
+
+      (is (= lines [4 28 28 28 61]))
+    )))

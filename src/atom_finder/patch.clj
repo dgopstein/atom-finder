@@ -61,3 +61,33 @@
                   (map deleted-lines-hunk)
                   (mapcat #(map first %))
                   )})))
+
+(defn patch-files-old
+  "list of files removed in this patch"
+  [patch]
+  (->> patch
+       parse-diff
+       .getPatches
+       (map (memfn getOldFile))
+       set
+       ))
+
+(defn patch-files-new
+  "list of files removed in this patch"
+  [patch]
+  (->> patch
+       parse-diff
+       .getPatches
+       (map (memfn getNewFile))
+       set
+       ))
+
+(defn patch-files
+  "list of files changed in this patch"
+  [patch]
+  (->> patch
+       parse-diff
+       .getPatches
+       (mapcat #(vector (.getOldFile %1) (.getNewFile %1)))
+       set
+       ))

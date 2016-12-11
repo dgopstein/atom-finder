@@ -1,6 +1,8 @@
 (ns atom-finder.atom-patch
   (:require
    [atom-finder.util :refer :all]
+   [atom-finder.constants :refer :all]
+   [atom-finder.classifier :refer :all]
    [clojure.pprint :refer [pprint]]
    [clj-jgit.porcelain :as gitp]
    [clj-jgit.querying :as gitq]
@@ -12,23 +14,10 @@
    )
   )
 
-(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")
-(def repo (gitp/load-repo (expand-home "~/opt/src/gcc")))
-
-(defn commit-finder
-  "Return full source for each file changed in a commit"
-  [repo commit-hash]
-  (let [object-reader (.. repo getRepository newObjectReader)
-        object-loader (.open object-reader (giti/resolve-object commit-hash repo))
-        object-stream (.openStream object-loader)]
-
-    ;(.copyTo object-loader java.lang.System/out)
-    (let [bytes (.getBytes object-loader)]
-      (.release object-reader)
-      (String. bytes)
-    )
-    ; (don't forget to release the ObjectReader when done) See also this article for more details
-  ))
+;(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")
+;(def file-name "gcc/testsuite/g++.dg/debug/dwarf2/integer-typedef.C")
+;(def repo gcc-repo)
+;(def atom-classifier conditional-atom?)
 
 (defn rev-walk-commit
   "make a new revwalk to find given commit"
@@ -41,11 +30,10 @@
   [loader]
   (->> loader .getBytes String.))
 
-(defn commit-file
+(defn commit-file-source
   "Return full source for each file changed in a commit"
   [repo commit-hash file-name]
   (let [repository (.getRepository repo)
-        commit (giti/resolve-object commit-hash repo)
         rev-commit (rev-walk-commit repo commit-hash)
         tree      (.getTree rev-commit)
         tree-walk (doto (TreeWalk. repository) (.setRecursive true) (.addTree tree))
@@ -61,11 +49,29 @@
   ))
 
 
-(print (commit-file repo commit-hash "gcc/testsuite/g++.dg/debug/dwarf2/integer-typedef.C"))
-(print (commit-file repo commit-hash "integer-typedef.C"))
-(print (commit-file repo commit-hash "gcc/c-family/ChangeLog"))
+;(print (commit-file-source repo commit-hash "gcc/testsuite/g++.dg/debug/dwarf2/integer-typedef.C"))
+;(print (commit-file-source repo commit-hash "gcc/c-family/ChangeLog"))
+
+(commit-file-atom-count gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" "gcc/c-family/c-pretty-print.c" conditional-atom?)
+
+
+(defn commit-file-atom-count
+  "count the occurence of an atom in commit's version of file"
+  [repo commit-hash file-name atom-classifier]
+    (->> (commit-file-source repo commit-hash file-name)
+         parse-source
+         (atoms-in-tree atom-classifier)
+;         count
+         )
+  )
 
 (defn atom-removed-in-commit?
   [repo commit-hash atom-classifier]
+  (some? #(atom-removed-in-commit-file? repo commit-hash % atom-classifier) (patch-files (gitq/changed-files-with-patch))))
 
-  )
+(defn atom-removed-in-commit-file?
+  [repo commit-hash file atom-classifier]
+  (let [parent-hash (.getParent (find-commit repo commit-hash))]
+      (< 0
+         (- (commit-file-atom-count repo commit-hash file-name atom-classifier)
+            (commit-file-atom-count repo parent-hash file-name atom-classifier)))))

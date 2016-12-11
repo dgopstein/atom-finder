@@ -1,5 +1,4 @@
 (in-ns 'atom-finder.classifier)
+(import '(org.eclipse.cdt.core.dom.ast IASTConditionalExpression))
 
-(defn conditional-atom?
-  [node]
-  )
+(def conditional-atom? (partial instance? IASTConditionalExpression))

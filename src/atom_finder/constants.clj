@@ -1,0 +1,11 @@
+(ns atom-finder.constants
+  (:require [atom-finder.util :refer :all]
+            [clj-jgit.porcelain :as gitp]))
+nil
+
+(def gcc-path (expand-home "~/opt/src/gcc"))
+(def gcc-repo (gitp/load-repo gcc-path))
+
+(def root (tu (resource-path "logic-as-control-flow.c")))
+(def big-root (tu (expand-home "~/opt/src/github-top-c/php-src/ext/sqlite3/libsqlite/sqlite3.c")))
+(def github-top-c (expand-home "~/opt/src/github-top-c"))

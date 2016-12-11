@@ -1,6 +1,7 @@
 (ns atom-finder.atom-patch-test
   (:require [clojure.test :refer :all]
             [atom-finder.util :refer :all]
+            [atom-finder.constants]
             [atom-finder.patch :refer :all]
             [atom-finder.atom-patch :refer :all]
             [atom-finder.source-versions :refer :all]
@@ -31,9 +32,17 @@
         (is (= expected (bugzilla-ids (find-commit gcc-repo revstr))))
         ))))
 
+
+(deftest commit-file-atom-count-test
+  (testing "See if file in commit contains an atoms"
+    (let [repo    atom-finder.constants/gcc-repo]
+      (is (= 0 (commit-file-atom-count repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" "gcc/c-family/c-pretty-print.c" conditional-atom?)))
+      (is (= 1 (commit-file-atom-count repo "1e0cfd0" "gcc/c-family/c-pretty-print.c" conditional-atom?)))
+      )))
+
 (deftest atom-removed-in-commit?-test
   (testing "See if commits remove atoms"
-    (let [gcc-repo    (gitp/load-repo (expand-home "~/opt/src/gcc"))]
-      (is (= true (atom-removed-in-commit? gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" conditional-atom?)))
-      (is (= false (atom-removed-in-commit? gcc-repo "97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" conditional-atom?)))
+    (let [repo    atom-finder.constants/gcc-repo]
+      (is (= true (atom-removed-in-commit? repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" conditional-atom?)))
+      (is (= false (atom-removed-in-commit? repo "97574c57cf26ace9b8609575bbab66465924fef7" conditional-atom?)))
       )))

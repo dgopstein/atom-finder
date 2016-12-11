@@ -248,7 +248,7 @@
 
     my-temp-file))
 
-(defn parse
+(defn parse-source
   "Turn a string of C source code into an AST"
   [code]
   (->> code write-tempfile tu))
@@ -257,7 +257,7 @@
   "Turn a single C expression into an AST"
   [code]
   (-> (str "int main() {\n" code ";\n}\n")
-      parse
+      parse-source
       (get-in-tree [0 2 0 0]))) 
 
 (defn loc
@@ -268,3 +268,15 @@
         length (.getNodeLength loc)
         line   (.getStartingLineNumber loc)]
     {:line line :offset offset :length length}))
+
+(defn errln "println to stderr" [s]
+  (binding [*out* *err*] (println s)))
+
+(defn atoms-in-tree
+  "Return all instances of atom in an AST"
+  [atom-classifier node]
+  (let [child-atoms
+        (mapcat (partial atoms-in-tree atom-classifier) (children node))]
+    (if (atom-classifier node)
+      (conj child-atoms node)
+      child-atoms)))
