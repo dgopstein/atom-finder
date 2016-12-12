@@ -43,7 +43,7 @@
 (defn short-circuitable-expr?
   "can this AST node short-circuit?"
   [node]
-  ;(prn (write (get-in-tree node [1])))
+  ;(prn (write-ast (get-in-tree node [1])))
   (and (short-circuitable-op? node)
        (mutatable-expr? (get-in-tree node [1]))))
 

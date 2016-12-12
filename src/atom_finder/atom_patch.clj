@@ -118,11 +118,14 @@
        )))
    (gitq/rev-list repo)))
 
+(atoms-removed-in-commit repo "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?)
+
 (defn log-atom-removed-all-commits
   []
   (binding [*out* (clojure.java.io/writer "gcc-conditional-commits.txt")]
     (->> conditional-atom?
-         (atom-removed-all-commits gcc-repo)
+         ;(atom-removed-all-commits gcc-repo)
+         (atom-removed-all-commits (gitp/load-repo "/Volumes/RAM Disk/gcc"))
          (take 10)
          (map println)
          dorun

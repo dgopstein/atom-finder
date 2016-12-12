@@ -70,9 +70,6 @@
       (is (= lines [5 30 51]))
     )))
 
-(map println (map write (atoms-in-tree conditional-atom? (tu (resource-path "conditional.c")))))
-(conditional-atom? (tu (resource-path "conditional.c")))
-
 (deftest test-conditional-atom?
   (testing "conditional-atom? finds all atoms in snippet study code"
     (is (= true 

@@ -7,8 +7,8 @@
             [atom-finder.source-versions :refer :all]
             [atom-finder.classifier :refer :all]
             [clj-jgit.porcelain  :as gitp]
+            [clojure.pprint :refer :all]
             ))
-
 
 (deftest removed-lines-test
   (testing "Which lines were removed in this patch"
@@ -40,10 +40,19 @@
       (is (= 25 (commit-file-atom-count repo "1e0cfd0" "gcc/c-family/c-pretty-print.c" conditional-atom?)))
       )))
 
+(defmacro repeat-test [func data]
+  (cons 'do (map (partial apply (eval func)) data)))
+
+
 (deftest atom-removed-in-commit?-test
   (testing "See if commits remove atoms"
-    (let [repo    atom-finder.constants/gcc-repo]
-      (is (true? (atom-removed-in-commit? repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" conditional-atom?)))
-      (is (true? (atom-removed-in-commit? repo "97574c57cf26ace9b8609575bbab66465924fef7" conditional-atom?)))
-      (is (false? (atom-removed-in-commit? repo "17fc6eeba9352b97ba16d64fd1de9a5bdc081062" conditional-atom?)))
-      )))
+    (repeat-test
+     (fn [test commit-hash atom-classifier]
+       `(is (~test (atom-removed-in-commit? atom-finder.constants/gcc-repo ~commit-hash ~atom-classifier))))
+
+     [[true?  "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" conditional-atom?]
+      [true?  "97574c57cf26ace9b8609575bbab66465924fef7" conditional-atom?]
+      [false? "17fc6eeba9352b97ba16d64fd1de9a5bdc081062" conditional-atom?]
+      [false? "6d34050702a3fc983620fd5f2ae89cff243b6bbd" conditional-atom?]
+      [true?  "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?]
+      ])))

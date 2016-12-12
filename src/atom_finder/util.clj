@@ -121,8 +121,8 @@
     node
     (flatten (map leaves (children node)))))
 
-(def writer (ASTWriter.))
-(defn write [node] (.write writer node))
+(def ast-writer (ASTWriter.))
+(defn write-ast [node] (.write ast-writer node))
 
 ;; http://stackoverflow.com/questions/23178750/iteratively-apply-function-to-its-result-without-generating-a-seq
 (defn fn-pow
