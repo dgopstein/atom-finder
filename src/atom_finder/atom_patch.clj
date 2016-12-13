@@ -123,10 +123,11 @@
 (defn log-atom-removed-all-commits
   []
   (binding [*out* (clojure.java.io/writer "gcc-conditional-commits.txt")]
-    (->> conditional-atom?
-         ;(atom-removed-all-commits gcc-repo)
-         (atom-removed-all-commits (gitp/load-repo "/Volumes/RAM Disk/gcc"))
-         (take 10)
+    (->> ;conditional-atom?
+         logic-as-control-flow-atom?
+         (atom-removed-all-commits gcc-repo)
+         ;(atom-removed-all-commits (gitp/load-repo "/Volumes/RAM Disk/gcc"))
+         (filter #(true? (nth % 1))) (take 3)
          (map println)
          dorun
          time)))
