@@ -122,7 +122,7 @@
 
 (defn log-atom-removed-all-commits
   []
-  (binding [*out* (clojure.java.io/writer "gcc-conditional-commits.txt")]
+  (binding [*out* (clojure.java.io/writer "gcc-logic-as-control-flow-commits.txt")]
     (->> ;conditional-atom?
          logic-as-control-flow-atom?
          (atom-removed-all-commits gcc-repo)
