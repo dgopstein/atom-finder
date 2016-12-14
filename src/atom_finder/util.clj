@@ -265,8 +265,8 @@
 (defn parse-source
   "Turn a string of C source code into an AST"
   [code]
-  (->> code write-tempfile tu)
-  ;(mem-tu "anonymously-parsed-code.c" code)
+  ;(->> code write-tempfile tu)
+  (mem-tu "anonymously-parsed-code.c" code)
   )
 
 (defn parse-expr
