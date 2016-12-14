@@ -102,21 +102,23 @@
   [repo commit-hash atom-classifier]
   (any-true? #(true? (last %)) (atoms-removed-in-commit repo commit-hash atom-classifier)))
 
+(defn parse-commit-for-atom
+  [repo atom-classifier rev-commit]
+  (let [commit-hash (.name rev-commit)]
+    (try
+      [commit-hash
+       (atom-removed-in-commit? repo rev-commit atom-classifier)
+       (bugzilla-ids rev-commit)
+       ]
+      (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
+      (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
+      )))
 
 (defn atom-removed-all-commits
   [repo atom-classifier]
-  (pmap
-   (fn [rev-commit]
-     (let [commit-hash (.name rev-commit)]
-     (try
-       [commit-hash
-        (atom-removed-in-commit? repo rev-commit atom-classifier)
-        (bugzilla-ids rev-commit)
-        ]
-       (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
-       (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
-       )))
-   (gitq/rev-list repo)))
+  (pmap (partial parse-commit-for-atom repo atom-classifier)
+   (gitq/rev-list repo)) ; TODO remove the take-nth
+  )
 
 (atoms-removed-in-commit repo "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?)
 
@@ -126,8 +128,11 @@
     (->> ;conditional-atom?
          logic-as-control-flow-atom?
          (atom-removed-all-commits gcc-repo)
+         ;(atom-removed-all-commits ag-repo)
          ;(atom-removed-all-commits (gitp/load-repo "/Volumes/RAM Disk/gcc"))
-         (filter #(true? (nth % 1))) (take 3)
+         ;(filter #(true? (nth % 1)))
+         ;(take 3)
          (map println)
          dorun
          time)))
+

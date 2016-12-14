@@ -66,6 +66,20 @@
 
 (def tu translation-unit)
 
+(defn mem-tu
+  "Create an AST from in-memory source (name is for documentation only)"
+  [filename source]
+  (let [definedSymbols {}
+        includePaths (make-array String 0)
+        info (new ScannerInfo definedSymbols includePaths)
+        log (new DefaultLogService)
+        emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
+        opts 8]
+
+    (.getASTTranslationUnit (GPPLanguage/getDefault)
+                            (FileContent/create filename (.toCharArray source))
+                            info emptyIncludes nil opts log)))
+
 (defn arg-count [f]
   (let [m (first (.getDeclaredMethods (class f)))
         p (.getParameterTypes m)]
@@ -151,7 +165,7 @@
   "Return every sub-tree of size n"
   [n node]
   ;; start from the leaves of the tree and walk upwards n generations
-  (let [candidates (distinct (map #(ancestor n %) (leaves node)))]
+  (let [candidates (distinct (map (partial ancestor n) (leaves node)))]
     ;; candidates may still have deeper branches than the one we came up from
     (filter #(= n (depth %)) candidates)))
 
@@ -251,7 +265,9 @@
 (defn parse-source
   "Turn a string of C source code into an AST"
   [code]
-  (->> code write-tempfile tu))
+  (->> code write-tempfile tu)
+  ;(mem-tu "anonymously-parsed-code.c" code)
+  )
 
 (defn parse-expr
   "Turn a single C expression into an AST"

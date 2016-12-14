@@ -43,10 +43,9 @@
 (defmacro repeat-test [func data]
   (cons 'do (map (partial apply (eval func)) data)))
 
-
 (deftest atom-removed-in-commit?-test
   (testing "See if commits remove atoms"
-    (repeat-test
+    (macroexpand '(repeat-test
      (fn [test commit-hash atom-classifier]
        `(is (~test (atom-removed-in-commit? atom-finder.constants/gcc-repo ~commit-hash ~atom-classifier))))
 
