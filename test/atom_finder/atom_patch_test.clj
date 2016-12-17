@@ -45,7 +45,7 @@
 
 (deftest atom-removed-in-commit?-test
   (testing "See if commits remove atoms"
-    (macroexpand '(repeat-test
+    (repeat-test
      (fn [test commit-hash atom-classifier]
        `(is (~test (atom-removed-in-commit? atom-finder.constants/gcc-repo ~commit-hash ~atom-classifier))))
 
@@ -54,4 +54,12 @@
       [false? "17fc6eeba9352b97ba16d64fd1de9a5bdc081062" conditional-atom?]
       [false? "6d34050702a3fc983620fd5f2ae89cff243b6bbd" conditional-atom?]
       [true?  "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?]
-      ]))))
+      ])))
+
+(deftest apply-before-after-test
+  (testing "Count the sizes of programs before and after a commit"
+    (let [repo  atom-finder.constants/ag-repo
+          commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c"
+          file-name "src/print.c"]
+      (is (= [1892 2192] (apply-before-after repo commit-hash file-name count-nodes)))
+    )))

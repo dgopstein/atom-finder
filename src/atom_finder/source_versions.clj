@@ -9,12 +9,12 @@
    [clojure.string :as string]
    ))
 
-(def repo (gitp/load-repo (expand-home "~/opt/src/gcc")))
+;(def repo (gitp/load-repo (expand-home "~/opt/src/gcc")))
 
 ;; Log
-(def rlog (gitp/git-log repo))
+;(def rlog (gitp/git-log repo))
 
-(def rlist (gitq/rev-list repo))
+;(def rlist (gitq/rev-list repo))
 
 (defn bugzilla-ids
   [rev-commit]

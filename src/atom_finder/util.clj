@@ -44,6 +44,7 @@
 (defn pap [x] (tap prn x))
 
 (def any-true? (comp boolean some))
+(def exists? any-true?)
 
 (def range-from (partial iterate inc))
 
@@ -206,6 +207,11 @@
        (map parent)
        distinct))
 
+(defn count-nodes
+  "Count the size of the ast"
+  [node]
+    (inc (reduce + (map count-nodes (children node)))))
+
 (defn c-files
   "Search directory structure for C-like files"
   [dirname]
@@ -265,9 +271,7 @@
 (defn parse-source
   "Turn a string of C source code into an AST"
   [code]
-  ;(->> code write-tempfile tu)
-  (mem-tu "anonymously-parsed-code.c" code)
-  )
+  (mem-tu "anonymously-parsed-code.c" code))
 
 (defn parse-expr
   "Turn a single C expression into an AST"

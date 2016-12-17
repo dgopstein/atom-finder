@@ -16,9 +16,9 @@
    )
   )
 
-;(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")
-;(def file-name "gcc/c-family/c-pretty-print.c")
-;(def repo gcc-repo)
+;
+;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
+;(do (def repo  ag-repo)(def commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c")(def file-name "src/print.c"))
 ;(def atom-classifier conditional-atom?)
 ;(def parent-hash (commit-parent-hash repo commit-hash))
 
@@ -64,7 +64,7 @@
     (->> (commit-file-source repo commit-hash file-name)
          parse-source
          (atoms-in-tree atom-classifier)
-         count
+         count ; timing hot spot. Make more efficient atom counting function?
          ))
 
 (defn edited-files
@@ -82,15 +82,23 @@
 ;(def commit-hash "97574c57cf26ace9b8609575bbab66465924fef7")
 ;(def file-name "gcc/c-family/ChangeLog")
 
+;(apply-before-after repo commit-hash file-name count-nodes)
+
 (defn commit-parent-hash
   [repo commit-hash]
   (.name (first (.getParents (find-commit repo commit-hash)))))
 
+(defn apply-before-after
+  "parse a commit and it's parent and apply f to the root of both"
+  [repo commit-hash file-name f]
+  (let [parent-hash (commit-parent-hash repo commit-hash)]
+    [(f (parse-source (commit-file-source repo parent-hash file-name)))
+     (f (parse-source (commit-file-source repo commit-hash file-name)))]))
+
 (defn atom-removed-in-commit-file?
   [repo commit-hash file-name atom-classifier]
-  (let [parent-hash (commit-parent-hash repo commit-hash)]
-      (< (commit-file-atom-count repo commit-hash file-name atom-classifier)
-         (commit-file-atom-count repo parent-hash file-name atom-classifier))))
+    (apply > (apply-before-after repo commit-hash file-name
+                                 #(count (atoms-in-tree atom-classifier %)))))
 
 (defn atoms-removed-in-commit
   [repo commit-hash atom-classifier]
@@ -100,7 +108,7 @@
 
 (defn atom-removed-in-commit?
   [repo commit-hash atom-classifier]
-  (any-true? #(true? (last %)) (atoms-removed-in-commit repo commit-hash atom-classifier)))
+  (exists? #(true? (last %)) (atoms-removed-in-commit repo commit-hash atom-classifier)))
 
 (defn parse-commit-for-atom
   [repo atom-classifier rev-commit]
@@ -120,7 +128,7 @@
    (gitq/rev-list repo)) ; TODO remove the take-nth
   )
 
-(atoms-removed-in-commit repo "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?)
+;(atoms-removed-in-commit repo "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?)
 
 (defn log-atom-removed-all-commits
   []
@@ -133,6 +141,7 @@
          ;(filter #(true? (nth % 1)))
          ;(take 3)
          (map println)
+         (take 100)
          dorun
          time)))
 
