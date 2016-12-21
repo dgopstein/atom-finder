@@ -73,16 +73,16 @@
 (deftest test-conditional-atom?
   (testing "conditional-atom? finds all atoms in snippet study code"
     (is (= true 
-           (-> "conditional.c" resource-path tu
-               (get-in-tree [0 2 1 0 1 1 0])
-               conditional-atom?
-               )))
+           (->> "conditional.c" resource-path tu
+                (get-in-tree [0 2 1 0 1 1 0])
+                conditional-atom?
+                )))
 
     (is (= false
-           (-> "conditional.c" resource-path tu
-               (get-in-tree [0 2 1 0 1 1])
-               conditional-atom?
-               )))
+           (->> "conditional.c" resource-path tu
+                (get-in-tree [0 2 1 0 1 1])
+                conditional-atom?
+                )))
 
     (let [lines  (->> (resource-path "conditional.c")
                       tu
@@ -92,3 +92,39 @@
 
       (is (= lines [4 28 28 28 61]))
     )))
+
+(deftest preprocessors-in-context-test
+  (testing "Macro entirely in context"
+    (let [filename (resource-path "macro-in-expression.c")
+          atoms (preprocessors-in-contexts all-preprocessor non-toplevel-classifier (tu filename))]
+
+      (is (= (map :line atoms) '(5 8 11)))
+      ))
+
+  (testing "Macro starts in context"
+    (let [filename (resource-path "if-starts-in-expression.c")
+          atoms (preprocessors-in-contexts all-preprocessor non-toplevel-classifier (tu filename))]
+
+      (is (= (map :line atoms) '(9 11 14 16 18 23))) ; technically 25 should be here too because otherwise it's dependent on which if branch is evaluated
+      ))
+
+  (testing "Macro applied in function"
+    (let [filename (resource-path "macro-application.c")
+          atoms (preprocessors-in-contexts all-preprocessor non-toplevel-classifier (tu filename))]
+
+      (is (= (map :line atoms) '()))
+      ))
+
+  (testing "Preprocessor from snippet study"
+    (let [filename (resource-path "define-in-if-loop.c")
+          atoms (preprocessors-in-contexts all-preprocessor statement-expression-classifier (tu filename))]
+
+      (is (= (map :line atoms) '(4 7 11)))
+      ))
+
+  (testing "preprocesor-in-statement classifier"
+    (let [pisc (-> atom-lookup (strict-get :preprocessor-in-statement) :classifier)]
+      (is (true? (pisc (parse-expr "1 + \n#define M\n 3"))))
+      (is (false? (pisc (parse-stmt "1 + \n#define M\n 3;"))))
+      (is (false? (pisc (parse-stmt "{ 1 + 3; f(); }"))))
+      )))

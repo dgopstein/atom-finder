@@ -16,3 +16,5 @@
     (errln (str "Many aspects of this project rely on the existence of " gcc-path " and you don't have anything there!"))
     (println "Your environment appears to be set up correctly!"))
 )
+
+;(ns-unmap 'atom-finder.core 'all-preprocessor)

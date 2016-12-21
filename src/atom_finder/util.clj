@@ -87,9 +87,14 @@
     (alength p)))
 
 
-(defn children [node] (.getChildren node))
-(defn parent [node]
-  (or (.getParent node) node))
+(defn children    [node] (.getChildren node))
+(defn parent      [node] (.getParent node))
+(defn safe-parent [node] (or (.getParent node) node))
+(defn root-ancestor [node]
+  (let [p (parent node)]
+    (if (nil? p)
+      node
+      (recur p))))
 
 (defn pre-tree
   ([f node] (pre-tree f node 1))
@@ -234,10 +239,10 @@
 
 (defn get-in-tree
   "Find a value in the AST by indexes"
-  [node indices]
+  [indices node]
   (if (empty? indices)
     node
-    (recur (nth (children node) (first indices)) (rest indices))))
+    (recur (rest indices) (nth (children node) (first indices)))))
 
 (defn expand-home [s]
   (if (.startsWith s "~")
@@ -276,9 +281,16 @@
 (defn parse-expr
   "Turn a single C expression into an AST"
   [code]
-  (-> (str "int main() {\n" code ";\n}\n")
+  (->> (str "int main() {\n" code ";\n}\n")
       parse-source
       (get-in-tree [0 2 0 0]))) 
+
+(defn parse-stmt
+  "Turn a single C expression into an AST"
+  [code]
+  (->> (str "int main() {\n" code "\n}\n")
+      parse-source
+      (get-in-tree [0 2 0]))) 
 
 (defn loc
   "Get location information about an AST node"
@@ -300,3 +312,8 @@
     (if (atom-classifier node)
       (conj child-atoms node)
       child-atoms)))
+
+(defn strict-get [m k]
+  (if-let [[k v] (find m k)]
+    v
+        (throw (Exception. (str "Key Not Found " k)))))

@@ -45,7 +45,7 @@
   [node]
   ;(prn (write-ast (get-in-tree node [1])))
   (and (short-circuitable-op? node)
-       (mutatable-expr? (get-in-tree node [1]))))
+       (mutatable-expr? (get-in-tree [1] node))))
 (def logic-as-control-flow-atom? short-circuitable-expr?)
 
 (defn ast-node? [node] (instance? IASTNode node))

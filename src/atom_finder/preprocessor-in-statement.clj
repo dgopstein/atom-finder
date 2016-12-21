@@ -1,3 +1,5 @@
+(in-ns 'atom-finder.classifier)
+
 (defn contains-location?
   "Does this node contain the given offset/length"
   [root offset length]
@@ -21,6 +23,13 @@
         (if (> root-offset offset)
           false
           (>= (+ root-offset (.getNodeLength root-loc)) offset))))))
+
+(defn offset-parent?
+  "True if this is deepest AST node that contains an offset"
+  [node offset]
+  (and 
+   (contains-offset? node offset)
+   (not (exists? #(contains-offset? % offset) (children node)))))
 
 (defn offset-parent
   "Find the AST node that contains the whole location offset
@@ -55,7 +64,7 @@
           (for [md (preprocessor-type root)]
             (macro-in-contexts root md context-classifier))))
 
-(defn all-preprocessor [root] (.getAllPreprocessorStatements root))
+(defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
 (defn define-only [root] (filter #(instance? IASTPreprocessorMacroDefinition %) (all-preprocessor root)))
 
 (defn define-in-contexts
@@ -65,6 +74,9 @@
 (defn non-toplevel-classifier
   [parent]
   (not (instance? IASTTranslationUnit parent)))
+
+(def all-non-toplevel-preprocessors (partial preprocessors-in-contexts all-preprocessor non-toplevel-classifier))
+
 
 (defn statement-expression-classifier
   [parent]
@@ -86,3 +98,11 @@
                  (printf "%03d %s\n"
                          (count (preprocessors-in-contexts define-only expression-classifier root))
                          (.getFilePath root))) dirname)))))
+
+(defn preprocessor-parent? [node]
+  "Is this AST node the direct parent of a preprocessor directive"
+  (->> node
+       root-ancestor
+       all-preprocessor
+       (map (comp :offset loc))
+       (exists? (partial offset-parent? node))))
