@@ -1,7 +1,5 @@
 (in-ns 'atom-finder.classifier)
 (import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression))
-(require '[clojure.spec :as s]
-         '[clojure.spec.gen :as gen])
 
 (defn mutatable-op?
   "can this AST node change program state?"
@@ -43,21 +41,9 @@
 (defn short-circuitable-expr?
   "can this AST node short-circuit?"
   [node]
-  ;(prn (write-ast (get-in-tree node [1])))
   (and (short-circuitable-op? node)
        (mutatable-expr? (get-in-tree [1] node))))
 (def logic-as-control-flow-atom? short-circuitable-expr?)
-
-(defn ast-node? [node] (instance? IASTNode node))
-(s/def ::ast-node ast-node?)
-(s/fdef logic-as-control-flow-atoms :args ::ast-node :ret (s/coll-of ::ast-node))
-;(s/exercise logic-as-control-flow-atoms)
-;(gen/generate (s/gen ::ast-node))
-
-;(s/valid? ::ast-node atom-finder.classifier/root)
-;(s/valid? (s/coll-of ::ast-node) [atom-finder.classifier/root])
-;
-;(ast-node? atom-finder.classifier/root)
 
 (defn logic-as-control-flow-atoms
   "Return all instances of logic-as-control-flow in an AST"
@@ -66,14 +52,3 @@
     (leaf? node) nil
     (short-circuitable-expr? node) [node]
     :else (mapcat logic-as-control-flow-atoms (children node))))
-
-(defn preprocessor-in-dir
-  "Find all preprocessor directives not at the top level in directory"
-  [dirname]
-  (time (prn (count
-              (pmap-dir-nodes
-               (fn [root]
-                 (printf "%03d %s\n"
-                         (count (preprocessors-in-contexts define-only expression-classifier root))
-                         (.getFilePath root))) dirname)))))
-  
