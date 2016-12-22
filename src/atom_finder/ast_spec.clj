@@ -1,19 +1,7 @@
 (ns atom-finder.ast-spec
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression]
-           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTBinaryExpression CPPASTLiteralExpression])
+  (:import [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTLiteralExpression])
   (:require [clojure.spec :as s]
-            [clojure.spec.gen :as gen]
-            [clojure.spec.test :as test]
-            [clojure.string :as str]
-            [atom-finder.util :refer :all]
-            ))
-
-(defn ast-node? [node] (instance? IASTNode node))
-(s/def ::ast-node ast-node?)
-(s/fdef leaves :args ::ast-node :ret (s/coll-of ::ast-node))
-
-(s/def ::binary-expression (s/and ast-node? (partial instance? CPPASTBinaryExpression)))
-(s/def ::literal-expression (s/and ast-node? (partial instance? CPPASTLiteralExpression)))
+            [clojure.spec.gen :as gen]))
 
 (def gen-literal-expression-args
  (gen/one-of
@@ -33,11 +21,7 @@
      (CPPASTLiteralExpression. type (.toCharArray (str val))))
    gen-literal-expression-args))
 
-;(gen/sample gen-literal-expression-args 20)
-;(gen/sample gen-literal-expression 10)
-;
-;(->>
-; (s/exercise ::literal-expression 10 {::literal-expression (fn [] gen-literal-expression)})
-; (map (comp write-ast first))
-; )
-
+(s/def ::literal-expression
+  (s/with-gen
+    (partial instance? CPPASTLiteralExpression)
+    (fn [] gen-literal-expression)))
