@@ -1,8 +1,11 @@
 (ns atom-finder.classifier-test
   (:require [clojure.test :refer :all]
+            [schema.test]
             [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
             ))
+
+(use-fixtures :once schema.test/validate-schemas)
 
 (deftest test-short-circuitable?
   (let [cases 

@@ -99,8 +99,9 @@
                          (count (preprocessors-in-contexts define-only expression-classifier root))
                          (.getFilePath root))) dirname)))))
 
-(defn preprocessor-parent? [node]
+(defn preprocessor-parent?
   "Is this AST node the direct parent of a preprocessor directive"
+  [node]
   (->> node
        root-ancestor
        all-preprocessor
