@@ -27,8 +27,8 @@
   "Creates an Atom record, with each function wrapped in Schema validation code"
   [name classifier find-all]
   `(Atom. (s/validate AtomName ~name)
-          (s/fn :- IASTNode [node# :- IASTNode] (~classifier node#))
-          (s/fn :- [IASTNode] [node# :- IASTNode] (~find-all node#))
+          (s/fn ~(symbol (str name "-classifier")) :- Boolean [node# :- IASTNode] (~classifier node#))
+          (s/fn ~(symbol (str name "-find-all")) :- [IASTNode] [node# :- IASTNode] (~find-all node#))
           )
   )
 

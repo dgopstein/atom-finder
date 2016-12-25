@@ -20,6 +20,7 @@
 ;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
 ;(do (def repo  ag-repo)(def commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c")(def file-name "src/print.c"))
 ;(def atom-classifier conditional-atom?)
+;(def atom-finder (->> atom-lookup :conditional :find-all))
 ;(def parent-hash (commit-parent-hash repo commit-hash))
 
 (defn rev-commit
@@ -95,10 +96,31 @@
     [(f (parse-source (commit-file-source repo parent-hash file-name)))
      (f (parse-source (commit-file-source repo commit-hash file-name)))]))
 
+(defn source-before-after
+  "Return the ast of changed files before/after a commit"
+  [repo commit-hash file-name]
+  (apply-before-after repo commit-hash file-name identity))
+
+;(->> (source-before-after repo commit-hash file-name)
+;     (map write-ast)
+;     println)
+
 (defn atom-removed-in-commit-file?
   [repo commit-hash file-name atom-classifier]
     (apply > (apply-before-after repo commit-hash file-name
                                  #(count (atoms-in-tree atom-classifier %)))))
+
+(defn atom-removed-in-file?
+  "Compare two sources for atom removal"
+  [atom-finder srcs]
+  (apply >
+   (map (comp count atom-finder) srcs)))
+
+(defn commit-files-before-after
+  "For every file changed in this commit, give both before and after"
+  [repo commit-hash]
+  (->> (edited-files repo commit-hash)
+       (map (partial source-before-after repo commit-hash))))
 
 (defn atoms-removed-in-commit
   [repo commit-hash atom-classifier]
@@ -109,6 +131,8 @@
 (defn atom-removed-in-commit?
   [repo commit-hash atom-classifier]
   (exists? #(true? (last %)) (atoms-removed-in-commit repo commit-hash atom-classifier)))
+  ;(exists? (map (partial atom-removed-in-file? atom-finder)
+  ;              (commit-files-before-after repo commit-hash))))
 
 (defn parse-commit-for-atom
   [repo atom-classifier rev-commit]
@@ -145,3 +169,12 @@
          dorun
          time)))
 
+(defn log-atoms-removed-all-commits
+  [repo]
+  (binding [*out* (clojure.java.io/writer "gcc-logic-as-control-flow-commits.txt")]
+    (->> logic-as-control-flow-atom?
+         (atom-removed-all-commits repo)
+         (map println)
+         (take 100)
+         dorun
+         time)))

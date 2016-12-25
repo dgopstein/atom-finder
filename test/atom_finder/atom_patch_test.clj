@@ -48,7 +48,7 @@
     (repeat-test
      (fn [test commit-hash atom-classifier]
        `(is (~test (atom-removed-in-commit? atom-finder.constants/gcc-repo ~commit-hash ~atom-classifier))))
-
+     
      [[true?  "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" conditional-atom?]
       [true?  "97574c57cf26ace9b8609575bbab66465924fef7" conditional-atom?]
       [false? "17fc6eeba9352b97ba16d64fd1de9a5bdc081062" conditional-atom?]
@@ -62,4 +62,19 @@
           commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c"
           file-name "src/print.c"]
       (is (= [1892 2192] (apply-before-after repo commit-hash file-name count-nodes)))
+    )))
+
+(deftest atom-removed-in-file?-test
+  (testing "atom-removed-in-file?"
+    (let [repo  atom-finder.constants/gcc-repo
+          commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
+          file-name "gcc/c-family/c-pretty-print.c"]
+      (is (false?
+          (atom-removed-in-file?
+           (->> atom-lookup :logic-as-control-flow :find-all)
+           (source-before-after repo commit-hash file-name))))
+      (is (true?
+          (atom-removed-in-file?
+           (->> atom-lookup :conditional :find-all)
+           (source-before-after repo commit-hash file-name))))
     )))

@@ -44,7 +44,9 @@
 (defn pap [x] (tap prn x))
 
 (def any-true? (comp boolean some))
-(def exists? any-true?)
+(defn exists?
+  ([lst] (any-true? true? lst))
+  ([pred lst] (any-true? pred lst)))
 
 (def range-from (partial iterate inc))
 
