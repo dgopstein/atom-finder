@@ -12,6 +12,7 @@
    [schema.core :as s]
    )
   (:import
+   [atom_finder.classifier Atom]
    [org.eclipse.jgit.lib ObjectReader Repository]
    [org.eclipse.jgit.api Git]
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
@@ -30,8 +31,9 @@
 ;(def atom-classifier conditional-atom?)
 ;(def atom-finder (->> atom-lookup :conditional :finder))
 ;(def parent-hash (commit-parent-hash repo commit-hash))
+;(def rev-commit (first (gitq/rev-list repo)))
 
-(defn rev-commit
+(defn find-rev-commit
   "make a new revwalk to find given commit"
   [repo commit-hash]
   (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-hash)
@@ -46,7 +48,7 @@
   "Return full source for each file changed in a commit"
   [repo :- Git commit-hash :- String file-name :- String]
   (let [repository (.getRepository repo)
-        rc (rev-commit repo commit-hash)
+        rc (find-rev-commit repo commit-hash)
         tree      (.getTree rc)
         tree-walk (doto (TreeWalk. repository) (.setRecursive true) (.addTree tree))
         ]
@@ -79,7 +81,7 @@
 (defn edited-files
   "which files were edited in commit"
   [repo commit-hash]
-  (->> (rev-commit repo commit-hash)
+  (->> (find-rev-commit repo commit-hash)
        (gitq/changed-files repo)
        (filter #(= (last %) :edit))
        (map first)
@@ -109,10 +111,6 @@
   [repo commit-hash file-name]
   (apply-before-after repo commit-hash file-name identity))
 
-;(->> (source-before-after repo commit-hash file-name)
-;     (map write-ast)
-;     println)
-
 (s/defn atom-removed-in-file? :- Boolean
   "Count the number of atoms in two ASTs and see if they've decreased"
   [atom-finder :- AtomFinder srcs :- BeforeAfter]
@@ -121,7 +119,7 @@
 
 (s/defn atoms-removed-in-file :- s/Any ;{s/Keyword s/Boolean}
   "Check multiple atoms in a single file"
-  [atoms :- [atom_finder.classifier.Atom] srcs :- BeforeAfter]
+  [atoms :- [Atom] srcs :- BeforeAfter]
   (into {}
         (map #(vector (:name %1) (atom-removed-in-file? (:finder %1) srcs)) atoms)))
 
@@ -138,35 +136,33 @@
   (exists? (map (partial atom-removed-in-file? atom-finder) srcs)))
 
 (s/defn atoms-removed-in-commit :- {s/Str {s/Keyword s/Bool}}
-  [repo commit-hash atoms]
+  [repo :- Git atoms :- [Atom] commit-hash :- s/Str]
   (->> (commit-files-before-after repo commit-hash)
        (map (fn [[file srcs]] [file (atoms-removed-in-file atoms srcs)]))
        (into {})
        ))
 
-;(pprint (atoms-removed-in-commit repo commit-hash atoms))
-;((:finder (:conditional atom-lookup)) root)
-;((:finder (:logic-as-control-flow atom-lookup)) root)
-;((:finder (:preprocessor-in-statement atom-lookup)) (parse-stmt "{1 + \n#define M\n 3; 1 + \n#define M\n 3; 1 + \n#define M\n 3;}"))
-;(all-non-toplevel-preprocessors (parse-stmt "{1 + \n#define M\n 3; 1 + \n#define M\n 3; 1 + \n#define M\n 3;}"))
-
-(defn parse-commit-for-atom
-  [repo atom-classifier rev-commit]
+(s/defn parse-commit-for-atom
+  :- [(s/one s/Str "commit-hash")
+      (s/one {s/Str {s/Keyword s/Bool}} "files")
+      (s/one #{s/Int} "bugs")]
+  [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
     (try
       [commit-hash
-       (atom-removed-in-commit? repo rev-commit atom-classifier)
+       (atoms-removed-in-commit repo atoms commit-hash)
        (bugzilla-ids rev-commit)
        ]
       (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       )))
 
-(defn atom-removed-all-commits
-  [repo atom-classifier]
-  (pmap (partial parse-commit-for-atom repo atom-classifier)
-   (gitq/rev-list repo)) ; TODO remove the take-nth
-  )
+(defn atoms-removed-all-commits
+  [repo atoms]
+  (->>
+   (gitq/rev-list repo)
+   (pmap (partial parse-commit-for-atom repo atoms))
+  ))
 
 ;(atoms-removed-in-commit repo "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?)
 

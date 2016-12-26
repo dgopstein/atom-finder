@@ -21,7 +21,7 @@
 
 (def AtomName s/Keyword)
 (def AtomClassifier s/Keyword)
-(defrecord Atom [name classifier finder])
+(s/defrecord Atom [name classifier finder])
 
 (defmacro ValidatedAtom
   "Creates an Atom record, with each function wrapped in Schema validation code"
