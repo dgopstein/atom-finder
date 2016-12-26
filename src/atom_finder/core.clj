@@ -17,4 +17,4 @@
     (println "Your environment appears to be set up correctly!"))
 )
 
-;(ns-unmap 'atom-finder.core 'all-preprocessor)
+;(ns-unmap 'atom-finder.core 'contains-location?)

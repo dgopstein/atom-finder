@@ -13,9 +13,11 @@
 
 (s/set-fn-validation! true) ; Globally turn on schema validation
 
-(load "preprocessor-in-statement")
-(load "logic-as-control-flow")
-(load "conditional")
+(->>
+ ["preprocessor-in-statement" "logic-as-control-flow" "conditional" "literal-encoding"]
+ (map (partial str "classifier/"))
+ (apply load)
+ )
 
 (defn default-finder [classifier] (partial atoms-in-tree classifier))
 
