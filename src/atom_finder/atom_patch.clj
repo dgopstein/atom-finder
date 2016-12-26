@@ -9,18 +9,26 @@
    [clj-jgit.porcelain :as gitp]
    [clj-jgit.querying :as gitq]
    [clj-jgit.internal :as giti]
+   [schema.core :as s]
    )
   (:import
-   [org.eclipse.jgit.lib ObjectReader]
+   [org.eclipse.jgit.lib ObjectReader Repository]
+   [org.eclipse.jgit.api Git]
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
+   [org.eclipse.cdt.core.dom.ast IASTTranslationUnit]
    )
   )
+
+(def AtomFinder (s/=> IASTTranslationUnit [IASTTranslationUnit]))
+(def AtomFinders [(s/one AtomFinder "atom-finder") AtomFinder])
+(def BeforeAfter [(s/one IASTTranslationUnit "before") (s/one IASTTranslationUnit "after")])
+(def BeforeAfters [(s/one BeforeAfter "commit-file") BeforeAfter])
 
 ;
 ;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
 ;(do (def repo  ag-repo)(def commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c")(def file-name "src/print.c"))
 ;(def atom-classifier conditional-atom?)
-;(def atom-finder (->> atom-lookup :conditional :find-all))
+;(def atom-finder (->> atom-lookup :conditional :finder))
 ;(def parent-hash (commit-parent-hash repo commit-hash))
 
 (defn rev-commit
@@ -34,9 +42,9 @@
   [loader]
   (->> loader .getBytes String.))
 
-(defn commit-file-source
+(s/defn commit-file-source :- String
   "Return full source for each file changed in a commit"
-  [repo commit-hash file-name]
+  [repo :- Git commit-hash :- String file-name :- String]
   (let [repository (.getRepository repo)
         rc (rev-commit repo commit-hash)
         tree      (.getTree rc)
@@ -105,34 +113,42 @@
 ;     (map write-ast)
 ;     println)
 
-(defn atom-removed-in-commit-file?
-  [repo commit-hash file-name atom-classifier]
-    (apply > (apply-before-after repo commit-hash file-name
-                                 #(count (atoms-in-tree atom-classifier %)))))
-
-(defn atom-removed-in-file?
-  "Compare two sources for atom removal"
-  [atom-finder srcs]
+(s/defn atom-removed-in-file? :- Boolean
+  "Count the number of atoms in two ASTs and see if they've decreased"
+  [atom-finder :- AtomFinder srcs :- BeforeAfter]
   (apply >
    (map (comp count atom-finder) srcs)))
 
-(defn commit-files-before-after
-  "For every file changed in this commit, give both before and after"
+(s/defn atoms-removed-in-file :- s/Any ;{s/Keyword s/Boolean}
+  "Check multiple atoms in a single file"
+  [atoms :- [atom_finder.classifier.Atom] srcs :- BeforeAfter]
+  (into {}
+        (map #(vector (:name %1) (atom-removed-in-file? (:finder %1) srcs)) atoms)))
+
+(s/defn commit-files-before-after :- {s/Str BeforeAfter}
+  "For every file changed in this commit, give both before and after ASTs"
   [repo commit-hash]
   (->> (edited-files repo commit-hash)
-       (map (partial source-before-after repo commit-hash))))
+       (map #(vector %1 (source-before-after repo commit-hash %1)))
+       (into {})
+       ))
 
-(defn atoms-removed-in-commit
-  [repo commit-hash atom-classifier]
-  (into {}
-        (map #(vector %1 (atom-removed-in-commit-file? repo commit-hash %1 atom-classifier))
-             (edited-files repo commit-hash))))
+(s/defn atom-removed-in-commit? :- s/Bool
+  [atom-finder :- AtomFinder srcs :- BeforeAfters]
+  (exists? (map (partial atom-removed-in-file? atom-finder) srcs)))
 
-(defn atom-removed-in-commit?
-  [repo commit-hash atom-classifier]
-  (exists? #(true? (last %)) (atoms-removed-in-commit repo commit-hash atom-classifier)))
-  ;(exists? (map (partial atom-removed-in-file? atom-finder)
-  ;              (commit-files-before-after repo commit-hash))))
+(s/defn atoms-removed-in-commit :- {s/Str {s/Keyword s/Bool}}
+  [repo commit-hash atoms]
+  (->> (commit-files-before-after repo commit-hash)
+       (map (fn [[file srcs]] [file (atoms-removed-in-file atoms srcs)]))
+       (into {})
+       ))
+
+;(pprint (atoms-removed-in-commit repo commit-hash atoms))
+;((:finder (:conditional atom-lookup)) root)
+;((:finder (:logic-as-control-flow atom-lookup)) root)
+;((:finder (:preprocessor-in-statement atom-lookup)) (parse-stmt "{1 + \n#define M\n 3; 1 + \n#define M\n 3; 1 + \n#define M\n 3;}"))
+;(all-non-toplevel-preprocessors (parse-stmt "{1 + \n#define M\n 3; 1 + \n#define M\n 3; 1 + \n#define M\n 3;}"))
 
 (defn parse-commit-for-atom
   [repo atom-classifier rev-commit]

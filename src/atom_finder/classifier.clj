@@ -11,7 +11,7 @@
    [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]
    [org.eclipse.cdt.internal.core.parser.scanner ASTMacroDefinition]))
 
-;(s/set-fn-validation! true) ; Globally turn on schema validation
+(s/set-fn-validation! true) ; Globally turn on schema validation
 
 (load "preprocessor-in-statement")
 (load "logic-as-control-flow")
@@ -21,16 +21,15 @@
 
 (def AtomName s/Keyword)
 (def AtomClassifier s/Keyword)
-(defrecord Atom [name classifier find-all])
+(defrecord Atom [name classifier finder])
 
 (defmacro ValidatedAtom
   "Creates an Atom record, with each function wrapped in Schema validation code"
-  [name classifier find-all]
+  [name classifier finder]
   `(Atom. (s/validate AtomName ~name)
           (s/fn ~(symbol (str name "-classifier")) :- Boolean [node# :- IASTNode] (~classifier node#))
-          (s/fn ~(symbol (str name "-find-all")) :- [IASTNode] [node# :- IASTNode] (~find-all node#))
-          )
-  )
+          (s/fn ~(symbol (str name "-finder")) :- [IASTNode] [node# :- IASTNode] (~finder node#))
+  ))
 
 (def atoms
   [

@@ -75,8 +75,10 @@
   [parent]
   (not (instance? IASTTranslationUnit parent)))
 
-(def all-non-toplevel-preprocessors (partial preprocessors-in-contexts all-preprocessor non-toplevel-classifier))
+(def all-non-toplevel-preprocessor-locs (partial preprocessors-in-contexts all-preprocessor non-toplevel-classifier))
 
+(defn all-non-toplevel-preprocessors [root]
+  (map #(offset-parent root (:offset %)) (all-non-toplevel-preprocessor-locs root)))
 
 (defn statement-expression-classifier
   [parent]
