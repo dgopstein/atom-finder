@@ -143,9 +143,9 @@
        ))
 
 (s/defn parse-commit-for-atom
-  :- [(s/one s/Str "commit-hash")
-      (s/one {s/Str {s/Keyword s/Bool}} "files")
-      (s/one #{s/Int} "bugs")]
+  ;:- [(s/one s/Str "commit-hash")
+  ;    (s/one {s/Str {s/Keyword s/Bool}} "files")
+  ;    (s/optional #{[(s/one s/Str "name") (s/one s/Int "id")]} "bugs")]
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
     (try
@@ -166,27 +166,12 @@
 
 ;(atoms-removed-in-commit repo "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?)
 
-(defn log-atom-removed-all-commits
-  []
-  (binding [*out* (clojure.java.io/writer "gcc-logic-as-control-flow-commits.txt")]
-    (->> ;conditional-atom?
-         logic-as-control-flow-atom?
-         (atom-removed-all-commits gcc-repo)
-         ;(atom-removed-all-commits ag-repo)
-         ;(atom-removed-all-commits (gitp/load-repo "/Volumes/RAM Disk/gcc"))
-         ;(filter #(true? (nth % 1)))
-         ;(take 3)
-         (map println)
-         (take 100)
-         dorun
-         time)))
-
 (defn log-atoms-removed-all-commits
   [repo]
   (binding [*out* (clojure.java.io/writer "gcc-logic-as-control-flow-commits.txt")]
-    (->> logic-as-control-flow-atom?
-         (atom-removed-all-commits repo)
-         (map println)
-         (take 100)
+    (->> atoms
+         (atoms-removed-all-commits repo)
+         (map prn)
+         (take 10)
          dorun
          time)))
