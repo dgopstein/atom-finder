@@ -131,3 +131,13 @@
       (is (false? (pisc (parse-stmt "1 + \n#define M\n 3;"))))
       (is (false? (pisc (parse-stmt "{ 1 + 3; f(); }"))))
       )))
+
+(deftest literal-encoding-test
+  (testing "utils"
+    (->>
+     [[:dec "1234"] [:oct "01234"] [:hex "0x1234"] [:bin "0b1234"]]
+     (map (fn [[k s]]
+            (is (= k (radix s)))
+            (is (= k (radix (parse-expr s))))
+            ))
+    )))

@@ -151,6 +151,20 @@
   [f x n]
     (nth (iterate f x) n))
 
+; https://gist.github.com/micmarsh/bcbe19c9de8bb7a471bf
+(defn flip [function]
+  (fn
+    ([] (function))
+    ([x] (function x))
+    ([x y] (function y x))
+    ([x y z] (function z y x))
+    ([a b c d] (function d c b a))
+    ([a b c d & rest]
+     (->> rest
+          (concat [a b c d])
+          reverse
+          (apply function)))))
+
 (defn ancestor
   "Get the nth grandparent of the node"
   [n node]
