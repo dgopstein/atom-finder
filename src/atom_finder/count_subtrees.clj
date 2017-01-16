@@ -2,35 +2,35 @@
   (:require [atom-finder.util :refer :all]
             [clojure.data.csv :as csv]
             [clojure.java.io  :as io]
-            [clojure.string   :as string]
-            )
+            [clojure.string   :as string])
+            
   (:import [org.eclipse.cdt.core.dom.ast IASTExpression]
-           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTIdExpression CPPASTName CPPASTLiteralExpression CPPASTPointer CPPASTSimpleDeclSpecifier CPPASTDeclarator CPPASTNullStatement CPPASTArrayModifier CPPASTDefaultStatement CPPASTProblem CPPASTProblemStatement CPPASTCompoundStatement CPPASTExpressionStatement
-            ]
-            ))
+           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTIdExpression CPPASTName CPPASTLiteralExpression CPPASTPointer CPPASTSimpleDeclSpecifier CPPASTDeclarator CPPASTNullStatement CPPASTArrayModifier CPPASTDefaultStatement CPPASTProblem CPPASTProblemStatement CPPASTCompoundStatement CPPASTExpressionStatement]))
+            
+            
 
 (defn astrminal
   "string that describes the tree structure with terminals"
   [node]
   (str (string/join "," (cons (typename node)
-       (map astrminal (children node))))
+                         (map astrminal (children node))))
        ")"))
 
 (defn astr
   "string that describes the tree structure"
   [node]
   (str (string/join "," (cons (typename node)
-       (map astr (filter (comp not leaf?) (children node)))))
+                         (map astr (filter (comp not leaf?) (children node)))))
        ")"))
 
 (defn pastr
   "pretty string that describes the tree structure"
   ([node] (pastr 0 node))
   ([d node]
-    (string/join (cons (str (typename node) "\n")
-                       (map #(str (string/join (repeat d "    ")) (pastr (inc d) %))
-                            (filter (comp not leaf?) (children node)))))
-         ))
+   (string/join (cons (str (typename node) "\n")
+                      (map #(str (string/join (repeat d "    ")) (pastr (inc d) %))
+                           (filter (comp not leaf?) (children node)))))))
+         
 
 (defn pastr2
   "pretty string that describes the tree structure"
@@ -84,8 +84,8 @@
        (filter-instance IASTExpression)
        (filter non-trivial?)
        (map (partial ancestor d))
-       (map collapse-types)
-       ))
+       (map collapse-types)))
+       
 
 
 (defn count-non-trivial-expression-parents
@@ -95,8 +95,8 @@
        (non-trivial-expression-parents d)
        distinct
        (map typename)
-       frequencies
-       ))
+       frequencies))
+       
        
 
 (defn count-in-dir
@@ -116,6 +116,6 @@
   [dirs]
   (csv/write-csv *out*
     (apply concat (for [dir dirs]
-      (let [name (.getName (io/file dir))]
-        (map #(cons name %) (count-nodes-in-dir dir))
-        )))))
+                   (let [name (.getName (io/file dir))]
+                     (map #(cons name %) (count-nodes-in-dir dir)))))))
+        

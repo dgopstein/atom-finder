@@ -18,24 +18,24 @@
        ;(filter :exception-types)
        (map #(dissoc % :exception-types))
        (map #(dissoc % :declaring-class))
-       (sort-by :name)
-       ))
+       (sort-by :name)))
+       
 
 (defn public-methods
   "list public methods of java object"
   [obj]
   (->> obj
        (java-methods)
-       (filter #(:public (:flags %)))
-       ))
+       (filter #(:public (:flags %)))))
+       
 
 (defn ppublic-methods
   "print public methods of java object"
   [obj]
   (->> obj
        (public-methods)
-       (print-table)
-       ))
+       (print-table)))
+       
 
 (defmacro %w [& words]
     `(list ~@(map str (vec words))))
@@ -149,7 +149,7 @@
 ;; http://stackoverflow.com/questions/23178750/iteratively-apply-function-to-its-result-without-generating-a-seq
 (defn fn-pow
   [f x n]
-    (nth (iterate f x) n))
+  (nth (iterate f x) n))
 
 ; https://gist.github.com/micmarsh/bcbe19c9de8bb7a471bf
 (defn flip [function]
@@ -168,7 +168,7 @@
 (defn ancestor
   "Get the nth grandparent of the node"
   [n node]
-    (fn-pow parent node n))
+  (fn-pow parent node n))
 
 (defn ancestral-instance?
   "Check whether any of this nodes ancestry are of the type listed"
@@ -231,7 +231,7 @@
 (defn count-nodes
   "Count the size of the ast"
   [node]
-    (inc (reduce + (map count-nodes (children node)))))
+  (inc (reduce + (map count-nodes (children node)))))
 
 (defn c-files
   "Search directory structure for C-like files"
@@ -244,8 +244,8 @@
      (fn [file]
        (and
         (exts (nth (re-find #".*\.([^.]+)" (.getName file)) 1 nil))
-        (.isFile file))
-       )
+        (.isFile file)))
+       
      files)))
 
 (defn resource-path
@@ -263,21 +263,21 @@
 (defn expand-home [s]
   (if (.startsWith s "~")
     (clojure.string/replace-first s "~" (System/getProperty "user.home"))
-        s))
+    s))
 
 (defn pmap-dir-nodes
   "Apply a function to the AST of every c file in a directory"
   [f dirname]
-          (pmap
-           (fn [file]
-             (let [filename (.getPath file)]
-               (try
-                 (f (tu filename))
-                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
-                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
-                 )))
+  (pmap
+   (fn [file]
+     (let [filename (.getPath file)]
+       (try
+         (f (tu filename))
+         (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
+         (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename)))))
+                 
 
-           (c-files dirname)))
+   (c-files dirname)))
 
 (defn write-tempfile
   [content]

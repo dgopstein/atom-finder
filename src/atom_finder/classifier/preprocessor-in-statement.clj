@@ -55,14 +55,14 @@
         parent (offset-parent root (ret :offset))
         in-expr? (classifier parent)]
             
-            [ret in-expr?]))
+       [ret in-expr?]))
 
 (defn preprocessors-in-contexts
   "return a list of all preprocessor directives inside of various contexts"
   [preprocessor-type context-classifier root]
-    (keep (fn [[md in-expr?]] (if in-expr? md)) 
-          (for [md (preprocessor-type root)]
-            (macro-in-contexts root md context-classifier))))
+  (keep (fn [[md in-expr?]] (if in-expr? md)) 
+        (for [md (preprocessor-type root)]
+          (macro-in-contexts root md context-classifier))))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
 (defn define-only [root] (filter #(instance? IASTPreprocessorMacroDefinition %) (all-preprocessor root)))
