@@ -15,12 +15,12 @@
   "Does this AST node an statement that contains decrement and increment operators?"
   [node]
   (let [statement #{;statement types that might not cause confusion
-                    IASTForStatement IASTExpressionStatement}]
+                    IASTForStatement IASTExpressionStatement IASTConditionalExpression}]
       (cond
         (leaf? node) false
         
         (not-any? #(instance? % node) statement)
-        (some true? (map pre-increment-decrement? (children node)))
+        (if(some true? (map pre-increment-decrement? (children node))) true false)
         
         :else false)))
                                                

@@ -1,6 +1,9 @@
 (in-ns 'atom-finder.classifier)
 (import '(org.eclipse.cdt.core.dom.ast IASTCompoundStatement IASTIfStatement IASTForStatement IASTWhileStatement))
 
+; All possible statement I found with omittable curly braces
+; IF WHILE FOR +RANGE-BASED-FOR
+; +TRY? CATCH? DO - WHILE? SWITCH - CASE? TRYBLOCK? CASE? DEFAULT?
 
 (defn curly-braces?
   "Does this note represent curly brace?"
