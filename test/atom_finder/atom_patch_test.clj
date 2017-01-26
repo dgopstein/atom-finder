@@ -8,6 +8,7 @@
             [atom-finder.classifier :refer :all]
             [clj-jgit.porcelain  :as gitp]
             [clojure.pprint :refer :all]
+            [clojure.data.json :as json]
             ))
 
 (deftest removed-lines-test
@@ -19,7 +20,7 @@
       )))
 
 (deftest bugzilla-id-test
-  (let [gcc-repo    (gitp/load-repo (expand-home "~/opt/src/gcc"))
+  (let [gcc-repo    (gitp/load-repo (expand-home (get (json/read-str (slurp (resource-path "conf.json")):key-fn keyword) :gcc-path)))
         results 
           [["97574c57cf26ace9b8609575bbab66465924fef7" #{}]
            ["98103e4a9e8ae9e52751c9e96ec46e6095181b69" #{["fortran" 61420] ["fortran" 78013]}]
