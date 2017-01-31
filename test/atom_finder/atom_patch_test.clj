@@ -8,7 +8,6 @@
             [atom-finder.classifier :refer :all]
             [clj-jgit.porcelain  :as gitp]
             [clojure.pprint :refer :all]
-            [clojure.data.json :as json]
             ))
 
 (deftest removed-lines-test
