@@ -6,7 +6,7 @@
 (def conf-data (json/read-str (slurp (resource-path "conf.json")):key-fn keyword))
 
 (def gcc-path (expand-home (get conf-data :gcc-path)))
-(def gcc-repo (gitp/load-repo "Z:\\Github\\gcc"))
+(def gcc-repo (gitp/load-repo gcc-path))
 
 (def ag-path (expand-home (get conf-data :ag-path)))
 (def ag-repo (gitp/load-repo ag-path))
