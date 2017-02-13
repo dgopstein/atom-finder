@@ -2,6 +2,7 @@
   (:require [atom-finder.util :refer :all]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
+            [clojure.string :refer :all]
             )
   (:import
    [org.eclipse.cdt.core.dom.ast IASTNode
@@ -13,11 +14,19 @@
 
 (s/set-fn-validation! true) ; Globally turn on schema validation
 
-(->>
- ["preprocessor-in-statement" "logic-as-control-flow" "conditional" "literal-encoding" "reversed-subscript"]
- (map (partial str "classifier/"))
- (apply load)
- )
+(defn classifier-files []
+  (->> "atom_finder/classifier/"
+       ClassLoader/getSystemResource 
+       clojure.java.io/file
+       file-seq
+       (map (memfn getName))
+       (filter #(ends-with? % ".clj"))
+       (map #(replace % #"\.clj$" ""))
+       (map (partial str "classifier/"))
+       ))
+
+; Load all files in the classifier directory
+(apply load (classifier-files))
 
 (defn default-finder [classifier] (partial atoms-in-tree classifier))
 
