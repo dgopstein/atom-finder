@@ -141,3 +141,16 @@
             (is (= k (radix (parse-expr s))))
             ))
     )))
+
+(deftest test-reversed-subscript-atom?
+  (testing "reversed-subscript-atom? finds all atoms in snippet study code"
+
+    (let [lines  (->> (resource-path "reversed-subscript.c")
+                      tu
+                      (atoms-in-tree reversed-subscript-atom?)
+                      (map loc)
+                      (map :line))]
+
+      (is (= lines [7 10 11 11 12 15 16 16 17 17 17 27 28 28 38 39 39 41 42
+                    45 54 55 55 60 65 72 72 74 74 76 76 79 81 83]))
+    )))
