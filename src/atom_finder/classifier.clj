@@ -14,7 +14,7 @@
 (s/set-fn-validation! true) ; Globally turn on schema validation
 
 (->>
- ["preprocessor-in-statement" "logic-as-control-flow" "conditional" "literal-encoding"]
+ ["preprocessor-in-statement" "logic-as-control-flow" "conditional" "literal-encoding" "reversed-subscript"]
  (map (partial str "classifier/"))
  (apply load)
  )
@@ -38,6 +38,7 @@
    (ValidatedAtom :preprocessor-in-statement preprocessor-parent?        all-non-toplevel-preprocessors)
    (ValidatedAtom :logic-as-control-flow     logic-as-control-flow-atom? logic-as-control-flow-atoms)
    (ValidatedAtom :conditional               conditional-atom?           (default-finder conditional-atom?))
+   (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
    ]
   )
 
