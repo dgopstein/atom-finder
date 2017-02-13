@@ -2,7 +2,7 @@
   (:require [atom-finder.util :refer :all]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
-            [clojure.string :refer :all]
+            [clojure.string :as str]
             )
   (:import
    [org.eclipse.cdt.core.dom.ast IASTNode
@@ -20,8 +20,8 @@
        clojure.java.io/file
        file-seq
        (map (memfn getName))
-       (filter #(ends-with? % ".clj"))
-       (map #(replace % #"\.clj$" ""))
+       (filter #(str/ends-with? % ".clj"))
+       (map #(str/replace % #"\.clj$" ""))
        (map (partial str "classifier/"))
        ))
 
