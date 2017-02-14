@@ -20,10 +20,6 @@
    (map atom-lookup [:preprocessor-in-statement :reversed-subscript]))
 )
 
-;(ns-unmap 'atom-finder.core 'contains-location?)
-
-(def psgl (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/preprocessor_subscript_gcc_linux_2017-02-13.edn")))))
-
 (defn dedupe-preprocessors
   [results]
 (->> results
@@ -42,7 +38,6 @@
        )
   )
 
-;(pprint (sum-found-atoms (dedupe-preprocessors psgl)))
 
 (defn found-atom-source
   [atom-name results]
@@ -57,6 +52,6 @@
        )
   )
 
+;(def psgl (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/preprocessor_subscript_gcc_linux_2017-02-13.edn")))))
+;(pprint (sum-found-atoms (dedupe-preprocessors psgl)))
 ; (found-atom-source :reversed-subscript psgl)
-(def vsx_preempt (slurp-lines (expand-home "~/opt/src/linux/tools/testing/selftests/powerpc/math/vsx_preempt.c")))
-;(pprint (map vector (range) vsx_preempt))
