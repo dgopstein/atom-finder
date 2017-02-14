@@ -91,3 +91,11 @@ int main() {
   strings_with_constant_indices();
   pointer_arithmetic();
 }
+
+// simplified from: linux/drivers/md/md.c
+static blk_qc_t md_make_request(struct request_queue *q, struct bio *bio)
+{
+	const int rw = bio_data_dir(bio);
+	unsigned int sectors;
+	part_stat_add(cpu, &mddev->gendisk->part0, sectors[rw], sectors); // probably not an atom
+}
