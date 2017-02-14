@@ -1,11 +1,16 @@
 (ns atom-finder.util
-  (:require [clojure.reflect :as r])
+  (:require [clojure.reflect :as r]
+            [clojure.string :as str])
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
            [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
+
+;;;;;;
+;;;   Completely generic utilities
+;;;;;;
 
 ;; print methods of java object
 ;; http://stackoverflow.com/questions/5821286/how-can-i-get-the-methods-of-a-java-class-from-clojure
@@ -52,6 +57,13 @@
 
 (defn map-values [f m]
   (reduce merge (map (fn [[k v]] {k (f v)}) m)))
+
+(defn slurp-lines [file]
+    (str/split-lines (slurp file)))
+
+;;;;;;;;
+;;   Specific to this project
+;;;;;;;
 
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))
@@ -262,7 +274,7 @@
 
 (defn expand-home [s]
   (if (.startsWith s "~")
-    (clojure.string/replace-first s "~" (System/getProperty "user.home"))
+    (str/replace-first s "~" (System/getProperty "user.home"))
         s))
 
 (defn pmap-dir-nodes

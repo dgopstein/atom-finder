@@ -163,6 +163,8 @@
            ["\"abc\"[1&&2]"   false]
            ["null[123]"       false]
            ["(1?2:'c')[null]" true ]
+           ["0x100220[1]"     false]
+           ["1[0x100220]"     false]
            ]]
 
       (doseq [[code sc?] cases]
