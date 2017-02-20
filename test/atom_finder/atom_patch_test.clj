@@ -1,13 +1,13 @@
 (ns atom-finder.atom-patch-test
   (:require [clojure.test :refer :all]
             [atom-finder.util :refer :all]
+            [atom-finder.constants]
             [atom-finder.patch :refer :all]
             [atom-finder.atom-patch :refer :all]
             [atom-finder.source-versions :refer :all]
             [atom-finder.classifier :refer :all]
             [clj-jgit.porcelain  :as gitp]
             [clojure.pprint :refer :all]
-            [omniconf.core :as cfg]
             ))
 
 (deftest removed-lines-test
@@ -19,8 +19,7 @@
       )))
 
 (deftest bugzilla-id-test
-(cfg/populate-from-file (resource-path "conf.edn"))
-  (let [gcc-repo    (gitp/load-repo (expand-home (cfg/get :jake-dev-conf :gcc-path)))
+  (let [gcc-repo    atom-finder.constants/gcc-repo
         results 
           [["97574c57cf26ace9b8609575bbab66465924fef7" #{}]
            ["98103e4a9e8ae9e52751c9e96ec46e6095181b69" #{["fortran" 61420] ["fortran" 78013]}]
@@ -36,8 +35,7 @@
 
 (deftest commit-file-atom-count-test
   (testing "See if file in commit contains an atoms"
-  (cfg/populate-from-file (resource-path "conf.edn"))
-    (let [repo    (gitp/load-repo  (cfg/get :jake-dev-conf :gcc-path))]
+    (let [repo    atom-finder.constants/gcc-repo]
       (is (= 24 (commit-file-atom-count repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" "gcc/c-family/c-pretty-print.c" conditional-atom?)))
       (is (= 25 (commit-file-atom-count repo "1e0cfd0" "gcc/c-family/c-pretty-print.c" conditional-atom?)))
       )))
@@ -60,8 +58,7 @@
 
 (deftest apply-before-after-test
   (testing "Count the sizes of programs before and after a commit"
-  (cfg/populate-from-file (resource-path "conf.edn"))
-    (let [repo  (gitp/load-repo (cfg/get :jake-dev-conf :ag-path))
+    (let [repo  atom-finder.constants/ag-repo
           commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c"
           file-name "src/print.c"]
       (is (= [1892 2192] (apply-before-after repo commit-hash file-name count-nodes)))
@@ -69,8 +66,7 @@
 
 (deftest atom-removed-in-file?-test
   (testing "atom-removed-in-file?"
-  (cfg/populate-from-file (resource-path "conf.edn"))
-    (let [repo  (gitp/load-repo (cfg/get :jake-dev-conf :gcc-path))
+    (let [repo  atom-finder.constants/gcc-repo
           commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
           file-name "gcc/c-family/c-pretty-print.c"
           srcs (source-before-after repo commit-hash file-name)]

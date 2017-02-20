@@ -21,10 +21,3 @@ tramp
 
 .DS_Store
 tmp/
-/.vs/Clojure/v14/.suo
-/project.sln
-/.vs
-/Project1
-/project.VC.db
-/project.VC.VC.opendb
-/bible.txt

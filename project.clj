@@ -19,7 +19,7 @@
                    "resources/org.eclipse.equinox.common_3.6.200.v20130402-1505.jar"
                    "resources/com.zutubi.diff-3.0.dev.jar"
                    "src/test/resources"
-                   "src"]
+                   "src/conf"]
   :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}}
   :jvm-opts ["-Xss8m"]
   :main atom-finder.core)

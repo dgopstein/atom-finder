@@ -8,7 +8,7 @@
 (use-fixtures :once schema.test/validate-schemas)
 
 (deftest test-short-circuitable?
-  (let [cases 
+  (let [cases
         [["1 && 2"    false]
          ["1 || 2"    false]
          ["0 && 1"    false]
@@ -141,3 +141,33 @@
             (is (= k (radix (parse-expr s))))
             ))
     )))
+
+(deftest test-reversed-subscript-atom?
+  (testing "reversed-subscript-atom? finds all atoms in snippet study code"
+
+    (let [lines  (->> (resource-path "reversed-subscript.c")
+                      tu
+                      (atoms-in-tree reversed-subscript-atom?)
+                      (map loc)
+                      (map :line))]
+
+      (is (= lines [7 10 11 11 12 15 16 16 17 17 17 27 28 28 38 39 39 41 42
+                    45 54 55 55 60 65 72 72 74 74 76 76 79 81 83]))
+      ))
+
+  (testing "individual reversed-subscript expressions"
+    (let [cases
+          [["'a'[\"abc\"]"    true ]
+           ["\"abc\"['a']"    false]
+           ["(1&&2)[\"abc\"]" true ]
+           ["\"abc\"[1&&2]"   false]
+           ["null[123]"       false]
+           ["(1?2:'c')[null]" true ]
+           ["0x100220[1]"     false]
+           ["1[0x100220]"     false]
+           ]]
+
+      (doseq [[code sc?] cases]
+        (testing (str "Is reversed-subscript-atom? - " code " - " sc?)
+          (is (= (reversed-subscript-atom? (parse-expr code)) sc?))))
+      )))
