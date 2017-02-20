@@ -263,7 +263,7 @@
 (defn resource-path
   "Find the path to a resource"
   [filename]
-  (.getPath (clojure.java.io/resource filename)))
+  (.getPath (clojure.java.io/file (clojure.java.io/resource filename))))
 
 (defn get-in-tree
   "Find a value in the AST by indexes"
@@ -273,7 +273,7 @@
     (recur (rest indices) (nth (children node) (first indices)))))
 
 (defn expand-home [s]
-  (if (.startsWith s "~")
+  (if (clojure.string/starts-with? s "~")
     (str/replace-first s "~" (System/getProperty "user.home"))
         s))
 

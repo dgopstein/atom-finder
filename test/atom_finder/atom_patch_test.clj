@@ -19,7 +19,7 @@
       )))
 
 (deftest bugzilla-id-test
-  (let [gcc-repo    (gitp/load-repo (expand-home "~/opt/src/gcc"))
+  (let [gcc-repo    atom-finder.constants/gcc-repo
         results 
           [["97574c57cf26ace9b8609575bbab66465924fef7" #{}]
            ["98103e4a9e8ae9e52751c9e96ec46e6095181b69" #{["fortran" 61420] ["fortran" 78013]}]

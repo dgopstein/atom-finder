@@ -21,3 +21,12 @@ tramp
 
 .DS_Store
 tmp/
+/bible.txt
+/project.VC.VC.opendb
+/project.VC.db
+/project.sln
+/.vs/project/v14/.suo
+/Project1/Project1.vcxproj
+/Project1/Project1.vcxproj.filters
+/.vs/Clojure/v14/.suo
+/.vs/config/applicationhost.config
