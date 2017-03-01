@@ -263,7 +263,8 @@
 (defn resource-path
   "Find the path to a resource"
   [filename]
-  (.getPath (clojure.java.io/file (clojure.java.io/resource filename))))
+  (some->> filename clojure.java.io/resource clojure.java.io/file .getPath))
+
 
 (defn get-in-tree
   "Find a value in the AST by indexes"

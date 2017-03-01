@@ -3,8 +3,8 @@
             [clj-jgit.porcelain :as gitp]
             [omniconf.core :as cfg]))
 
-(cfg/populate-from-file (resource-path "conf.edn"))
-
+; If there's no specified configuration file, default to the travis-ci file
+(cfg/populate-from-file (some resource-path ["conf.edn" "travis-ci.edn"]))
 
 (def gcc-path (some->> :gcc-path cfg/get expand-home))
 (def ag-path  (some->> :ag-path  cfg/get expand-home))
