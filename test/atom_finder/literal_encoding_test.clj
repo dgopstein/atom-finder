@@ -39,8 +39,24 @@
       (doseq [[literal base] signed-cases]
         (testing (str "Which base is " literal " - " base)
           (is (= base (radix literal)))))
+      ))
 
-      )))
+  (testing "Radix shouldn't classify non-numeric contacts"
+    (let [cases [
+           ["123"   :dec]
+           ["012"   :oct]
+           ["0x2"   :hex]
+           ["0b1"   :bin]
+           ["\"123\"" :non-numeric]
+           ["true"    :non-numeric]
+           ["'a'"     :non-numeric]
+           ["a"       :non-literal]
+         ]]
+      (doseq [[literal base] cases]
+        (testing (str "Which base is " literal " - " base)
+          (is (= base (radix (parse-expr literal))))))
+    ))
+  )
 
 (deftest test-bitwise-op?
   (testing "Is this ASTNode a bitwise operation"
@@ -61,4 +77,27 @@
       (doseq [[expr expected] cases]
         (testing (str "Is this operator bitwise: " expr " - " expected)
           (is (= expected (bitwise-op? (parse-expr expr)))))))
+    ))
+
+(deftest test-literal-encoding?
+  (testing "Find examples of Literal Encoding atom"
+    (let [cases [
+            ["1 + 2"     false]
+            ["1 & 2"     true]
+            ["1 & 02"    true]
+            ["01 & 02"   false]
+            ["0x1 & 02"  false]
+            ["0x1 & 2"   true]
+            ["1 & 0x2"   true]
+            ["~1"        true] ; Maybe values <8 shouldn't be the atom
+            ["~8"        true]
+            ["~01"       false]
+            ["~0x1"      false]
+            ["!0x1"      false]
+            ["!1"        false]
+                 ]]
+
+      (doseq [[expr expected] cases]
+        (testing (str "Is this a literal encoding atom: " expr " - " expected)
+          (is (= expected (literal-encoding-atom? (parse-expr expr)))))))
     ))

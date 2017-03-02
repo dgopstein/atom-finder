@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression))
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression IASTLiteralExpression))
 
 (defmulti radix "In which base is the number specified" class)
 (s/defmethod radix String :- s/Keyword
@@ -15,8 +15,16 @@
                 :dec
   ))
 
-(s/defmethod radix IASTNode :- s/Keyword [n]
-  (radix (String. (.getValue n))))
+(s/defmethod radix IASTNode :- s/Keyword [n] :non-literal)
+
+(s/defmethod radix IASTLiteralExpression :- (s/maybe s/Keyword) [node]
+  (let [numeric-literal-types
+        #{IASTLiteralExpression/lk_float_constant
+          IASTLiteralExpression/lk_integer_constant}]
+    (or
+      (and (numeric-literal-types (.getKind node))
+           (radix (String. (.getValue node))))
+      :non-numeric)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      contexts for literal encoding     ;
@@ -41,3 +49,10 @@
   (contains? #{IASTUnaryExpression/op_tilde} (.getOperator node)))
 
 (defmethod bitwise-op? :default [x] false)
+
+(s/defn literal-encoding-atom? :- Boolean
+  "Change of Literal Encoding atom classifier"
+  [node :- IASTNode]
+  (and (bitwise-op? node)
+       (any-true? (children node)
+  )))
