@@ -15,18 +15,17 @@
                 :dec
   ))
 
-(s/defmethod radix IASTNode :- s/Keyword [n :- IASTNode]
+(s/defmethod radix IASTNode :- s/Keyword [n]
   (radix (String. (.getValue n))))
 
-(s/defmethod bitwise-op? s/Bool [n :- IASTNode]
-  (condp instance
-      IASTBinaryExpression (bitwise-binary-op? n)
-      IASTUnaryExpression  (bitwise-unary-op? n)))
+(defmulti bitwise-op? "Check if an ASTNode represents a bitwise operator" class)
+(s/defmethod bitwise-op? IASTBinaryExpression :- s/Bool [n] false)
+(s/defmethod bitwise-op? IASTUnaryExpression :- s/Bool [n] false)
 
-&  bitwise AND
-|  bitwise inclusive OR
-^  bitwise XOR (eXclusive OR)
-<<  left shift
->>  right shift
-~  bitwise NOT (one's complement) (unary)
+; &  bitwise AND
+; |  bitwise inclusive OR
+; ^  bitwise XOR (eXclusive OR)
+; <<  left shift
+; >>  right shift
+; ~  bitwise NOT (one's complement) (unary)
 
