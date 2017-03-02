@@ -1,4 +1,4 @@
-# atom-finder ![Build Status](https://travis-ci.org/dgopstein/atom-finder.svg?branch=master)
+# atom-finder [![Build Status](https://travis-ci.org/dgopstein/atom-finder.svg?branch=master)](https://travis-ci.org/dgopstein/atom-finder)
 
 A Clojure library for finding [Atoms of Confusion](https://atomsofconfusion.com) in C projects.
 
