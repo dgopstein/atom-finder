@@ -36,8 +36,29 @@
                                           [(str "+" s) b]]) cases)
           ]
 
-    (doseq [[literal base] signed-cases]
-      (testing (str "Which base is " literal " - " base)
-        (is (= base (radix literal)))))
+      (doseq [[literal base] signed-cases]
+        (testing (str "Which base is " literal " - " base)
+          (is (= base (radix literal)))))
 
       )))
+
+(deftest test-bitwise-op?
+  (testing "Is this ASTNode a bitwise operation"
+    (let [cases [
+            ["1 + 2"     false]
+            ["1 & 2"     true]
+            ["'a' & 'b'" true]
+            ["1 && 2"    false]
+            ["1 &= 2"    true]
+            ["1 << 2"    true]
+            ["\"abc\" << \"def\"" true]
+            ["~1"        true]
+            ["!1"        false]
+            ["1?2:3"     false]
+            ["1"         false]
+                 ]]
+
+      (doseq [[expr expected] cases]
+        (testing (str "Is this operator bitwise: " expr " - " expected)
+          (is (= expected (bitwise-op? (parse-expr expr)))))))
+    ))

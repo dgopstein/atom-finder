@@ -18,14 +18,26 @@
 (s/defmethod radix IASTNode :- s/Keyword [n]
   (radix (String. (.getValue n))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;      contexts for literal encoding     ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; - Decimals used in bitwise operations
+; - Chars used in arithmetic operations? ('A' - 'a') is pretty legit though?
+
 (defmulti bitwise-op? "Check if an ASTNode represents a bitwise operator" class)
-(s/defmethod bitwise-op? IASTBinaryExpression :- s/Bool [n] false)
-(s/defmethod bitwise-op? IASTUnaryExpression :- s/Bool [n] false)
 
-; &  bitwise AND
-; |  bitwise inclusive OR
-; ^  bitwise XOR (eXclusive OR)
-; <<  left shift
-; >>  right shift
-; ~  bitwise NOT (one's complement) (unary)
+(s/defmethod bitwise-op? IASTBinaryExpression :- s/Bool [node]
+  (let [bitwise-ops #{
+          IASTBinaryExpression/op_binaryAnd  IASTBinaryExpression/op_binaryAndAssign
+          IASTBinaryExpression/op_binaryOr   IASTBinaryExpression/op_binaryOrAssign
+          IASTBinaryExpression/op_binaryXor  IASTBinaryExpression/op_binaryXorAssign
+          IASTBinaryExpression/op_shiftLeft  IASTBinaryExpression/op_shiftLeftAssign
+          IASTBinaryExpression/op_shiftRight IASTBinaryExpression/op_shiftRightAssign
+                      }]
+  (contains? bitwise-ops (.getOperator node))))
 
+(s/defmethod bitwise-op? IASTUnaryExpression :- s/Bool [node]
+  (contains? #{IASTUnaryExpression/op_tilde} (.getOperator node)))
+
+(defmethod bitwise-op? :default [x] false)
