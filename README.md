@@ -1,14 +1,9 @@
-# atom-finder
+# atom-finder ![Build Status](https://travis-ci.org/dgopstein/atom-finder.svg?branch=master)
 
-A Clojure library designed to ... well, that part is up to you.
+A Clojure library for finding [Atoms of Confusion](https://atomsofconfusion.com) in C projects.
 
-## Usage
-
-FIXME
-
-## License
-
-Copyright © 2016 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Facilities for
+ * Parsing C/C++ with Eclipse CDT library
+ * Finding specific patterns in an AST
+ * Traversing version histories through git
+ * Parsing commit logs for bug/patch IDs
