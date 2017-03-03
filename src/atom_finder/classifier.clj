@@ -48,6 +48,7 @@
    (ValidatedAtom :logic-as-control-flow     logic-as-control-flow-atom? logic-as-control-flow-atoms)
    (ValidatedAtom :conditional               conditional-atom?           (default-finder conditional-atom?))
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
+   (ValidatedAtom :literal-encoding          literal-encoding-atom?      (default-finder literal-encoding-atom?))
    ]
   )
 
