@@ -7,8 +7,8 @@
   ; This is a simplification. See for details:
   ; cdt/core/org.eclipse.cdt.core/parser/org/eclipse/cdt/internal/core/dom/parser/cpp/CPPASTLiteralExpression.java
   (condp re-find num
-    #"^[+-]?0x" :hex
-    #"^[+-]?0b" :bin
+    #"^[+-]?0[xX]" :hex
+    #"^[+-]?0[bB]" :bin
     #"^[+-]?0([^0-9]|$)" :dec ; Matches "0", "0.1" This may not technically be true buuuut...
     #"^[+-]?0.[0-9]*[.eE]" :dec ; There is no octal float in C
     #"^[+-]?0"  :oct
@@ -50,9 +50,34 @@
 
 (defmethod bitwise-op? :default [x] false)
 
-(s/defn literal-encoding-atom? :- Boolean
+(s/defn parse-binary-literal :- s/Int
+  "Parse a binary literal from string"
+  [s :- String]
+  (-> s
+      (str/replace #"[bB]" "")
+      (Long/parseLong 2)))
+
+(s/defn real-number? :- s/Bool
+  "Is the number represented by this string a Real number"
+  [s :- String]
+  (->> s
+       (re-find #"[.eE]")
+       boolean))
+
+(s/defn parse-numeric-literal :- (s/maybe s/Num)
+  "Parse any valid C++ numeric literal from a string for it's value"
+  [s-in :- String]
+  (let [s (str/replace s-in #"[uUlL]*$" "")] ; remove suffix
+    (condp contains? (radix s)
+          #{:oct :dec :hex} (if (real-number? s) (Double/parseDouble s) (Long/decode s))
+          #{:bin} (parse-binary-literal s)
+          nil)))
+
+(s/defn literal-encoding-atom? :- s/Bool
   "Change of Literal Encoding atom classifier"
   [node :- IASTNode]
   (and (bitwise-op? node)
-       (any-true? (children node)
-  )))
+       (any-true?
+         #(and (= :dec (radix %1)) (<= 8 (parse-numeric-literal (.toString %1))))
+         (children node)))
+  )

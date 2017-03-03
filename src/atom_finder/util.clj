@@ -61,6 +61,11 @@
 (defn slurp-lines [file]
     (str/split-lines (slurp file)))
 
+(defn close?
+  "Are two numbers approximately equal"
+  [tolerance x y]
+     (< (Math/abs (- x y)) tolerance))
+
 ;;;;;;;;
 ;;   Specific to this project
 ;;;;;;;

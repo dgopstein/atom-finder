@@ -1,4 +1,4 @@
-(ns atom-finder.classifier-test
+(ns atom-finder.literal-encoding-test
   (:require [clojure.test :refer :all]
             [schema.test]
             [atom-finder.util :refer :all]
@@ -14,6 +14,8 @@
           ["012"   :oct]
           ["0x2"   :hex]
           ["0b1"   :bin]
+          ["0X2"   :hex]
+          ["0B1"   :bin]
           ["0b0"   :bin]
           ["0"     :dec]
           ["0.0"   :dec]
@@ -79,22 +81,54 @@
           (is (= expected (bitwise-op? (parse-expr expr)))))))
     ))
 
-(deftest test-literal-encoding?
-  (testing "Find examples of Literal Encoding atom"
+(deftest test-parse-numeric-literal?
+  (testing "Get numeric value from a string"
+    (let [cases [
+            ["11"    11]
+            ["011"   9]
+            ["0x11"  17]
+            ["0b11"  3]
+            ["-11"   -11]
+            ["-011"  -9]
+            ["-0x11" -17]
+            ["-0b11" -3]
+            ["-0B11" -3]
+            ["0x10.1p2"   64.250000]
+            ["010e1"      100.000000]
+            ["0x10.1e3p2" 64.471680]
+            ["0x10e3.1p2" 17292.250000]
+            ["010.1e1"    101.000000]
+            ["12ul"  12]
+            ["012l"  10]
+            ["0x12u" 18]
+            [".012" 0.012]
+                 ]]
+
+      (doseq [[expr expected] cases]
+        (testing (str "Parse numeric literal from string: " expr " - " expected)
+          (is (close? 0.001 expected (parse-numeric-literal expr))))))
+    ))
+
+(deftest test-numeric-literal-parsing?
+  (testing "Find the value of numeric literal strings"
     (let [cases [
             ["1 + 2"     false]
-            ["1 & 2"     true]
-            ["1 & 02"    true]
+            ["1 & 2"     false]
+            ["9 & 2"     true]
+            ["1 & 02"    false]
+            ["9 & 02"    true]
             ["01 & 02"   false]
             ["0x1 & 02"  false]
-            ["0x1 & 2"   true]
-            ["1 & 0x2"   true]
-            ["~1"        true] ; Maybe values <8 shouldn't be the atom
+            ["0x1 & 2"   false]
+            ["0x1 & 9"   true]
+            ["1 & 0x2"   false]
+            ["9 & 0x2"   true]
+            ["~1"        false]
             ["~8"        true]
-            ["~01"       false]
-            ["~0x1"      false]
-            ["!0x1"      false]
-            ["!1"        false]
+            ["~011"       false]
+            ["~0x11"      false]
+            ["!0x11"      false]
+            ["!11"        false]
                  ]]
 
       (doseq [[expr expected] cases]
