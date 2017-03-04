@@ -14,7 +14,25 @@
    filepath
    slurp-lines
    (map #(re-find #"<true>" %))
-   (keep-indexed #(if %2 %1))))
+   (keep-indexed #(if %2 (inc %1)))))
+
+(deftest test-post-*crement-atom?
+  (testing "post-*crement? finds all atoms in c file"
+    (let [filepath   (resource-path "post-increment.c")
+          expected   (true-lines filepath)
+          lines  (->> filepath
+                      tu
+                      post-*crement-atoms
+                      (map loc)
+                      (map :line))]
+
+     (is (= expected lines))
+    )))
+
+(defn post-*crement-atom? [node]
+  ))
+
+(remove #{2} [1 2 3])
 
 (def tree (->>
             "post-increment.c"
