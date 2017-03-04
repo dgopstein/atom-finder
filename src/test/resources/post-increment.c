@@ -24,4 +24,12 @@ int main() {
   if (a < b) { a++; b; }; // <false>
 
   putchar(b++); // <true>
+
+  *(a++); // <true>
+
+  while (a++) ; // <true>
+
+  int y = a++; // <true>
+
+  y = (a++, b); // <true>
 }
