@@ -19,32 +19,3 @@
 
      ; (is (= expected lines))
     )))
-
-(def tree (->>
-            "assignment-as-value.c"
-            resource-path
-            tu
-            ))
-      (def f1 (get-in-tree [0 2 1] tree)) ; false
-      (def t1 (get-in-tree [0 2 2 0] tree)) ; true
-      (def t2 (get-in-tree [0 2 3 1] tree)) ; true
-      (def t2 (get-in-tree [0 2 4] tree))   ; true
-      (def f2 (get-in-tree [0 2 5 2] tree)) ; false
-      (def t3 (get-in-tree [0 2 6] tree)) ; true
-
-  (write-ast t1)
-  (map write-ast (children t2))
-
-  (write-ast f1)
-  (typename f1)
- )
-
-(->>
- "assignment-as-value.c"
- resource-path
- tu
- ;(get-in-tree [0 2 3]) ; false
- (get-in-tree [0 2 4]) ; false
- children
- (map typename)
- )

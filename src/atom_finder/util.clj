@@ -351,3 +351,12 @@
   (if-let [[k v] (find m k)]
     v
         (throw (Exception. (str "Key Not Found " k)))))
+
+(defn true-lines
+  "Find all lines marked with <true> in test file"
+  [filepath]
+  (->>
+   filepath
+   slurp-lines
+   (map #(re-find #"<true>" %))
+   (keep-indexed #(if %2 (inc %1)))))

@@ -49,6 +49,7 @@
    (ValidatedAtom :conditional               conditional-atom?           (default-finder conditional-atom?))
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
    (ValidatedAtom :literal-encoding          literal-encoding-atom?      (default-finder literal-encoding-atom?))
+   (ValidatedAtom :post-increment            post-*crement-atom?         (default-finder post-*crement-atom?))
    ]
   )
 

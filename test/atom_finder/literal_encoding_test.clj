@@ -125,6 +125,7 @@
             ["9 & 0x2"   true]
             ["~1"        false]
             ["~8"        true]
+            ["~9"        true]
             ["~011"       false]
             ["~0x11"      false]
             ["!0x11"      false]

@@ -24,5 +24,4 @@ int main() {
   if (a < b) { a++; b; }; // <false>
 
   putchar(b++); // <true>
-
 }

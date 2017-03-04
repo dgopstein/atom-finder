@@ -82,6 +82,6 @@
               ; dec and oct are the same for numbers lower than 8
               ; so bitwise comparisons for literals lower than 8
               ; probably aren't confusing
-              (< 8 (parse-numeric-literal (.toString %1))))
+              (>= (parse-numeric-literal (.toString %1)) 8))
          (children node)))
   )
