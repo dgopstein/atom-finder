@@ -20,7 +20,6 @@
 (defn remove-wrappers
   "Drill down the tree past expressions that just return the value of their direct children"
   [node]
-  ;(print (str "kid: |" (write-ast node) "| "))
   (let [new-node
         (cond 
           ; comma operators only return the value of their second operand
@@ -34,11 +33,10 @@
       (remove-wrappers new-node))))
 
 (defn value-consuming-children
-  "e.g. The first and third arguments of a for loop don't use the values of their expression, but the second one does, so return that one"
+  "Return the children of this node who's values will be used. e.g. The first and third clauses of a for loop don't use the values of their expression, but the second one does, so return that one"
   [node]
   (condp instance? node
-    IASTForStatement   [(.getConditionalExpression node)]
-   ;IASTExpressionList (remove #{(first (children node))} ++kids)
+    IASTForStatement   [(.getConditionExpression node)]
     (children node)))
 
 (defn post-*crement-atom? [node]
@@ -46,15 +44,11 @@
   (and (not (any-true? #(% node) [(partial instance? IASTExpressionList)
                                   (partial instance? IASTExpressionStatement)
                                   paren-node?]))
-
-       (let [kids         (value-consuming-children node)
-             salient-kids (map remove-wrappers kids)
-             ++kids   (filter post-*crement? salient-kids)
-             ]
-         
-           (not (empty? ++kids))
-         )))
-
+       (->> node
+            value-consuming-children
+            (map remove-wrappers)
+            (any-true? post-*crement?)
+            )))
 
 (defn post-*crement-not-atom?
   "Is this node a post-*crement that isn't an atom?"

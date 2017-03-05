@@ -49,6 +49,8 @@
 (defn tap [f x] (f x) x)
 (defn pap [x] (tap prn x))
 
+(def not-empty? (comp not empty?))
+
 (defn sym-diff
   "Set symmetric difference - the opposite of the intersection"
   [& args]
