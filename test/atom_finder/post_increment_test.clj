@@ -13,9 +13,20 @@
           expected   (true-lines filepath)
           lines  (->> filepath
                       tu
-                      ((:finder (:post-increment atom-lookup)))
+                      ((atom-finder.classifier/default-finder post-*crement-atom?))
                       (map loc)
                       (map :line))]
 
-     (is (= expected lines))
+     (is (empty? (sort (sym-diff (set expected) (set lines))))
     )))
+
+  (->>
+((atom-finder.classifier/default-finder post-*crement-atom?) (parse-expr "y = (a++, b)"))
+(map write-ast))
+
+  (->>
+   ;"(a, b++)"
+   "a, b++"
+   parse-expr
+   post-*crement-atom?
+   )

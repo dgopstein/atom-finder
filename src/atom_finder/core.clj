@@ -12,12 +12,14 @@
 (defn -main
   [& args]
 
-  (if (not (.exists (io/file gcc-path)))
-    (errln (str "Many aspects of this project rely on the existence of " gcc-path " and you don't have anything there!")))
-
   (print-atoms-in-dir
    (expand-home "~/opt/src/redis")
-   (map atom-lookup [:preprocessor-in-statement :reversed-subscript]))
+   ;(map atom-lookup [:post-increment])
+   [{:name :post-*crement-not-atom, :finder
+     (atom-finder.classifier/default-finder
+      (fn [node] (and (post-*crement? node)
+                      (not (post-*crement-atom? node)))))}]
+   )
 )
 
 (defn dedupe-preprocessors
@@ -40,6 +42,7 @@
 
 
 (defn found-atom-source
+  "Return the source code for an atom found in a file"
   [atom-name results]
   (->> results
        (filter #(not-empty (atom-name (last %))))
@@ -55,3 +58,10 @@
 ;(def psgl (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/preprocessor_subscript_gcc_linux_2017-02-13.edn")))))
 ;(pprint (sum-found-atoms (dedupe-preprocessors psgl)))
 ; (found-atom-source :reversed-subscript psgl)
+(def psgl (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/redis_post_increment_2017-03-04.edn")))))
+(def psgl (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/redis_not_post_increment_2017-03-04.edn")))))
+(pprint (sum-found-atoms psgl))
+(found-atom-source :post-increment psgl)
+(found-atom-source :post-*crement-not-atom psgl)
+
+gcc-repo

@@ -1,6 +1,7 @@
 (ns atom-finder.util
   (:require [clojure.reflect :as r]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
            [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit]
@@ -47,6 +48,13 @@
 
 (defn tap [f x] (f x) x)
 (defn pap [x] (tap prn x))
+
+(defn sym-diff
+  "Set symmetric difference - the opposite of the intersection"
+  [& args]
+  (clojure.set/difference
+   (apply clojure.set/union args)
+   (apply clojure.set/intersection args)))
 
 (def any-true? (comp boolean some))
 (defn exists?
@@ -182,6 +190,11 @@
           reverse
           (apply function)))))
 
+(defn all-parents
+  "Get the all grandparents of the node"
+  [node]
+  (take-while some? (iterate parent node)))
+
 (defn ancestor
   "Get the nth grandparent of the node"
   [n node]
@@ -289,11 +302,12 @@
           (pmap
            (fn [file]
              (let [filename (.getPath file)]
-               (try
+               ;(try
                  (f (tu filename))
-                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
-                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
-                 )))
+                ; (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
+                ; (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
+                ; )
+             ))
 
            (c-files dirname)))
 

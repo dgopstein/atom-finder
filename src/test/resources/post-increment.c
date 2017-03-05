@@ -27,9 +27,35 @@ int main() {
 
   *(a++); // <true>
 
+  (*a)++; // <false>
+
   while (a++) ; // <true>
 
   int y = a++; // <true>
 
-  y = (a++, b); // <true>
+  y = (a++, b); // <false>
+
+  y = (a, b++); // <true>
+
+  (a++, b); // <false>
+
+  (a, b++); // <false>
+
+  (a, y = b++); // <true>
+
+  (y = a++, b); // <true>
+
+  (y = a++, y = b++); // <true>
+
+  for (int i = 0; i < a; b++, i++) ; // <false>
+
+  while (a && b--) ; // <true>
+
+  *a++ = b; // <true>
+
+  se->id = server.slowlog_entry_id++; // <true>
+
+  a[b++]; // <true>
+
+  putchar(a->b++); // <true>
 }
