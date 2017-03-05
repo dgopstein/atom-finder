@@ -58,10 +58,10 @@
    (apply clojure.set/union args)
    (apply clojure.set/intersection args)))
 
-(def any-true? (comp boolean some))
+(def any-pred? (comp boolean some))
 (defn exists?
-  ([lst] (any-true? true? lst))
-  ([pred lst] (any-true? pred lst)))
+  ([lst] (any-pred? true? lst))
+  ([pred lst] (any-pred? pred lst)))
 
 (def range-from (partial iterate inc))
 

@@ -77,7 +77,7 @@
   "Change of Literal Encoding atom classifier"
   [node :- IASTNode]
   (and (bitwise-op? node)
-       (any-true?
+       (any-pred?
         #(and (= :dec (radix %1))
               ; dec and oct are the same for numbers lower than 8
               ; so bitwise comparisons for literals lower than 8

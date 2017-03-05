@@ -18,7 +18,7 @@
    [{:name :post-*crement-not-atom, :finder
      (atom-finder.classifier/default-finder
       (fn [node] (and (post-*crement? node)
-                      (not (any-true? post-*crement-atom? (all-parents node))))))}]
+                      (not (any-pred? post-*crement-atom? (all-parents node))))))}]
    )
 )
 

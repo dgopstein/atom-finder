@@ -41,20 +41,20 @@
 
 (defn post-*crement-atom? [node]
   ; certain nodes can never "use" the value of an expression
-  (and (not (any-true? #(% node) [(partial instance? IASTExpressionList)
+  (and (not (any-pred? #(% node) [(partial instance? IASTExpressionList)
                                   (partial instance? IASTExpressionStatement)
                                   paren-node?]))
        (->> node
             value-consuming-children
             (map remove-wrappers)
-            (any-true? post-*crement?)
+            (any-pred? post-*crement?)
             )))
 
 (defn post-*crement-not-atom?
   "Is this node a post-*crement that isn't an atom?"
   [node]
   (and (post-*crement? node)
-       (not (any-true? post-*crement-atom? (all-parents node)))))
+       (not (any-pred? post-*crement-atom? (all-parents node)))))
 
 ; Check if we miss any instances of the atom:
 ;  (print-atoms-in-dir
