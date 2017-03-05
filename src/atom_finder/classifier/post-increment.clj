@@ -21,7 +21,7 @@
   "Drill down the tree past expressions that just return the value of their direct children"
   [node]
   (let [new-node
-        (cond 
+        (cond
           ; comma operators only return the value of their second operand
           (instance? IASTExpressionList node) (last (children node))
           ; parenthesis just return their only child

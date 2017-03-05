@@ -304,11 +304,11 @@
           (pmap
            (fn [file]
              (let [filename (.getPath file)]
-               ;(try
+               (try
                  (f (tu filename))
-                ; (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
-                ; (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
-                ; )
+                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
+                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
+               )
              ))
 
            (c-files dirname)))
