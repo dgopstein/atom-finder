@@ -18,9 +18,10 @@
    [{:name :post-*crement-not-atom, :finder
      (atom-finder.classifier/default-finder
       (fn [node] (and (post-*crement? node)
-                      (not (post-*crement-atom? node)))))}]
+                      (not (any-true? post-*crement-atom? (all-parents node))))))}]
    )
 )
+
 
 (defn dedupe-preprocessors
   [results]
@@ -58,10 +59,10 @@
 ;(def psgl (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/preprocessor_subscript_gcc_linux_2017-02-13.edn")))))
 ;(pprint (sum-found-atoms (dedupe-preprocessors psgl)))
 ; (found-atom-source :reversed-subscript psgl)
-(def psgl (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/redis_post_increment_2017-03-04.edn")))))
-(def psgl (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/redis_not_post_increment_2017-03-04.edn")))))
-(pprint (sum-found-atoms psgl))
-(found-atom-source :post-increment psgl)
-(found-atom-source :post-*crement-not-atom psgl)
 
-gcc-repo
+;(def psgl2 (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/redis_post_increment_2017-03-04.edn")))))
+;(def psgl3 (read-string (slurp (clojure.java.io/file (ClassLoader/getSystemResource "data/redis_not_post_increment_2017-03-04.edn")))))
+;(pprint (sum-found-atoms psgl2))
+;(pprint (sum-found-atoms psgl3))
+;(found-atom-source :post-increment psgl)
+;(found-atom-source :post-*crement-not-atom psgl)

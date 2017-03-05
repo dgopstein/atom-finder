@@ -18,15 +18,4 @@
                       (map :line))]
 
      (is (empty? (sort (sym-diff (set expected) (set lines))))
-    )))
-
-  (->>
-((atom-finder.classifier/default-finder post-*crement-atom?) (parse-expr "y = (a++, b)"))
-(map write-ast))
-
-  (->>
-   ;"(a, b++)"
-   "a, b++"
-   parse-expr
-   post-*crement-atom?
-   )
+    ))))
