@@ -19,7 +19,7 @@
 
 (defn classifier-files []
   (->> "atom_finder/classifier/"
-       ClassLoader/getSystemResource 
+       ClassLoader/getSystemResource
        clojure.java.io/file
        file-seq
        (map (memfn getName))
@@ -52,11 +52,8 @@
    (ValidatedAtom :logic-as-control-flow     logic-as-control-flow-atom? logic-as-control-flow-atoms)
    (ValidatedAtom :conditional               conditional-atom?           (default-finder conditional-atom?))
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
-   (ValidatedAtom :comma                     comma-atom?                      (default-finder comma-atom?))
-   (ValidatedAtom :post-increment-decrement  post-increment-decrement-atom?   post-increment-decrement-atoms)
-   (ValidatedAtom :pre-increment-decrement   pre-increment-decrement-atom?    pre-increment-decrement-atoms)
-   (ValidatedAtom :curly-braces              curly-braces-atom?               (default-finder curly-braces-atom?))
-   ]
-  )
+   (ValidatedAtom :literal-encoding          literal-encoding-atom?      (default-finder literal-encoding-atom?))
+   (ValidatedAtom :post-increment            post-*crement-atom?         (default-finder post-*crement-atom?))
+  ))
 
 (def atom-lookup (into {} (map #(vector (:name %1) %1) atoms)))

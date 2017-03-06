@@ -1,6 +1,7 @@
 (ns atom-finder.util
   (:require [clojure.reflect :as r]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
            [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit]
@@ -48,10 +49,19 @@
 (defn tap [f x] (f x) x)
 (defn pap [x] (tap prn x))
 
-(def any-true? (comp boolean some))
+(def not-empty? (comp not empty?))
+
+(defn sym-diff
+  "Set symmetric difference - the opposite of the intersection"
+  [& args]
+  (clojure.set/difference
+   (apply clojure.set/union args)
+   (apply clojure.set/intersection args)))
+
+(def any-pred? (comp boolean some))
 (defn exists?
-  ([lst] (any-true? true? lst))
-  ([pred lst] (any-true? pred lst)))
+  ([lst] (any-pred? true? lst))
+  ([pred lst] (any-pred? pred lst)))
 
 (def range-from (partial iterate inc))
 
@@ -60,6 +70,11 @@
 
 (defn slurp-lines [file]
     (str/split-lines (slurp file)))
+
+(defn close?
+  "Are two numbers approximately equal"
+  [tolerance x y]
+     (< (Math/abs (- x y)) tolerance))
 
 ;;;;;;;;
 ;;   Specific to this project
@@ -177,6 +192,11 @@
           reverse
           (apply function)))))
 
+(defn all-parents
+  "Get the all grandparents of the node"
+  [node]
+  (take-while some? (iterate parent node)))
+
 (defn ancestor
   "Get the nth grandparent of the node"
   [n node]
@@ -263,7 +283,8 @@
 (defn resource-path
   "Find the path to a resource"
   [filename]
-  (.getPath (clojure.java.io/file (clojure.java.io/resource filename))))
+  (some->> filename clojure.java.io/resource clojure.java.io/file .getPath))
+
 
 (defn get-in-tree
   "Find a value in the AST by indexes"
@@ -287,7 +308,8 @@
                  (f (tu filename))
                  (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
                  (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
-                 )))
+               )
+             ))
 
            (c-files dirname)))
 
@@ -345,3 +367,12 @@
   (if-let [[k v] (find m k)]
     v
         (throw (Exception. (str "Key Not Found " k)))))
+
+(defn true-lines
+  "Find all lines marked with <true> in test file"
+  [filepath]
+  (->>
+   filepath
+   slurp-lines
+   (map #(re-find #"<true>" %))
+   (keep-indexed #(if %2 (inc %1)))))

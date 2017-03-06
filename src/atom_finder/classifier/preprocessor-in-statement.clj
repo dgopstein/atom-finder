@@ -27,7 +27,7 @@
 (defn offset-parent?
   "True if this is deepest AST node that contains an offset"
   [node offset]
-  (and 
+  (and
    (contains-offset? node offset)
    (not (exists? #(contains-offset? % offset) (children node)))))
 
@@ -54,13 +54,13 @@
                                         ;in-expr?  (not (toplevel-offset? root offset))
         parent (offset-parent root (ret :offset))
         in-expr? (classifier parent)]
-            
+
             [ret in-expr?]))
 
 (defn preprocessors-in-contexts
   "return a list of all preprocessor directives inside of various contexts"
   [preprocessor-type context-classifier root]
-    (keep (fn [[md in-expr?]] (if in-expr? md)) 
+    (keep (fn [[md in-expr?]] (if in-expr? md))
           (for [md (preprocessor-type root)]
             (macro-in-contexts root md context-classifier))))
 
