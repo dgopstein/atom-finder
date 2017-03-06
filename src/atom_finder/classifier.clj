@@ -16,7 +16,7 @@
 
 (defn classifier-files []
   (->> "atom_finder/classifier/"
-       ClassLoader/getSystemResource 
+       ClassLoader/getSystemResource
        clojure.java.io/file
        file-seq
        (map (memfn getName))
