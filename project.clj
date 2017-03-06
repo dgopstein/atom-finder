@@ -15,7 +15,7 @@
                  [prismatic/schema "1.1.3"]
                  [com.grammarly/omniconf "0.2.5"] ;https://github.com/grammarly/omniconf
                  ]
-  :resource-paths ["resources/org.eclipse.cdt.core_5.6.0.201402142303.jar"
+  :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.0.dev.jar"
                    "src/test/resources"
                    "src/conf"]
