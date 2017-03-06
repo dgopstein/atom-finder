@@ -7,11 +7,8 @@
   (:import
    [org.eclipse.cdt.core.dom.ast IASTNode
     IASTExpression IASTStatement IASTTranslationUnit
-    IASTPreprocessorMacroDefinition IASTIfStatement IASTBinaryExpression
-    IASTCompoundStatement IASTForStatement IASTWhileStatement
-    IASTExpressionStatement]
-   [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit 
-    CPPASTExpressionList]
+    IASTPreprocessorMacroDefinition IASTIfStatement IASTBinaryExpression]
+   [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
    [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]
    [org.eclipse.cdt.internal.core.parser.scanner ASTMacroDefinition]))
 
@@ -44,7 +41,6 @@
           (s/fn ~(symbol (str name "-classifier")) :- Boolean [node# :- IASTNode] (~classifier node#))
           (s/fn ~(symbol (str name "-finder")) :- [IASTNode] [node# :- IASTNode] (~finder node#))
   ))
-  
 
 (def atoms
   [
@@ -54,6 +50,8 @@
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
    (ValidatedAtom :literal-encoding          literal-encoding-atom?      (default-finder literal-encoding-atom?))
    (ValidatedAtom :post-increment            post-*crement-atom?         (default-finder post-*crement-atom?))
-  ))
+   ]
+  )
+
 
 (def atom-lookup (into {} (map #(vector (:name %1) %1) atoms)))

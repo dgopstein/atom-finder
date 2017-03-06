@@ -1,6 +1,0 @@
-{
-  :gcc-path "~/opt/src/gcc",
-  :ag-path "~/opt/src/the_silver_searcher",
-  :big-root "~/opt/src/php-src/ext/sqlite3/libsqlite/sqlite3.c",
-  :github-top-c "~/opt/src/github-top-c"
-}
