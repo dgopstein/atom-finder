@@ -64,7 +64,6 @@
           (for [md (preprocessor-type root)]
             (macro-in-contexts root md context-classifier))))
 
-(defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
 (defn define-only [root] (filter #(instance? IASTPreprocessorMacroDefinition %) (all-preprocessor root)))
 
 (defn define-in-contexts

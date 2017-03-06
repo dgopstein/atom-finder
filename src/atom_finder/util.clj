@@ -4,9 +4,10 @@
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
-           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit]
+           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit IASTNodeLocation]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
+           [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
 ;;;;;;
@@ -76,6 +77,13 @@
   [tolerance x y]
      (< (Math/abs (- x y)) tolerance))
 
+(defn strict-get
+  "Lookup value in collection and throw exception if it doesn't exist"
+  [m k]
+  (if-let [[k v] (find m k)]
+    v
+        (throw (Exception. (str "Key Not Found " k)))))
+
 ;;;;;;;;
 ;;   Specific to this project
 ;;;;;;;
@@ -134,18 +142,18 @@
                    1 (f node)
                    2 (f node index))]
 
-     (conj 
+     (conj
            (doseq [iast-node kids]
              (pre-tree f iast-node (inc index)))
            ret))))
 
 (defn print-tree [node]
-  (letfn 
+  (letfn
       [(f [node index]
          (let [offset (format " (offset: %s, %s)"
                               (-> node .getFileLocation .getNodeOffset)
                               (-> node .getFileLocation .getNodeLength))]
-           
+
            (printf "%s -%s %s -> %s\n"
                    (apply str (repeat index "  "))
                    (-> node .getClass .getSimpleName)
@@ -154,7 +162,7 @@
                        (str "           ")
                        (.subSequence 0 10)
                        (.replaceAll "\n" " \\ ")))))]
-    
+
     (pre-tree f node)))
 
 (defn depth [node]
@@ -213,7 +221,7 @@
 
 (defn typename [node]
   (let [name (-> node .getClass .getSimpleName)]
-    (nth (re-find #"CPPAST(.*)" name) 1)))
+    (nth (re-find #"AST(.*)" name) 1)))
 
 (defn filter-depth
   "Return every sub-tree of size n"
@@ -333,23 +341,25 @@
   [code]
   (->> (str "int main() {\n" code ";\n}\n")
       parse-source
-      (get-in-tree [0 2 0 0]))) 
+      (get-in-tree [0 2 0 0])))
 
 (defn parse-stmt
   "Turn a single C expression into an AST"
   [code]
   (->> (str "int main() {\n" code "\n}\n")
       parse-source
-      (get-in-tree [0 2 0]))) 
+      (get-in-tree [0 2 0])))
 
-(defn loc
-  "Get location information about an AST node"
-  [node]
-  (let [loc    (.getFileLocation node)
-        offset (.getNodeOffset loc)
-        length (.getNodeLength loc)
-        line   (.getStartingLineNumber loc)]
+(defmulti loc "Get location information about an AST node" class)
+(defmethod loc ASTFileLocation [l]
+  (let [offset (.getNodeOffset l)
+        length (.getNodeLength l)
+        line   (.getStartingLineNumber l)]
     {:line line :offset offset :length length}))
+
+(defmethod loc Object
+  [node]
+  (loc (.getFileLocation node)))
 
 (defn errln "println to stderr" [s]
   (binding [*out* *err*] (println s)))
@@ -363,10 +373,7 @@
       (conj child-atoms node)
       child-atoms)))
 
-(defn strict-get [m k]
-  (if-let [[k v] (find m k)]
-    v
-        (throw (Exception. (str "Key Not Found " k)))))
+(defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
 
 (defn true-lines
   "Find all lines marked with <true> in test file"
