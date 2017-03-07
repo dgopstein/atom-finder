@@ -26,10 +26,11 @@
 
 (deftest parse-frag-test
   (testing "parse-expr"
-    (let [sanitize #(clojure.string/replace % #"\s+" " ")]
-      (let [c "1 + 3"]            (is (= (write-ast (parse-expr c)) (write-ast (parse-frag c)))))
-      (let [c "1 + 3;"]           (is (= (write-ast (parse-stmt c)) (write-ast (parse-frag c)))))
-      (let [c "{ 1 + 3; f(); } "] (is (= (write-ast (parse-stmt c)) (write-ast (parse-frag c)))))
+    (let [sanitize #(clojure.string/replace % #"\s+" " ")
+          cmp-frag (fn [parser code] (is (= (write-ast (parser code)) (write-ast (parse-frag code)))))]
+      (cmp-frag parse-expr "1 + 3")
+      (cmp-frag parse-stmt "1 + 3;")
+      (cmp-frag parse-stmt "{ 1 + 3; f(); } ")
     )))
 
 (deftest sym-diff-test

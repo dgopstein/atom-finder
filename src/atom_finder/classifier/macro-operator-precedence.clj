@@ -1,17 +1,13 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition)
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement)
         '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition))
 
 (def macro-expansions (comp (memfn getMacroExpansions) root-ancestor))
 (def macro-definitions (comp (memfn getMacroDefinitions) root-ancestor))
 
-(def macro-operator-precedence-atom? macro-def-precedence-atom?)
-(defn macro-def-precedence-atom?
-  "Is the definition of a macro prone to precedence issues"
-  [node]
-  (macro-definitions node)
-  )
 
+; Check to see whether there are multiple lines in a macro definition
+; TODO Technically this should check for multiple statements, not lines
 (s/defn multiline-macro? :- s/Bool
   [node :- IASTPreprocessorMacroDefinition]
   (let [loc (.getExpansionLocation node)]
@@ -21,17 +17,15 @@
 (defn all-multiline-macros [root]
   (filter multiline-macro? (macro-definitions root)))
 
-(defn do-wrapped-macro? [node] false)
+(s/defn do-wrapped-macro? :- s/Bool
+  [node :- IASTPreprocessorMacroDefinition]
+  (let [exp (.getExpansion node)]
+    (and (->> exp parse-stmt (instance? IASTDoStatement) not) ; avoid trailing semicolon
+         (->> (str exp ";") parse-stmt (instance? IASTDoStatement)))))
 
-(defmulti dangerous-precedence-macro-def? class)
-(defmethod dangerous-precedence-macro-def? ASTFunctionStyleMacroDefinition [node]
-  false)
-
-(defmethod dangerous-precedence-macro-def? ASTMacroDefinition [node]
-  (and (multiline-macro? node)
-       (not (do-wrapped-macro? node))))
-
-(->> "#define f(x) x?x:x
+(->> "
+#define f4(x) do { x; } while(0)
+#define f(x) x?x:x
 #define f2(x) x?x:x
 #define f3 x?x:x
 int main() {
@@ -41,14 +35,32 @@ int main() {
 }"
      parse-source
      macro-definitions
-     ;(map (memfn toString))
-     ;(map (memfn getMacroDefinition))
-     ;first
-     pprint
+     first
+     .getExpansion
+     parse-stmt ; NEEDS TO ACCOUNT FOR MISSING SEMICOLON
+     ;(instance? IASTDoStatement)
      )
-; => #object[org.eclipse.cdt.internal.core.parser.scanner.ASTMacroExpansion 0x3c885ca1 "f(2)"]
-;IASTBinaryExpression/op_multiply
 
+(defn all-do-wrapped-macros [root]
+  (filter do-wrapped-macro? (macro-definitions root)))
 
-;(print-tree (parse-expr "!x*y"))
-;(print-tree (parse-expr "!(x*y)"))
+(defmulti dangerous-precedence-macro-def? class)
+(defmethod dangerous-precedence-macro-def? ASTFunctionStyleMacroDefinition [node]
+  ((some-fn dangerous-multiline?) node))
+
+(defmethod dangerous-precedence-macro-def? ASTMacroDefinition [node]
+  ((some-fn dangerous-multiline?) node))
+
+(defn dangerous-multiline? [node]
+  (and (multiline-macro? node)
+       (not (do-wrapped-macro? node))))
+
+(defn macro-def-precedence-atoms
+  "Is the definition of a macro prone to precedence issues"
+  [node]
+  (->> node
+       macro-definitions
+       (filter dangerous-precedence-macro-def?)
+       )
+  )
+(def macro-operator-precedence-atoms macro-def-precedence-atoms)
