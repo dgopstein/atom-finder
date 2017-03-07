@@ -1,12 +1,13 @@
 (ns atom-finder.util
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
+            [schema.core :as s]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
-           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit IASTNodeLocation]
+           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTExpression IASTTranslationUnit IASTNodeLocation]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
-           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
+           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit CPPASTProblemStatement]
            [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
@@ -339,16 +340,64 @@
 (defn parse-expr
   "Turn a single C expression into an AST"
   [code]
-  (->> (str "int main() {\n" code ";\n}\n")
-      parse-source
-      (get-in-tree [0 2 0 0])))
+  (->> (str code ";")
+      parse-stmt
+      (get-in-tree [0])))
 
 (defn parse-stmt
-  "Turn a single C expression into an AST"
+  "Turn a single C statement into an AST"
   [code]
   (->> (str "int main() {\n" code "\n}\n")
       parse-source
       (get-in-tree [0 2 0])))
+
+;(s/defn right-neighbor :- IASTNode
+;  "Find the element to the right of this one in the AST"
+;  [node :- IASTNode]
+;  (let [kids (children (parent node))
+;        node-pos (.indexOf kids node)]
+;
+;    (nth kids (inc node-pos))))
+;
+;  (->> node
+;       parent
+;       children
+;       (flip (memfn indexOf) node)
+;       (nth
+;       )
+;  )
+
+(defn find-after
+  "Take the element after the specified one"
+  [coll elem]
+  (->> (map vector coll (rest coll))
+       (filter #(= elem (first %)))
+       first
+       last))
+
+; core/org.eclipse.cdt.core/parser/org/eclipse/cdt/internal/core/dom/rewrite/changegenerator/ChangeGenerator.java:getNextSiblingNode(IASTNode node)
+(s/defn next-sibling :- (s/maybe IASTNode)
+  [node :- IASTNode]
+  (let [parent-node (parent node)
+        siblings
+          (condp instance? parent-node
+                ICPPASTNamespaceDefinition (.getDeclarations (cast ICPPASTNamespaceDefinition) true)
+                IASTCompositeTypeSpecifier (.getDeclarations (cast IASTCompositeTypeSpecifier) true)
+                (children parent-node))]
+
+        (find-after siblings node)))
+
+(s/defn stmt-str? :- s/Bool
+  [code :- String]
+  (let [stmt-parse (parse-stmt code)]
+    ; if the code isn't a statement the next node will be a problem statement
+    (not (instance? CPPASTProblemStatement (next-sibling stmt-parse)))
+  ))
+
+(defn parse-frag
+  "Turn a single C fragment (statement or expression) into an AST"
+  [code]
+  ((if (stmt-str? code) parse-stmt parse-expr) code))
 
 (defmulti loc "Get location information about an AST node" class)
 (defmethod loc ASTFileLocation [l]
