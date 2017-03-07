@@ -89,7 +89,7 @@
 
     (let [lines  (->> (resource-path "conditional.c")
                       tu
-                      (atoms-in-tree conditional-atom?)
+                      (filter-tree conditional-atom?)
                       (map loc)
                       (map :line))]
 
@@ -147,7 +147,7 @@
 
     (let [lines  (->> (resource-path "reversed-subscript.c")
                       tu
-                      (atoms-in-tree reversed-subscript-atom?)
+                      (filter-tree reversed-subscript-atom?)
                       (map loc)
                       (map :line))]
 

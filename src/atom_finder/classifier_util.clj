@@ -6,7 +6,7 @@
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTUnaryExpression]))
 
-(defn default-finder [classifier] (partial atoms-in-tree classifier))
+(defn default-finder [classifier] (partial filter-tree classifier))
 
 (defn paren-node?
   "Does this node just represent ()'s"

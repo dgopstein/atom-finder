@@ -240,15 +240,6 @@
         matches     (filter func kids)]
     (concat matches kid-matches)))
 
-;(defn atoms-in-tree
-;  "Return all instances of atom in an AST"
-;  [atom-classifier node]
-;  (let [child-atoms
-;        (mapcat (partial atoms-in-tree atom-classifier) (children node))]
-;    (if (atom-classifier node)
-;      (conj child-atoms node)
-;      child-atoms)))
-
 (defn filter-type
   "Return every example of type"
   [type node]
@@ -406,14 +397,5 @@
 
 (defn errln "println to stderr" [s]
   (binding [*out* *err*] (println s)))
-
-(defn atoms-in-tree
-  "Return all instances of atom in an AST"
-  [atom-classifier node]
-  (let [child-atoms
-        (mapcat (partial atoms-in-tree atom-classifier) (children node))]
-    (if (atom-classifier node)
-      (conj child-atoms node)
-      child-atoms)))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
