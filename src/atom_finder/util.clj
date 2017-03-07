@@ -374,12 +374,3 @@
       child-atoms)))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
-
-(defn true-lines
-  "Find all lines marked with <true> in test file"
-  [filepath]
-  (->>
-   filepath
-   slurp-lines
-   (map #(re-find #"<true>" %))
-   (keep-indexed #(if %2 (inc %1)))))
