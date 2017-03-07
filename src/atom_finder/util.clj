@@ -351,22 +351,6 @@
       parse-source
       (get-in-tree [0 2 0])))
 
-;(s/defn right-neighbor :- IASTNode
-;  "Find the element to the right of this one in the AST"
-;  [node :- IASTNode]
-;  (let [kids (children (parent node))
-;        node-pos (.indexOf kids node)]
-;
-;    (nth kids (inc node-pos))))
-;
-;  (->> node
-;       parent
-;       children
-;       (flip (memfn indexOf) node)
-;       (nth
-;       )
-;  )
-
 (defn find-after
   "Take the element after the specified one"
   [coll elem]

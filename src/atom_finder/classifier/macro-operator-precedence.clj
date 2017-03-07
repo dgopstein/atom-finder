@@ -1,5 +1,6 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition))
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition)
+        '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition))
 
 (def macro-expansions (comp (memfn getMacroExpansions) root-ancestor))
 (def macro-definitions (comp (memfn getMacroDefinitions) root-ancestor))
@@ -11,32 +12,20 @@
   (macro-definitions node)
   )
 
+(s/defn multiline-macro? :- s/Bool
+  [node :- IASTPreprocessorMacroDefinition]
+  (let [loc (.getExpansionLocation node)]
+    (< 1 (- (.getEndingLineNumber loc)
+            (.getStartingLineNumber loc)))))
+
 (defn all-multiline-macros [root]
   (filter multiline-macro? (macro-definitions root)))
-(defn multiline-macro? [node]
-  (pprint node)
-  )
 
-(->> "#define f(x) x?x:x
-#define f2(x) x?x:x
-#define f3 x?x:x
-int main() {
-
-  f(2);
-  f(3);
-}"
-     parse-source
-     macro-definitions
-     first
-     .getExpansion
-     parse-fragment
-     )
-
-(defn do-wrapped-macro? [node])
+(defn do-wrapped-macro? [node] false)
 
 (defmulti dangerous-precedence-macro-def? class)
 (defmethod dangerous-precedence-macro-def? ASTFunctionStyleMacroDefinition [node]
-  )
+  false)
 
 (defmethod dangerous-precedence-macro-def? ASTMacroDefinition [node]
   (and (multiline-macro? node)
