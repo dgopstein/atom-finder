@@ -1,5 +1,6 @@
 (ns atom-finder.classifier
   (:require [atom-finder.util :refer :all]
+            [atom-finder.classifier-util :refer :all]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
@@ -28,8 +29,6 @@
 ; Load all files in the classifier directory
 (apply load (classifier-files))
 
-(defn default-finder [classifier] (partial atoms-in-tree classifier))
-
 (def AtomName s/Keyword)
 (def AtomClassifier s/Keyword)
 (s/defrecord Atom [name classifier finder])
@@ -52,6 +51,5 @@
    (ValidatedAtom :post-increment            post-*crement-atom?         (default-finder post-*crement-atom?))
    ]
   )
-
 
 (def atom-lookup (into {} (map #(vector (:name %1) %1) atoms)))

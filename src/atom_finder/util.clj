@@ -5,9 +5,9 @@
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
-           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTExpression IASTTranslationUnit IASTNodeLocation]
+           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition IASTCompositeTypeSpecifier ASTVisitor IASTNode]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
-           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit CPPASTProblemStatement]
+           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
            [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
@@ -240,6 +240,15 @@
         matches     (filter func kids)]
     (concat matches kid-matches)))
 
+;(defn atoms-in-tree
+;  "Return all instances of atom in an AST"
+;  [atom-classifier node]
+;  (let [child-atoms
+;        (mapcat (partial atoms-in-tree atom-classifier) (children node))]
+;    (if (atom-classifier node)
+;      (conj child-atoms node)
+;      child-atoms)))
+
 (defn filter-type
   "Return every example of type"
   [type node]
@@ -337,19 +346,19 @@
   [code]
   (mem-tu "anonymously-parsed-code.c" code))
 
-(defn parse-expr
-  "Turn a single C expression into an AST"
-  [code]
-  (->> (str code ";")
-      parse-stmt
-      (get-in-tree [0])))
-
 (defn parse-stmt
   "Turn a single C statement into an AST"
   [code]
   (->> (str "int main() {\n" code "\n}\n")
       parse-source
       (get-in-tree [0 2 0])))
+
+(defn parse-expr
+  "Turn a single C expression into an AST"
+  [code]
+  (->> (str code ";")
+      parse-stmt
+      (get-in-tree [0])))
 
 (defn find-after
   "Take the element after the specified one"
@@ -382,6 +391,7 @@
   "Turn a single C fragment (statement or expression) into an AST"
   [code]
   ((if (stmt-str? code) parse-stmt parse-expr) code))
+
 
 (defmulti loc "Get location information about an AST node" class)
 (defmethod loc ASTFileLocation [l]

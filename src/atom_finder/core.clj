@@ -3,6 +3,7 @@
             [atom-finder.count-subtrees :refer :all]
             [atom-finder.constants :refer :all]
             [atom-finder.util :refer :all]
+            [atom-finder.classifier-util :refer :all]
             [atom-finder.atoms-in-dir :refer :all]
             [clojure.pprint :refer [pprint]]
             [clojure.data.csv :as csv]
@@ -16,7 +17,7 @@
    (expand-home "~/opt/src/redis")
    ;(map atom-lookup [:post-increment])
    [{:name :post-*crement-not-atom, :finder
-     (atom-finder.classifier/default-finder
+     (default-finder
       (fn [node] (and (post-*crement? node)
                       (not (any-pred? post-*crement-atom? (all-parents node))))))}]
    )

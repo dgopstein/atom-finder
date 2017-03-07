@@ -3,6 +3,7 @@
             [schema.test]
             [atom-finder.util :refer :all]
             [atom-finder.test-util :refer :all]
+            [atom-finder.classifier-util :refer :all]
             [atom-finder.classifier :refer :all]
             ))
 

@@ -17,39 +17,57 @@
 (defn all-multiline-macros [root]
   (filter multiline-macro? (macro-definitions root)))
 
+(s/defn paren-wrapped-macro? :- s/Bool
+  [node :- IASTPreprocessorMacroDefinition]
+  (let [exp (.getExpansion node)]
+    (->> exp parse-stmt paren-node?)))
+
 (s/defn do-wrapped-macro? :- s/Bool
   [node :- IASTPreprocessorMacroDefinition]
   (let [exp (.getExpansion node)]
     (and (->> exp parse-stmt (instance? IASTDoStatement) not) ; avoid trailing semicolon
          (->> (str exp ";") parse-stmt (instance? IASTDoStatement)))))
 
-(->> "
-#define f4(x) do { x; } while(0)
-#define f(x) x?x:x
-#define f2(x) x?x:x
-#define f3 x?x:x
-int main() {
-
-  f(2);
-  f(3);
-}"
-     parse-source
-     macro-definitions
-     first
-     .getExpansion
-     parse-stmt ; NEEDS TO ACCOUNT FOR MISSING SEMICOLON
-     ;(instance? IASTDoStatement)
-     )
-
 (defn all-do-wrapped-macros [root]
   (filter do-wrapped-macro? (macro-definitions root)))
 
+(def not-outer-wrapped-macro?
+  (comp not (some-fn paren-wrapped-macro? do-wrapped-macro?)))
+
+;(->> "
+;#define f4(x) do { x; } while(0)
+;#define f(x) x?x:x
+;#define f2(x) x?x:x
+;#define f3 x?x:x
+;int main() {
+;
+;  f(2);
+;  f(3);
+;}"
+;     parse-source
+;     macro-definitions
+;     ((flip nth) 2)
+;     .getExpansion
+;     parse-frag
+;     write-ast
+;     )
+
+(s/defn arg-wrapped? :- s/Bool
+  [node :- IASTPreprocessorFunctionStyleMacroDefinition]
+  (let [params (.getParameters node)
+        ast    (parse-frag (.getExpansion node))]
+       (filter-tree ast)
+
+  ))
+
+(def not-arg-wrapped-macro? (comp not arg-wrapped?))
+
 (defmulti dangerous-precedence-macro-def? class)
 (defmethod dangerous-precedence-macro-def? ASTFunctionStyleMacroDefinition [node]
-  ((some-fn dangerous-multiline?) node))
+  ((some-fn not-outer-wrapped-macro? not-arg-wrapped-macro?) node))
 
 (defmethod dangerous-precedence-macro-def? ASTMacroDefinition [node]
-  ((some-fn dangerous-multiline?) node))
+  (not-outer-wrapped-macro? node))
 
 (defn dangerous-multiline? [node]
   (and (multiline-macro? node)

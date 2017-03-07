@@ -11,12 +11,6 @@
                IASTUnaryExpression/op_postFixIncr}
              (.getOperator node)))
 
-(defn paren-node?
-  "Does this node just represent ()'s"
-  [node]
-  (and (instance? IASTUnaryExpression node)
-       (= (.getOperator node) IASTUnaryExpression/op_bracketedPrimary)))
-
 (defn remove-wrappers
   "Drill down the tree past expressions that just return the value of their direct children"
   [node]
