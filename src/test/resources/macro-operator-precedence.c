@@ -84,4 +84,8 @@ int main() {
   2)
   if (a) M13; // <no-atom>
   M13;        // <no-atom>
+
+#define M14 // <no-atom> <param-wrapped>
+
+#define M15(x) #x // <no-atom>
 }

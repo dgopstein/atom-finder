@@ -298,9 +298,10 @@
 (defn get-in-tree
   "Find a value in the AST by indexes"
   [indices node]
-  (if (empty? indices)
-    node
-    (recur (rest indices) (nth (children node) (first indices)))))
+  (cond
+    (nil? node) nil
+    (empty? indices) node
+    :else (recur (rest indices) (nth (children node) (first indices) nil))))
 
 (defn expand-home [s]
   (if (clojure.string/starts-with? s "~")
@@ -375,7 +376,8 @@
   [code :- String]
   (let [stmt-parse (parse-stmt code)]
     ; if the code isn't a statement the next node will be a problem statement
-    (not (instance? CPPASTProblemStatement (next-sibling stmt-parse)))
+    (and (not (nil? stmt-parse))
+      (not (instance? CPPASTProblemStatement (next-sibling stmt-parse))))
   ))
 
 (defn parse-frag

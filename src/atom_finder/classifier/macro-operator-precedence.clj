@@ -5,21 +5,27 @@
 (def macro-expansions (comp (memfn getMacroExpansions) root-ancestor))
 (def macro-definitions (comp (memfn getMacroDefinitions) root-ancestor))
 
+(def empty-macro? (comp empty? (memfn getExpansion)))
+
 (s/defn paren-wrapped-macro? :- s/Bool
   [node :- IASTPreprocessorMacroDefinition]
   (let [exp (.getExpansion node)]
-    (->> exp parse-expr paren-node?)))
+    (if (empty? exp)
+      false
+      (not (false? (some->> exp parse-expr paren-node?))))))
 
 (s/defn do-wrapped-macro? :- s/Bool
   [node :- IASTPreprocessorMacroDefinition]
   (let [exp (.getExpansion node)]
-    (and (->> exp parse-stmt (instance? IASTDoStatement) not) ; avoid trailing semicolon
-         (->> (str exp ";") parse-stmt (instance? IASTDoStatement)))))
+    (if (empty? exp)
+      false
+      (and (not (false? (some->> exp parse-stmt (instance? IASTDoStatement) not))) ; avoid trailing semicolon
+           (not (false? (some->> (str exp ";") parse-stmt (instance? IASTDoStatement))))))))
 
 (defn all-do-wrapped-macros [root] (filter do-wrapped-macro? (macro-definitions root)))
 
-(def outer-wrapped-macro? (some-fn paren-wrapped-macro? do-wrapped-macro?))
-(def not-outer-wrapped-macro? (comp not outer-wrapped-macro?))
+(def outer-wrapped-macro? (some-fn empty-macro? paren-wrapped-macro? do-wrapped-macro?))
+(def not-outer-wrapped-macro? (complement outer-wrapped-macro?))
 
 (defmulti param-wrapped-macro? class)
 (defmethod param-wrapped-macro? IASTPreprocessorMacroDefinition [node] true)
@@ -32,13 +38,19 @@
     (every? #(paren-node? (ancestor 2 %)) param-nodes)))
 
 (defn all-param-wrapped-macros [root] (filter param-wrapped-macro? (macro-definitions root)))
-(def not-param-wrapped-macro? (comp not param-wrapped-macro?))
+(def not-param-wrapped-macro? (complement param-wrapped-macro?))
+
+(def unparsable-macro? (comp nil? parse-frag (memfn getExpansion)))
 
 (defmulti macro-def-precedence-atom? class)
 (defmethod macro-def-precedence-atom? IASTPreprocessorFunctionStyleMacroDefinition [node]
-  ((some-fn not-outer-wrapped-macro? not-param-wrapped-macro?) node))
+  (and (not (empty-macro? node))
+       (not (unparsable-macro? node))
+      ((some-fn not-outer-wrapped-macro? not-param-wrapped-macro?) node)))
 (defmethod macro-def-precedence-atom? IASTPreprocessorMacroDefinition [node]
-  (not-outer-wrapped-macro? node))
+  (and (not (empty-macro? node))
+       (not (unparsable-macro? node))
+       (not-outer-wrapped-macro? node)))
 
 (defn macro-def-precedence-atoms
   "Is the definition of a macro prone to precedence issues"
