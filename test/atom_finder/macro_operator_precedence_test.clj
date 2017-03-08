@@ -9,14 +9,11 @@
 (use-fixtures :once schema.test/validate-schemas)
 
 (deftest test-macro-operator-precedence?
-  (testing "Is a macro multi-line?"
-    (test-atom-lines "macro-operator-precedence.c" "<multiline>" all-multiline-macros))
-
   (testing "Is a macro wrapped in a do-while loop?"
     (test-atom-lines "macro-operator-precedence.c" "<do-wrapped>" all-do-wrapped-macros))
 
   (testing "Are macro parameter wrapped in parens?"
-    (test-atom-lines "macro-operator-precedence.c" "<arg-wrapped>" all-param-wrapped-macros))
+    (test-atom-lines "macro-operator-precedence.c" "<param-wrapped>" all-param-wrapped-macros))
 
   (let [cases
         [["#define f4(x) do { x; } while(0)" false]
