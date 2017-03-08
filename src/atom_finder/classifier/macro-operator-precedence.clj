@@ -22,7 +22,6 @@
 (def not-outer-wrapped-macro? (comp not outer-wrapped-macro?))
 
 (defmulti param-wrapped-macro? class)
-(remove-all-methods param-wrapped-macro?)
 (defmethod param-wrapped-macro? IASTPreprocessorMacroDefinition [node] true)
 (defmethod param-wrapped-macro? IASTPreprocessorFunctionStyleMacroDefinition
   [node]
@@ -36,10 +35,8 @@
 (def not-param-wrapped-macro? (comp not param-wrapped-macro?))
 
 (defmulti macro-def-precedence-atom? class)
-;(defmethod macro-def-precedence-atom? ASTFunctionStyleMacroDefinition [node]
 (defmethod macro-def-precedence-atom? IASTPreprocessorFunctionStyleMacroDefinition [node]
   ((some-fn not-outer-wrapped-macro? not-param-wrapped-macro?) node))
-
 (defmethod macro-def-precedence-atom? IASTPreprocessorMacroDefinition [node]
   (not-outer-wrapped-macro? node))
 
@@ -48,7 +45,7 @@
   [node]
   (->> node
        macro-definitions
-       (filter macro-def-precedence-atom?)
-       )
-  )
+       (filter macro-def-precedence-atom?)))
+
+; In the future we might test macro expansions in addition to definitions
 (def macro-operator-precedence-atoms macro-def-precedence-atoms)

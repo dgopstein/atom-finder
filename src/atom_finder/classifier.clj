@@ -49,6 +49,7 @@
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
    (ValidatedAtom :literal-encoding          literal-encoding-atom?      (default-finder literal-encoding-atom?))
    (ValidatedAtom :post-increment            post-*crement-atom?         (default-finder post-*crement-atom?))
+   (ValidatedAtom :macro-operator-precedence macro-def-precedence-atom?  macro-operator-precedence-atoms)
    ]
   )
 
