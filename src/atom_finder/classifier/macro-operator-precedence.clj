@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement)
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement)
         '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition))
 
 (def macro-expansions (comp (memfn getMacroExpansions) root-ancestor))
@@ -28,45 +28,56 @@
     (and (->> exp parse-stmt (instance? IASTDoStatement) not) ; avoid trailing semicolon
          (->> (str exp ";") parse-stmt (instance? IASTDoStatement)))))
 
-(defn all-do-wrapped-macros [root]
-  (filter do-wrapped-macro? (macro-definitions root)))
+(defn all-do-wrapped-macros [root] (filter do-wrapped-macro? (macro-definitions root)))
 
-(def not-outer-wrapped-macro?
-  (comp not (some-fn paren-wrapped-macro? do-wrapped-macro?)))
+(def not-outer-wrapped-macro? (comp not (some-fn paren-wrapped-macro? do-wrapped-macro?)))
 
-;(->> "
-;#define f4(x) do { x; } while(0)
-;#define f(x) x?x:x
-;#define f2(x) x?x:x
-;#define f3 x?x:x
-;int main() {
-;
-;  f(2);
-;  f(3);
-;}"
-;     parse-source
-;     macro-definitions
-;     ((flip nth) 2)
-;     .getExpansion
-;     parse-frag
-;     write-ast
-;     )
+(->> "
+#define f4(x) do { x; } while(0)
+#define f(x) x?x:x
+#define f2(x) x?x:x
+#define f5(x) (x)?x:x
+#define f6(x) (x)?(x):(x)
+#define f3 x?x:x
+#define Z3(x, y) x*y
+int main() {
 
-(s/defn arg-wrapped? :- s/Bool
-  [node :- IASTPreprocessorFunctionStyleMacroDefinition]
-  (let [params (.getParameters node)
-        ast    (parse-frag (.getExpansion node))]
-       (filter-tree ast)
+  f(2);
+  f(3);
+}"
+     parse-source
+     macro-definitions
+     (take 1)
+     ;first
+     ;.getExpansion
+     ;parse-frag
+     (map #(vector (.toString (.getName %1)) (param-wrapped-macro? %1)))
+     )
 
-  ))
+(defmulti param-wrapped-macro? class)
+(defmethod param-wrapped-macro? IASTPreprocessorMacroDefinition [node] true)
+(defmethod param-wrapped-macro? IASTPreprocessorFunctionStyleMacroDefinition
+  [node]
+  (let [params      (set (map (memfn getParameter) (.getParameters node)))
+        ast         (parse-frag (.getExpansion node))
+        param-nodes (filter-tree #(and (instance? IASTName %1)
+                                       (contains? params (.toString %1))) ast)]
+    (every? #(paren-node? (ancestor 2 %)) param-nodes)))
+(defn all-param-wrapped-macros [root] (filter param-wrapped-macro? (macro-definitions root)))
 
-(def not-arg-wrapped-macro? (comp not arg-wrapped?))
+(->> "a"
+     parse-expr
+     .getName
+     .toString
+     )
 
-(defmulti dangerous-precedence-macro-def? class)
-(defmethod dangerous-precedence-macro-def? ASTFunctionStyleMacroDefinition [node]
-  ((some-fn not-outer-wrapped-macro? not-arg-wrapped-macro?) node))
+(def not-param-wrapped-macro? (comp not param-wrapped-macro?))
 
-(defmethod dangerous-precedence-macro-def? ASTMacroDefinition [node]
+(defmulti macro-def-precedence-atoms? class)
+(defmethod macro-def-precedence-atoms? ASTFunctionStyleMacroDefinition [node]
+  ((some-fn not-outer-wrapped-macro? not-param-wrapped-macro?) node))
+
+(defmethod macro-def-precedence-atoms? ASTMacroDefinition [node]
   (not-outer-wrapped-macro? node))
 
 (defn dangerous-multiline? [node]
@@ -78,7 +89,7 @@
   [node]
   (->> node
        macro-definitions
-       (filter dangerous-precedence-macro-def?)
+       (filter macro-def-precedence-atoms?)
        )
   )
 (def macro-operator-precedence-atoms macro-def-precedence-atoms)

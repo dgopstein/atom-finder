@@ -5,7 +5,7 @@
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
-           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition IASTCompositeTypeSpecifier ASTVisitor IASTNode]
+           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
            [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
@@ -381,8 +381,11 @@
 (defn parse-frag
   "Turn a single C fragment (statement or expression) into an AST"
   [code]
-  ((if (stmt-str? code) parse-stmt parse-expr) code))
-
+  (let [parse-stmt-or-expr (fn [code] ((if (stmt-str? code) parse-stmt parse-expr) code))
+        node1 (parse-stmt-or-expr code)]
+    (if (instance? IASTProblemStatement node1)
+      (parse-stmt-or-expr (str code ";"))
+      node1)))
 
 (defmulti loc "Get location information about an AST node" class)
 (defmethod loc ASTFileLocation [l]
