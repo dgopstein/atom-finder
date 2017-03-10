@@ -9,7 +9,7 @@
 ; Utilities for processing the edn output of print-atoms-in-dir
 
 (defn read-data
-  "Parse an edn file from the data directory"
+  ""
   [filename]
   (->> (str "data/" filename)
        ClassLoader/getSystemResource
@@ -27,7 +27,6 @@
   "Generate a total count of each of the atoms in the result edn"
   [results]
   (->> results
-       ;(take 300)
        (map last)
        (map (partial map-values count))
        (reduce (partial merge-with +))

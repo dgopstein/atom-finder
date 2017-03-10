@@ -88,4 +88,14 @@ int main() {
 #define M14 // <no-atom> <param-wrapped>
 
 #define M15(x) #x // <no-atom>
+
+#define M16 1 // <no-atom>
+
+#define M17 "abc" // <no-atom>
+
+#define M18 abc // <no-atom>
+
+#define M19 ab.c // <def-atom>
+
+#define M20 (ab.c) // <no-atom>
 }

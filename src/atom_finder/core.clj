@@ -19,3 +19,12 @@
    (map atom-lookup [:macro-operator-precedence])
    )
 )
+
+(->> "macro-operator-precedence_redis_2017-03-07.edn"
+     read-data
+     ;(take 10)
+     ;(found-atom-source :macro-operator-precedence)
+     sum-found-atoms
+     )
+
+;sum-found-atoms => {:macro-operator-precedence 1760}
