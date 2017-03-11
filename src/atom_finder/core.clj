@@ -20,12 +20,12 @@
    )
 )
 
-(->> "macro-operator-precedence_redis_2017-03-10_1.edn"
-     read-data
-     (take 30)
-     (found-atom-source :macro-operator-precedence)
-     ;sum-found-atoms
-     )
+;(->> "macro-operator-precedence_redis_2017-03-10_1.edn"
+;     read-data
+;     (take 30)
+;     (found-atom-source :macro-operator-precedence)
+;     ;sum-found-atoms
+;     )
 
 ;sum-found-atoms => {:macro-operator-precedence 1760}
 ;sum-found-atoms => {:macro-operator-precedence  759} # After removing atomic macros (#define M1 123)
