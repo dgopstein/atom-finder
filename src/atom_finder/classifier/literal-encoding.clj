@@ -18,13 +18,10 @@
 (s/defmethod radix IASTNode :- s/Keyword [n] :non-literal)
 
 (s/defmethod radix IASTLiteralExpression :- (s/maybe s/Keyword) [node]
-  (let [numeric-literal-types
-        #{IASTLiteralExpression/lk_float_constant
-          IASTLiteralExpression/lk_integer_constant}]
     (or
-      (and (numeric-literal-types (.getKind node))
+      (and (#{:int :float} (literal-type node))
            (radix (String. (.getValue node))))
-      :non-numeric)))
+      :non-numeric))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;      contexts for literal encoding     ;
