@@ -85,17 +85,17 @@ int main() {
   if (a) M13; // <no-atom>
   M13;        // <no-atom>
 
-#define M14 // <no-atom> <param-wrapped>
+#define M14 // <no-atom>
 
-#define M15(x) #x // <no-atom>
+#define M15(x) #x // <no-atom> <do-wrapped>
 
-#define M16 1 // <no-atom>
+#define M16 1 // <no-atom> <param-wrapped>
 
-#define M17 "abc" // <no-atom>
+#define M17 "abc" // <no-atom> <param-wrapped>
 
-#define M18 abc // <no-atom>
+#define M18 abc // <no-atom> <param-wrapped>
 
-#define M19 ab.c // <def-atom>
+#define M19 ab.c // <def-atom> <param-wrapped>
 
-#define M20 (ab.c) // <no-atom>
+#define M20 (ab.c) // <no-atom> <param-wrapped>
 }

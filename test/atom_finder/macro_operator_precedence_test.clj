@@ -10,10 +10,13 @@
 
 (deftest test-macro-operator-precedence?
   (testing "Is a macro wrapped in a do-while loop?"
-    (test-atom-lines "macro-operator-precedence.c" "<do-wrapped>" all-do-wrapped-macros))
+    (test-atom-lines "macro-operator-precedence.c" "<do-wrapped>"
+                     #(filter (comp do-wrapped-exp? (memfn getExpansion)) (macro-definitions %))))
 
   (testing "Are macro parameter wrapped in parens?"
-    (test-atom-lines "macro-operator-precedence.c" "<param-wrapped>" all-param-wrapped-macros))
+    (test-atom-lines "macro-operator-precedence.c" "<param-wrapped>"
+                     #(filter (fn [n] (and (not (unparsable-exp? (.getExpansion n)))
+                                    (param-wrapped-macro? n))) (macro-definitions %))))
 
   (let [cases
         [["#define f4(x) do { x; } while(0)" false]
