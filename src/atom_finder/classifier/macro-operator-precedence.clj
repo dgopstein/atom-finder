@@ -49,10 +49,3 @@
 
 ; In the future we might test macro expansions in addition to definitions
 (def macro-operator-precedence-atoms macro-def-precedence-atoms)
-
-(->> "#define M1(x) #x"
-     parse-source
-     macro-definitions
-     first
-     .getExpansion
-     do-wrapped-exp?)
