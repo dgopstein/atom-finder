@@ -21,6 +21,8 @@
          ["unsigned int V1 = -2" true]
          ["unsigned int V1 = 2" false]
          ["char V1 = 261" true]
+         ["char V1 = 129" true]
+         ["char V1 = 127 + 5" false] ; maybe one day
          ["char V1 = 26" false]
          ;["int *V1 = {3, 4, 1, 2}", false]
          ]]

@@ -51,23 +51,25 @@
            (any-pred? #(#{:real} (:number-type %)) arg-types))
 
       ; large -> small (count the number of bits necessary to represent the number literal)
-      (any-pred? #(and (%1)
-                       (< (:bits context-type) (number-bits (parse-numeric-literal %1)))) (map vector arg-types arg-exprs))
+      (any-pred? (fn [[type expr]]
+                   (and (numeric-literal? expr)
+                        (#{:int} (:number-type type))
+                        (< (:bits context-type) (number-bits (parse-numeric-literal (write-ast expr))))))
+                 (map vector arg-types arg-exprs))
   )))
 
-(->> "char V1 = 261"
+(->> "char V1 = -261"
      parse-expr
-     ;coercing-declaration
-     .toString
+     coercing-declaration
      )
+(numeric-literal? (parse-expr"261"))
 
-(->> "int *V1 = 1.99, v2 = asdf"
+(->> "int *V1 = 1.99, v2 = -265"
      parse-expr
      .getDeclarators
-     first
+     last
      .getInitializer
      .getInitializerClause
-     .toString
      )
 
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
