@@ -14,14 +14,18 @@
     (test-atom-lines "type-conversion.c" "<true>" (default-finder type-conversion-atom?)))
 
   (let [cases
-        [["int V1 = 1.99;" true]
-         ["int V1 = 1;" false]
-         ["unsigned int V1 = -2;" true]
-         ["unsigned int V1 = 2;" false]
-         ["char V1 = 261;" true]
-         ["char V1 = 26;" false]
+        [["int V1 = 1.99" true]
+         ["long int V1 = 1.99" true]
+         ["int V1 = 2, V2 = 1.99" true]
+         ["int V1 = 1" false]
+         ["unsigned int V1 = -2" true]
+         ["unsigned int V1 = 2" false]
+         ["char V1 = 261" true]
+         ["char V1 = 26" false]
+         ["int *V1 = {3, 4, 1, 2}", false]
          ]]
     (for [[code expected] cases]
       (testing (str code " -> " expected)
-      (is (= expected (->> code parse-stmt type-conversion-atom?))))))
+      ;(is (= expected (->> code parse-expr type-conversion-atom?))))))
+      (is (= expected (->> code parse-expr coercing-declaration))))))
     )
