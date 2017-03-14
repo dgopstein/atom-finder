@@ -14,6 +14,18 @@
   (and (instance? IASTUnaryExpression node)
        (= (.getOperator node) IASTUnaryExpression/op_bracketedPrimary)))
 
+(defn unary-minus-node?
+  "Does this node just represent unary minus"
+  [node]
+  (and (instance? IASTUnaryExpression node)
+       (= (.getOperator node) IASTUnaryExpression/op_minus)))
+
+(defn unary-plus-node?
+  "Does this node just represent unary minus"
+  [node]
+  (and (instance? IASTUnaryExpression node)
+       (= (.getOperator node) IASTUnaryExpression/op_plus)))
+
 (def literal-types {
   IASTLiteralExpression/lk_integer_constant :int
   IASTLiteralExpression/lk_float_constant   :float
@@ -57,6 +69,11 @@
 
 (s/defmethod radix IASTNode :- s/Keyword [n] :non-literal)
 
+(s/defmethod radix IASTUnaryExpression :- (s/maybe s/Keyword) [node]
+  (if (or (unary-minus-node? node) (unary-plus-node? node))
+    (radix (.getOperand node))
+    :non-numeric))
+
 (s/defmethod radix IASTLiteralExpression :- (s/maybe s/Keyword) [node]
   (if (#{:int :float} (literal-type node))
     (radix (String. (.getValue node)))
@@ -66,9 +83,20 @@
   [node :- IASTNode]
   (not (#{:non-literal :non-numeric} (radix node))))
 
-(s/defn parse-numeric-literal :- (s/maybe s/Num)
-  "Parse any valid C++ numeric literal from a string for it's value"
-  [s-in :- String]
+(defmulti parse-numeric-literal "Parse any valid C++ numeric literal from a string for it's value" class)
+
+(s/defmethod parse-numeric-literal :default :- (s/maybe s/Num) [node] nil)
+
+(s/defmethod parse-numeric-literal IASTUnaryExpression :- (s/maybe s/Num) [node]
+  (cond
+    (unary-minus-node? node) (parse-numeric-literal (str "-" (.getOperand node)))
+    (unary-plus-node?  node) (parse-numeric-literal (str "+" (.getOperand node)))
+    :else nil))
+
+(s/defmethod parse-numeric-literal IASTLiteralExpression :- (s/maybe s/Num) [node]
+  (parse-numeric-literal (.toString node)))
+
+(s/defmethod parse-numeric-literal String :- (s/maybe s/Num) [s-in]
   (let [s (str/replace s-in #"[uUlL]*$" "")] ; remove suffix
     (condp contains? (radix s)
           #{:oct :dec :hex} (if (real-number? s) (Double/parseDouble s) (Long/decode s))

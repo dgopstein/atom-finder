@@ -64,6 +64,10 @@
      )
 (numeric-literal? (parse-expr"261"))
 
+(->> "-0x235"
+     radix
+     )
+
 (->> "int *V1 = 1.99, v2 = -265"
      parse-expr
      .getDeclarators
