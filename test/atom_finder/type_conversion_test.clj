@@ -22,7 +22,7 @@
          ["unsigned int V1 = 2" false]
          ["char V1 = 261" true]
          ["char V1 = 26" false]
-         ["int *V1 = {3, 4, 1, 2}", false]
+         ;["int *V1 = {3, 4, 1, 2}", false]
          ]]
     (for [[code expected] cases]
       (testing (str code " -> " expected)

@@ -9,29 +9,31 @@
     ;[node-type :- s/Keyword context-type :- CoercionType arg-type :- CoercionType])
     [node-type :- s/Keyword context-type arg-type])
 
-(s/defrecord TypeDescription
+(s/defrecord TD ;TypeDescription
     [number-type :- s/Keyword bits :- s/Int])
+(def DeclSpec IASTSimpleDeclSpecifier)
+(def TypeKind IBasicType$Kind)
 
 (def type-components
   [
-[IBasicType$Kind/eBoolean      IASTSimpleDeclSpecifier/t_bool          (TypeDescription. :int 1)]       ;[:bool nil]]
-[IBasicType$Kind/eChar         IASTSimpleDeclSpecifier/t_char          (TypeDescription. :int 8)]         ;[:char 8]]
-[IBasicType$Kind/eChar16       IASTSimpleDeclSpecifier/t_char16_t      (TypeDescription. :int 16)]        ;[:char 16]]
-[IBasicType$Kind/eChar32       IASTSimpleDeclSpecifier/t_char32_t      (TypeDescription. :int 32)]        ;[:char 32]]
-[IBasicType$Kind/eDecimal128   IASTSimpleDeclSpecifier/t_decimal128    (TypeDescription. :real 128)]    ;[:decimal 128]]
-[IBasicType$Kind/eDecimal32    IASTSimpleDeclSpecifier/t_decimal32     (TypeDescription. :real 32)]     ;[:decimal 32]]
-[IBasicType$Kind/eDecimal64    IASTSimpleDeclSpecifier/t_decimal64     (TypeDescription. :real 64)]     ;[:decimal 64]]
-[nil                           IASTSimpleDeclSpecifier/t_decltype      (TypeDescription. :decltype nil)]   ;[:decltype nil]]
-[nil                           IASTSimpleDeclSpecifier/t_decltype_auto (TypeDescription. :decltype nil)]   ;[:decltype nil]]
-[IBasicType$Kind/eDouble       IASTSimpleDeclSpecifier/t_double        (TypeDescription. :real 64)]       ;[:float 64]]
-[IBasicType$Kind/eFloat        IASTSimpleDeclSpecifier/t_float         (TypeDescription. :real 32)]       ;[:float 32]]
-[IBasicType$Kind/eFloat128     IASTSimpleDeclSpecifier/t_float128      (TypeDescription. :real 128)]      ;[:float 128]]
-[IBasicType$Kind/eInt          IASTSimpleDeclSpecifier/t_int           (TypeDescription. :int 32)]         ;[:int 32]]
-[IBasicType$Kind/eInt128       IASTSimpleDeclSpecifier/t_int128        (TypeDescription. :int 128)]        ;[:int 128]]
-[IBasicType$Kind/eNullPtr      IASTSimpleDeclSpecifier/t_typeof        (TypeDescription. :typeof nil)]     ;[:typeof nil]]
-[IBasicType$Kind/eUnspecified  IASTSimpleDeclSpecifier/t_unspecified   (TypeDescription. :unspecified nil)];[:unspecified nil]]
-[IBasicType$Kind/eVoid         IASTSimpleDeclSpecifier/t_void          (TypeDescription. :void nil)]       ;[:void nil]]
-[IBasicType$Kind/eWChar        IASTSimpleDeclSpecifier/t_wchar_t       (TypeDescription. :wchar nil)]      ;[:wchar nil]]
+[TypeKind/eBoolean      DeclSpec/t_bool          (TD. :int 1)]
+[TypeKind/eChar         DeclSpec/t_char          (TD. :int 8)]
+[TypeKind/eChar16       DeclSpec/t_char16_t      (TD. :int 16)]
+[TypeKind/eChar32       DeclSpec/t_char32_t      (TD. :int 32)]
+[TypeKind/eDecimal128   DeclSpec/t_decimal128    (TD. :real 128)]
+[TypeKind/eDecimal32    DeclSpec/t_decimal32     (TD. :real 32)]
+[TypeKind/eDecimal64    DeclSpec/t_decimal64     (TD. :real 64)]
+[nil                           DeclSpec/t_decltype      (TD. :decltype nil)]
+[nil                           DeclSpec/t_decltype_auto (TD. :decltype nil)]
+[TypeKind/eDouble       DeclSpec/t_double        (TD. :real 64)]
+[TypeKind/eFloat        DeclSpec/t_float         (TD. :real 32)]
+[TypeKind/eFloat128     DeclSpec/t_float128      (TD. :real 128)]
+[TypeKind/eInt          DeclSpec/t_int           (TD. :int 32)]
+[TypeKind/eInt128       DeclSpec/t_int128        (TD. :int 128)]
+[TypeKind/eNullPtr      DeclSpec/t_typeof        (TD. :typeof nil)]
+[TypeKind/eUnspecified  DeclSpec/t_unspecified   (TD. :unspecified nil)]
+[TypeKind/eVoid         DeclSpec/t_void          (TD. :void nil)]
+[TypeKind/eWChar        DeclSpec/t_wchar_t       (TD. :wchar nil)]
                  ])
 
 (def decl-type (into {} (map #(into [] (vals (select-keys % [1 2]))) type-components)))
@@ -40,22 +42,23 @@
 (s/defn coercing-declaration; :- CoercionContext
   [node :- IASTDeclaration]
   (let [context-type (->> node .getDeclSpecifier .getType decl-type)
-        arg-types (map #(->> % .getInitializer .getInitializerClause
-                               .getExpressionType .getKind intl-type)
-                       (.getDeclarators node))]
+        arg-exprs (map #(->> % .getInitializer .getInitializerClause) (.getDeclarators node))
+        arg-types (map #(->> % .getExpressionType .getKind intl-type) arg-exprs)]
 
     (or
       ; real -> int
       (and (#{:int} (:number-type context-type))
            (any-pred? #(#{:real} (:number-type %)) arg-types))
 
-      ; large -> small
-      (any-pred? #(< (:bits context-type) (:bits %)) arg-types)
+      ; large -> small (count the number of bits necessary to represent the number literal)
+      (any-pred? #(and (%1)
+                       (< (:bits context-type) (number-bits (parse-numeric-literal %1)))) (map vector arg-types arg-exprs))
   )))
 
 (->> "char V1 = 261"
      parse-expr
-     coercing-declaration
+     ;coercing-declaration
+     .toString
      )
 
 (->> "int *V1 = 1.99, v2 = asdf"
@@ -64,7 +67,7 @@
      first
      .getInitializer
      .getInitializerClause
-     .getExpressionType
+     .toString
      )
 
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
