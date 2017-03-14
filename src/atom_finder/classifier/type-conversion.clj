@@ -15,8 +15,6 @@ IBasicType$Kind/eBoolean
 
 (s/defrecord TD ;TypeDescription
     [number-type :- s/Keyword bits :- s/Int])
-(def DeclSpec IASTSimpleDeclSpecifier)
-(def TypeKind IBasicType$Kind)
 
 (def type-components
   [
@@ -43,9 +41,25 @@ IBasicType$Kind/eBoolean
 (def decl-type (into {} (map #(into [] (vals (select-keys % [1 2]))) type-components)))
 (def intl-type (into {} (map #(into [] (vals (select-keys % [0 2]))) type-components)))
 
+(s/defn decl-spec-range :- [(s/one s/Int "lower") (s/one s/Int "upper")]
+  "Which values can safely be stored in a variable declared to this type"
+  [node :- IASTSimpleDeclSpecifier]
+
+  (let [unsigned (.isUnsigned node)
+        bits (->> node .getType decl-type :bits)
+        signed-range [(->> 8 dec (Math/pow 2) int -)
+                      (->> 8 dec (Math/pow 2) int dec)]
+        ]
+
+    (if unsigned
+      (map #(- % (first signed-range)) signed-range)
+      signed-range)))
+
 (s/defn coercing-declaration; :- CoercionContext
   [node :- IASTDeclaration]
-  (let [context-type (->> node .getDeclSpecifier .getType decl-type)
+  (let [context-spec (.getDeclSpecifier node)
+        context-type (->> context-spec .getType decl-type)
+        [context-lower context-upper] (decl-spec-range context-spec)
         arg-exprs (map #(->> % .getInitializer .getInitializerClause) (.getDeclarators node))
         arg-types (map #(->> % .getExpressionType .getKind intl-type) arg-exprs)]
 
@@ -58,7 +72,7 @@ IBasicType$Kind/eBoolean
       (any-pred? (fn [[type expr]]
                    (and (numeric-literal? expr)
                         (#{:int} (:number-type type))
-                        (< (:bits context-type) (number-bits (parse-numeric-literal (write-ast expr))))))
+                        (not (<= context-lower (parse-numeric-literal expr) context-upper))))
                  (map vector arg-types arg-exprs))
   )))
 
@@ -68,16 +82,14 @@ IBasicType$Kind/eBoolean
      )
 (numeric-literal? (parse-expr"261"))
 
-(->> "-0x235"
-     radix
-     )
-
-(->> "int *V1 = 1.99, v2 = -265"
+(->> "unsigned int *V1 = 1.99, v2 = -265"
      parse-expr
-     .getDeclarators
-     last
-     .getInitializer
-     .getInitializerClause
+     .getDeclSpecifier
+     ;public-methods
+     ;(map :name)
+     ;.getType
+     ;decl-type
+     ;.isUnsigned
      )
 
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
