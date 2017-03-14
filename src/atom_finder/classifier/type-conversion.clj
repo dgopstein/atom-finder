@@ -1,6 +1,10 @@
 (in-ns 'atom-finder.classifier)
 (import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTDeclaration))
 
+DeclSpec/eBoolean
+TypeKind
+IBasicType$Kind/eBoolean
+
 (s/defn type-conversion-atom? :- s/Bool [node :- IASTNode] false)
 
 (s/defrecord CoercionType
@@ -16,24 +20,24 @@
 
 (def type-components
   [
-[TypeKind/eBoolean      DeclSpec/t_bool          (TD. :int 1)]
-[TypeKind/eChar         DeclSpec/t_char          (TD. :int 8)]
-[TypeKind/eChar16       DeclSpec/t_char16_t      (TD. :int 16)]
-[TypeKind/eChar32       DeclSpec/t_char32_t      (TD. :int 32)]
-[TypeKind/eDecimal128   DeclSpec/t_decimal128    (TD. :real 128)]
-[TypeKind/eDecimal32    DeclSpec/t_decimal32     (TD. :real 32)]
-[TypeKind/eDecimal64    DeclSpec/t_decimal64     (TD. :real 64)]
-[nil                           DeclSpec/t_decltype      (TD. :decltype nil)]
-[nil                           DeclSpec/t_decltype_auto (TD. :decltype nil)]
-[TypeKind/eDouble       DeclSpec/t_double        (TD. :real 64)]
-[TypeKind/eFloat        DeclSpec/t_float         (TD. :real 32)]
-[TypeKind/eFloat128     DeclSpec/t_float128      (TD. :real 128)]
-[TypeKind/eInt          DeclSpec/t_int           (TD. :int 32)]
-[TypeKind/eInt128       DeclSpec/t_int128        (TD. :int 128)]
-[TypeKind/eNullPtr      DeclSpec/t_typeof        (TD. :typeof nil)]
-[TypeKind/eUnspecified  DeclSpec/t_unspecified   (TD. :unspecified nil)]
-[TypeKind/eVoid         DeclSpec/t_void          (TD. :void nil)]
-[TypeKind/eWChar        DeclSpec/t_wchar_t       (TD. :wchar nil)]
+[IBasicType$Kind/eBoolean      IASTSimpleDeclSpecifier/t_bool          (TD. :int 1)]
+[IBasicType$Kind/eChar         IASTSimpleDeclSpecifier/t_char          (TD. :int 8)]
+[IBasicType$Kind/eChar16       IASTSimpleDeclSpecifier/t_char16_t      (TD. :int 16)]
+[IBasicType$Kind/eChar32       IASTSimpleDeclSpecifier/t_char32_t      (TD. :int 32)]
+[IBasicType$Kind/eDecimal128   IASTSimpleDeclSpecifier/t_decimal128    (TD. :real 128)]
+[IBasicType$Kind/eDecimal32    IASTSimpleDeclSpecifier/t_decimal32     (TD. :real 32)]
+[IBasicType$Kind/eDecimal64    IASTSimpleDeclSpecifier/t_decimal64     (TD. :real 64)]
+[nil                           IASTSimpleDeclSpecifier/t_decltype      (TD. :decltype nil)]
+[nil                           IASTSimpleDeclSpecifier/t_decltype_auto (TD. :decltype nil)]
+[IBasicType$Kind/eDouble       IASTSimpleDeclSpecifier/t_double        (TD. :real 64)]
+[IBasicType$Kind/eFloat        IASTSimpleDeclSpecifier/t_float         (TD. :real 32)]
+[IBasicType$Kind/eFloat128     IASTSimpleDeclSpecifier/t_float128      (TD. :real 128)]
+[IBasicType$Kind/eInt          IASTSimpleDeclSpecifier/t_int           (TD. :int 32)]
+[IBasicType$Kind/eInt128       IASTSimpleDeclSpecifier/t_int128        (TD. :int 128)]
+[IBasicType$Kind/eNullPtr      IASTSimpleDeclSpecifier/t_typeof        (TD. :typeof nil)]
+[IBasicType$Kind/eUnspecified  IASTSimpleDeclSpecifier/t_unspecified   (TD. :unspecified nil)]
+[IBasicType$Kind/eVoid         IASTSimpleDeclSpecifier/t_void          (TD. :void nil)]
+[IBasicType$Kind/eWChar        IASTSimpleDeclSpecifier/t_wchar_t       (TD. :wchar nil)]
                  ])
 
 (def decl-type (into {} (map #(into [] (vals (select-keys % [1 2]))) type-components)))
@@ -79,7 +83,7 @@
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
 (s/defn coercing-node? :- s/Bool
   "A node which can have children that implicitly convert their arguments to a different type"
-  [node])
+  [node] false)
   ; declaration
   ; assignment
   ; function call
@@ -90,7 +94,7 @@
   ; float < double < long double
 
   ; char x = (unsigned char) -12
-  )
+  ;)
 
 (->> "V1 = 1.99"
      parse-expr
