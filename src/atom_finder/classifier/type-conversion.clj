@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTDeclaration))
+(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList))
 
 DeclSpec/eBoolean
 TypeKind
@@ -56,19 +56,21 @@ IBasicType$Kind/eBoolean
       signed-range)))
 
 (s/defn coercing-declaration; :- CoercionContext
-  [node :- IASTDeclaration]
+  [node :- IASTSimpleDeclaration]
   (let [context-spec (.getDeclSpecifier node)
         context-type (->> context-spec .getType decl-type)
         [context-lower context-upper] (decl-spec-range context-spec)
         arg-exprs (map #(->> % .getInitializer .getInitializerClause) (.getDeclarators node))
-        arg-types (map #(->> % .getExpressionType .getKind intl-type) arg-exprs)]
+        simple-arg-exprs (filter #(not (instance? IASTInitializerList %)) arg-exprs)
+        arg-types (map #(->> % .getExpressionType .getKind intl-type) simple-arg-exprs)]
 
     (or
       ; real -> int
       (and (#{:int} (:number-type context-type))
            (any-pred? #(#{:real} (:number-type %)) arg-types))
 
-      ; large -> small (count the number of bits necessary to represent the number literal)
+      ; large -> small
+      ; signed -> unsigned (and the reverse)
       (any-pred? (fn [[type expr]]
                    (and (numeric-literal? expr)
                         (#{:int} (:number-type type))
@@ -78,13 +80,11 @@ IBasicType$Kind/eBoolean
 
 (->> "char V1 = -261"
      parse-expr
-     coercing-declaration
-     )
-(numeric-literal? (parse-expr"261"))
+     coercing-declaration)
 
-(->> "unsigned int *V1 = 1.99, v2 = -265"
+(->> "unsigned int *V1 = 1.99, v2 = -265, V3 = {1, 3}"
      parse-expr
-     .getDeclSpecifier
+     .getDeclarators last .getInitializer .getInitializerClause)
      ;public-methods
      ;(map :name)
      ;.getType
