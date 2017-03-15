@@ -35,31 +35,30 @@
                  ])
 
 (def decl-type (into {} (map #(into [] (vals (select-keys % [1 2]))) type-components)))
-(def intl-type (into {} (map #(into [] (vals (select-keys % [0 2]))) type-components)))
+(def basic-type (into {} (map #(into [] (vals (select-keys % [0 2]))) type-components)))
 
-(s/defn decl-spec-range :- [(s/one s/Int "lower") (s/one s/Int "upper")]
-  "Which values can safely be stored in a variable declared to this type"
-  [node :- IASTSimpleDeclSpecifier]
-
-  (let [unsigned (.isUnsigned node)
-        bits (->> node .getType decl-type :bits)
-        signed-range [(->> bits dec (Math/pow 2) bigint -)
+(defn bit-range [unsigned? bits]
+  (let [signed-range [(->> bits dec (Math/pow 2) bigint -)
                       (->> bits dec (Math/pow 2) bigint dec)]]
-
-    (if unsigned
+    (if unsigned?
       (map #(- % (first signed-range)) signed-range)
       signed-range)))
 
-(defmulti type-conversion-atom? class)
-(s/defmethod type-conversion-atom? :default [node] false)
-(s/defmethod type-conversion-atom? IASTSimpleDeclaration
+(def RangeSpec [(s/one s/Int "lower") (s/one s/Int "upper")])
+(defmulti type-range "Which values can safely be stored in a variable with this type" class)
+(s/defmethod type-range IBasicType :- RangeSpec [node]
+    (bit-range (.isUnsigned node) (->> node .getKind basic-type :bits)))
+(s/defmethod type-range IASTSimpleDeclSpecifier :- RangeSpec [node]
+    (bit-range (.isUnsigned node) (->> node .getType decl-type :bits)))
+
+(s/defmethod type-conversion-declaration? IASTSimpleDeclaration
   [node]
   (let [context-spec (.getDeclSpecifier node)
         context-type (->> context-spec .getType decl-type)
-        [context-lower context-upper] (decl-spec-range context-spec)
+        [context-lower context-upper] (type-range context-spec)
         arg-exprs (keep #(some->> % .getInitializer .getInitializerClause) (.getDeclarators node))
         simple-arg-exprs (filter #(not (instance? IASTInitializerList %)) arg-exprs)
-        arg-types (keep #(->> % .getExpressionType .getKind intl-type) simple-arg-exprs)]
+        arg-types (keep #(->> % .getExpressionType .getKind basic-type) simple-arg-exprs)]
 
     (or
       ; real -> int
@@ -75,12 +74,27 @@
                  (map vector arg-types arg-exprs))
   )))
 
-(-> "V1 = 2" parse-expr)
+(->> "int main() { unsigned int V1; V1 = 2; }"
+    parse-source
+    (get-in-tree [0 2 1 0])
+    .getOperand1
+    .getExpressionType
+    .getKind
+    basic-type
+    ;type-range
+    ;(bit-range (.isUnsigned node) (->> node basic-type :bits)))
+    )
+
 
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
-(s/defn coercing-node? :- s/Bool
+(s/defn type-conversion-atom? :- s/Bool
   "A node which can have children that implicitly convert their arguments to a different type"
-  [node] false)
+  [node :- IASTNode]
+  (condp #(->> % %) node
+    (instance? IASTDeclaration) (type-conversion-declaration? node)
+    assignment-node?
+    )
+
   ; declaration
   ; assignment
   ; function call
