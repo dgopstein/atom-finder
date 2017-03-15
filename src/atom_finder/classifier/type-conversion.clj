@@ -75,6 +75,8 @@
                  (map vector arg-types arg-exprs))
   )))
 
+(-> "V1 = 2" parse-expr)
+
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
 (s/defn coercing-node? :- s/Bool
   "A node which can have children that implicitly convert their arguments to a different type"

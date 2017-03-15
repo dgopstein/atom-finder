@@ -23,6 +23,7 @@ int main() {
 
   char V4 = 54; // <false>
   char V5 = V4; // <false> - Maybe one day
+  V5 = 128      // <true>
 
   int V6 = 288;       // <false>
   char V7 = V6 % 256; // <false>

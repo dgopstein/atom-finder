@@ -4,27 +4,21 @@
             [schema.core :as s]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTLiteralExpression]))
+  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression]))
 
 (defn default-finder [classifier] (partial filter-tree classifier))
 
-(defn paren-node?
-  "Does this node just represent ()'s"
-  [node]
-  (and (instance? IASTUnaryExpression node)
-       (= (.getOperator node) IASTUnaryExpression/op_bracketedPrimary)))
+(defmacro operation-classifier
+  "Identify unary/binary nodes by their operation"
+  [expression-type field-name]
+  `(fn [node#]
+     (and (instance? ~expression-type node#)
+          (= (.getOperator node#) (. ~expression-type ~(symbol (str "op_" field-name)))))))
 
-(defn unary-minus-node?
-  "Does this node just represent unary minus"
-  [node]
-  (and (instance? IASTUnaryExpression node)
-       (= (.getOperator node) IASTUnaryExpression/op_minus)))
-
-(defn unary-plus-node?
-  "Does this node just represent unary minus"
-  [node]
-  (and (instance? IASTUnaryExpression node)
-       (= (.getOperator node) IASTUnaryExpression/op_plus)))
+(def paren-node?       (operation-classifier IASTUnaryExpression  bracketedPrimary))
+(def unary-minus-node? (operation-classifier IASTUnaryExpression  minus))
+(def unary-plus-node?  (operation-classifier IASTUnaryExpression  plus))
+(def assignment-node?  (operation-classifier IASTBinaryExpression assign))
 
 (def literal-types {
   IASTLiteralExpression/lk_integer_constant :int
