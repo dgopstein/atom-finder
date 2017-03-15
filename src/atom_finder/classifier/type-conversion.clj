@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList))
+(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList IProblemType))
 
 (s/defn type-conversion-atom? :- s/Bool [node :- IASTNode] false)
 
@@ -51,8 +51,8 @@
 (s/defmethod type-range IASTSimpleDeclSpecifier :- RangeSpec [node]
     (bit-range (.isUnsigned node) (->> node .getType decl-type :bits)))
 
-(s/defmethod type-conversion-declaration? IASTSimpleDeclaration
-  [node]
+(s/defn type-conversion-declaration? :- s/Bool
+  [node :- IASTSimpleDeclaration]
   (let [context-spec (.getDeclSpecifier node)
         context-type (->> context-spec .getType decl-type)
         [context-lower context-upper] (type-range context-spec)
@@ -74,15 +74,33 @@
                  (map vector arg-types arg-exprs))
   )))
 
-(->> "int main() { unsigned int V1; V1 = 2; }"
+(s/defn type-conversion-assignment? :- s/Bool
+  [node :- IASTBinaryExpression]
+  (let [context-exty (->> node .getOperand1 .getExpressionType)
+        context-type (->> context-exty .getKind basic-type)
+        [context-lower context-upper] (type-range context-exty)
+        arg-expr (->> node .getOperand2)
+        arg-exty (->> arg-expr .getExpressionType)
+        arg-type (when-not (instance? IProblemType arg-exty)
+                   (->> arg-exty .getKind basic-type))]
+
+    (boolean
+     (or
+      ; real -> int
+      (and (#{:int}  (:number-type context-type))
+           (#{:real} (:number-type arg-type)))
+
+      ; large -> small
+      ; signed -> unsigned (and the reverse)
+      (and (numeric-literal? arg-expr)
+           (#{:int} (:number-type arg-type))
+           (not (<= context-lower (parse-numeric-literal arg-expr) context-upper)))))
+  ))
+
+(->> "int main() { unsigned int V1; V1 = -2; }"
     parse-source
-    (get-in-tree [0 2 1 0])
-    .getOperand1
-    .getExpressionType
-    .getKind
-    basic-type
-    ;type-range
-    ;(bit-range (.isUnsigned node) (->> node basic-type :bits)))
+    (get-in-tree [0 2 1 0]) ;.getOperand1 .getExpressionType type-range
+    type-conversion-assignment?
     )
 
 
@@ -90,10 +108,11 @@
 (s/defn type-conversion-atom? :- s/Bool
   "A node which can have children that implicitly convert their arguments to a different type"
   [node :- IASTNode]
-  (condp #(->> % %) node
-    (instance? IASTDeclaration) (type-conversion-declaration? node)
-    assignment-node?
-    )
+  (cond
+    (instance? IASTSimpleDeclaration node) (type-conversion-declaration? node)
+    (assignment-node? node) (type-conversion-assignment? node)
+    :else false
+    ))
 
   ; declaration
   ; assignment
