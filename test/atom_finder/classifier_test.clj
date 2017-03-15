@@ -3,6 +3,7 @@
             [schema.test]
             [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
+            [atom-finder.classifier-util :refer :all]
             ))
 
 (use-fixtures :once schema.test/validate-schemas)

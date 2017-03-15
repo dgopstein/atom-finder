@@ -1,10 +1,6 @@
 (in-ns 'atom-finder.classifier)
 (import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList))
 
-DeclSpec/eBoolean
-TypeKind
-IBasicType$Kind/eBoolean
-
 (s/defn type-conversion-atom? :- s/Bool [node :- IASTNode] false)
 
 (s/defrecord CoercionType
@@ -47,22 +43,23 @@ IBasicType$Kind/eBoolean
 
   (let [unsigned (.isUnsigned node)
         bits (->> node .getType decl-type :bits)
-        signed-range [(->> 8 dec (Math/pow 2) int -)
-                      (->> 8 dec (Math/pow 2) int dec)]
-        ]
+        signed-range [(->> bits dec (Math/pow 2) bigint -)
+                      (->> bits dec (Math/pow 2) bigint dec)]]
 
     (if unsigned
       (map #(- % (first signed-range)) signed-range)
       signed-range)))
 
-(s/defn coercing-declaration; :- CoercionContext
-  [node :- IASTSimpleDeclaration]
+(defmulti type-conversion-atom? class)
+(s/defmethod type-conversion-atom? :default [node] false)
+(s/defmethod type-conversion-atom? IASTSimpleDeclaration
+  [node]
   (let [context-spec (.getDeclSpecifier node)
         context-type (->> context-spec .getType decl-type)
         [context-lower context-upper] (decl-spec-range context-spec)
-        arg-exprs (map #(->> % .getInitializer .getInitializerClause) (.getDeclarators node))
+        arg-exprs (keep #(some->> % .getInitializer .getInitializerClause) (.getDeclarators node))
         simple-arg-exprs (filter #(not (instance? IASTInitializerList %)) arg-exprs)
-        arg-types (map #(->> % .getExpressionType .getKind intl-type) simple-arg-exprs)]
+        arg-types (keep #(->> % .getExpressionType .getKind intl-type) simple-arg-exprs)]
 
     (or
       ; real -> int
@@ -77,20 +74,6 @@ IBasicType$Kind/eBoolean
                         (not (<= context-lower (parse-numeric-literal expr) context-upper))))
                  (map vector arg-types arg-exprs))
   )))
-
-(->> "char V1 = -261"
-     parse-expr
-     coercing-declaration)
-
-(->> "unsigned int *V1 = 1.99, v2 = -265, V3 = {1, 3}"
-     parse-expr
-     .getDeclarators last .getInitializer .getInitializerClause)
-     ;public-methods
-     ;(map :name)
-     ;.getType
-     ;decl-type
-     ;.isUnsigned
-     )
 
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
 (s/defn coercing-node? :- s/Bool
@@ -107,12 +90,3 @@ IBasicType$Kind/eBoolean
 
   ; char x = (unsigned char) -12
   ;)
-
-(->> "V1 = 1.99"
-     parse-expr
-     ;children
-     ;(map typename)
-     ;last
-     ;children
-     ;(map write-ast)
-     )

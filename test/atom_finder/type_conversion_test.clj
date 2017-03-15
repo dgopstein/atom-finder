@@ -10,7 +10,7 @@
 (use-fixtures :once schema.test/validate-schemas)
 
 (deftest test-type-conversion
-  (testing "Is a macro wrapped in a do-while loop?"
+  (testing "Is a type-conversion atom here?"
     (test-atom-lines "type-conversion.c" "<true>" (default-finder type-conversion-atom?)))
 
   (let [cases
@@ -21,13 +21,15 @@
          ["unsigned int V1 = -2" true]
          ["unsigned int V1 = 2" false]
          ["char V1 = 261" true]
+         ["int V1 = 261" false]
          ["char V1 = 129" true]
          ["char V1 = 127 + 5" false] ; maybe one day
          ["char V1 = 26" false]
          ["int *V1 = {3, 4, 1, 2}", false]
+         ["int V1" false]
          ]]
     (for [[code expected] cases]
       (testing (str code " -> " expected)
       ;(is (= expected (->> code parse-expr type-conversion-atom?))))))
-      (is (= expected (->> code parse-expr coercing-declaration))))))
+      (is (= expected (->> code parse-expr type-conversion-atom?))))))
     )

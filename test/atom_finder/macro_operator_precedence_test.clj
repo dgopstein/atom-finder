@@ -4,7 +4,8 @@
             [atom-finder.util :refer :all]
             [atom-finder.test-util :refer :all]
             [atom-finder.classifier :refer :all]
-            ))
+            )
+  (:use     [clojure.pprint :only [pprint print-table]]))
 
 (use-fixtures :once schema.test/validate-schemas)
 

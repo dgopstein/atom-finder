@@ -19,15 +19,15 @@
 
 (def true-lines (partial find-lines "<true>"))
 
-(defn test-atom-lines
+(defmacro test-atom-lines
   "Compare the results of an atom classifier with a regex search"
   [filename pat atom-finder]
-  (let [filepath   (resource-path filename)
-        expected   (find-lines pat filepath)
-        lines  (->> filepath
-                    tu
-                    atom-finder
-                    (map loc)
-                    (map :line))]
+  `(let [filepath#   (resource-path ~filename)
+         expected#   (find-lines ~pat filepath#)
+         lines#  (->> filepath#
+                      tu
+                      (~atom-finder)
+                      (map loc)
+                      (map :line))]
 
-    (is (empty? (sort (sym-diff (set expected) (set lines)))))))
+    (is (empty? (sort (sym-diff (set expected#) (set lines#)))))))

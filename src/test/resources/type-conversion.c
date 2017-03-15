@@ -21,9 +21,9 @@ int main() {
     V2 = UINT_MAX + (V1 + 1); // <false>
   }
 
-  int V1 = 261;
-  char V2 = V1; // <true>
+  char V4 = 54; // <false>
+  char V5 = V4; // <false> - Maybe one day
 
-  int V1 = 288;
-  char V2 = V1 % 256; // <false>
+  int V6 = 288;       // <false>
+  char V7 = V6 % 256; // <false>
 }
