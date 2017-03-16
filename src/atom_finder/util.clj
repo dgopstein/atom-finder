@@ -4,7 +4,7 @@
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
-           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit]
+           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit IASTUnaryExpression IASTExpressionList IASTForStatement]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
@@ -376,3 +376,32 @@
    slurp-lines
    (map #(re-find #"<true>" %))
    (keep-indexed #(if %2 (inc %1)))))
+
+(defn paren-node?
+  "Does this node just represent ()'s"
+  [node]
+  (and (instance? IASTUnaryExpression node)
+       (= (.getOperator node) IASTUnaryExpression/op_bracketedPrimary)))
+
+(defn remove-wrappers
+  "Drill down the tree past expressions that just return the value of their direct children"
+  [node]
+  (let [new-node
+        (cond
+          ; comma operators only return the value of their second operand
+          (instance? IASTExpressionList node) (last (children node))
+          ; parenthesis just return their only child
+          (paren-node? node) (.getOperand node)
+          :else node)]
+
+    (if (= node new-node)
+      node
+      (remove-wrappers new-node))))
+
+(defn value-consuming-children
+  "Return the children of this node who's values will be used. e.g. The first and third clauses of a for loop don't use the values of their expression, but the second one does, so return that one"
+  [node]
+  (condp instance? node
+    IASTForStatement   [(.getConditionExpression node)]
+    (children node)))
+

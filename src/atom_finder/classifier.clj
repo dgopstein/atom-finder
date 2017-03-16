@@ -50,6 +50,9 @@
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
    (ValidatedAtom :literal-encoding          literal-encoding-atom?      (default-finder literal-encoding-atom?))
    (ValidatedAtom :post-increment            post-*crement-atom?         (default-finder post-*crement-atom?))
+   (ValidatedAtom :comma                     comma-atom?                      (default-finder comma-atom?))
+   (ValidatedAtom :curly-braces              curly-braces-atom?               (default-finder curly-braces-atom?))
+   (ValidatedAtom :assignment-as-value       assignment-as-value-atom?   (default-finder assignment-as-value-atom?))
    ]
   )
 
