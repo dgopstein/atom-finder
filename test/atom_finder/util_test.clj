@@ -1,7 +1,9 @@
 (ns atom-finder.util-test
   (:require [clojure.test :refer :all]
             [atom-finder.util :refer :all]
-            ))
+            )
+  (:import
+           [org.eclipse.cdt.core.dom.ast IASTLiteralExpression]))
 
 (deftest count-nodes-test
   (testing "count-nodes"
@@ -44,3 +46,11 @@
     (is (= #{1 2 4 5} (sym-diff #{1 2 3} #{2 3 4} #{3 4 5})))
     ))
 
+(deftest filter-tree-test
+  (testing "filter-tree"
+    (is
+     (= ["1" "2" "3"]
+        (->> "1 + 2 - 3" parse-expr
+             (filter-tree (partial instance? IASTLiteralExpression))
+             (map write-ast))))
+    ))

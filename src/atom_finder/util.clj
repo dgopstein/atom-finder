@@ -233,12 +233,11 @@
     (filter #(= n (depth %)) candidates)))
 
 (defn filter-tree
-  "Return every example of type"
-  [func node]
-  (let [kids        (children node)
-        kid-matches (mapcat (partial filter-tree func) kids)
-        matches     (filter func kids)]
-    (concat matches kid-matches)))
+  "Find every AST node that matches pred"
+  [pred node]
+  (concat
+   (when (pred node) [node])
+   (mapcat (partial filter-tree pred) (children node))))
 
 (defn filter-type
   "Return every example of type"
