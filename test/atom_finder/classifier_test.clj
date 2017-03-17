@@ -180,14 +180,12 @@
                       tu
                       (filter-tree curly-braces-atom?)
                       (map loc)
-                      (map :line)
-                      ((partial into #{})))]
+                      (map :line))]
 
-      (is (= lines #{3 4 7 8 26 27 28 29 41 43 44 54 66 79 95})))))
-
+      (is (= lines [3 4 7 8 26 27 28 29 41 43 44 54 66 79 95 101 102 104 104 108 109])))))
 
 (deftest comma-operator-test
-  (testing "small statements" 
+  (testing "small statements"
     (is (comma-atom? (parse-expr "1,2")))
     (is (false? (comma-atom? (parse-expr "int a,b;"))))
     (is (comma-atom? (parse-expr "num1,num2")))
@@ -206,8 +204,7 @@
                       tu
                       (filter-tree assignment-as-value-atom?)
                       (map loc)
-                      (map :line)
-                      ((partial into #{})))]
+                      (map :line))]
 
-      (is (= lines #{8 10 12 14 16 20 22 30 32 36 38 42 48 50 52 56 58 60 62})))));;[8 10 12 12 14 16 20 22 30 32 36 38 42 48 50 52 52 56 58 60 62]
+      (is (= lines [8 10 12 12 14 16 20 22 30 32 36 38 42 48 50 52 52 56 58 60 62])))))
 

@@ -7,7 +7,7 @@ int main(){
     if( a == 1)	a++;
     else if (a == 2) { --a; }
     else --a;
-    
+
     if ( a == 1){
     	a++;
         --a;
@@ -51,7 +51,7 @@ int main() {
 		--i;
 		++i;
 	}
-	for (int i = 0; i < 10; ++i) 
+	for (int i = 0; i < 10; ++i)
 		--i;
 }
 
@@ -62,7 +62,7 @@ int main() {
 		--i;
 		++i;
 	}
-	
+
 	while (i > -1)
 		--i;
 }
@@ -92,7 +92,19 @@ int main() {
 		case 1:	printf("%d\n", i);
 		default: printf("We need a bigger boat\n");
 	}
-        switch (i) 
+        switch (i)
          default: printf("We definitely need a bigger boat\n");
 
+}
+
+void dans_if_test() {
+  if (1)
+    if (2) 3;
+
+  if (1)
+    if (2) { 3; }
+  else 4;
+
+  if (1)
+    while (2) 3;
 }
