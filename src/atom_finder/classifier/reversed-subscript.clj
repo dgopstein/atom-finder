@@ -10,7 +10,7 @@
 
 (defn reversed-subscript-atom?
   "Is this node a reversed-subscript-atom?"
-  [node] 
+  [node]
   (and (instance? IASTArraySubscriptExpression node)
        ;;the first and second children are the expressions outside and inside the brackets, respectively
        ;;IBasicType covers types that can be used as indices

@@ -2,6 +2,8 @@
   (:require [clojure.test :refer :all]
             [schema.test]
             [atom-finder.util :refer :all]
+            [atom-finder.test-util :refer :all]
+            [atom-finder.classifier-util :refer :all]
             [atom-finder.classifier :refer :all]
             ))
 
@@ -9,13 +11,5 @@
 
 (deftest test-post-*crement-atom?
   (testing "post-*crement? finds all atoms in c file"
-    (let [filepath   (resource-path "post-increment.c")
-          expected   (true-lines filepath)
-          lines  (->> filepath
-                      tu
-                      ((atom-finder.classifier/default-finder post-*crement-atom?))
-                      (map loc)
-                      (map :line))]
-
-     (is (empty? (sort (sym-diff (set expected) (set lines))))
-    ))))
+    (test-atom-lines "post-increment.c" "<true>" (default-finder post-*crement-atom?)))
+  )

@@ -1,12 +1,14 @@
 (ns atom-finder.util
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
+            [schema.core :as s]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
-           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage ASTVisitor IASTExpression IASTTranslationUnit IASTUnaryExpression IASTExpressionList IASTForStatement]
+           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
-           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
+           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
+           [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
 ;;;;;;
@@ -76,6 +78,13 @@
   [tolerance x y]
      (< (Math/abs (- x y)) tolerance))
 
+(defn strict-get
+  "Lookup value in collection and throw exception if it doesn't exist"
+  [m k]
+  (if-let [[k v] (find m k)]
+    v
+        (throw (Exception. (str "Key Not Found " k)))))
+
 ;;;;;;;;
 ;;   Specific to this project
 ;;;;;;;
@@ -134,18 +143,18 @@
                    1 (f node)
                    2 (f node index))]
 
-     (conj 
+     (conj
            (doseq [iast-node kids]
              (pre-tree f iast-node (inc index)))
            ret))))
 
 (defn print-tree [node]
-  (letfn 
+  (letfn
       [(f [node index]
          (let [offset (format " (offset: %s, %s)"
                               (-> node .getFileLocation .getNodeOffset)
                               (-> node .getFileLocation .getNodeLength))]
-           
+
            (printf "%s -%s %s -> %s\n"
                    (apply str (repeat index "  "))
                    (-> node .getClass .getSimpleName)
@@ -154,7 +163,7 @@
                        (str "           ")
                        (.subSequence 0 10)
                        (.replaceAll "\n" " \\ ")))))]
-    
+
     (pre-tree f node)))
 
 (defn depth [node]
@@ -213,7 +222,7 @@
 
 (defn typename [node]
   (let [name (-> node .getClass .getSimpleName)]
-    (nth (re-find #"CPPAST(.*)" name) 1)))
+    (nth (re-find #"AST(.*)" name) 1)))
 
 (defn filter-depth
   "Return every sub-tree of size n"
@@ -289,9 +298,10 @@
 (defn get-in-tree
   "Find a value in the AST by indexes"
   [indices node]
-  (if (empty? indices)
-    node
-    (recur (rest indices) (nth (children node) (first indices)))))
+  (cond
+    (nil? node) nil
+    (empty? indices) node
+    :else (recur (rest indices) (nth (children node) (first indices) nil))))
 
 (defn expand-home [s]
   (if (clojure.string/starts-with? s "~")
@@ -328,80 +338,69 @@
   [code]
   (mem-tu "anonymously-parsed-code.c" code))
 
-(defn parse-expr
-  "Turn a single C expression into an AST"
-  [code]
-  (->> (str "int main() {\n" code ";\n}\n")
-      parse-source
-      (get-in-tree [0 2 0 0]))) 
-
 (defn parse-stmt
-  "Turn a single C expression into an AST"
+  "Turn a single C statement into an AST"
   [code]
   (->> (str "int main() {\n" code "\n}\n")
       parse-source
-      (get-in-tree [0 2 0]))) 
+      (get-in-tree [0 2 0])))
 
-(defn loc
-  "Get location information about an AST node"
-  [node]
-  (let [loc    (.getFileLocation node)
-        offset (.getNodeOffset loc)
-        length (.getNodeLength loc)
-        line   (.getStartingLineNumber loc)]
+(defn parse-expr
+  "Turn a single C expression into an AST"
+  [code]
+  (->> (str code ";")
+      parse-stmt
+      (get-in-tree [0])))
+
+(defn find-after
+  "Take the element after the specified one"
+  [coll elem]
+  (->> (map vector coll (rest coll))
+       (filter #(= elem (first %)))
+       first
+       last))
+
+; core/org.eclipse.cdt.core/parser/org/eclipse/cdt/internal/core/dom/rewrite/changegenerator/ChangeGenerator.java:getNextSiblingNode(IASTNode node)
+(s/defn next-sibling :- (s/maybe IASTNode)
+  [node :- IASTNode]
+  (let [parent-node (parent node)
+        siblings
+          (condp instance? parent-node
+                ICPPASTNamespaceDefinition (.getDeclarations (cast ICPPASTNamespaceDefinition) true)
+                IASTCompositeTypeSpecifier (.getDeclarations (cast IASTCompositeTypeSpecifier) true)
+                (children parent-node))]
+
+        (find-after siblings node)))
+
+(s/defn stmt-str? :- s/Bool
+  [code :- String]
+  (let [stmt-parse (parse-stmt code)]
+    ; if the code isn't a statement the next node will be a problem statement
+    (and (not (nil? stmt-parse))
+      (not (instance? CPPASTProblemStatement (next-sibling stmt-parse))))
+  ))
+
+(defn parse-frag
+  "Turn a single C fragment (statement or expression) into an AST"
+  [code]
+  (let [parse-stmt-or-expr (fn [code] ((if (stmt-str? code) parse-stmt parse-expr) code))
+        node1 (parse-stmt-or-expr code)]
+    (if (instance? IASTProblemStatement node1)
+      (parse-stmt-or-expr (str code ";"))
+      node1)))
+
+(defmulti loc "Get location information about an AST node" class)
+(defmethod loc ASTFileLocation [l]
+  (let [offset (.getNodeOffset l)
+        length (.getNodeLength l)
+        line   (.getStartingLineNumber l)]
     {:line line :offset offset :length length}))
+
+(defmethod loc Object
+  [node]
+  (loc (.getFileLocation node)))
 
 (defn errln "println to stderr" [s]
   (binding [*out* *err*] (println s)))
 
-(defn atoms-in-tree
-  "Return all instances of atom in an AST"
-  [atom-classifier node]
-  (let [child-atoms
-        (mapcat (partial atoms-in-tree atom-classifier) (children node))]
-    (if (atom-classifier node)
-      (conj child-atoms node)
-      child-atoms)))
-
-(defn strict-get [m k]
-  (if-let [[k v] (find m k)]
-    v
-        (throw (Exception. (str "Key Not Found " k)))))
-
-(defn true-lines
-  "Find all lines marked with <true> in test file"
-  [filepath]
-  (->>
-   filepath
-   slurp-lines
-   (map #(re-find #"<true>" %))
-   (keep-indexed #(if %2 (inc %1)))))
-
-(defn paren-node?
-  "Does this node just represent ()'s"
-  [node]
-  (and (instance? IASTUnaryExpression node)
-       (= (.getOperator node) IASTUnaryExpression/op_bracketedPrimary)))
-
-(defn remove-wrappers
-  "Drill down the tree past expressions that just return the value of their direct children"
-  [node]
-  (let [new-node
-        (cond
-          ; comma operators only return the value of their second operand
-          (instance? IASTExpressionList node) (last (children node))
-          ; parenthesis just return their only child
-          (paren-node? node) (.getOperand node)
-          :else node)]
-
-    (if (= node new-node)
-      node
-      (remove-wrappers new-node))))
-
-(defn value-consuming-children
-  "Return the children of this node who's values will be used. e.g. The first and third clauses of a for loop don't use the values of their expression, but the second one does, so return that one"
-  [node]
-  (condp instance? node
-    IASTForStatement   [(.getConditionExpression node)]
-    (children node)))
-
+(defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))

@@ -3,6 +3,7 @@
             [schema.test]
             [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
+            [atom-finder.classifier-util :refer :all]
             ))
 
 (use-fixtures :once schema.test/validate-schemas)
@@ -89,7 +90,7 @@
 
     (let [lines  (->> (resource-path "conditional.c")
                       tu
-                      (atoms-in-tree conditional-atom?)
+                      (filter-tree conditional-atom?)
                       (map loc)
                       (map :line))]
 
@@ -147,7 +148,7 @@
 
     (let [lines  (->> (resource-path "reversed-subscript.c")
                       tu
-                      (atoms-in-tree reversed-subscript-atom?)
+                      (filter-tree reversed-subscript-atom?)
                       (map loc)
                       (map :line))]
 
@@ -177,7 +178,7 @@
 
     (let [lines  (->> (resource-path "curly-braces.c")
                       tu
-                      (atoms-in-tree curly-braces-atom?)
+                      (filter-tree curly-braces-atom?)
                       (map loc)
                       (map :line))]
 
@@ -191,7 +192,7 @@
     (is (comma-atom? (parse-expr "num1,num2")))
     (let [lines  (->> (resource-path "comma.c")
                       tu
-                      (atoms-in-tree comma-atom?)
+                      (filter-tree comma-atom?)
                       (map loc)
                       (map :line))]
 
@@ -202,7 +203,7 @@
 
     (let [lines  (->> (resource-path "assignment-as-value.c")
                       tu
-                      (atoms-in-tree assignment-as-value-atom?)
+                      (filter-tree assignment-as-value-atom?)
                       (map loc)
                       (map :line))]
 

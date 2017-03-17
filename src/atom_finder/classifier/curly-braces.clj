@@ -11,8 +11,7 @@
 (defn curly-braces-atom?
   "Does this AST node an statement that should be followed by curly braces?"
   [node]
-  (let [omittable-types [IASTForStatement IASTIfStatement IASTWhileStatement IASTDoStatement  ICPPASTRangeBasedForStatement]
-        special-types [IASTCaseStatement IASTDefaultStatement]]
+  (let [omittable-types [IASTForStatement IASTIfStatement IASTWhileStatement IASTDoStatement  ICPPASTRangeBasedForStatement]]
   (cond
    (some #(instance? % node) omittable-types)
       (some #(omitted-curly-brace? %) (children node))
@@ -22,9 +21,6 @@
                                               .getSyntax
                                               .toString
                                               ((partial = "{"))))
-   (some #(instance? % node) special-types)
-      nil
-      
    :else false)))
 
 (comment
@@ -40,4 +36,4 @@
               (conj child-atoms node)
               child-atoms))))
  )
-;default case - 
+

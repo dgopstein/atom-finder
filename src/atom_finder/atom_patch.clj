@@ -74,7 +74,7 @@
   [repo commit-hash file-name atom-classifier]
     (->> (commit-file-source repo commit-hash file-name)
          parse-source
-         (atoms-in-tree atom-classifier)
+         (filter-tree atom-classifier)
          count ; timing hot spot. Make more efficient atom counting function?
          ))
 
