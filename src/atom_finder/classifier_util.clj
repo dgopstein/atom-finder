@@ -4,7 +4,7 @@
             [schema.core :as s]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression]))
+  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTExpressionList IASTForStatement]))
 
 (defn default-finder [classifier] (partial filter-tree classifier))
 
@@ -99,3 +99,25 @@
 
 (defn log2 [n] (/ (Math/log n) (Math/log 2)))
 (def number-bits "How many bits are requited to store an integer value" log2)
+
+(defn remove-wrappers
+  "Drill down the tree past expressions that just return the value of their direct children"
+  [node]
+  (let [new-node
+        (cond
+          ; comma operators only return the value of their second operand
+          (instance? IASTExpressionList node) (last (children node))
+          ; parenthesis just return their only child
+          (paren-node? node) (.getOperand node)
+          :else node)]
+
+    (if (= node new-node)
+      node
+      (remove-wrappers new-node))))
+
+(defn value-consuming-children
+  "Return the children of this node who's values will be used. e.g. The first and third clauses of a for loop don't use the values of their expression, but the second one does, so return that one"
+  [node]
+  (condp instance? node
+    IASTForStatement   [(.getConditionExpression node)]
+    (children node)))

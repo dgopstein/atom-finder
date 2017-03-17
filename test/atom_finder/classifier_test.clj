@@ -172,3 +172,39 @@
         (testing (str "Is reversed-subscript-atom? - " code " - " sc?)
           (is (= (reversed-subscript-atom? (parse-expr code)) sc?))))
       )))
+
+(deftest test-omitted-curly-braces-atom?
+  (testing "omitted-curly-braces-atom? finds all atoms in snippet study code"
+
+    (let [lines  (->> (resource-path "curly-braces.c")
+                      tu
+                      (filter-tree curly-braces-atom?)
+                      (map loc)
+                      (map :line))]
+
+      (is (= lines [3 4 7 8 26 27 28 29 41 43 44 54 66 79 95 101 102 104 104 108 109])))))
+
+(deftest comma-operator-test
+  (testing "small statements"
+    (is (comma-atom? (parse-expr "1,2")))
+    (is (false? (comma-atom? (parse-expr "int a,b;"))))
+    (is (comma-atom? (parse-expr "num1,num2")))
+    (let [lines  (->> (resource-path "comma.c")
+                      tu
+                      (filter-tree comma-atom?)
+                      (map loc)
+                      (map :line))]
+
+      (is (= lines [4 11 11 11])))))
+
+(deftest test-assignment-as-value-atom?
+  (testing "assignment-as-value-atom? finds all atoms in snippet study code"
+
+    (let [lines  (->> (resource-path "assignment-as-value.c")
+                      tu
+                      (filter-tree assignment-as-value-atom?)
+                      (map loc)
+                      (map :line))]
+
+      (is (= lines [8 10 12 12 14 16 20 22 30 32 36 38 42 48 50 52 52 56 58 60 62])))))
+
