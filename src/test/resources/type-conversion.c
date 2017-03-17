@@ -27,4 +27,6 @@ int main() {
 
   int V11 = 288;       // <false>
   char V12 = V6 % 256; // <false>
+
+  int V13 = 1, V14 = 2.3; // <true>
 }

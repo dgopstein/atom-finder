@@ -1,5 +1,6 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList IProblemType))
+(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList ISemanticProblem)
+        '(java.text ParseException))
 
 (s/defn type-conversion-atom? :- s/Bool [node :- IASTNode] false)
 
@@ -41,21 +42,21 @@
 (defmulti unsigned? class)
 (s/defmethod unsigned? IASTSimpleDeclaration [node] (->> node .getDeclSpecifier unsigned?))
 (s/defmethod unsigned? IASTExpression [node] (->> node .getExpressionType unsigned?))
-(s/defmethod unsigned? IProblemType [node] nil) ; tread as false, but that's probably ok
+(s/defmethod unsigned? ISemanticProblem [node] nil) ; tread as false, but that's probably ok
 (s/defmethod unsigned? :default [node] (->> node .isUnsigned))
 
 (defmulti unify-type "Go from an arbitrary java node to it's type in clojure data" class)
 (s/defmethod unify-type IBasicType :- (s/maybe TD) [node] (->> node .getKind basic-type))
 (s/defmethod unify-type IASTSimpleDeclSpecifier :- (s/maybe TD) [node]
   (->> node .getType decl-type))
-(s/defmethod unify-type IASTSimpleDeclaration :- (s/maybe TD) [node]
+(s/defmethod unify-type IASTSimpleDeclaration [node]
   (merge (->> node .getDeclSpecifier unify-type)
          {:unsigned? (unsigned? node)}))
-(s/defmethod unify-type IASTExpression :- (s/maybe TD) [node]
+(s/defmethod unify-type IASTExpression [node]
   (merge (->> node .getExpressionType unify-type)
          {:unsigned? (unsigned? node) :val node}))
-(s/defmethod unify-type IProblemType [node]
-  (throw (Exception. "Expression not parsable")))
+(s/defmethod unify-type ISemanticProblem [node]
+  (throw (ParseException. (str "Expression type unknown (" (class node) ")") 0)))
 
 (s/defn bit-range :- [(s/one s/Int "lower") (s/one s/Int "upper")]
   "Which values can safely be stored in a variable with this type"
@@ -68,36 +69,38 @@
        (map #(- % (first signed-range)) signed-range)
        signed-range))))
 
-(s/defn td-range :- [(s/one s/Int "lower") (s/one s/Int "upper")] [type :- TD]
+(s/defn td-range :- [(s/one s/Int "lower") (s/one s/Int "upper")] [type]
   (bit-range (:unsigned? type) (:bits type)))
 
-(s/defn type-conversion-declaration? :- s/Bool
-  [node :- IASTSimpleDeclaration]
-  (let [context-type (->> node unify-type)]
-    (if (nil? context-type)
-      false
-      (let [[context-lower context-upper] (bit-range node)
-            arg-exprs (keep #(some->> % .getInitializer .getInitializerClause) (.getDeclarators node))
-            simple-arg-exprs (filter #(not (instance? IASTInitializerList %)) arg-exprs)
-            arg-types (keep #(->> % .getExpressionType .getKind basic-type) simple-arg-exprs)]
-
-        (or
-         ; real -> int
-         (and (#{:int} (:number-type context-type))
-              (any-pred? #(#{:real} (:number-type %)) arg-types))
-
-         ; large -> small
-         ; signed -> unsigned (and the reverse)
-         (any-pred? (fn [[type expr]]
-                      (and (numeric-literal? expr)
-                           (#{:int} (:number-type type))
-                           (not (<= context-lower (parse-numeric-literal expr) context-upper))))
-                    (map vector arg-types arg-exprs))
-         )))))
+;(s/defn type-conversion-declaration? :- s/Bool
+;  [node :- IASTSimpleDeclaration]
+;  (let [context-type (->> node unify-type)]
+;    (if (nil? context-type)
+;      false
+;      (let [[context-lower context-upper] (bit-range node)
+;            arg-exprs (keep #(some->> % .getInitializer .getInitializerClause) (.getDeclarators node))
+;            simple-arg-exprs (filter #(not (instance? IASTInitializerList %)) arg-exprs)
+;            arg-types (keep #(->> % .getExpressionType .getKind basic-type) simple-arg-exprs)]
+;
+;        (or
+;         ; real -> int
+;         (and (#{:int} (:number-type context-type))
+;              (any-pred? #(#{:real} (:number-type %)) arg-types))
+;
+;         ; large -> small
+;         ; signed -> unsigned (and the reverse)
+;         (any-pred? (fn [[type expr]]
+;                      (and (numeric-literal? expr)
+;                           (#{:int} (:number-type type))
+;                           (not (<= context-lower (parse-numeric-literal expr) context-upper))))
+;                    (map vector arg-types arg-exprs))
+;         )))))
 
 (defmulti unify-arg-types class)
 (s/defmethod unify-arg-types IASTBinaryExpression [node]
   (map unify-type [(.getOperand2 node)]))
+(s/defmethod unify-arg-types IASTSimpleDeclaration [node]
+  (keep #(some->> % .getInitializer .getInitializerClause unify-type) (.getDeclarators node)))
 
 
 ;(s/defn type-conversion-assignment? :- s/Bool
@@ -125,31 +128,42 @@
 {:unsigned :val}
 (s/defn type-conversion? :- s/Bool
   [node]
-  (let [context-type (->> node unify-type)
-        arg-types (->> node unify-arg-types)] ; merge unsigned in
-    (boolean (when (and context-type (not-empty arg-types))
-      (let [[context-lower context-upper] (td-range context-type)]
-        (or
-         ; real -> int
-         (and (#{:int} (:number-type context-type))
-              (any-pred? #(#{:real} (:number-type %)) arg-types))
+  (try
+    (let [context-type (->> node unify-type)
+          arg-types (->> node unify-arg-types)] ; merge unsigned in
+      (boolean (when (and context-type (not-empty arg-types))
+                 (let [[context-lower context-upper] (td-range context-type)]
+                   (or
+                                        ; real -> int
+                    (and (#{:int} (:number-type context-type))
+                         (any-pred? #(#{:real} (:number-type %)) arg-types))
 
-         ; large -> small
-         ; signed -> unsigned (and the reverse)
-         (any-pred? (fn [type]
-                      (and (numeric-literal? (:val type))
-                           (#{:int} (:number-type type))
-                           (not (<= context-lower (parse-numeric-literal (:val type)) context-upper))))
-                    arg-types)
-         ))))))
-(def type-conversion-assignment? type-conversion?)
+                                        ; large -> small
+                                        ; signed -> unsigned (and the reverse)
+                    (any-pred? (fn [type]
+                                 (and (numeric-literal? (:val type))
+                                      (#{:int} (:number-type type))
+                                      (not (<= context-lower (parse-numeric-literal (:val type)) context-upper))))
+                               arg-types)
+                    )))))
+    (catch ParseException pe false) ; TODO make this more specific to unknown types
+    ))
+(defn type-conversion-assignment? [x] (type-conversion? x))
+(defn type-conversion-declaration? [x] (type-conversion? x))
 
 
-(->> "int main() { unsigned int V1; V2 = -2; }"
-    parse-source
-    (get-in-tree [0 2 1 0]) ;.getOperand1 .getExpressionType type-range
-    type-conversion-assignment?
-    )
+(->> ;"int main() { unsigned int V1; V2 = -2; }"
+ ;"int main() {float V1 = 1.99; int V2 = V1;}"
+ "int V13 = 1, V14 = 2.3;"
+ parse-frag
+ (get-in-tree [0]) ;.getOperand1 .getExpressionType type-range
+ ;type-conversion-assignment?
+ ;.getDeclaration
+ ;.getDeclSpecifier
+ ;.getType
+ ;unify-type
+ ;write-ast
+ )
 
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
 (s/defn type-conversion-atom? :- s/Bool
