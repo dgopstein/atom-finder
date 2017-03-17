@@ -23,17 +23,3 @@
                                               ((partial = "{"))))
    :else false)))
 
-(comment
- (defn curly-braces-atoms
-   "Return all instances of omitted curly brace atoms in the node"
-   [node]
-   (let [child-atoms
-         (mapcat (partial curly-braces-atoms) (children node))]
-     (cond
-      ;;(instance? IASTIfStatement node)?
-      (instance? IASTSwitchStatement node) (swtich-curly-brace node child-atoms)
-      :else (if (curly-braces-atom? node) 
-              (conj child-atoms node)
-              child-atoms))))
- )
-
