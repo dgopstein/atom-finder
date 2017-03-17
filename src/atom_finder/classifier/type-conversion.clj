@@ -38,19 +38,24 @@
 (def basic-type (into {} (map #(into [] (vals (select-keys % [0 2]))) type-components)))
 (def all-type (merge decl-type basic-type))
 
-
-(defmulti unify-type "Go from an arbitrary java node to it's type in clojure data" class)
-(s/defmethod unify-type IBasicType :- (s/maybe TD) [node] (->> node .getKind basic-type))
-(s/defmethod unify-type IASTSimpleDeclSpecifier :- (s/maybe TD) [node] (->> node .getType decl-type))
-(s/defmethod unify-type IASTSimpleDeclaration :- (s/maybe TD) [node] (->> node .getDeclSpecifier unify-type))
-(s/defmethod unify-type IASTExpression :- (s/maybe TD) [node] (->> node .getExpressionType unify-type))
-(s/defmethod unify-type IProblemType [node] nil)
-
 (defmulti unsigned? class)
 (s/defmethod unsigned? IASTSimpleDeclaration [node] (->> node .getDeclSpecifier unsigned?))
 (s/defmethod unsigned? IASTExpression [node] (->> node .getExpressionType unsigned?))
 (s/defmethod unsigned? IProblemType [node] nil) ; tread as false, but that's probably ok
 (s/defmethod unsigned? :default [node] (->> node .isUnsigned))
+
+(defmulti unify-type "Go from an arbitrary java node to it's type in clojure data" class)
+(s/defmethod unify-type IBasicType :- (s/maybe TD) [node] (->> node .getKind basic-type))
+(s/defmethod unify-type IASTSimpleDeclSpecifier :- (s/maybe TD) [node]
+  (->> node .getType decl-type))
+(s/defmethod unify-type IASTSimpleDeclaration :- (s/maybe TD) [node]
+  (merge (->> node .getDeclSpecifier unify-type)
+         {:unsigned? (unsigned? node)}))
+(s/defmethod unify-type IASTExpression :- (s/maybe TD) [node]
+  (merge (->> node .getExpressionType unify-type)
+         {:unsigned? (unsigned? node) :val node}))
+(s/defmethod unify-type IProblemType [node]
+  (throw (Exception. "Expression not parsable")))
 
 (s/defn bit-range :- [(s/one s/Int "lower") (s/one s/Int "upper")]
   "Which values can safely be stored in a variable with this type"
@@ -62,6 +67,9 @@
      (if unsigned?
        (map #(- % (first signed-range)) signed-range)
        signed-range))))
+
+(s/defn td-range :- [(s/one s/Int "lower") (s/one s/Int "upper")] [type :- TD]
+  (bit-range (:unsigned? type) (:bits type)))
 
 (s/defn type-conversion-declaration? :- s/Bool
   [node :- IASTSimpleDeclaration]
@@ -87,51 +95,55 @@
                     (map vector arg-types arg-exprs))
          )))))
 
-(s/defn type-conversion-assignment? :- s/Bool
-  [node :- IASTBinaryExpression]
-  (let [context-type (->> node unify-type)]
-    (if (nil? context-type)
-      false
-      (let [[context-lower context-upper] (bit-range node)
-            arg-expr (->> node .getOperand2)
-            arg-type (->> arg-expr unify-type)]
+(defmulti unify-arg-types class)
+(s/defmethod unify-arg-types IASTBinaryExpression [node]
+  (map unify-type [(.getOperand2 node)]))
 
-        (boolean
-         (or
-                                        ; real -> int
-          (and (#{:int}  (:number-type context-type))
-               (#{:real} (:number-type arg-type)))
 
-                                        ; large -> small
-                                        ; signed -> unsigned (and the reverse)
-          (and (numeric-literal? arg-expr)
-               (#{:int} (:number-type arg-type))
-               (not (<= context-lower (parse-numeric-literal arg-expr) context-upper)))))
-        ))))
-
-;(s/defn type-conversion-declaration? :- s/Bool
-;  [node :- IASTSimpleDeclaration]
-;  (let [context-type (->> node unify-type)
-;        arg-exprs (->> node unify-args-types)]
-;    (if (nil? unify-type)
+;(s/defn type-conversion-assignment? :- s/Bool
+;  [node :- IASTBinaryExpression]
+;  (let [context-type (->> node unify-type)]
+;    (if (nil? context-type)
 ;      false
 ;      (let [[context-lower context-upper] (bit-range node)
-;            simple-arg-exprs (filter #(not (instance? IASTInitializerList %)) arg-exprs)
-;            arg-types (keep #(->> % .getExpressionType .getKind basic-type) simple-arg-exprs)]
+;            arg-expr (->> node .getOperand2)
+;            arg-type (->> arg-expr unify-type)]
 ;
-;        (or
-;         ; real -> int
-;         (and (#{:int} (:number-type context-type))
-;              (any-pred? #(#{:real} (:number-type %)) arg-types))
+;        (boolean
+;         (or
+;                                        ; real -> int
+;          (and (#{:int}  (:number-type context-type))
+;               (#{:real} (:number-type arg-type)))
 ;
-;         ; large -> small
-;         ; signed -> unsigned (and the reverse)
-;         (any-pred? (fn [[type expr]]
-;                      (and (numeric-literal? expr)
-;                           (#{:int} (:number-type type))
-;                           (not (<= context-lower (parse-numeric-literal expr) context-upper))))
-;                    (map vector arg-types arg-exprs))
-;         )))))
+;                                        ; large -> small
+;                                        ; signed -> unsigned (and the reverse)
+;          (and (numeric-literal? arg-expr)
+;               (#{:int} (:number-type arg-type))
+;               (not (<= context-lower (parse-numeric-literal arg-expr) context-upper)))))
+;        ))))
+
+{:unsigned :val}
+(s/defn type-conversion? :- s/Bool
+  [node]
+  (let [context-type (->> node unify-type)
+        arg-types (->> node unify-arg-types)] ; merge unsigned in
+    (boolean (when (and context-type (not-empty arg-types))
+      (let [[context-lower context-upper] (td-range context-type)]
+        (or
+         ; real -> int
+         (and (#{:int} (:number-type context-type))
+              (any-pred? #(#{:real} (:number-type %)) arg-types))
+
+         ; large -> small
+         ; signed -> unsigned (and the reverse)
+         (any-pred? (fn [type]
+                      (and (numeric-literal? (:val type))
+                           (#{:int} (:number-type type))
+                           (not (<= context-lower (parse-numeric-literal (:val type)) context-upper))))
+                    arg-types)
+         ))))))
+(def type-conversion-assignment? type-conversion?)
+
 
 (->> "int main() { unsigned int V1; V2 = -2; }"
     parse-source
