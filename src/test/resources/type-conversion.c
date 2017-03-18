@@ -27,4 +27,25 @@ int main() {
 
   int V11 = 288;       // <false>
   char V12 = V6 % 256; // <false>
+
+  int V13 = 1, V14 = 2.3; // <true>
+
+  (int) 2.3; // <true>
+  (int) 2;   // <false>
+}
+
+
+void F1(int A1) {}
+
+void F0() {
+  F1(2.1); // <true>
+  F1(2);   // <false>
+}
+
+int F2() {
+  return 1.2;  // <true>
+}
+
+int F3() {
+  return 1;  // <false>
 }
