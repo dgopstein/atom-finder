@@ -172,3 +172,7 @@
         (testing (str "Is reversed-subscript-atom? - " code " - " sc?)
           (is (= (reversed-subscript-atom? (parse-expr code)) sc?))))
       )))
+
+(deftest test-type-conversion
+  (testing "Is a repurposed variable atom here?"
+    (test-atom-lines "repurposed_variable.c" "<true>" (default-finder repurposed-variable-atom?))))

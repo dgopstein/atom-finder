@@ -3,8 +3,6 @@
         '(java.text ParseException)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp.semantics EvalBinding))
 
-(s/defn type-conversion-atom? :- s/Bool [node :- IASTNode] false)
-
 (s/defrecord TD ;TypeDescription
     [number-type :- s/Keyword bits :- s/Int])
 (def FullType {(s/required-key :number-type) s/Keyword
@@ -116,7 +114,7 @@
     )))
 
 (s/defn type-conversion-atom? :- s/Bool
-  [node]
+  [node :- IASTNode]
   (try
     (let [c-types (->> node context-types)
           a-types (->> node arg-types)
