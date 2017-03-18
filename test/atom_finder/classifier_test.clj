@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [schema.test]
             [atom-finder.util :refer :all]
+            [atom-finder.test-util :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.classifier-util :refer :all]
             ))
@@ -172,3 +173,20 @@
         (testing (str "Is reversed-subscript-atom? - " code " - " sc?)
           (is (= (reversed-subscript-atom? (parse-expr code)) sc?))))
       )))
+
+(deftest test-omitted-curly-braces-atom?
+  (testing "omitted-curly-braces-atom? finds all atoms in snippet study code"
+    (test-atom-lines "omitted-curly-braces.c" "<true>" (default-finder omitted-curly-braces-atom?))))
+
+(deftest comma-operator-test
+  (testing "small statements"
+    (is (comma-operator-atom? (parse-expr "1,2")))
+    (is (false? (comma-operator-atom? (parse-expr "int a,b;"))))
+    (is (comma-operator-atom? (parse-expr "num1,num2")))
+
+  (testing "comma-operator? finds all atoms in snippet study code"
+    (test-atom-lines "comma-operator.c" "<true>" (default-finder comma-operator-atom?)))))
+
+(deftest test-assignment-as-value-atom?
+  (testing "assignment-as-value-atom? finds all atoms in snippet study code"
+    (test-atom-lines "assignment-as-value.c" "<true>" (default-finder assignment-as-value-atom?))))

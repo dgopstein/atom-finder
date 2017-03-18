@@ -11,28 +11,6 @@
                IASTUnaryExpression/op_postFixIncr}
              (.getOperator node)))
 
-(defn remove-wrappers
-  "Drill down the tree past expressions that just return the value of their direct children"
-  [node]
-  (let [new-node
-        (cond
-          ; comma operators only return the value of their second operand
-          (instance? IASTExpressionList node) (last (children node))
-          ; parenthesis just return their only child
-          (paren-node? node) (.getOperand node)
-          :else node)]
-
-    (if (= node new-node)
-      node
-      (remove-wrappers new-node))))
-
-(defn value-consuming-children
-  "Return the children of this node who's values will be used. e.g. The first and third clauses of a for loop don't use the values of their expression, but the second one does, so return that one"
-  [node]
-  (condp instance? node
-    IASTForStatement   [(.getConditionExpression node)]
-    (children node)))
-
 (defn post-*crement-atom? [node]
   ; certain nodes can never "use" the value of an expression
   (and (not (any-pred? #(% node) [(partial instance? IASTExpressionList)

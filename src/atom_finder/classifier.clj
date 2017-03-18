@@ -49,6 +49,9 @@
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
    (ValidatedAtom :literal-encoding          literal-encoding-atom?      (default-finder literal-encoding-atom?))
    (ValidatedAtom :post-increment            post-*crement-atom?         (default-finder post-*crement-atom?))
+   (ValidatedAtom :comma                     comma-operator-atom?        (default-finder comma-operator-atom?))
+   (ValidatedAtom :curly-braces              omitted-curly-braces-atom?  (default-finder omitted-curly-braces-atom?))
+   (ValidatedAtom :assignment-as-value       assignment-as-value-atom?   (default-finder assignment-as-value-atom?))
    (ValidatedAtom :macro-operator-precedence macro-def-precedence-atom?  macro-operator-precedence-atoms)
    ]
   )
