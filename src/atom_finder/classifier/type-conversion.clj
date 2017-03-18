@@ -66,8 +66,9 @@
 (s/defmethod context-types IASTBinaryExpression [node]
   [(unify-type (.getOperand1 node))])
 (s/defmethod context-types IASTSimpleDeclaration [node]
-  [(merge (->> node .getDeclSpecifier unify-type)
-         {:unsigned? (unsigned? node)})])
+  (repeat (count (.getDeclarators node))
+          (merge (->> node .getDeclSpecifier unify-type)
+                  {:unsigned? (unsigned? node)})))
 
 (defmulti arg-types class)
 (s/defmethod arg-types :default [node] nil)
