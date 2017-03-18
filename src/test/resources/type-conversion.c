@@ -30,3 +30,12 @@ int main() {
 
   int V13 = 1, V14 = 2.3; // <true>
 }
+
+
+void F1(int A1) {}
+
+void F0() {
+  F1(2.1); // <true>
+  F1(2);   // <false>
+}
+
