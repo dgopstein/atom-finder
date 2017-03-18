@@ -4,7 +4,7 @@
             [schema.core :as s]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression]))
+  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTFunctionDefinition]))
 
 (defn default-finder [classifier] (partial filter-tree classifier))
 
@@ -99,3 +99,11 @@
 
 (defn log2 [n] (/ (Math/log n) (Math/log 2)))
 (def number-bits "How many bits are requited to store an integer value" log2)
+
+(defn enclosing-function
+  "find the nearest ancestor that's a function definition"
+  [node]
+  (if (or (nil? node)
+          (instance? IASTFunctionDefinition node))
+    node
+    (enclosing-function (parent node))))
