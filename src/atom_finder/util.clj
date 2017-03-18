@@ -233,12 +233,11 @@
     (filter #(= n (depth %)) candidates)))
 
 (defn filter-tree
-  "Return every example of type"
-  [func node]
-  (let [kids        (children node)
-        kid-matches (mapcat (partial filter-tree func) kids)
-        matches     (filter func kids)]
-    (concat matches kid-matches)))
+  "Find every AST node that matches pred"
+  [pred node]
+  (concat
+   (when (pred node) [node])
+   (mapcat (partial filter-tree pred) (children node))))
 
 (defn filter-type
   "Return every example of type"
@@ -404,3 +403,18 @@
   (binding [*out* *err*] (println s)))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
+
+(defn print-node
+  "Print the line that contains the node and the lines around it"
+  [node]
+  (let [line-num (.getStartingLineNumber (.getFileLocation node)) file-name (.getContainingFilename node)]
+    (with-open [rdr (clojure.java.io/reader file-name)] 
+      (let [file-seq (line-seq rdr) total-line-num (count file-seq)]
+       (println "===================================================")
+
+       (if (>= (- line-num 2) 0) (println (str (- line-num 1) "    " (nth file-seq (- line-num 2)))))
+       (println (str line-num ">>>>" (nth file-seq (- line-num 1))))
+       (if (<= line-num total-line-num) (println (str (+ line-num 1) "    " (nth file-seq line-num))))
+
+       (println "===================================================")))))
+

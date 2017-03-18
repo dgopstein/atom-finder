@@ -1,10 +1,10 @@
 int main(){
     int a = 1;
-    if( a == 1)	a++;
-    else if (a == 2) --a;
+    if( a == 1)	a++; //ture
+    else if (a == 2) --a; //true
     else --a;
 
-    if( a == 1)	a++;
+    if( a == 1)	a++; //true
     else if (a == 2) { --a; }
     else --a;
     
@@ -23,10 +23,10 @@ int main(){
 
 int main(){
   int a = 1;
-  if (a) ;
-  else if (a) ;
-  else if (a) ;
-  else if (a) ;
+  if (a) ;//ture
+  else if (a) ;//ture
+  else if (a) ;//ture
+  else if (a) ;//ture
   else ;
 
   if (a) {}
@@ -38,10 +38,10 @@ int main(){
 int main(){
   int a = 1;
 
-  if (a) ;
+  if (a) ;//ture
 
-  if (a) ;
-  else if(a) {}
+  if (a) ;//ture
+  else if(a) {}//ture
   else ;
 
 }
@@ -51,7 +51,7 @@ int main() {
 		--i;
 		++i;
 	}
-	for (int i = 0; i < 10; ++i) 
+	for (int i = 0; i < 10; ++i)//ture 
 		--i;
 }
 
@@ -63,7 +63,7 @@ int main() {
 		++i;
 	}
 	
-	while (i > -1)
+	while (i > -1)//ture
 		--i;
 }
 
@@ -76,7 +76,7 @@ int main() {
 		++i;
 	} while (i < 0);
 
-	do	++i;
+	do	++i;//ture
 	while (i < 0);
 }
 
@@ -92,7 +92,19 @@ int main() {
 		case 1:	printf("%d\n", i);
 		default: printf("We need a bigger boat\n");
 	}
-        switch (i) 
+        switch (i) //ture
          default: printf("We definitely need a bigger boat\n");
 
+}
+
+void dans_if_test() {
+  if (1)//ture
+    if (2) 3;//ture
+
+  if (1)//ture
+    if (2) { 3; }//ture
+    else 4;
+
+  if (1)//ture
+    while (2) 3;//ture
 }
