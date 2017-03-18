@@ -39,3 +39,10 @@ void F0() {
   F1(2);   // <false>
 }
 
+int F2() {
+  return 1.2;  // <true>
+}
+
+int F3() {
+  return 1;  // <false>
+}

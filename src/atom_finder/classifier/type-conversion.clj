@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList ISemanticProblem IASTFunctionCallExpression IFunctionType)
+(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList ISemanticProblem IASTFunctionCallExpression IFunctionType IASTFunctionDefinition IASTReturnStatement)
         '(java.text ParseException)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp.semantics EvalBinding))
 
@@ -10,7 +10,7 @@
 (def FullType {(s/required-key :number-type) s/Keyword
                (s/required-key :bits) s/Int
                (s/optional-key :unsigned?) s/Bool
-               (s/optional-key :val) s/Any})
+               (s/optional-key :val) IASTNode})
 
 (def type-components
   [
@@ -46,12 +46,13 @@
 (defmulti unify-type "Go from an arbitrary java node to it's type in clojure data" class)
 (s/defmethod unify-type IBasicType :- (s/maybe FullType) [node]
   (merge (->> node .getKind basic-type)
-         {:unsigned? (unsigned? node) :val node}))
-(s/defmethod unify-type IASTSimpleDeclSpecifier :- (s/maybe TD) [node]
-  (->> node .getType decl-type))
+         {:unsigned? (unsigned? node)}))
+(s/defmethod unify-type IASTSimpleDeclSpecifier :- (s/maybe FullType) [node]
+  (merge (->> node .getType decl-type)
+         {:unsigned? (unsigned? node)}))
 (s/defmethod unify-type IASTExpression :- (s/maybe FullType) [node]
   (merge (->> node .getExpressionType unify-type)
-         {:unsigned? (unsigned? node) :val node}))
+         {:val node}))
 (s/defmethod unify-type ISemanticProblem [node]
   (throw (ParseException. (str "Expression type unknown (" (class node) ")") 0)))
 
@@ -64,20 +65,24 @@
         (when (instance? IFunctionType type)
           (->> type .getParameterTypes (map unify-type)))))))
 (s/defmethod context-types IASTBinaryExpression [node]
-  [(unify-type (.getOperand1 node))])
+  [(->> node .getOperand1 .getExpressionType unify-type)])
 (s/defmethod context-types IASTSimpleDeclaration [node]
   (repeat (count (.getDeclarators node))
-          (merge (->> node .getDeclSpecifier unify-type)
-                  {:unsigned? (unsigned? node)})))
+          (->> node .getDeclSpecifier unify-type)))
+(s/defmethod context-types IASTReturnStatement [node]
+  [(->> node enclosing-function (get-in-tree [0]) unify-type)])
 
 (defmulti arg-types class)
 (s/defmethod arg-types :default [node] nil)
 (s/defmethod arg-types IASTBinaryExpression [node]
   (map unify-type [(.getOperand2 node)]))
 (s/defmethod arg-types IASTSimpleDeclaration [node]
-  (keep #(some->> % .getInitializer .getInitializerClause unify-type) (.getDeclarators node)))
+  (keep #(some->> % .getInitializer .getInitializerClause unify-type)
+        (.getDeclarators node)))
 (s/defmethod arg-types IASTFunctionCallExpression [node]
   (map unify-type (.getArguments node)))
+(s/defmethod arg-types IASTReturnStatement [node]
+  [(->> node .getReturnArgument unify-type)])
 
 (s/defn bit-range :- [(s/one s/Int "lower") (s/one s/Int "upper")]
   "Which values can safely be stored in a variable with this type"
