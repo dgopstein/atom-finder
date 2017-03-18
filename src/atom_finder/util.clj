@@ -403,3 +403,18 @@
   (binding [*out* *err*] (println s)))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
+
+(defn print-node
+  "Print the line that contains the node and the lines around it"
+  [node]
+  (let [line-num (.getStartingLineNumber (.getFileLocation node)) file-name (.getContainingFilename node)]
+    (with-open [rdr (clojure.java.io/reader file-name)] 
+      (let [file-seq (line-seq rdr) total-line-num (count file-seq)]
+       (println "===================================================")
+
+       (if (>= (- line-num 2) 0) (println (str (- line-num 1) "    " (nth file-seq (- line-num 2)))))
+       (println (str line-num ">>>>" (nth file-seq (- line-num 1))))
+       (if (<= line-num total-line-num) (println (str (+ line-num 1) "    " (nth file-seq line-num))))
+
+       (println "===================================================")))))
+
