@@ -1,11 +1,11 @@
 int main(){
     int a = 1;
-    if( a == 1)	a++; //ture
-    else if (a == 2) --a; //true
+    if( a == 1)	a++; // <true>
+    else if (a == 2) --a; // <true>
     else --a;
 
-    if( a == 1)	a++; //true
-    else if (a == 2) { --a; }
+    if( a == 1)	a++; // <true>
+    else if (a == 2) { --a; } // <true>
     else --a;
     
     if ( a == 1){
@@ -23,10 +23,10 @@ int main(){
 
 int main(){
   int a = 1;
-  if (a) ;//ture
-  else if (a) ;//ture
-  else if (a) ;//ture
-  else if (a) ;//ture
+  if (a) ;// <true>
+  else if (a) ;// <true>
+  else if (a) ;// <true>
+  else if (a) ;// <true>
   else ;
 
   if (a) {}
@@ -38,10 +38,10 @@ int main(){
 int main(){
   int a = 1;
 
-  if (a) ;//ture
+  if (a) ;// <true>
 
-  if (a) ;//ture
-  else if(a) {}//ture
+  if (a) ;// <true>
+  else if(a) {}// <true>
   else ;
 
 }
@@ -51,7 +51,7 @@ int main() {
 		--i;
 		++i;
 	}
-	for (int i = 0; i < 10; ++i)//ture 
+	for (int i = 0; i < 10; ++i)// <true> 
 		--i;
 }
 
@@ -63,7 +63,7 @@ int main() {
 		++i;
 	}
 	
-	while (i > -1)//ture
+	while (i > -1)// <true>
 		--i;
 }
 
@@ -76,7 +76,7 @@ int main() {
 		++i;
 	} while (i < 0);
 
-	do	++i;//ture
+	do	++i;// <true>
 	while (i < 0);
 }
 
@@ -92,19 +92,19 @@ int main() {
 		case 1:	printf("%d\n", i);
 		default: printf("We need a bigger boat\n");
 	}
-        switch (i) //ture
+        switch (i) // <true>
          default: printf("We definitely need a bigger boat\n");
 
 }
 
 void dans_if_test() {
-  if (1)//ture
-    if (2) 3;//ture
+  if (1)// <true>
+    if (2) 3;// <true>
 
-  if (1)//ture
-    if (2) { 3; }//ture
+  if (1)// <true>
+    if (2) { 3; }// <true>
     else 4;
 
-  if (1)//ture
-    while (2) 3;//ture
+  if (1)// <true>
+    while (2) 3;// <true>
 }

@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [schema.test]
             [atom-finder.util :refer :all]
+            [atom-finder.test-util :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.classifier-util :refer :all]
             ))
@@ -175,14 +176,7 @@
 
 (deftest test-omitted-curly-braces-atom?
   (testing "omitted-curly-braces-atom? finds all atoms in snippet study code"
-
-    (let [lines  (->> (resource-path "omitted-curly-braces.c")
-                      tu
-                      (filter-tree omitted-curly-braces-atom?)
-                      (map loc)
-                      (map :line))]
-
-      (is (= lines [3 4 7 8 26 27 28 29 41 43 44 54 66 79 95 101 102 104 105 108 109])))))
+    (test-atom-lines "omitted-curly-braces.c " "<true>" (default-finder omitted-curly-braces-atom?))))
 
 
 (deftest comma-operator-test
@@ -200,12 +194,4 @@
 
 (deftest test-assignment-as-value-atom?
   (testing "assignment-as-value-atom? finds all atoms in snippet study code"
-
-    (let [lines  (->> (resource-path "assignment-as-value.c")
-                      tu
-                      (filter-tree assignment-as-value-atom?)
-                      (map loc)
-                      (map :line))]
-
-      (is (= lines [8 10 12 12 14 16 20 22 30 32 36 38 42 48 50 52 52 56 58 60 62])))))
-
+    (test-atom-lines "assignment-as-value.c " "<true>" (default-finder assignment-as-value-atom?))))
