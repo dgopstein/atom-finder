@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList ISemanticProblem IASTFunctionCallExpression IFunctionType IASTFunctionDefinition IASTReturnStatement)
+(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList ISemanticProblem IASTFunctionCallExpression IFunctionType IASTReturnStatement IASTCastExpression)
         '(java.text ParseException)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp.semantics EvalBinding))
 
@@ -56,33 +56,38 @@
 (s/defmethod unify-type ISemanticProblem [node]
   (throw (ParseException. (str "Expression type unknown (" (class node) ")") 0)))
 
+; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
 (defmulti context-types class)
 (s/defmethod context-types :default [node] nil)
 (s/defmethod context-types IASTFunctionCallExpression [node]
-  (let [first-arg (->> node .getEvaluation .getArguments first)]
-    (when (instance? EvalBinding first-arg)
-      (let [type (->> first-arg .getBinding .getType)]
-        (when (instance? IFunctionType type)
-          (->> type .getParameterTypes (map unify-type)))))))
+    (let [first-arg (->> node .getEvaluation .getArguments first)]
+      (when (instance? EvalBinding first-arg)
+        (let [type (->> first-arg .getBinding .getType)]
+          (when (instance? IFunctionType type)
+            (->> type .getParameterTypes (map unify-type)))))))
 (s/defmethod context-types IASTBinaryExpression [node]
-  [(->> node .getOperand1 .getExpressionType unify-type)])
+    [(->> node .getOperand1 .getExpressionType unify-type)])
 (s/defmethod context-types IASTSimpleDeclaration [node]
-  (repeat (count (.getDeclarators node))
-          (->> node .getDeclSpecifier unify-type)))
+    (repeat (count (.getDeclarators node))
+            (->> node .getDeclSpecifier unify-type)))
 (s/defmethod context-types IASTReturnStatement [node]
-  [(->> node enclosing-function (get-in-tree [0]) unify-type)])
+    [(->> node enclosing-function (get-in-tree [0]) unify-type)])
+(s/defmethod context-types IASTCastExpression [node]
+    [(->> node .getTypeId .getDeclSpecifier unify-type)])
 
 (defmulti arg-types class)
 (s/defmethod arg-types :default [node] nil)
 (s/defmethod arg-types IASTBinaryExpression [node]
-  (map unify-type [(.getOperand2 node)]))
+    (map unify-type [(.getOperand2 node)]))
 (s/defmethod arg-types IASTSimpleDeclaration [node]
-  (keep #(some->> % .getInitializer .getInitializerClause unify-type)
-        (.getDeclarators node)))
+    (keep #(some->> % .getInitializer .getInitializerClause unify-type)
+          (.getDeclarators node)))
 (s/defmethod arg-types IASTFunctionCallExpression [node]
-  (map unify-type (.getArguments node)))
+    (map unify-type (.getArguments node)))
 (s/defmethod arg-types IASTReturnStatement [node]
-  [(->> node .getReturnArgument unify-type)])
+    [(->> node .getReturnArgument unify-type)])
+(s/defmethod arg-types IASTCastExpression [node]
+    [(->> node .getOperand unify-type)])
 
 (s/defn bit-range :- [(s/one s/Int "lower") (s/one s/Int "upper")]
   "Which values can safely be stored in a variable with this type"
@@ -110,7 +115,6 @@
           (not (<= context-lower (parse-numeric-literal (:val a-type)) context-upper))))
     )))
 
-; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
 (s/defn type-conversion-atom? :- s/Bool
   [node]
   (try
@@ -119,15 +123,3 @@
           types   (map vector c-types a-types)]
       (any-pred? #(apply coercing-node? %) types))
     (catch ParseException pe false)))
-
-
-  ; [X] declaration
-  ; [X] assignment
-  ; [X] function call
-  ; [ ] return statement
-  ; [ ] type-casting
-
-  ; _Bool < char < short < int < long < long long
-  ; float < double < long double
-
-  ; char x = (unsigned char) -12

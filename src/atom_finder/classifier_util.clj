@@ -4,7 +4,7 @@
             [schema.core :as s]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression]))
+  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTFunctionDefinition]))
 
 (defn default-finder [classifier] (partial filter-tree classifier))
 
