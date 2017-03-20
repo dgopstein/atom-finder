@@ -33,7 +33,7 @@
 (defn find-commit
   [repo commit-ish]
   (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-ish))
-  
+
 
 ;(doseq [revc (take 20 rlist)]
 ;  (println (.name revc))

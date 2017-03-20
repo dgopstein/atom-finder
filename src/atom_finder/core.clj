@@ -6,6 +6,7 @@
             [atom-finder.classifier-util :refer :all]
             [atom-finder.results-util :refer :all]
             [atom-finder.atoms-in-dir :refer :all]
+            [atom-finder.atom-patch :as atom-patch]
             [clojure.pprint :refer [pprint]]
             [clojure.data.csv :as csv]
             [clojure.java.io :as io]
@@ -14,10 +15,13 @@
 (defn -main
   [& args]
 
-  (print-atoms-in-dir
-   (expand-home "~/opt/src/redis")
-   (map atom-lookup [:macro-operator-precedence])
-   )
+  ;(->> (atom-patch/atoms-changed-all-commits gcc-repo atoms)
+  ;     ;(map prn)
+  ;     (take 10)
+  ;     dorun)
+
+  ; 3:51
+  (atom-patch/log-atoms-changed-all-commits "gcc-bugs-atoms_2017-03-20.txt" gcc-repo atoms)
 )
 
 ;(->> "macro-operator-precedence_redis_2017-03-10_1.edn"

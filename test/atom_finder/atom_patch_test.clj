@@ -14,7 +14,7 @@
   (testing "Which lines were removed in this patch"
     (let [patch (->> "97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" resource-path slurp)
           rl    (removed-lines patch)]
-      
+
       (is (= rl {"gcc/ChangeLog" [16 26 27 28 29] "gcc/config/sparc/sparc.c" []}))
       )))
 
@@ -55,13 +55,9 @@
            commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
            file-name "gcc/c-family/c-pretty-print.c"
            srcs (source-before-after repo commit-hash file-name)]
-       (is (false?
-           (atom-removed-in-file?
-            (->> atom-lookup :logic-as-control-flow :finder)
-            srcs)))
-       (is (true?
-           (atom-removed-in-file?
-            (->> atom-lookup :conditional :finder)
-            srcs)))
+       (is (= [28 28] (-> atom-lookup :logic-as-control-flow :finder (atom-in-file-counts srcs))))
+       (is (false? (-> atom-lookup :logic-as-control-flow :finder (atom-removed-in-file? srcs))))
+       (is (= [25 24] (-> atom-lookup :conditional :finder (atom-in-file-counts srcs))))
+       (is (true? (-> atom-lookup :conditional :finder (atom-removed-in-file? srcs))))
      )))
  )

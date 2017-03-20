@@ -24,6 +24,7 @@
 (def AtomFinders [(s/one AtomFinder "atom-finder") AtomFinder])
 (def BeforeAfter [(s/one IASTTranslationUnit "before") (s/one IASTTranslationUnit "after")])
 (def BeforeAfters [(s/one BeforeAfter "commit-file") BeforeAfter])
+(def BACounts [(s/one s/Num "count") s/Num])
 
 ;
 ;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
@@ -52,7 +53,7 @@
         tree      (.getTree rc)
         tree-walk (doto (TreeWalk. repository) (.setRecursive true) (.addTree tree))
         ]
-    
+
     (.setFilter tree-walk (PathFilter/create file-name)) ; Use PathFilterGroup???? http://download.eclipse.org/jgit/docs/jgit-2.0.0.201206130900-r/apidocs/org/eclipse/jgit/treewalk/filter/PathFilter.html
     (.next tree-walk)
 
@@ -111,17 +112,21 @@
   [repo commit-hash file-name]
   (apply-before-after repo commit-hash file-name identity))
 
+(s/defn atom-in-file-counts :- BACounts
+  "Count the number of atoms in two ASTs"
+  [atom-finder :- AtomFinder srcs :- BeforeAfter]
+   (map (comp count atom-finder) srcs))
+
 (s/defn atom-removed-in-file? :- Boolean
   "Count the number of atoms in two ASTs and see if they've decreased"
   [atom-finder :- AtomFinder srcs :- BeforeAfter]
-  (apply >
-   (map (comp count atom-finder) srcs)))
+  (apply > (atom-in-file-counts atom-finder srcs)))
 
-(s/defn atoms-removed-in-file :- s/Any ;{s/Keyword s/Boolean}
+(s/defn atoms-in-file-counts :- s/Any ;{s/Keyword BACounts}
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs :- BeforeAfter]
   (into {}
-        (map #(vector (:name %1) (atom-removed-in-file? (:finder %1) srcs)) atoms)))
+        (map #(vector (:name %1) (atom-in-file-counts (:finder %1) srcs)) atoms)))
 
 (s/defn commit-files-before-after :- {s/Str BeforeAfter}
   "For every file changed in this commit, give both before and after ASTs"
@@ -135,10 +140,10 @@
   [atom-finder :- AtomFinder srcs :- BeforeAfters]
   (exists? (map (partial atom-removed-in-file? atom-finder) srcs)))
 
-(s/defn atoms-removed-in-commit :- {s/Str {s/Keyword s/Bool}}
+(s/defn atoms-changed-in-commit :- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] commit-hash :- s/Str]
   (->> (commit-files-before-after repo commit-hash)
-       (map (fn [[file srcs]] [file (atoms-removed-in-file atoms srcs)]))
+       (map (fn [[file srcs]] [file (atoms-in-file-counts atoms srcs)]))
        (into {})
        ))
 
@@ -150,28 +155,26 @@
   (let [commit-hash (.name rev-commit)]
     (try
       [commit-hash
-       (atoms-removed-in-commit repo atoms commit-hash)
+       (atoms-changed-in-commit repo atoms commit-hash)
        (bugzilla-ids rev-commit)
        ]
       (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       )))
 
-(defn atoms-removed-all-commits
+(defn atoms-changed-all-commits
   [repo atoms]
   (->>
    (gitq/rev-list repo)
    (pmap (partial parse-commit-for-atom repo atoms))
   ))
 
-;(atoms-removed-in-commit repo "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?)
-
-(defn log-atoms-removed-all-commits
-  [repo]
-  (binding [*out* (clojure.java.io/writer "gcc-logic-as-control-flow-commits.txt")]
+(defn log-atoms-changed-all-commits
+  [filename repo atoms]
+  (binding [*out* (clojure.java.io/writer filename)]
     (->> atoms
-         (atoms-removed-all-commits repo)
+         (atoms-changed-all-commits repo)
          (map prn)
-         (take 10)
+         ;(take 10)
          dorun
          time)))
