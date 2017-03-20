@@ -174,10 +174,6 @@
           (is (= (reversed-subscript-atom? (parse-expr code)) sc?))))
       )))
 
-(deftest test-omitted-curly-braces-atom?
-  (testing "omitted-curly-braces-atom? finds all atoms in snippet study code"
-    (test-atom-lines "omitted-curly-braces.c" "<true>" (default-finder omitted-curly-braces-atom?))))
-
 (deftest comma-operator-test
   (testing "small statements"
     (is (comma-operator-atom? (parse-expr "1,2")))
