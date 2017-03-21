@@ -15,12 +15,14 @@
 (defn -main
   [& args]
 
+  (set! *warn-on-reflection* true)
+
   ;(->> (atom-patch/atoms-changed-all-commits gcc-repo atoms)
   ;     ;(map prn)
   ;     (take 10)
   ;     dorun)
 
-  ; 3:51
+  ; 4:10
   (atom-patch/log-atoms-changed-all-commits "gcc-bugs-atoms_2017-03-20.txt" gcc-repo atoms)
 )
 
