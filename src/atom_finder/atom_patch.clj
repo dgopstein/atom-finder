@@ -19,6 +19,7 @@
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
    [org.eclipse.cdt.core.dom.ast IASTTranslationUnit]
    )
+  (:use (incanter core stats))
   )
 
 (def AtomFinder (s/=> IASTTranslationUnit [IASTTranslationUnit]))
@@ -181,17 +182,17 @@
          time)))
 
 ;(def filename "gcc-bugs-atoms_2017-03-20.edn")
-;
-;(def gcc-bugs
-;  (->> filename
-;       read-patch-data))
+
+(def gcc-bugs
+  (->> filename
+       read-patch-data))
 
 (s/defn merge-bac :- BACounts
   [a :- BACounts b :- BACounts]
     (map + a b))
 
 (s/defn sum-bacs :- {s/Keyword BACounts}
-  [lst] :- [{s/Keyword BACounts}]]
+  [lst] :- [{s/Keyword BACounts}]
   (reduce (partial merge-with merge-bac) lst))
 
 (defn collapse-commit-bac
@@ -214,34 +215,6 @@
 
 ;(def bac-sum (time (sum-bac-by-bugs gcc-bugs)))
 
-(->> bac-sum
-     ;vals
-     ;first
-     ;pprint)
-     (map-values
-     #(map-values (fn [[a b]]
-                   (if (#{a} 0)
-                     0
-                     (let [avg (avg [a b])]
-                       (float (/ (- a avg) avg))))) %))
-     (map-values #(avg (vals %)))
-     pprint)
-
-(defn sum-diff-by-bugs
-  "{bug-id? {atom count-change}}"
-  [bug-res]
-bug-res(
-(->> gcc-bugs
-     (take 4)
-     (filter (comp not empty? :atom-counts)) ; throw out commits without atom-counts
-     ;(map #(map-values (partial map-values (comp apply -))))
-     pprint)
-     (map collapse-commit-bac)
-     (group-by (comp empty? :bug-ids))
-     (map-values (partial map :atom-counts))
-     (map-values sum-bacs)
-     ))
-
 (defn flatten-res
   "Take the heavily nested structure output by XXX and flatten it"
   [res]
@@ -261,11 +234,46 @@ bug-res(
                  :count count}) atoms)) atom-counts)))))
 
 (def flat-gcc-bugs (->> gcc-bugs flatten-res))
+(defn group-by-atom-bug
+  [flat-res]
+  (->> flat-res
+       (map #(merge %1 {:change (- (apply - (:count %1)))}))
+       (map #(merge %1 {:bug? (empty? (:bug-ids %1))}))
+       (map #(select-keys % [:atom :change :bug?]))
+       (group-by :atom)
+       (map-values (partial group-by :bug?))
+       (map-values (partial map-values (partial map :change)))))
 
-(->> flat-gcc-bugs
-     (take 200)
-     (map #(merge %1 {:change (apply - (:count %1))}))
-     (map #(merge %1 {:bug? (empty? (:bug-ids %1))}))
-     (map #(select-keys % [:atom :change :bug?]))
+(defn atom-removal-p-values
+  [flat-res]
+  (->> flat-res
+       group-by-atom-bug
+       (map-values (fn [m] (try (:p-value (t-test (m false) :y (m true))) (catch Exception e nil))))))
 
-     prn)
+(defn atom-removal-sums
+  [flat-res]
+  (->> flat-res
+       group-by-atom-bug
+       (map-values (partial map-values (partial reduce +)))))
+
+(->> flat-gcc-bugs atom-removal-p-values pprint)
+(->> flat-gcc-bugs atom-removal-sums pprint)
+(->> flat-gcc-bugs group-by-atom-bug
+     (map-values (fn [m] (try (t-test (m false) :y (m true)) (catch Exception e nil))))
+     (map-values cohens-D)
+     )
+
+(def grouped-bugs (->> flat-gcc-bugs group-by-atom-bug))
+(->> grouped-bugs first last vals (apply #(t-test %1 :y %2)) cohens-D)
+
+(def T-Res
+{(s/required-key :x-var) s/Num
+ (s/required-key :y-var) s/Num
+ (s/required-key :x-mean) s/Num
+ (s/required-key :y-mean) s/Num})
+
+(s/defn cohens-D
+  [t-res] ; :- T-Res]
+  (and t-res
+    (let [sd-pooled (Math/sqrt (/ (+ (:x-var t-res) (:y-var t-res)) 2))]
+       (/ (- (:y-mean t-res) (:x-mean t-res)) sd-pooled))))
