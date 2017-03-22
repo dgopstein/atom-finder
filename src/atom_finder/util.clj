@@ -85,6 +85,8 @@
     v
         (throw (Exception. (str "Key Not Found " k)))))
 
+(defn avg [seq1] (/ (reduce + seq1) (count seq1)))
+
 ;;;;;;;;
 ;;   Specific to this project
 ;;;;;;;

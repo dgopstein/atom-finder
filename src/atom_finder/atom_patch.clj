@@ -5,6 +5,7 @@
    [atom-finder.classifier :refer :all]
    [atom-finder.source-versions :refer :all]
    [atom-finder.patch :refer :all]
+   [atom-finder.results-util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clj-jgit.porcelain :as gitp]
    [clj-jgit.querying :as gitq]
@@ -178,3 +179,93 @@
          ;(take 10)
          dorun
          time)))
+
+;(def filename "gcc-bugs-atoms_2017-03-20.edn")
+;
+;(def gcc-bugs
+;  (->> filename
+;       read-patch-data))
+
+(s/defn merge-bac :- BACounts
+  [a :- BACounts b :- BACounts]
+    (map + a b))
+
+(s/defn sum-bacs :- {s/Keyword BACounts}
+  [lst] :- [{s/Keyword BACounts}]]
+  (reduce (partial merge-with merge-bac) lst))
+
+(defn collapse-commit-bac
+  "For the results of a single commit, collapse all the before/after counts"
+  [commit-res]
+  (update-in commit-res [:atom-counts]
+                #(sum-bacs (vals %))))
+
+(defn sum-bac-by-bugs
+  "{bug-id? {atom [before-count after-count]}}"
+  [bug-res]
+(->> bug-res
+     ;(map-indexed (fn [i b] (prn i) b))
+     (filter (comp not empty? :atom-counts)) ; throw out commits without atom-counts
+     (map collapse-commit-bac)
+     (group-by (comp empty? :bug-ids))
+     (map-values (partial map :atom-counts))
+     (map-values sum-bacs)
+     ))
+
+;(def bac-sum (time (sum-bac-by-bugs gcc-bugs)))
+
+(->> bac-sum
+     ;vals
+     ;first
+     ;pprint)
+     (map-values
+     #(map-values (fn [[a b]]
+                   (if (#{a} 0)
+                     0
+                     (let [avg (avg [a b])]
+                       (float (/ (- a avg) avg))))) %))
+     (map-values #(avg (vals %)))
+     pprint)
+
+(defn sum-diff-by-bugs
+  "{bug-id? {atom count-change}}"
+  [bug-res]
+bug-res(
+(->> gcc-bugs
+     (take 4)
+     (filter (comp not empty? :atom-counts)) ; throw out commits without atom-counts
+     ;(map #(map-values (partial map-values (comp apply -))))
+     pprint)
+     (map collapse-commit-bac)
+     (group-by (comp empty? :bug-ids))
+     (map-values (partial map :atom-counts))
+     (map-values sum-bacs)
+     ))
+
+(defn flatten-res
+  "Take the heavily nested structure output by XXX and flatten it"
+  [res]
+  (->> res
+       (mapcat
+        (fn [{revstr :revstr
+             atom-counts :atom-counts
+             bug-ids :bug-ids}]
+          (mapcat
+           (fn [[file atoms]] atoms
+             (map
+              (fn [[atom count]]
+                {:revstr revstr
+                 :bug-ids bug-ids
+                 :file file
+                 :atom atom
+                 :count count}) atoms)) atom-counts)))))
+
+(def flat-gcc-bugs (->> gcc-bugs flatten-res))
+
+(->> flat-gcc-bugs
+     (take 200)
+     (map #(merge %1 {:change (apply - (:count %1))}))
+     (map #(merge %1 {:bug? (empty? (:bug-ids %1))}))
+     (map #(select-keys % [:atom :change :bug?]))
+
+     prn)
