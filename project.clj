@@ -12,7 +12,7 @@
                  [org.slf4j/slf4j-nop "1.7.13"] ; suprress version-mismatch warning from jgit https://github.com/sbt/sbt-git/pull/105/files
                  [prismatic/schema "1.1.3"]
                  [com.grammarly/omniconf "0.2.5"] ;https://github.com/grammarly/omniconf
-                 [incanter "1.5.8"]
+                 [org.clojure/data.csv "0.1.3"]
                  ]
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.0.dev.jar"

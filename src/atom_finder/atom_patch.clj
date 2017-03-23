@@ -19,7 +19,7 @@
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
    [org.eclipse.cdt.core.dom.ast IASTTranslationUnit]
    )
-  (:use (incanter core stats))
+  ;(:use (incanter core stats))
   )
 
 (def AtomFinder (s/=> IASTTranslationUnit [IASTTranslationUnit]))
@@ -181,7 +181,7 @@
          dorun
          time)))
 
-;(def filename "gcc-bugs-atoms_2017-03-20.edn")
+;(def filename "gcc-bugs-atoms_2017-03-20_2.edn")
 
 (def gcc-bugs
   (->> filename
@@ -244,11 +244,11 @@
        (map-values (partial group-by :bug?))
        (map-values (partial map-values (partial map :change)))))
 
-(defn atom-removal-p-values
-  [flat-res]
-  (->> flat-res
-       group-by-atom-bug
-       (map-values (fn [m] (try (:p-value (t-test (m false) :y (m true))) (catch Exception e nil))))))
+;(defn atom-removal-p-values
+;  [flat-res]
+;  (->> flat-res
+;       group-by-atom-bug
+;       (map-values (fn [m] (try (:p-value (t-test (m false) :y (m true))) (catch Exception e nil))))))
 
 (defn atom-removal-sums
   [flat-res]
@@ -256,24 +256,34 @@
        group-by-atom-bug
        (map-values (partial map-values (partial reduce +)))))
 
+(def atom-bug-groups (group-by-atom-bug flat-gcc-bugs))
+
+;(map-values
+; (fn [val]
+;   (prn val)
+;   [(map-values (partial reduce +) val)
+;    (try (:p-value (t-test (val false) :y (val true))) (catch Exception e nil))
+;    cohens-D]
+;   atom-bug-groups))
+
 (->> flat-gcc-bugs atom-removal-p-values pprint)
 (->> flat-gcc-bugs atom-removal-sums pprint)
-(->> flat-gcc-bugs group-by-atom-bug
-     (map-values (fn [m] (try (t-test (m false) :y (m true)) (catch Exception e nil))))
-     (map-values cohens-D)
-     )
+;(->> flat-gcc-bugs group-by-atom-bug
+;     (map-values (fn [m] (try (t-test (m false) :y (m true)) (catch Exception e nil))))
+;     (map-values cohens-D)
+;     pprint)
 
 (def grouped-bugs (->> flat-gcc-bugs group-by-atom-bug))
-(->> grouped-bugs first last vals (apply #(t-test %1 :y %2)) cohens-D)
+;(->> grouped-bugs first last vals (apply #(t-test %1 :y %2)) cohens-D)
 
-(def T-Res
-{(s/required-key :x-var) s/Num
- (s/required-key :y-var) s/Num
- (s/required-key :x-mean) s/Num
- (s/required-key :y-mean) s/Num})
-
-(s/defn cohens-D
-  [t-res] ; :- T-Res]
-  (and t-res
-    (let [sd-pooled (Math/sqrt (/ (+ (:x-var t-res) (:y-var t-res)) 2))]
-       (/ (- (:y-mean t-res) (:x-mean t-res)) sd-pooled))))
+;(def T-Res
+;{(s/required-key :x-var) s/Num
+; (s/required-key :y-var) s/Num
+; (s/required-key :x-mean) s/Num
+; (s/required-key :y-mean) s/Num})
+;
+;(s/defn cohens-D
+;  [t-res] ; :- T-Res]
+;  (when t-res
+;    (let [sd-pooled (Math/sqrt (/ (+ (:x-var t-res) (:y-var t-res)) 2))]
+;       (/ (- (:y-mean t-res) (:x-mean t-res)) sd-pooled))))
