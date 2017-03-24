@@ -7,6 +7,8 @@
    [atom-finder.patch :refer :all]
    [atom-finder.results-util :refer :all]
    [clojure.pprint :refer [pprint]]
+   [clojure.data.csv :as csv]
+   [clojure.java.io :as io]
    [clj-jgit.porcelain :as gitp]
    [clj-jgit.querying :as gitq]
    [clj-jgit.internal :as giti]
@@ -181,12 +183,6 @@
          dorun
          time)))
 
-;(def filename "gcc-bugs-atoms_2017-03-20_2.edn")
-
-(def gcc-bugs
-  (->> filename
-       read-patch-data))
-
 (s/defn merge-bac :- BACounts
   [a :- BACounts b :- BACounts]
     (map + a b))
@@ -213,8 +209,6 @@
      (map-values sum-bacs)
      ))
 
-;(def bac-sum (time (sum-bac-by-bugs gcc-bugs)))
-
 (defn flatten-res
   "Take the heavily nested structure output by XXX and flatten it"
   [res]
@@ -233,7 +227,6 @@
                  :atom atom
                  :count count}) atoms)) atom-counts)))))
 
-(def flat-gcc-bugs (->> gcc-bugs flatten-res))
 (defn group-by-atom-bug
   [flat-res]
   (->> flat-res
@@ -244,46 +237,36 @@
        (map-values (partial group-by :bug?))
        (map-values (partial map-values (partial map :change)))))
 
-;(defn atom-removal-p-values
-;  [flat-res]
-;  (->> flat-res
-;       group-by-atom-bug
-;       (map-values (fn [m] (try (:p-value (t-test (m false) :y (m true))) (catch Exception e nil))))))
-
 (defn atom-removal-sums
   [flat-res]
   (->> flat-res
        group-by-atom-bug
        (map-values (partial map-values (partial reduce +)))))
 
-(def atom-bug-groups (group-by-atom-bug flat-gcc-bugs))
+;(def filename "gcc-bugs-atoms_2017-03-20_2.edn")
+;(def gcc-bugs (->> filename read-patch-data))
+;(def bac-sum (time (sum-bac-by-bugs gcc-bugs)))
+;(def flat-gcc-bugs (->> gcc-bugs flatten-res))
 
-;(map-values
-; (fn [val]
-;   (prn val)
-;   [(map-values (partial reduce +) val)
-;    (try (:p-value (t-test (val false) :y (val true))) (catch Exception e nil))
-;    cohens-D]
-;   atom-bug-groups))
+;(def atom-bug-groups (group-by-atom-bug flat-gcc-bugs))
 
-(->> flat-gcc-bugs atom-removal-p-values pprint)
-(->> flat-gcc-bugs atom-removal-sums pprint)
-;(->> flat-gcc-bugs group-by-atom-bug
-;     (map-values (fn [m] (try (t-test (m false) :y (m true)) (catch Exception e nil))))
-;     (map-values cohens-D)
-;     pprint)
+;(->> flat-gcc-bugs atom-removal-p-values pprint)
+;(->> flat-gcc-bugs atom-removal-sums pprint)
 
-(def grouped-bugs (->> flat-gcc-bugs group-by-atom-bug))
-;(->> grouped-bugs first last vals (apply #(t-test %1 :y %2)) cohens-D)
+;(def grouped-bugs (->> flat-gcc-bugs group-by-atom-bug))
 
-;(def T-Res
-;{(s/required-key :x-var) s/Num
-; (s/required-key :y-var) s/Num
-; (s/required-key :x-mean) s/Num
-; (s/required-key :y-mean) s/Num})
-;
-;(s/defn cohens-D
-;  [t-res] ; :- T-Res]
-;  (when t-res
-;    (let [sd-pooled (Math/sqrt (/ (+ (:x-var t-res) (:y-var t-res)) 2))]
-;       (/ (- (:y-mean t-res) (:x-mean t-res)) sd-pooled))))
+(defn write-res-csv
+  [filename flat-res]
+  (with-open [out-file (io/writer filename)]
+    (csv/write-csv out-file
+                   [(->> flat-res first keys
+                        (map #(subs (str %) 1)))])
+    (csv/write-csv out-file (->> flat-res (map vals)))))
+
+(write-res-csv "gcc-bugs_10000.csv"
+  (take 10000
+    (for [m flat-gcc-bugs]
+      (merge m {:count-before (-> m :count first)
+                :count-after (-> m :count last)
+                :n-bugs (-> m :bug-ids count)}))))
+
