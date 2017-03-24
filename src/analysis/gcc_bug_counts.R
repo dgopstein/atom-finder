@@ -2,18 +2,21 @@ library(data.table)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-gcc.bugs.csv <- data.table(read.csv("../../gcc-bugs_10000.csv"))
+gcc.bugs.csv <- data.table(read.csv("../../gcc-bugs.csv"))
 
 names(gcc.bugs.csv)
 
-head(gcc.bugs.csv, 100)
+nrow(gcc.bugs.csv)
 
-atoms <- gcc.bugs.csv[, .(commits = .N, n.bugs = max(n.bugs),
+atoms <- gcc.bugs.csv[, .(commits = .N, bug.commits = sum(n.bugs > 1),
                           count.before = sum(count.before), count.after = sum(count.after),
                           decreased = sum(count.after < count.before), increased = sum(count.after > count.before)) , by=atom]
+
+tail(gcc.bugs.csv)
+
 atoms
 
-atoms.bugs <- gcc.bugs.csv[, .(commits = .N, n.bugs = max(n.bugs),
+atoms.bugs <- gcc.bugs.csv[, .(commits = .N, bug.commits = sum(n.bugs > 1),
                           count.before = sum(count.before), count.after = sum(count.after),
                           decreased = sum(count.after < count.before), increased = sum(count.after > count.before)),
                           by=.(atom, is.bug = n.bugs > 0)]
@@ -38,4 +41,9 @@ cnt.mats <- mapply(function(TT,TF,FT,FF)
 
 names(cnt.mats) <- cnts$atom
 
-sapply(cnt.mats, function(m) fisher.test(m)$p.value, simplify=FALSE)
+fishers <- sapply(cnt.mats, function(m) fisher.test(m), simplify=FALSE)
+unlist(lapply(fishers, function(x) x$p.value))
+
+#######
+## NORMALIZE by lines in commit
+############

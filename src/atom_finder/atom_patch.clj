@@ -263,10 +263,12 @@
                         (map #(subs (str %) 1)))])
     (csv/write-csv out-file (->> flat-res (map vals)))))
 
-(write-res-csv "gcc-bugs_10000.csv"
-  (take 10000
-    (for [m flat-gcc-bugs]
+(def add-convenience-columns
+  [flat-res]
+    (for [m flat-res]
       (merge m {:count-before (-> m :count first)
                 :count-after (-> m :count last)
-                :n-bugs (-> m :bug-ids count)}))))
+                :n-bugs (-> m :bug-ids count)})))
+
+;(write-res-csv "gcc-bugs.csv" (take 10000 (add-convenience-colums flat-gcc-bugs)))
 
