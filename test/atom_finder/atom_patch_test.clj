@@ -20,18 +20,6 @@
       (is (= rl {"gcc/ChangeLog" [16 26 27 28 29] "gcc/config/sparc/sparc.c" []}))
       )))
 
-(deftest flatten-res
-  (testing "flatten-res"
-    (let [cases [
-                 [{:a {:b 2 :c 3}}          {:b 2 :c 3}]
-                 [{:a {:b 2 :c 3} :d 4}     {:b 2 :c 3 :d 4}]
-                 [{:a [2 3] :d 4}           [{:a 2 :d 4} {:a 3 :d 4}]]
-                 [{:a [{:b 2} {:b 3}] :d 4} [{:b 2 :d 4} {:b 2 :d 4}]
-                 ]]
-      (for [[input expected] cases]
-        (is (= expected (flatten-res input)))
-        ))))
-
 (when gcc-repo
   (deftest bugzilla-id-test
     (let [repo    gcc-repo
@@ -63,16 +51,14 @@
        (is (= [1892 2192] (apply-before-after repo commit-hash file-name count-nodes)))
      )))
 
- (deftest atom-removed-in-file?-test
-   (testing "atom-removed-in-file?"
+ (deftest atom-in-file-counts-test
+   (testing "atom-in-file-counts"
      (let [repo gcc-repo
            commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
            file-name "gcc/c-family/c-pretty-print.c"
            srcs (source-before-after repo commit-hash file-name)]
-       (is (= [28 28] (-> atom-lookup :logic-as-control-flow :finder (atom-in-file-counts srcs))))
-       (is (false? (-> atom-lookup :logic-as-control-flow :finder (atom-removed-in-file? srcs))))
-       (is (= [25 24] (-> atom-lookup :conditional :finder (atom-in-file-counts srcs))))
-       (is (true? (-> atom-lookup :conditional :finder (atom-removed-in-file? srcs))))
+       (is (= [28 28] (-> atom-lookup :logic-as-control-flow :finder (atom-in-file-counts srcs) vals)))
+       (is (= [25 24] (-> atom-lookup :conditional :finder (atom-in-file-counts srcs) vals)))
      )))
 
 

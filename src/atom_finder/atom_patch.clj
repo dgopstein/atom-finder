@@ -92,8 +92,6 @@
        (map first)
        ))
 
-
-;(atoms-removed-in-commit repo commit-hash atom-classifier)
 ;(atom-removed-in-commit-file? repo commit-hash "gcc/c-family/ChangeLog" atom-classifier)
 ;(def commit-hash "97574c57cf26ace9b8609575bbab66465924fef7")
 ;(def file-name "gcc/c-family/ChangeLog")
@@ -116,11 +114,6 @@
   [repo commit-hash file-name]
   (apply-before-after repo commit-hash file-name identity))
 
-(s/defn atom-removed-in-file? :- Boolean
-  "Count the number of atoms in two ASTs and see if they've decreased"
-  [atom-finder :- AtomFinder srcs :- BeforeAfter]
-  (apply > (atom-in-file-counts atom-finder srcs)))
-
 (s/defn atom-in-file-counts :- BACounts
   "Count the number of atoms in two ASTs"
   [atom-finder :- AtomFinder srcs :- BeforeAfter]
@@ -129,8 +122,8 @@
 (s/defn atoms-in-file-counts ;{s/Keyword BACounts}
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs :- BeforeAfter]
-  (map (fn [atom] {:atom (:name atom)
-                   :counts (atom-in-file-counts (:finder atom) srcs)}) atoms))
+  (map (fn [atom] (merge {:atom (:name atom)}
+                   (atom-in-file-counts (:finder atom) srcs))) atoms))
 
 (s/defn commit-files-before-after :- [{(s/required-key :file) s/Str
                                        (s/required-key :source-before) IASTTranslationUnit
@@ -143,26 +136,14 @@
                             (source-before-after repo commit-hash %1))))
        ))
 
-(s/defn atom-removed-in-commit? :- s/Bool
-  [atom-finder :- AtomFinder srcs :- BeforeAfters]
-  (exists? (map (partial atom-removed-in-file? atom-finder) srcs)))
-
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] commit-hash :- s/Str]
-  (->> (commit-files-before-after repo commit-hash)
-       (map
-        (fn [{file :file
-              src-before :source-before
-              src-after :source-after}]
-          {:file file
-           ;{:atoms
-            :atoms-counts (atoms-in-file-counts atoms [src-before src-after])
-            ;:lines-before 0
-                                        ;:lines-after 0}
-           }))
-       ))
+  (for [{file :file src-before :source-before src-after :source-after}
+          (commit-files-before-after repo commit-hash)
+        atoms-counts (atoms-in-file-counts atoms [src-before src-after])]
+    (merge {:file file} atoms-counts)))
 
-;(atoms-changed-in-commit gcc-repo atoms "c565e664faf3102b80218481ea50e7028ecd646e")
+;(pprint (atoms-changed-in-commit gcc-repo atoms "c565e664faf3102b80218481ea50e7028ecd646e"))
 
 (s/defn parse-commit-for-atom
   ;:- [(s/one s/Str "commit-hash")
@@ -171,15 +152,13 @@
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
     (try
-      {:revstr commit-hash
-       :atoms (atoms-changed-in-commit repo atoms commit-hash)
-       :bug-ids (bugzilla-ids rev-commit)
-       }
+      (for [atom (atoms-changed-in-commit repo atoms commit-hash)]
+        (merge {:revstr commit-hash :bug-ids (bugzilla-ids rev-commit)} atom))
       (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       )))
 
-;(parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e"))
+;(pprint (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
 
 (defn atoms-changed-all-commits
   [repo atoms]
@@ -188,7 +167,7 @@
    (pmap (partial parse-commit-for-atom repo atoms))
   ))
 
-(take 2 (atoms-changed-all-commits gcc-repo (take 2 atoms)))
+;(take 2 (atoms-changed-all-commits gcc-repo (take 2 atoms)))
 
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
@@ -200,76 +179,9 @@
          dorun
          time)))
 
-(defmulti flatten-child (fn [k v parent] (class v)))
-(defmethod flatten-child clojure.lang.PersistentVector [k v parent]
-  (map #(merge parent %) {k v}))
-(defmethod flatten-child :default [k v parent] parent)
-
-(defmulti flatten-res class)
-(def m {:a {:b 2 :c 3} :d 4})
-(defmethod flatten-res clojure.lang.PersistentArrayMap [m]
- (reduce-kv
-   (fn [m k v]
-     (cond
-       (map? v) v
-       (vector? v) v
-       :else {k v}
-       )
-       ) m)
-)
-(defmethod flatten-res clojure.lang.PersistentVector [v] v)
-(defmethod flatten-res :default [x] x)
-
-(apply hash-map (mapcat (fn [[k v]] (map #(vector % k) (pap v))) {:a [:b :c]}))
-
-;(defmethod flatten-res clojure.lang.PersistentHashSet [_] :set)
-
-
-(defn flatten-res
-  "Take the heavily nested structure and flatten it"
-  [res]
-  (->> res
-       (mapcat
-        (fn [{revstr :revstr
-             atom-counts :atom-counts
-             bug-ids :bug-ids}]
-          (mapcat
-           (fn [[file atoms]] atoms
-             (map
-              (fn [[atom count]]
-                {:revstr revstr
-                 :bug-ids bug-ids
-                 :file file
-                 :atom atom
-                 :count count}) atoms)) atom-counts)))))
-
-(defn group-by-atom-bug
-  [flat-res]
-  (->> flat-res
-       (map #(merge %1 {:change (- (apply - (:count %1)))}))
-       (map #(merge %1 {:bug? (empty? (:bug-ids %1))}))
-       (map #(select-keys % [:atom :change :bug?]))
-       (group-by :atom)
-       (map-values (partial group-by :bug?))
-       (map-values (partial map-values (partial map :change)))))
-
-(defn atom-removal-sums
-  [flat-res]
-  (->> flat-res
-       group-by-atom-bug
-       (map-values (partial map-values (partial reduce +)))))
 
 ;(def filename "gcc-bugs-atoms_2017-03-20_2.edn")
 ;(def gcc-bugs (->> filename read-patch-data))
-;(def bac-sum (time (sum-bac-by-bugs gcc-bugs)))
-;(def flat-gcc-bugs (->> gcc-bugs flatten-res))
-
-;(def atom-bug-groups (group-by-atom-bug flat-gcc-bugs))
-
-;(->> flat-gcc-bugs atom-removal-p-values pprint)
-;(->> flat-gcc-bugs atom-removal-sums pprint)
-
-;(def grouped-bugs (->> flat-gcc-bugs group-by-atom-bug))
 
 (defn write-res-csv
   [filename flat-res]
@@ -282,9 +194,7 @@
 (defn add-convenience-columns
   [flat-res]
     (for [m flat-res]
-      (merge m {:count-before (-> m :count first)
-                :count-after (-> m :count last)
-                :n-bugs (-> m :bug-ids count)})))
+      (merge m {:n-bugs (-> m :bug-ids count)})))
 
 ;(write-res-csv "gcc-bugs.csv" (take 10000 (add-convenience-colums flat-gcc-bugs)))
 
