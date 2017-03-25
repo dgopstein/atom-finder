@@ -20,6 +20,18 @@
       (is (= rl {"gcc/ChangeLog" [16 26 27 28 29] "gcc/config/sparc/sparc.c" []}))
       )))
 
+(deftest flatten-res
+  (testing "flatten-res"
+    (let [cases [
+                 [{:a {:b 2 :c 3}}          {:b 2 :c 3}]
+                 [{:a {:b 2 :c 3} :d 4}     {:b 2 :c 3 :d 4}]
+                 [{:a [2 3] :d 4}           [{:a 2 :d 4} {:a 3 :d 4}]]
+                 [{:a [{:b 2} {:b 3}] :d 4} [{:b 2 :d 4} {:b 2 :d 4}]
+                 ]]
+      (for [[input expected] cases]
+        (is (= expected (flatten-res input)))
+        ))))
+
 (when gcc-repo
   (deftest bugzilla-id-test
     (let [repo    gcc-repo
@@ -64,8 +76,6 @@
      )))
 
 
-; (deftest flatten-res
-;   (testing "flatten-res"
 ;     (let [repo gcc-repo
 ;           commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
 ;

@@ -21,14 +21,14 @@
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
    [org.eclipse.cdt.core.dom.ast IASTTranslationUnit]
    )
-  ;(:use (incanter core stats))
   )
 
 (def AtomFinder (s/=> IASTTranslationUnit [IASTTranslationUnit]))
 (def AtomFinders [(s/one AtomFinder "atom-finder") AtomFinder])
 (def BeforeAfter [(s/one IASTTranslationUnit "before") (s/one IASTTranslationUnit "after")])
 (def BeforeAfters [(s/one BeforeAfter "commit-file") BeforeAfter])
-(def BACounts [(s/one s/Num "count-before") (s/one s/Num "count-after")])
+;(def BACounts [(s/one s/Num "count-before") (s/one s/Num "count-after")])
+(def BACounts {(s/required-key :count-before) s/Int (s/required-key :count-after) s/Int})
 
 ;
 ;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
@@ -74,7 +74,7 @@
 ;(commit-file-atom-count gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" "gcc/c-family/c-pretty-print.c" conditional-atom?)
 ;(commit-file-atom-count gcc-repo commit-hash "gcc/c-family/c-pretty-print.c" conditional-atom?)
 
-(defn commit-file-atom-count
+(s/defn commit-file-atom-count :- s/Int
   "count the occurence of an atom in commit's version of file"
   [repo commit-hash file-name atom-classifier]
     (->> (commit-file-source repo commit-hash file-name)
@@ -116,46 +116,50 @@
   [repo commit-hash file-name]
   (apply-before-after repo commit-hash file-name identity))
 
-(s/defn atom-in-file-counts :- BACounts
-  "Count the number of atoms in two ASTs"
-  [atom-finder :- AtomFinder srcs :- BeforeAfter]
-   (map (comp count atom-finder) srcs))
-
 (s/defn atom-removed-in-file? :- Boolean
   "Count the number of atoms in two ASTs and see if they've decreased"
   [atom-finder :- AtomFinder srcs :- BeforeAfter]
   (apply > (atom-in-file-counts atom-finder srcs)))
 
-(s/defn atoms-in-file-counts :- s/Any ;{s/Keyword BACounts}
+(s/defn atom-in-file-counts :- BACounts
+  "Count the number of atoms in two ASTs"
+  [atom-finder :- AtomFinder srcs :- BeforeAfter]
+   (zipmap [:count-before :count-after] (map (comp count atom-finder) srcs)))
+
+(s/defn atoms-in-file-counts ;{s/Keyword BACounts}
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs :- BeforeAfter]
-  (into {}
-        (map #(vector (:name %1) (atom-in-file-counts (:finder %1) srcs)) atoms)))
+  (map (fn [atom] {:atom (:name atom)
+                   :counts (atom-in-file-counts (:finder atom) srcs)}) atoms))
 
-(s/defn commit-files-before-after :- {s/Str BeforeAfter}
+(s/defn commit-files-before-after :- [{(s/required-key :file) s/Str
+                                       (s/required-key :source-before) IASTTranslationUnit
+                                       (s/required-key :source-after) IASTTranslationUnit}]
   "For every file changed in this commit, give both before and after ASTs"
   [repo commit-hash]
   (->> (edited-files repo commit-hash)
-       (map #(vector %1 (source-before-after repo commit-hash %1)))
-       (into {})
+       (map #(merge {:file %1}
+                    (zipmap [:source-before :source-after]
+                            (source-before-after repo commit-hash %1))))
        ))
 
 (s/defn atom-removed-in-commit? :- s/Bool
   [atom-finder :- AtomFinder srcs :- BeforeAfters]
   (exists? (map (partial atom-removed-in-file? atom-finder) srcs)))
 
-(s/defn atoms-changed-in-commit :- {s/Str {s/Keyword BACounts}}
+(s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] commit-hash :- s/Str]
   (->> (commit-files-before-after repo commit-hash)
        (map
-        (fn [[file srcs]]
-          [file
+        (fn [{file :file
+              src-before :source-before
+              src-after :source-after}]
+          {:file file
            ;{:atoms
-            (atoms-in-file-counts atoms srcs)
+            :atoms-counts (atoms-in-file-counts atoms [src-before src-after])
             ;:lines-before 0
                                         ;:lines-after 0}
-           ]))
-       (into {})
+           }))
        ))
 
 ;(atoms-changed-in-commit gcc-repo atoms "c565e664faf3102b80218481ea50e7028ecd646e")
@@ -175,12 +179,16 @@
       (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       )))
 
+;(parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e"))
+
 (defn atoms-changed-all-commits
   [repo atoms]
   (->>
    (gitq/rev-list repo)
    (pmap (partial parse-commit-for-atom repo atoms))
   ))
+
+(take 2 (atoms-changed-all-commits gcc-repo (take 2 atoms)))
 
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
@@ -192,34 +200,33 @@
          dorun
          time)))
 
-(s/defn merge-bac :- BACounts
-  [a :- BACounts b :- BACounts]
-    (map + a b))
+(defmulti flatten-child (fn [k v parent] (class v)))
+(defmethod flatten-child clojure.lang.PersistentVector [k v parent]
+  (map #(merge parent %) {k v}))
+(defmethod flatten-child :default [k v parent] parent)
 
-(s/defn sum-bacs :- {s/Keyword BACounts}
-  [lst] :- [{s/Keyword BACounts}]
-  (reduce (partial merge-with merge-bac) lst))
+(defmulti flatten-res class)
+(def m {:a {:b 2 :c 3} :d 4})
+(defmethod flatten-res clojure.lang.PersistentArrayMap [m]
+ (reduce-kv
+   (fn [m k v]
+     (cond
+       (map? v) v
+       (vector? v) v
+       :else {k v}
+       )
+       ) m)
+)
+(defmethod flatten-res clojure.lang.PersistentVector [v] v)
+(defmethod flatten-res :default [x] x)
 
-(defn collapse-commit-bac
-  "For the results of a single commit, collapse all the before/after counts"
-  [commit-res]
-  (update-in commit-res [:atom-counts]
-                #(sum-bacs (vals %))))
+(apply hash-map (mapcat (fn [[k v]] (map #(vector % k) (pap v))) {:a [:b :c]}))
 
-(defn sum-bac-by-bugs
-  "{bug-id? {atom [before-count after-count]}}"
-  [bug-res]
-(->> bug-res
-     ;(map-indexed (fn [i b] (prn i) b))
-     (filter (comp not empty? :atom-counts)) ; throw out commits without atom-counts
-     (map collapse-commit-bac)
-     (group-by (comp empty? :bug-ids))
-     (map-values (partial map :atom-counts))
-     (map-values sum-bacs)
-     ))
+;(defmethod flatten-res clojure.lang.PersistentHashSet [_] :set)
+
 
 (defn flatten-res
-  "Take the heavily nested structure output by XXX and flatten it"
+  "Take the heavily nested structure and flatten it"
   [res]
   (->> res
        (mapcat
