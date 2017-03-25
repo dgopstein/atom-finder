@@ -28,7 +28,7 @@
 (def AtomFinders [(s/one AtomFinder "atom-finder") AtomFinder])
 (def BeforeAfter [(s/one IASTTranslationUnit "before") (s/one IASTTranslationUnit "after")])
 (def BeforeAfters [(s/one BeforeAfter "commit-file") BeforeAfter])
-(def BACounts [(s/one s/Num "count") s/Num])
+(def BACounts [(s/one s/Num "count-before") (s/one s/Num "count-after")])
 
 ;
 ;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
@@ -147,9 +147,18 @@
 (s/defn atoms-changed-in-commit :- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] commit-hash :- s/Str]
   (->> (commit-files-before-after repo commit-hash)
-       (map (fn [[file srcs]] [file (atoms-in-file-counts atoms srcs)]))
+       (map
+        (fn [[file srcs]]
+          [file
+           ;{:atoms
+            (atoms-in-file-counts atoms srcs)
+            ;:lines-before 0
+                                        ;:lines-after 0}
+           ]))
        (into {})
        ))
+
+;(atoms-changed-in-commit gcc-repo atoms "c565e664faf3102b80218481ea50e7028ecd646e")
 
 (s/defn parse-commit-for-atom
   ;:- [(s/one s/Str "commit-hash")
@@ -158,10 +167,10 @@
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
     (try
-      [commit-hash
-       (atoms-changed-in-commit repo atoms commit-hash)
-       (bugzilla-ids rev-commit)
-       ]
+      {:revstr commit-hash
+       :atoms (atoms-changed-in-commit repo atoms commit-hash)
+       :bug-ids (bugzilla-ids rev-commit)
+       }
       (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       )))
@@ -263,7 +272,7 @@
                         (map #(subs (str %) 1)))])
     (csv/write-csv out-file (->> flat-res (map vals)))))
 
-(def add-convenience-columns
+(defn add-convenience-columns
   [flat-res]
     (for [m flat-res]
       (merge m {:count-before (-> m :count first)

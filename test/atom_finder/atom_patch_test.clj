@@ -7,6 +7,8 @@
             [atom-finder.source-versions :refer :all]
             [atom-finder.classifier :refer :all]
             [clj-jgit.porcelain  :as gitp]
+            [clj-jgit.querying :as gitq]
+            [clj-jgit.internal :as giti]
             [clojure.pprint :refer :all]
             ))
 
@@ -60,4 +62,29 @@
        (is (= [25 24] (-> atom-lookup :conditional :finder (atom-in-file-counts srcs))))
        (is (true? (-> atom-lookup :conditional :finder (atom-removed-in-file? srcs))))
      )))
+
+
+; (deftest flatten-res
+;   (testing "flatten-res"
+;     (let [repo gcc-repo
+;           commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
+;
+;           (atoms-changed-in-commit gcc-repo atoms "c565e664faf3102b80218481ea50e7028ecd646e")
+;           (->> atom-lookup :conditional :finder vector
+;                (atoms-changed-all-commits repo)
+;                (take 10)
+;               )
+;        (->> (gitq/rev-list gcc-repo) (take 10))
+;           (->> rev-list first commit-hash)
+;
+;     ;(let [repo gcc-repo
+;     ;      atoms (filter (comp #{:conditional :reversed-subscript} :name) atoms)
+;     ;      res
+;     ;       (for [ch ["3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
+;     ;                "c565e664faf3102b80218481ea50e7028ecd646e"]]
+;     ;        (parse-commit-for-atom repo atoms
+;     ;          (gitq/find-rev-commit repo (giti/new-rev-walk repo) ch)))]
+;     ;  (flatten-res res)
+;     ;  ;(map prn res)
+;     ;      )
  )
