@@ -21,21 +21,6 @@
       )))
 
 (when gcc-repo
-  (deftest bugzilla-id-test
-    (let [repo    gcc-repo
-          results
-          [["97574c57cf26ace9b8609575bbab66465924fef7" #{}]
-           ["98103e4a9e8ae9e52751c9e96ec46e6095181b69" #{["fortran" 61420] ["fortran" 78013]}]
-           ["b9db1ed4a901e9c0af7ac8cc5d4d933b5b9fd4b5" #{["libstdc++" 68838]}]
-           ["bf8e44c9e49d658635b5a2ea4905333fa8845d1f" #{["debug" 77985]}] ]
-          ]
-
-      (doseq [[revstr expected] results]
-        (testing (str "Which bugzilla id corresponds to commit " revstr)
-          (is (= expected (bugzilla-ids (find-commit repo revstr))))
-          ))))
-
-
   (deftest commit-file-atom-count-test
     (testing "See if file in commit contains an atoms"
       (let [repo    gcc-repo]
@@ -60,27 +45,4 @@
        (is (= [28 28] (-> atom-lookup :logic-as-control-flow :finder (atom-in-file-counts srcs) vals)))
        (is (= [25 24] (-> atom-lookup :conditional :finder (atom-in-file-counts srcs) vals)))
      )))
-
-
-;     (let [repo gcc-repo
-;           commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
-;
-;           (atoms-changed-in-commit gcc-repo atoms "c565e664faf3102b80218481ea50e7028ecd646e")
-;           (->> atom-lookup :conditional :finder vector
-;                (atoms-changed-all-commits repo)
-;                (take 10)
-;               )
-;        (->> (gitq/rev-list gcc-repo) (take 10))
-;           (->> rev-list first commit-hash)
-;
-;     ;(let [repo gcc-repo
-;     ;      atoms (filter (comp #{:conditional :reversed-subscript} :name) atoms)
-;     ;      res
-;     ;       (for [ch ["3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
-;     ;                "c565e664faf3102b80218481ea50e7028ecd646e"]]
-;     ;        (parse-commit-for-atom repo atoms
-;     ;          (gitq/find-rev-commit repo (giti/new-rev-walk repo) ch)))]
-;     ;  (flatten-res res)
-;     ;  ;(map prn res)
-;     ;      )
  )

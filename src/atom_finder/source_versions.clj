@@ -24,7 +24,10 @@
        ;(prn)
        (re-seq #"(?:PR|pr).*?(?:(\S+)/)?(\d{5,})")
        (#(for [[match branch id] %]
-          [branch (Integer/parseInt id)]))
+          {:branch branch :bug-id (Integer/parseInt id)}))
+       (group-by :bug-id)
+       (map-values #(apply max-key (comp count :branch) %))
+       vals
        set
   ))
 

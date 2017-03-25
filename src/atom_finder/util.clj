@@ -67,6 +67,9 @@
 
 (def range-from (partial iterate inc))
 
+(defn distinct-by [f col]
+  (map first (vals (group-by f col))))
+
 (defn map-values [f m]
   (reduce merge (map (fn [[k v]] {k (f v)}) m)))
 
