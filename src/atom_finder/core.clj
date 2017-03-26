@@ -22,8 +22,8 @@
   ;     (take 10)
   ;     dorun)
 
-  ; 2017-03-26 01:00)
-  (time (atom-patch/log-atoms-changed-all-commits "gcc-bugs-atoms_2017-03-26.txt" gcc-repo atoms))
+  ; 2017-03-26 02:50)
+  ;(time (log-atoms-changed-all-commits "gcc-bugs-atoms_2017-03-26.txt" gcc-repo atoms))
 )
 
 ;(->> "macro-operator-precedence_redis_2017-03-10_1.edn"
