@@ -31,12 +31,13 @@
        set
   ))
 
-;(bugzilla-ids (find-commit repo "98103e4a9e8ae9e52751c9e96ec46e6095181b69"))
+;(bugzilla-ids (find-commit atom-finder.constants/gcc-repo "98103e4a9e8ae9e52751c9e96ec46e6095181b69"))
 
-(defn find-commit
-  [repo commit-ish]
-  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-ish))
-
+(defn find-rev-commit
+  "make a new revwalk to find given commit"
+  [repo commit-hash]
+  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-hash)
+  )
 
 ;(doseq [revc (take 20 rlist)]
 ;  (println (.name revc))

@@ -21,27 +21,20 @@
       )))
 
 (when gcc-repo
-  (deftest commit-file-atom-count-test
-    (testing "See if file in commit contains an atoms"
-      (let [repo    gcc-repo]
-        (is (= 24 (commit-file-atom-count repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" "gcc/c-family/c-pretty-print.c" conditional-atom?)))
-        (is (= 25 (commit-file-atom-count repo "1e0cfd0" "gcc/c-family/c-pretty-print.c" conditional-atom?)))
-        )))
-
  (deftest apply-before-after-test
    (testing "Count the sizes of programs before and after a commit"
      (let [repo  ag-repo
-           commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c"
+           rev-commit (find-rev-commit repo "05be1eddca2bce1cb923afda2b6ab5e67faa248c")
            file-name "src/print.c"]
-       (is (= [1892 2192] (apply-before-after repo commit-hash file-name count-nodes)))
+       (is (= [1892 2192] (apply-before-after repo rev-commit file-name count-nodes)))
      )))
 
  (deftest atom-in-file-counts-test
    (testing "atom-in-file-counts"
      (let [repo gcc-repo
-           commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
+           rev-commit (find-rev-commit repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")
            file-name "gcc/c-family/c-pretty-print.c"
-           srcs (source-before-after repo commit-hash file-name)]
+           srcs (source-before-after repo rev-commit file-name)]
        (is (= [28 28] (-> atom-lookup :logic-as-control-flow :finder (atom-in-file-counts srcs) vals)))
        (is (= [25 24] (-> atom-lookup :conditional :finder (atom-in-file-counts srcs) vals)))
      )))

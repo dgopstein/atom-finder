@@ -18,8 +18,10 @@
    [atom_finder.classifier Atom]
    [org.eclipse.jgit.lib ObjectReader Repository]
    [org.eclipse.jgit.api Git]
+   [org.eclipse.jgit.revwalk RevCommit]
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
-   [org.eclipse.cdt.core.dom.ast IASTTranslationUnit]
+   [org.eclipse.cdt.core.dom.ast IASTTranslationUnit IASTNode]
+   [org.eclipse.cdt.internal.core.dom.parser ASTNode]
    )
   )
 
@@ -38,12 +40,6 @@
 ;(def parent-hash (commit-parent-hash repo commit-hash))
 ;(def rev-commit (first (gitq/rev-list repo)))
 
-(defn find-rev-commit
-  "make a new revwalk to find given commit"
-  [repo commit-hash]
-  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-hash)
-  )
-
 (defn object-loader-string
   "dump the contents of an ObjectLoader to a String"
   [loader]
@@ -51,11 +47,10 @@
 
 (s/defn commit-file-source :- String
   "Return full source for each file changed in a commit"
-  [repo :- Git commit-hash :- String file-name :- String]
+  [repo :- Git rev-commit :- RevCommit file-name :- String]
   (let [repository (.getRepository repo)
-        rc (find-rev-commit repo commit-hash)
-        tree      (.getTree rc)
-        tree-walk (doto (TreeWalk. repository) (.setRecursive true) (.addTree tree))
+        tree       (.getTree rev-commit)
+        tree-walk  (doto (TreeWalk. repository) (.setRecursive true) (.addTree tree))
         ]
 
     (.setFilter tree-walk (PathFilter/create file-name)) ; Use PathFilterGroup???? http://download.eclipse.org/jgit/docs/jgit-2.0.0.201206130900-r/apidocs/org/eclipse/jgit/treewalk/filter/PathFilter.html
@@ -67,26 +62,17 @@
       )
   ))
 
-
-;(print (commit-file-source repo commit-hash "gcc/testsuite/g++.dg/debug/dwarf2/integer-typedef.C"))
+;(print (commit-file-source repo (find-rev-commit repo commit-hash) "gcc/testsuite/g++.dg/debug/dwarf2/integer-typedef.C"))
 ;(print (commit-file-source repo commit-hash "gcc/c-family/ChangeLog"))
 
-;(commit-file-atom-count gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" "gcc/c-family/c-pretty-print.c" conditional-atom?)
+;(commit-file-atom-count gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c" conditional-atom?)
+;(source-before-after gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c")
 ;(commit-file-atom-count gcc-repo commit-hash "gcc/c-family/c-pretty-print.c" conditional-atom?)
 
-(s/defn commit-file-atom-count :- s/Int
-  "count the occurence of an atom in commit's version of file"
-  [repo commit-hash file-name atom-classifier]
-    (->> (commit-file-source repo commit-hash file-name)
-         parse-source
-         (filter-tree atom-classifier)
-         count ; timing hot spot. Make more efficient atom counting function?
-         ))
-
-(defn edited-files
+(s/defn edited-files
   "which files were edited in commit"
-  [repo commit-hash]
-  (->> (find-rev-commit repo commit-hash)
+  [repo rev-commit :- RevCommit]
+  (->> rev-commit
        (gitq/changed-files repo)
        (filter #(= (last %) :edit))
        (map first)
@@ -98,21 +84,27 @@
 
 ;(apply-before-after repo commit-hash file-name count-nodes)
 
-(defn commit-parent-hash
-  [repo commit-hash]
-  (.name (first (.getParents (find-commit repo commit-hash)))))
+;(defn commit-parent-hash
+;  [repo commit-hash]
+;  (.name (first (.getParents (find-rev-commit repo commit-hash)))))
 
-(defn apply-before-after
+;TODO use RevWalk instead of find-rev-commit
+; http://stackoverflow.com/questions/28852698/how-do-i-get-the-tree-from-parent-commits-using-the-jgit-api
+(s/defn parent-rev-commit
+  [repo rev-commit :- RevCommit]
+  (find-rev-commit repo (.name (.getParent rev-commit 0))))
+
+(s/defn apply-before-after
   "parse a commit and it's parent and apply f to the root of both"
-  [repo commit-hash file-name f]
-  (let [parent-hash (commit-parent-hash repo commit-hash)]
-    [(f (parse-source (commit-file-source repo parent-hash file-name)))
-     (f (parse-source (commit-file-source repo commit-hash file-name)))]))
+  [repo rev-commit :- RevCommit file-name f]
+  (let [parent-commit (parent-rev-commit repo rev-commit)]
+    [(f (parse-source (commit-file-source repo parent-commit file-name)))
+     (f (parse-source (commit-file-source repo rev-commit file-name)))]))
 
-(defn source-before-after
+(s/defn source-before-after
   "Return the ast of changed files before/after a commit"
-  [repo commit-hash file-name]
-  (apply-before-after repo commit-hash file-name identity))
+  [repo rev-commit :- RevCommit file-name]
+  (apply-before-after repo rev-commit file-name identity))
 
 (s/defn atom-in-file-counts :- BACounts
   "Count the number of atoms in two ASTs"
@@ -128,19 +120,19 @@
 (s/defn commit-files-before-after :- [{(s/required-key :file) s/Str
                                        (s/required-key :source-before) IASTTranslationUnit
                                        (s/required-key :source-after) IASTTranslationUnit
-                                       (s/required-key :patch-lines) s/Int}]
+                                       (s/required-key :patch-chars) s/Int}]
   "For every file changed in this commit, give both before and after ASTs"
-  [repo commit-hash]
-  (->> (edited-files repo commit-hash)
+  [repo rev-commit :- RevCommit]
+  (->> (edited-files repo rev-commit)
        (map #(merge {:file %1
-                     :patch-lines (count-lines (commit-file-source repo commit-hash %1))}
+                     :patch-chars (count (commit-file-source repo rev-commit %1))}
                     (zipmap [:source-before :source-after]
-                            (source-before-after repo commit-hash %1))))
+                            (source-before-after repo rev-commit %1))))
        ))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
-  [repo :- Git atoms :- [Atom] commit-hash :- s/Str]
-  (for [commit-ba (commit-files-before-after repo commit-hash)
+  [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
+  (for [commit-ba (commit-files-before-after repo rev-commit)
         atoms-counts (atoms-in-file-counts atoms [(:source-before commit-ba) (:source-after commit-ba)])]
        (merge (dissoc commit-ba :source-before :source-after) atoms-counts)))
 
@@ -153,7 +145,7 @@
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
     (try
-      (for [atom (atoms-changed-in-commit repo atoms commit-hash)]
+      (for [atom (atoms-changed-in-commit repo atoms rev-commit)]
         (merge {:revstr commit-hash :bug-ids (bugzilla-ids rev-commit)} atom))
       (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
       (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
@@ -168,7 +160,23 @@
    (pmap (partial parse-commit-for-atom repo atoms))
   ))
 
-;(take 2 (atoms-changed-all-commits gcc-repo (take 2 atoms)))
+;(atoms-changed-all-commits gcc-repo atoms)
+;(time (println (map (fn [x] 1) (gitq/rev-list gcc-repo))))
+;(time (println (map (fn [x] 1) (take 200 (atoms-changed-all-commits gcc-repo (take 2 atoms))))))
+; rev-list -> 2543
+; 4   ->  4666
+; 8   ->  4646
+; 20  ->  5000
+; 20  ->  4400
+; 50  -> 22977
+; 100 -> 28277
+; 200 -> 36484
+; 200 -> 31531
+; 200 -> 24806
+;(time (find-rev-commit gcc-repo commit-hash))
+;(time (find-rev-commit gcc-repo old-commit-hash))
+;(time (dotimes [n 10] (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash))))
+;(time (dotimes [n 600] (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo old-commit-hash))))
 
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
@@ -199,3 +207,4 @@
 
 ;(write-res-csv "gcc-bugs.csv" (take 10000 (add-convenience-colums flat-gcc-bugs)))
 
+;(def old-commit-hash "151ad919455c7143abb03ba325d073e7f86523bc")

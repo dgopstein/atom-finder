@@ -133,10 +133,10 @@
     (alength p)))
 
 
-(defn children    [node] (.getChildren node))
-(defn parent      [node] (.getParent node))
-(defn safe-parent [node] (or (.getParent node) node))
-(defn root-ancestor [node]
+(defn children    [^IASTNode node] (.getChildren node))
+(defn parent      [^IASTNode node] (.getParent node))
+(defn safe-parent [^IASTNode node] (or (.getParent node) node))
+(defn root-ancestor [^IASTNode node]
   (let [p (parent node)]
     (if (nil? p)
       node

@@ -25,7 +25,6 @@
 
       (doseq [[revstr expected] results]
         (testing (str "Which bugzilla id corresponds to commit " revstr)
-          (is (= expected (bugzilla-ids (find-commit repo revstr))))
+          (is (= expected (bugzilla-ids (find-rev-commit repo revstr))))
           ))))
-
 )
