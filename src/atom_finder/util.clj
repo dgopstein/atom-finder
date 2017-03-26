@@ -45,6 +45,10 @@
        (print-table)
        ))
 
+(defn errln [& s]
+  (binding [*out* *err*]
+      (println (apply str s))))
+
 (defmacro %w [& words]
     `(list ~@(map str (vec words))))
 

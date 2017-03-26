@@ -138,19 +138,17 @@
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms "c565e664faf3102b80218481ea50e7028ecd646e"))
 
-(s/defn parse-commit-for-atom
-  ;:- [(s/one s/Str "commit-hash")
-  ;    (s/one {s/Str {s/Keyword s/Bool}} "files")
-  ;    (s/optional #{[(s/one s/Str "name") (s/one s/Int "id")]} "bugs")]
+(defn parse-commit-for-atom
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
     (try
-      (for [atom (atoms-changed-in-commit repo atoms rev-commit)]
-        (merge {:revstr commit-hash :bug-ids (bugzilla-ids rev-commit)} atom))
-      (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
-      (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
-      )))
+      (doall (for [atom (atoms-changed-in-commit repo atoms rev-commit)]
+        (merge {:revstr commit-hash :bug-ids (bugzilla-ids rev-commit)} atom)))
+      (catch Exception e (do (errln "-- exception parsing commit: \"" commit-hash "\"\n" ) [commit-hash nil nil]))
+      (catch Error e     (do (errln "-- error parsing commit: \""  commit-hash "\"\n") [commit-hash nil nil]))
+    )))
 
+      (try (/ 1 0) (catch Exception e "oops"))
 ;(pprint (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
 
 (defn atoms-changed-all-commits
