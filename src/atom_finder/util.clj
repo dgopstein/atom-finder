@@ -76,6 +76,9 @@
 (defn slurp-lines [file]
     (str/split-lines (slurp file)))
 
+(defn count-lines [str]
+    (count (filter #{\newline} str)))
+
 (defn close?
   "Are two numbers approximately equal"
   [tolerance x y]
@@ -413,7 +416,7 @@
   "Print the line that contains the node and the lines around it"
   [node]
   (let [line-num (.getStartingLineNumber (.getFileLocation node)) file-name (.getContainingFilename node)]
-    (with-open [rdr (clojure.java.io/reader file-name)] 
+    (with-open [rdr (clojure.java.io/reader file-name)]
       (let [file-seq (line-seq rdr) total-line-num (count file-seq)]
        (println "===================================================")
 

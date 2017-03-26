@@ -127,21 +127,22 @@
 
 (s/defn commit-files-before-after :- [{(s/required-key :file) s/Str
                                        (s/required-key :source-before) IASTTranslationUnit
-                                       (s/required-key :source-after) IASTTranslationUnit}]
+                                       (s/required-key :source-after) IASTTranslationUnit
+                                       (s/required-key :patch-lines) s/Int}]
   "For every file changed in this commit, give both before and after ASTs"
   [repo commit-hash]
   (->> (edited-files repo commit-hash)
-       (map #(merge {:file %1}
+       (map #(merge {:file %1
+                     :patch-lines (count-lines (commit-file-source repo commit-hash %1))}
                     (zipmap [:source-before :source-after]
                             (source-before-after repo commit-hash %1))))
        ))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] commit-hash :- s/Str]
-  (for [{file :file src-before :source-before src-after :source-after}
-          (commit-files-before-after repo commit-hash)
-        atoms-counts (atoms-in-file-counts atoms [src-before src-after])]
-    (merge {:file file} atoms-counts)))
+  (for [commit-ba (commit-files-before-after repo commit-hash)
+        atoms-counts (atoms-in-file-counts atoms [(:source-before commit-ba) (:source-after commit-ba)])]
+       (merge (dissoc commit-ba :source-before :source-after) atoms-counts)))
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms "c565e664faf3102b80218481ea50e7028ecd646e"))
 
