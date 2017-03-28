@@ -123,12 +123,14 @@
                                        (s/required-key :patch-chars) s/Int}]
   "For every file changed in this commit, give both before and after ASTs"
   [repo rev-commit :- RevCommit]
-  (->> (edited-files repo rev-commit)
-       (map #(merge {:file %1
-                     :patch-chars (count (commit-file-source repo rev-commit %1))}
-                    (zipmap [:source-before :source-after]
-                            (source-before-after repo rev-commit %1))))
-       ))
+  (for [edited-file (edited-files repo rev-commit)]
+    (let [[source-before source-after] (source-before-after repo rev-commit edited-file)]
+      {:file edited-file
+       :file-size-before (count source-before)
+       :file-size-after (count source-after)
+       :source-before source-before
+       :source-after source-after}
+      )))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
@@ -144,8 +146,8 @@
     (try
       (doall (for [atom (atoms-changed-in-commit repo atoms rev-commit)]
         (merge {:revstr commit-hash :bug-ids (bugzilla-ids rev-commit)} atom)))
-      (catch Exception e (do (errln "-- exception parsing commit: \"" commit-hash "\"\n" ) [commit-hash nil nil]))
-      (catch Error e     (do (errln "-- error parsing commit: \""  commit-hash "\"\n") [commit-hash nil nil]))
+      (catch Exception e (do (errln "-- exception parsing commit: \"" commit-hash "\"\n" ) {:revstr commit-hash}))
+      (catch Error e     (do (errln "-- error parsing commit: \""  commit-hash "\"\n") {:revstr commit-hash}))
     )))
 
       (try (/ 1 0) (catch Exception e "oops"))
@@ -186,9 +188,9 @@
          dorun
          time)))
 
-
-;(def filename "gcc-bugs-atoms_2017-03-20_2.edn")
-;(def gcc-bugs (->> filename read-patch-data))
+;(def filename "gcc-bugs-atoms_2017-03-26_2_1000.edn")
+;(def gcc-bugs (->> filename read-data (mapcat identity) (filter :revstr)))
+;(->> gcc-bugs add-convenience-columns (write-res-csv "gcc-bugs_2017-03-26_2_1000.csv"))
 
 (defn write-res-csv
   [filename flat-res]
