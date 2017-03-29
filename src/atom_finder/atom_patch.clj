@@ -82,8 +82,6 @@
 ;(def commit-hash "97574c57cf26ace9b8609575bbab66465924fef7")
 ;(def file-name "gcc/c-family/ChangeLog")
 
-;(apply-before-after repo commit-hash file-name count-nodes)
-
 ;(defn commit-parent-hash
 ;  [repo commit-hash]
 ;  (.name (first (.getParents (find-rev-commit repo commit-hash)))))
@@ -101,44 +99,40 @@
     [(f (parse-source (commit-file-source repo parent-commit file-name)))
      (f (parse-source (commit-file-source repo rev-commit file-name)))]))
 
-(s/defn source-before-after
+(s/defn ast-before-after
   "Return the ast of changed files before/after a commit"
   [repo rev-commit :- RevCommit file-name]
-  (apply-before-after repo rev-commit file-name identity))
-
-(s/defn atom-in-file-counts :- BACounts
-  "Count the number of atoms in two ASTs"
-  [atom-finder :- AtomFinder srcs :- BeforeAfter]
-   (zipmap [:count-before :count-after] (map (comp count atom-finder) srcs)))
+  (let [parent-commit (parent-rev-commit repo rev-commit)
+        source-before (commit-file-source repo parent-commit file-name)
+        source-after (commit-file-source repo rev-commit file-name)]
+    {:file file-name
+     :ast-before (parse-source source-before)
+     :ast-after  (parse-source source-after)
+     :source-chars-before (count source-before)
+     :source-chars-after  (count source-after)}))
 
 (s/defn atoms-in-file-counts ;{s/Keyword BACounts}
   "Check multiple atoms in a single file"
-  [atoms :- [Atom] srcs :- BeforeAfter]
-  (map (fn [atom] (merge {:atom (:name atom)}
-                   (atom-in-file-counts (:finder atom) srcs))) atoms))
+  [atoms :- [Atom] srcs]
+  (for [atom atoms]
+    {:atom (:name atom)
+     :count-before (->> srcs :ast-before ((:finder atom)) count)
+     :count-after  (->> srcs :ast-after  ((:finder atom)) count)
+     }))
 
-(s/defn commit-files-before-after :- [{(s/required-key :file) s/Str
-                                       (s/required-key :source-before) IASTTranslationUnit
-                                       (s/required-key :source-after) IASTTranslationUnit
-                                       (s/required-key :patch-chars) s/Int}]
+(s/defn commit-files-before-after
   "For every file changed in this commit, give both before and after ASTs"
   [repo rev-commit :- RevCommit]
-  (for [edited-file (edited-files repo rev-commit)]
-    (let [[source-before source-after] (source-before-after repo rev-commit edited-file)]
-      {:file edited-file
-       :file-size-before (count source-before)
-       :file-size-after (count source-after)
-       :source-before source-before
-       :source-after source-after}
-      )))
+  (map (partial ast-before-after repo rev-commit)
+       (edited-files repo rev-commit)))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
   (for [commit-ba (commit-files-before-after repo rev-commit)
-        atoms-counts (atoms-in-file-counts atoms [(:source-before commit-ba) (:source-after commit-ba)])]
-       (merge (dissoc commit-ba :source-before :source-after) atoms-counts)))
+        atoms-counts (atoms-in-file-counts atoms commit-ba)]
+       (merge (dissoc commit-ba :ast-before :ast-after) atoms-counts)))
 
-;(pprint (atoms-changed-in-commit gcc-repo atoms "c565e664faf3102b80218481ea50e7028ecd646e"))
+;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
 
 (defn parse-commit-for-atom
   [repo atoms rev-commit]
@@ -146,9 +140,9 @@
     (try
       (doall (for [atom (atoms-changed-in-commit repo atoms rev-commit)]
         (merge {:revstr commit-hash :bug-ids (bugzilla-ids rev-commit)} atom)))
-      (catch Exception e (do (errln "-- exception parsing commit: \"" commit-hash "\"\n" ) {:revstr commit-hash}))
-      (catch Error e     (do (errln "-- error parsing commit: \""  commit-hash "\"\n") {:revstr commit-hash}))
-    )))
+      (catch Exception e (do (errln (str "-- exception parsing commit: \"" commit-hash "\"\n")) {:revstr commit-hash}))
+      (catch Error e     (do (errln (str "-- error parsing commit: \""  commit-hash "\"\n")) {:revstr commit-hash})))
+    ))
 
       (try (/ 1 0) (catch Exception e "oops"))
 ;(pprint (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
