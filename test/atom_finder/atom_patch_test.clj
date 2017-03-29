@@ -34,8 +34,8 @@
      (let [repo gcc-repo
            rev-commit (find-rev-commit repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")
            file-name "gcc/c-family/c-pretty-print.c"
-           srcs (source-before-after repo rev-commit file-name)]
-       (is (= [28 28] (-> atom-lookup :logic-as-control-flow :finder (atom-in-file-counts srcs) vals)))
-       (is (= [25 24] (-> atom-lookup :conditional :finder (atom-in-file-counts srcs) vals)))
+           srcs (ast-before-after repo rev-commit file-name)]
+       (is (= [28 28] (-> atom-lookup :logic-as-control-flow vector (atoms-in-file-counts srcs) first (select-keys [:count-before :count-after]) vals)))
+       (is (= [25 24] (-> atom-lookup :conditional vector (atoms-in-file-counts srcs) first (select-keys [:count-before :count-after]) vals)))
      )))
  )
