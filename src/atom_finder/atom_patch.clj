@@ -40,11 +40,6 @@
 ;(def parent-hash (commit-parent-hash repo commit-hash))
 ;(def rev-commit (first (gitq/rev-list repo)))
 
-(defn object-loader-string
-  "dump the contents of an ObjectLoader to a String"
-  [loader]
-  (->> loader .getBytes String.))
-
 (s/defn commit-file-source :- String
   "Return full source for each file changed in a commit"
   [repo :- Git rev-commit :- RevCommit file-name :- String]
@@ -58,7 +53,7 @@
 
     (let [object-id (.getObjectId tree-walk 0)
           loader (.open repository object-id)]
-      (object-loader-string loader)
+      (->> loader .getBytes String.)
       )
   ))
 
@@ -81,10 +76,6 @@
 ;(atom-removed-in-commit-file? repo commit-hash "gcc/c-family/ChangeLog" atom-classifier)
 ;(def commit-hash "97574c57cf26ace9b8609575bbab66465924fef7")
 ;(def file-name "gcc/c-family/ChangeLog")
-
-;(defn commit-parent-hash
-;  [repo commit-hash]
-;  (.name (first (.getParents (find-rev-commit repo commit-hash)))))
 
 ;TODO use RevWalk instead of find-rev-commit
 ; http://stackoverflow.com/questions/28852698/how-do-i-get-the-tree-from-parent-commits-using-the-jgit-api
@@ -175,16 +166,19 @@
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
   (binding [*out* (clojure.java.io/writer filename)]
+    (println "[")
     (->> atoms
          (atoms-changed-all-commits repo)
          (map prn)
          ;(take 10)
          dorun
-         time)))
+         time)
+    (println "[")
+    ))
 
-;(def filename "gcc-bugs-atoms_2017-03-26_2_1000.edn")
+;(def filename "gcc-bugs-atoms_2017-03-28_200.edn")
 ;(def gcc-bugs (->> filename read-data (mapcat identity) (filter :revstr)))
-;(->> gcc-bugs add-convenience-columns (write-res-csv "gcc-bugs_2017-03-26_2_1000.csv"))
+;(->> gcc-bugs add-convenience-columns (write-res-csv "gcc-bugs_2017-03-28_200.csv"))
 
 (defn write-res-csv
   [filename flat-res]
@@ -199,6 +193,11 @@
     (for [m flat-res]
       (merge m {:n-bugs (-> m :bug-ids count)})))
 
-;(write-res-csv "gcc-bugs.csv" (take 10000 (add-convenience-colums flat-gcc-bugs)))
+;(->> (find-rev-commit gcc-repo commit-hash)
+;     (gitq/changed-files-with-patch gcc-repo)
+;     (spit "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931.diff"))
+;     ;(re-seq #"(?m)^-(?!--)") ; removed lines but not files
+;     ;count
+;     )
+     ;println)
 
-;(def old-commit-hash "151ad919455c7143abb03ba325d073e7f86523bc")
