@@ -4,6 +4,7 @@
             [atom-finder.constants :refer :all]
             [atom-finder.patch :refer :all]
             [atom-finder.atom-patch :refer :all]
+            [atom-finder.results-util :refer :all]
             [atom-finder.source-versions :refer :all]
             [atom-finder.classifier :refer :all]
             [clj-jgit.porcelain  :as gitp]
@@ -28,9 +29,7 @@
 
     (is
      (= '({:atom :preprocessor-in-statement :count-before 0 :count-after 0})
-        (flatten-res {:atom :preprocessor-in-statement,:stats {:atom-counts-before-after {:count-before 0,:count-after 0}}})
-        ;(flatten-map {:atom :preprocessor-in-statement,:stats {:atom-counts-before-after {:count-before 0,:count-after 0}}})
-        ))
+        (flatten-res {:atom :preprocessor-in-statement,:stats {:atom-counts-before-after {:count-before 0,:count-after 0}}})))
 
     (is (= '({:revstr "123abc" :atom :preprocessor-in-statement} {:revstr "123abc" :atom :logic-as-control-flow})
      (flatten-res '{:revstr "123abc" :atoms ({:atom :preprocessor-in-statement} {:atom :logic-as-control-flow})})))
@@ -39,9 +38,9 @@
              {:revstr "1a" :file "a.c" :atom :b}
              {:revstr "1a" :file "b.c" :atom :a}
              {:revstr "1a" :file "b.c" :atom :b})
-           (flatten-res '{:revstr "1a" :files
-                          ({:file "a.c" :atoms ({:atom :a} {:atom :b})}
-                           {:file "b.c" :atoms ({:atom :a} {:atom :b})})})))
+           (flatten-res '({:revstr "1a" :files
+                           ({:file "a.c" :atoms ({:atom :a} {:atom :b})}
+                            {:file "b.c" :atoms ({:atom :a} {:atom :b})})}))))
     ))
 
 (when gcc-repo
@@ -59,7 +58,7 @@
            rev-commit (find-rev-commit repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")
            file-name "gcc/c-family/c-pretty-print.c"
            srcs (ast-before-after repo rev-commit file-name)]
-       (is (= [28 28] (-> atom-lookup :logic-as-control-flow vector (atoms-in-file-counts srcs) first (select-keys [:count-before :count-after]) vals)))
-       (is (= [25 24] (-> atom-lookup :conditional vector (atoms-in-file-counts srcs) first (select-keys [:count-before :count-after]) vals)))
+       (is (= {:count-before 28 :count-after 28} (->> atom-lookup :logic-as-control-flow (ba-counts srcs))))
+       (is (= {:count-before 25 :count-after 24} (->> atom-lookup :conditional (ba-counts srcs))))
      )))
  )
