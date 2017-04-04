@@ -102,14 +102,28 @@
      :source-chars-before (count source-before)
      :source-chars-after  (count source-after)}))
 
-(s/defn atoms-in-file-counts ;{s/Keyword BACounts}
+(s/defn ba-counts
+  [srcs atom]
+  {:count-before (->> srcs :ast-before ((:finder atom)) count)
+   :count-after  (->> srcs :ast-after  ((:finder atom)) count)})
+
+(def atom-stats
+  {:atom-counts-before-after ba-counts
+   }
+  )
+
+(s/defn atoms-in-file-stats ;{s/Keyword BACounts}
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs]
   (for [atom atoms]
     {:atom (:name atom)
-     :count-before (->> srcs :ast-before ((:finder atom)) count)
-     :count-after  (->> srcs :ast-after  ((:finder atom)) count)
-     }))
+     :stats (apply merge (for [[stat-name f] atom-stats]
+                           {stat-name (f srcs atom)}))}
+     ))
+
+;(atoms-in-file-stats (vals (select-keys atom-lookup [:post-increment :literal-encoding]))
+;                     {:ast-before (parse-source "int main() { int x = 1, y; y = x++; }")
+;                      :ast-after (parse-source "int main() { int x = 1, y; y = x; x++; }")})
 
 (s/defn commit-files-before-after
   "For every file changed in this commit, give both before and after ASTs"
@@ -117,26 +131,30 @@
   (map (partial ast-before-after repo rev-commit)
        (edited-files repo rev-commit)))
 
+;TODO add generic insert here
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
-  (for [commit-ba (commit-files-before-after repo rev-commit)
-        atoms-counts (atoms-in-file-counts atoms commit-ba)]
-       (merge (dissoc commit-ba :ast-before :ast-after) atoms-counts)))
+  (for [commit-ba (commit-files-before-after repo rev-commit)]
+       (merge (dissoc commit-ba :ast-before :ast-after)
+        {:atoms (atoms-in-file-stats atoms commit-ba)})))
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
+
+(defmacro log-err [msg ret x]
+  `(try ~x
+      (catch Exception e# (do (errln (str "-- exception parsing commit: \"" ~msg "\"\n")) ~ret))
+      (catch Error e#     (do (errln (str "-- error parsing commit: \""  ~msg "\"\n")) ~ret))))
 
 (defn parse-commit-for-atom
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
-    (try
-      (doall (for [atom (atoms-changed-in-commit repo atoms rev-commit)]
-        (merge {:revstr commit-hash :bug-ids (bugzilla-ids rev-commit)} atom)))
-      (catch Exception e (do (errln (str "-- exception parsing commit: \"" commit-hash "\"\n")) {:revstr commit-hash}))
-      (catch Error e     (do (errln (str "-- error parsing commit: \""  commit-hash "\"\n")) {:revstr commit-hash})))
-    ))
+    (->>
+     (doall (atoms-changed-in-commit repo atoms rev-commit))
+     (array-map :revstr commit-hash :bug-ids (bugzilla-ids rev-commit) :files)
+     (log-err commit-hash {:revstr commit-hash})
+     )))
 
-      (try (/ 1 0) (catch Exception e "oops"))
-;(pprint (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
+;(pprint (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash)))
 
 (defn atoms-changed-all-commits
   [repo atoms]
@@ -193,11 +211,9 @@
     (for [m flat-res]
       (merge m {:n-bugs (-> m :bug-ids count)})))
 
-;(->> (find-rev-commit gcc-repo commit-hash)
-;     (gitq/changed-files-with-patch gcc-repo)
-;     (spit "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931.diff"))
-;     ;(re-seq #"(?m)^-(?!--)") ; removed lines but not files
-;     ;count
-;     )
-     ;println)
-
+(->> atoms
+     ;(take 2)
+     (atoms-changed-all-commits gcc-repo)
+     (take 2)
+     pprint
+     time)
