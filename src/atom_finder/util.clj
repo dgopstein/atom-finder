@@ -53,7 +53,14 @@
     `(list ~@(map str (vec words))))
 
 (defn tap [f x] (f x) x)
-(defn pap [x] (tap prn x))
+(defn pap [x] (tap prn x)) ; print the value of variable and return it
+
+; print the name and value of an expression
+(defmacro pprn [x]
+  `(let [y# ~x]
+    (do
+      (print (str ~(str x ": ") (prn-str y#)))
+      y#)))
 
 (def not-empty? (comp not empty?))
 
@@ -94,6 +101,15 @@
   (if-let [[k v] (find m k)]
     v
         (throw (Exception. (str "Key Not Found " k)))))
+
+; http://stackoverflow.com/questions/43213573/get-in-for-lists/43214175#43214175
+(defn get-nth-in [init ks]
+  (reduce
+   (fn [a k]
+     (if (associative? a)
+       (get a k)
+       (nth a k)))
+   init ks))
 
 (defn avg [seq1] (/ (reduce + seq1) (count seq1)))
 

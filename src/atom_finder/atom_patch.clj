@@ -211,9 +211,55 @@
     (for [m flat-res]
       (merge m {:n-bugs (-> m :bug-ids count)})))
 
-(->> atoms
-     ;(take 2)
-     (atoms-changed-all-commits gcc-repo)
-     (take 2)
-     pprint
-     time)
+;(->> atoms
+;     ;(take 2)
+;     (atoms-changed-all-commits gcc-repo)
+;     (take 2)
+;     pprint
+;     time)
+
+(flatten-res test-data)
+(->> test-data flatten-res)
+
+(pprint (get-nth-in test-data [0 :files 0 :atoms 0]))
+
+(->> '{:atom :preprocessor-in-statement, :stats {:atom-counts-before-after {:count-before 0, :count-after 0}}}
+     flatten-map
+     pprint)
+
+(flatten-map '{:a 1 :b {:c 3 :d 4}})
+
+(defn flatten-map [res]
+  (reduce
+     (fn [h [k v]]
+       (cond
+         (map? v) (merge h (flatten-res v))
+         (seq? v) (flatten-res v)
+         :else (assoc h k v)
+         )) {} res))
+
+(defn flatten-seq [sres]
+  ; seq? intentionally doesn't match vectors.
+  ; this distnguishes iterables from tuples.
+  ; I model lists of things as (well) lists,
+  ; and tuples as vectors.
+  (pprn sres)
+  (let [[seq-k seq-v] (first (filter (comp seq? last) sres))
+        dissoced (dissoc sres seq-k)]
+
+    (if (nil? seq-k)
+      (list sres)
+      (map #(merge dissoced %) seq-v))))
+
+(defn flatten-res [fres]
+  (pprn fres)
+  (->> fres
+       flatten-seq
+       (map flatten-map)))
+
+(->> '{:revstr "123abc" :files ({:file "a.c" :atoms ({:atom :a} {:atom :b})} {:file "b.c" :atoms ({:atom :a} {:atom :b})})}
+     flatten-res
+     pprint)
+
+(flatten-seq '{:a 1 :b ({:c 3} {:d 4})})
+(flatten-res '{:a 1 :b 2})

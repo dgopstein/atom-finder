@@ -20,6 +20,26 @@
       (is (= rl {"gcc/ChangeLog" [16 26 27 28 29] "gcc/config/sparc/sparc.c" []}))
       )))
 
+(deftest flatten-res-test
+  (testing "Can data be flattened"
+
+    (is
+     (= {:atom :preprocessor-in-statement :count-before 0 :count-after 0}
+        (flatten-res {:atom :preprocessor-in-statement,:stats {:atom-counts-before-after {:count-before 0,:count-after 0}}})
+        (flatten-map {:atom :preprocessor-in-statement,:stats {:atom-counts-before-after {:count-before 0,:count-after 0}}}))))
+
+    (is (= '({:revstr "123abc" :atom :preprocessor-in-statement} {:revstr "123abc" :atom :logic-as-control-flow})
+     (flatten-res '{:revstr "123abc" :atoms ({:atom :preprocessor-in-statement} {:atom :logic-as-control-flow})})))
+
+    (is (= '({:revstr "1a" :file "a.c" :atom :a}
+             {:revstr "1a" :file "a.c" :atom :b}
+             {:revstr "1a" :file "b.c" :atom :a}
+             {:revstr "1a" :file "b.c" :atom :b})
+           (flatten-res '{:revstr "1a" :files
+                          ({:file "a.c" :atoms ({:atom :a} {:atom :b})}
+                           {:file "b.c" :atoms ({:atom :a} {:atom :b})})})))
+    ))
+
 (when gcc-repo
  (deftest apply-before-after-test
    (testing "Count the sizes of programs before and after a commit"
