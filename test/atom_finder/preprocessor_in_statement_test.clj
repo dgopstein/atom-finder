@@ -51,5 +51,6 @@
           (is (= (pisc (parse-frag code)) sc?))))))
 
   (testing "preprocessor-in-statement? finds all atoms in code"
-    (test-atom-lines "preprocessor-in-statement.c" "<true>" (-> atom-lookup (strict-get :preprocessor-in-statement) :finder)))
-  )
+    (test-atom-lines "preprocessor-in-statement.c" "<true>" non-toplevel-defines)
+    (test-atom-lines "preprocessor-in-statement.c" "<true>" (default-finder define-parent?)))
+)

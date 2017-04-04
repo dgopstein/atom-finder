@@ -43,7 +43,7 @@
 
 (def atoms
   [
-   (ValidatedAtom :preprocessor-in-statement preprocessor-parent?        all-non-toplevel-preprocessors)
+   (ValidatedAtom :preprocessor-in-statement define-parent?              non-toplevel-defines)
    (ValidatedAtom :logic-as-control-flow     logic-as-control-flow-atom? logic-as-control-flow-atoms)
    (ValidatedAtom :conditional               conditional-atom?           (default-finder conditional-atom?))
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))

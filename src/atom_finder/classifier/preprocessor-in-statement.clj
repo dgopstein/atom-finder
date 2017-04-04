@@ -79,6 +79,10 @@
 (defn all-non-toplevel-preprocessors [root]
   (map #(offset-parent root (:offset %)) (all-non-toplevel-preprocessor-locs root)))
 
+(defn non-toplevel-defines [root]
+  (map #(->> % :offset (offset-parent root))
+       (define-in-contexts non-toplevel-classifier root)))
+
 (defn statement-expression-classifier
   [parent]
   (or (instance? IASTExpression parent)
@@ -107,4 +111,13 @@
        root-ancestor
        all-preprocessor
        (map (comp :offset loc))
+       (exists? (partial offset-parent? node))))
+
+(defn define-parent?
+  "Is this AST node the direct parent of a preprocessor directive"
+  [node]
+  (->> node
+       root-ancestor
+       (define-in-contexts non-toplevel-classifier)
+       (map :offset)
        (exists? (partial offset-parent? node))))

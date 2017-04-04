@@ -1,3 +1,5 @@
+#define M2 1 // <false>
+
 int main() {
   1 +            // <true>
 #define M1
