@@ -23,10 +23,14 @@
 (deftest flatten-res-test
   (testing "Can data be flattened"
 
+    (is (= {:a 1 :c 2 :d 3}
+         (flatten-map {:a 1 :b {:c 2 :d 3}})))
+
     (is
-     (= {:atom :preprocessor-in-statement :count-before 0 :count-after 0}
+     (= '({:atom :preprocessor-in-statement :count-before 0 :count-after 0})
         (flatten-res {:atom :preprocessor-in-statement,:stats {:atom-counts-before-after {:count-before 0,:count-after 0}}})
-        (flatten-map {:atom :preprocessor-in-statement,:stats {:atom-counts-before-after {:count-before 0,:count-after 0}}}))))
+        ;(flatten-map {:atom :preprocessor-in-statement,:stats {:atom-counts-before-after {:count-before 0,:count-after 0}}})
+        ))
 
     (is (= '({:revstr "123abc" :atom :preprocessor-in-statement} {:revstr "123abc" :atom :logic-as-control-flow})
      (flatten-res '{:revstr "123abc" :atoms ({:atom :preprocessor-in-statement} {:atom :logic-as-control-flow})})))
