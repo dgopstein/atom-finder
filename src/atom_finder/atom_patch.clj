@@ -29,8 +29,6 @@
 (def AtomFinders [(s/one AtomFinder "atom-finder") AtomFinder])
 (def BeforeAfter [(s/one IASTTranslationUnit "before") (s/one IASTTranslationUnit "after")])
 (def BeforeAfters [(s/one BeforeAfter "commit-file") BeforeAfter])
-;(def BACounts [(s/one s/Num "count-before") (s/one s/Num "count-after")])
-(def BACounts {(s/required-key :count-before) s/Int (s/required-key :count-after) s/Int})
 
 ;
 ;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
@@ -61,7 +59,7 @@
 ;(print (commit-file-source repo commit-hash "gcc/c-family/ChangeLog"))
 
 ;(commit-file-atom-count gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c" conditional-atom?)
-;(ast-before-after gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c")
+;(before-after-data gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c")
 ;(commit-file-atom-count gcc-repo commit-hash "gcc/c-family/c-pretty-print.c" conditional-atom?)
 
 (s/defn edited-files
@@ -90,7 +88,7 @@
     [(f (parse-source (commit-file-source repo parent-commit file-name)))
      (f (parse-source (commit-file-source repo rev-commit file-name)))]))
 
-(s/defn ast-before-after
+(s/defn before-after-data
   "Return the ast of changed files before/after a commit"
   [repo rev-commit :- RevCommit file-name]
   (let [parent-commit (parent-rev-commit repo rev-commit)
@@ -104,21 +102,22 @@
 
 (s/defn ba-counts
   [srcs atom]
-  {:count-before (->> srcs :ast-before ((:finder atom)) count)
-   :count-after  (->> srcs :ast-after  ((:finder atom)) count)})
+  {:atom-count-before (->> srcs :ast-before ((:finder atom)) count)
+   :atom-count-after  (->> srcs :ast-after  ((:finder atom)) count)})
 
 (def atom-stats
   {:atom-counts-before-after ba-counts
    }
   )
 
-(s/defn atoms-in-file-stats ;{s/Keyword BACounts}
+(s/defn atoms-in-file-stats
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs]
   (for [atom atoms]
     {:atom (:name atom)
-     :stats (apply merge (for [[stat-name f] atom-stats]
-                           {stat-name (f srcs atom)}))}
+     :stats (apply merge
+                   (for [[stat-name f] atom-stats]
+                     {stat-name (f srcs atom)}))}
      ))
 
 ;(atoms-in-file-stats (vals (select-keys atom-lookup [:post-increment :literal-encoding]))
@@ -128,7 +127,7 @@
 (s/defn commit-files-before-after
   "For every file changed in this commit, give both before and after ASTs"
   [repo rev-commit :- RevCommit]
-  (map (partial ast-before-after repo rev-commit)
+  (map (partial before-after-data repo rev-commit)
        (edited-files repo rev-commit)))
 
 ;TODO add generic insert here
