@@ -13,6 +13,9 @@
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
    [org.eclipse.cdt.core.dom.ast IASTTranslationUnit IASTNode]
    [org.eclipse.cdt.internal.core.dom.parser ASTNode]
+   [distance APTED]
+   [costmodel CostModel]
+   [node Node]
    )
   )
 
@@ -30,3 +33,19 @@
    :source-size-before-after source-size-before-after
    })
 
+
+(def ASTUnitCostModel
+  (proxy [CostModel] []
+    (del [node] 1.0)
+    (ins [node] 1.0)
+    (ren [a b] (if (= (->> a .getNodeData .toString) (->> b .getNodeData .toString)) 0.0 1.0))
+    ))
+
+(defn ASTDiffNode [node]
+  (proxy [Node] [node]
+    (toString [] (.toString (proxy-super getNodeData)))))
+
+apted = new APTED<>(new StringUnitCostModel())
+(def apted (APTED. ASTUnitCostModel))
+
+(.computeEditDistance apted (ASTDiffNode "abc") (ASTDiffNode "abc"))
