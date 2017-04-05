@@ -200,6 +200,6 @@
     (for [m flat-res]
       (merge m {:n-bugs (-> m :bug-ids count)})))
 
-(->> (atoms-changed-all-commits gcc-repo atoms)
-     (take 1)
-     pprint)
+;(->> (atoms-changed-all-commits gcc-repo atoms)
+;     (take 1)
+;     pprint)
