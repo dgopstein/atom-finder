@@ -41,11 +41,18 @@
     (ren [a b] (if (= (->> a .getNodeData .toString) (->> b .getNodeData .toString)) 0.0 1.0))
     ))
 
-(defn ASTDiffNode [node]
-  (proxy [Node] [node]
-    (toString [] (.toString (proxy-super getNodeData)))))
+(defn ASTDiffNode
+  ([node] (ASTDiffNode node []))
+  ([node children]
+   (let [node-obj
+         (proxy [Node] [node]
+           (toString [] (.toString (proxy-super getNodeData))))]
+
+     (doseq [child children] (.addChild node-obj child))
+
+     node-obj)))
 
 apted = new APTED<>(new StringUnitCostModel())
 (def apted (APTED. ASTUnitCostModel))
 
-(.computeEditDistance apted (ASTDiffNode "abc") (ASTDiffNode "abc"))
+(.computeEditDistance apted (ASTDiffNode "a" [(ASTDiffNode "b") (ASTDiffNode "c")]) (ASTDiffNode "a" [(ASTDiffNode "b") (ASTDiffNode "d")]))
