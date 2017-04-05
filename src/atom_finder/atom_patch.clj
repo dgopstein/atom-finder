@@ -6,6 +6,7 @@
    [atom-finder.source-versions :refer :all]
    [atom-finder.patch :refer :all]
    [atom-finder.results-util :refer :all]
+   [atom-finder.atom-stats :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.data.csv :as csv]
    [clojure.java.io :as io]
@@ -97,18 +98,8 @@
     {:file file-name
      :ast-before (parse-source source-before)
      :ast-after  (parse-source source-after)
-     :source-chars-before (count source-before)
-     :source-chars-after  (count source-after)}))
-
-(s/defn ba-counts
-  [srcs atom]
-  {:atom-count-before (->> srcs :ast-before ((:finder atom)) count)
-   :atom-count-after  (->> srcs :ast-after  ((:finder atom)) count)})
-
-(def atom-stats
-  {:atom-counts-before-after ba-counts
-   }
-  )
+     :source-before source-before
+     :source-after  source-after}))
 
 (s/defn atoms-in-file-stats
   "Check multiple atoms in a single file"
@@ -116,7 +107,7 @@
   (for [atom atoms]
     {:atom (:name atom)
      :stats (apply merge
-                   (for [[stat-name f] atom-stats]
+                   (for [[stat-name f] (atom-stats)]
                      {stat-name (f srcs atom)}))}
      ))
 
@@ -130,11 +121,10 @@
   (map (partial before-after-data repo rev-commit)
        (edited-files repo rev-commit)))
 
-;TODO add generic insert here
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
   (for [commit-ba (commit-files-before-after repo rev-commit)]
-       (merge (dissoc commit-ba :ast-before :ast-after)
+       (merge (select-keys commit-ba [:file])
         {:atoms (atoms-in-file-stats atoms commit-ba)})))
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
@@ -209,3 +199,7 @@
   [flat-res]
     (for [m flat-res]
       (merge m {:n-bugs (-> m :bug-ids count)})))
+
+(->> (atoms-changed-all-commits gcc-repo atoms)
+     (take 1)
+     pprint)
