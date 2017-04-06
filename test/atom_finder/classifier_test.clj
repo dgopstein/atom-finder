@@ -66,8 +66,7 @@
 
 (deftest test-logic-as-control-flow-atoms?
   (testing "logic-as-control-flow-atoms finds all atoms in snippet study code"
-    (let [lines  (->> (resource-path "logic-as-control-flow.c")
-                      tu
+    (let [lines  (->> "logic-as-control-flow.c" parse-resource
                       logic-as-control-flow-atoms
                       (map loc)
                       (map :line))]
@@ -78,19 +77,18 @@
 (deftest test-conditional-atom?
   (testing "conditional-atom? finds all atoms in snippet study code"
     (is (= true
-           (->> "conditional.c" resource-path tu
+           (->> "conditional.c" parse-resource
                 (get-in-tree [0 2 1 0 1 1 0])
                 conditional-atom?
                 )))
 
     (is (= false
-           (->> "conditional.c" resource-path tu
+           (->> "conditional.c" parse-resource
                 (get-in-tree [0 2 1 0 1 1])
                 conditional-atom?
                 )))
 
-    (let [lines  (->> (resource-path "conditional.c")
-                      tu
+    (let [lines  (->> "conditional.c" parse-resource
                       (filter-tree conditional-atom?)
                       (map loc)
                       (map :line))]
@@ -111,8 +109,7 @@
 (deftest test-reversed-subscript-atom?
   (testing "reversed-subscript-atom? finds all atoms in snippet study code"
 
-    (let [lines  (->> (resource-path "reversed-subscript.c")
-                      tu
+    (let [lines  (->> "reversed-subscript.c" parse-resource
                       (filter-tree reversed-subscript-atom?)
                       (map loc)
                       (map :line))]
