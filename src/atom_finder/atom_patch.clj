@@ -203,3 +203,15 @@
 ;(->> (atoms-changed-all-commits gcc-repo atoms)
 ;     (take 1)
 ;     pprint)
+
+
+(slurp (resource-path "macro-operator-precedence.c"))
+
+(->> "conditional.c"
+     resource-path
+     slurp
+     parse-source
+     ((atom-finder.classifier-util/default-finder conditional-atom?))
+     (map write-ast)
+     pprint
+     )

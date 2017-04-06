@@ -55,4 +55,40 @@
 apted = new APTED<>(new StringUnitCostModel())
 (def apted (APTED. ASTUnitCostModel))
 
-(.computeEditDistance apted (ASTDiffNode "a" [(ASTDiffNode "b") (ASTDiffNode "c")]) (ASTDiffNode "a" [(ASTDiffNode "b") (ASTDiffNode "d")]))
+(defn postorder [node]
+  (concat (->> node .getChildren (mapcat postorder)) [node]))
+
+(defn post-ids [node]
+  (->> (postorder node)
+       (map-indexed #(vector (inc %1) %2))
+       (into {})
+       ))
+
+(postorder (ASTDiffNode "a" [(ASTDiffNode "b") (ASTDiffNode "c")]))
+(->> ;(ASTDiffNode "a" [(ASTDiffNode "b") (ASTDiffNode "c")])
+     (ASTDiffNode "a" [(ASTDiffNode "b") (ASTDiffNode "c") (ASTDiffNode "d")])
+     post-ids
+     (map-values (memfn getNodeData))
+     )
+
+(.computeEditDistance apted
+                      (ASTDiffNode "a" [(ASTDiffNode "b")
+                                        (ASTDiffNode "c")])
+                      (ASTDiffNode "a" [(ASTDiffNode "b")
+                                        (ASTDiffNode "c")
+                                        (ASTDiffNode "d")
+                                        (ASTDiffNode "e")]))
+
+(defn added-nodes [apted]
+  (->> apted
+       .computeEditMapping
+       (filter (comp zero? first))
+       (map last)
+       ((post-ids))
+       )
+  )
+
+
+
+(->> (.computeEditMapping apted)
+     (map pprint))
