@@ -12,7 +12,7 @@
 (def gcc-repo (some->> gcc-path gitp/load-repo))
 (def ag-repo  (some->> ag-path  gitp/load-repo))
 
-(def root (tu (resource-path "logic-as-control-flow.c")))
+(def root (parse-resource "logic-as-control-flow.c"))
 
 (def big-root     (some->> :big-root     cfg/get expand-home tu))
 (def github-top-c (some->> :github-top-c cfg/get expand-home))

@@ -379,6 +379,11 @@
       parse-stmt
       (get-in-tree [0])))
 
+(defn parse-resource
+  "Parse a file in the resource directory"
+  [filename]
+  (->> filename resource-path slurp parse-source))
+
 (defn find-after
   "Take the element after the specified one"
   [coll elem]
