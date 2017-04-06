@@ -105,7 +105,7 @@
 
  (.maxMemory (Runtime/getRuntime))
 
-(.computeEditDistance apted (diff-nodify ast-a) (diff-nodify ast-b))
+(def edit-distance (.computeEditDistance apted (diff-nodify ast-a) (diff-nodify ast-b)))
 
 (.computeEditDistance apted ast-before ast-after)
 (added-nodes apted ast-before ast-after)
