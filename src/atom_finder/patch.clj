@@ -3,7 +3,7 @@
    [atom-finder.util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string])
-  (:import 
+  (:import
    [java.io ByteArrayInputStream StringReader]
    [com.zutubi.diff PatchFileParser unified.UnifiedPatchParser
     unified.UnifiedHunk
@@ -38,12 +38,12 @@
   "Pair each Hunk$Line with the file line number that goes with it"
   [hunk]
   (let [old-offset (.getOldOffset hunk)]
-    
+
     (->> hunk
          .getLines
          (map vector (range-from old-offset))
               )))
-       
+
 (defn deleted-lines-hunk
   "Return [line-num UnifiedHunk$Line] for every deleted line in a hunk"
   [hunk]
