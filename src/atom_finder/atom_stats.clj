@@ -71,24 +71,33 @@ apted = new APTED<>(new StringUnitCostModel())
      (map-values (memfn getNodeData))
      )
 
-(.computeEditDistance apted
-                      (ASTDiffNode "a" [(ASTDiffNode "b")
-                                        (ASTDiffNode "c")])
-                      (ASTDiffNode "a" [(ASTDiffNode "b")
-                                        (ASTDiffNode "c")
-                                        (ASTDiffNode "d")
-                                        (ASTDiffNode "e")]))
 
-(defn added-nodes [apted]
-  (->> apted
-       .computeEditMapping
-       (filter (comp zero? first))
-       (map last)
-       ((post-ids))
-       )
-  )
+(def ast-before (ASTDiffNode "a" [(ASTDiffNode "b") (ASTDiffNode "c" [(ASTDiffNode "f")])]))
+(def ast-after (ASTDiffNode "a" [(ASTDiffNode "b") (ASTDiffNode "c") (ASTDiffNode "d") (ASTDiffNode "e")]))
 
+(defn added-nodes [apted _ast-before ast-after]
+  (let [after-post-ids (post-ids ast-after)]
+    (->> apted
+         .computeEditMapping
+         (filter (comp zero? first))
+         (map last)
+         (map after-post-ids)
+         )
+    ))
 
+(defn removed-nodes [apted ast-before _ast-after]
+  (let [begin-post-ids (post-ids ast-before)]
+    (->> apted
+         .computeEditMapping
+         (filter (comp zero? last))
+         (map first)
+         (map begin-post-ids)
+         )
+    ))
+
+(.computeEditDistance apted ast-before ast-after)
+(added-nodes apted ast-before ast-after)
+(removed-nodes apted ast-before ast-after)
 
 (->> (.computeEditMapping apted)
      (map pprint))
