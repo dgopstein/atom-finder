@@ -25,7 +25,7 @@
   `(let [filepath#   (resource-path ~filename)
          expected#   (find-lines ~pat filepath#)
          lines#  (->> filepath#
-                      tu
+                      parse-file
                       (~atom-finder)
                       (map loc)
                       (map :line))]

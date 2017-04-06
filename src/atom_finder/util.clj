@@ -131,8 +131,6 @@
                             (FileContent/createForExternalFileLocation filename)
                             info emptyIncludes nil opts log)))
 
-(def tu translation-unit)
-
 (defn mem-tu
   "Create an AST from in-memory source (name is for documentation only)"
   [filename source]
@@ -335,21 +333,6 @@
     (str/replace-first s "~" (System/getProperty "user.home"))
         s))
 
-(defn pmap-dir-nodes
-  "Apply a function to the AST of every c file in a directory"
-  [f dirname]
-          (pmap
-           (fn [file]
-             (let [filename (.getPath file)]
-               (try
-                 (f (tu filename))
-                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
-                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
-               )
-             ))
-
-           (c-files dirname)))
-
 (defn write-tempfile
   [content]
   ; https://github.com/clojure-cookbook/clojure-cookbook/blob/master/04_local-io/4-10_using-temp-files.asciidoc
@@ -379,10 +362,12 @@
       parse-stmt
       (get-in-tree [0])))
 
+(def parse-file translation-unit)
+
 (defn parse-resource
   "Parse a file in the resource directory"
   [filename]
-  (->> filename resource-path slurp parse-source))
+  (->> filename resource-path parse-file))
 
 (defn find-after
   "Take the element after the specified one"
@@ -450,4 +435,20 @@
        (if (<= line-num total-line-num) (println (str (+ line-num 1) "    " (nth file-seq line-num))))
 
        (println "===================================================")))))
+
+(defn pmap-dir-nodes
+  "Apply a function to the AST of every c file in a directory"
+  [f dirname]
+          (pmap
+           (fn [file]
+             (let [filename (.getPath file)]
+               (try
+                 (f (parse-file filename))
+                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
+                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
+               )
+             ))
+
+           (c-files dirname)))
+
 
