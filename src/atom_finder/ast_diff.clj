@@ -30,7 +30,7 @@
 
      node-obj)))
 
-(def apted #(APTED. ASTUnitCostModel))
+(def apted (APTED. ASTUnitCostModel))
 
 (defn postorder [node]
   (concat (->> node .getChildren (mapcat postorder)) [node]))
@@ -73,10 +73,17 @@
     ))
 
 
-(def ast-a (->> "gcc_cp_pt.c_d430756d2dbcc396347bd60d205ed987716b5ae8" parse-resource))
-(def ast-b (->> "gcc_cp_pt.c_92884c107e041201b33c5d4196fe756c716e8a0c" parse-resource))
-(def ast-a (->> "diff_before.c" parse-resource))
-(def ast-b (->> "diff_after.c" parse-resource))
+(do
+  (def ast-a (->> "gcc_cp_pt.c_d430756d2dbcc396347bd60d205ed987716b5ae8" parse-resource))
+  (def ast-b (->> "gcc_cp_pt.c_92884c107e041201b33c5d4196fe756c716e8a0c" parse-resource)))
+
+(do
+  (def ast-a (->> "gcc_cp_pt.c_d430756d2dbcc396347bd60d205ed987716b5ae8_6000" parse-resource))
+  (def ast-b (->> "gcc_cp_pt.c_92884c107e041201b33c5d4196fe756c716e8a0c_6000" parse-resource)))
+
+(do
+  (def ast-a (->> "diff_before.c" parse-resource))
+  (def ast-b (->> "diff_after.c" parse-resource)))
 
 (s/defn diff-nodify :- Node [node :- IASTNode]
   (ASTDiffNode node (map diff-nodify (children node))))
@@ -92,9 +99,13 @@
     ))
 
 (->> (tree-diff ast-a ast-b)
-     (map-values #(map write-ast %))
+     (map-values (fn [node] (map #(vector [(typename %1) (write-ast %1)]) node)))
      pprint
      )
+
+ (.maxMemory (Runtime/getRuntime))
+
+(.computeEditDistance apted (diff-nodify ast-a) (diff-nodify ast-b))
 
 (.computeEditDistance apted ast-before ast-after)
 (added-nodes apted ast-before ast-after)
