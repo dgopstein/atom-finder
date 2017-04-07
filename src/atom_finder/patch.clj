@@ -44,12 +44,35 @@
          (map vector (range-from old-offset))
               )))
 
+(defn hunk-line-range-old
+  "The first and last line of every hunk"
+  [hunk]
+  (let [old-offset (.getOldOffset hunk)
+        new-offset (.getNewOffset hunk)
+        n-lines (->> hunk .getLines count)]
+    [old-offset (+ old-offset n-lines)]))
+
 (defn deleted-lines-hunk
   "Return [line-num UnifiedHunk$Line] for every deleted line in a hunk"
   [hunk]
   (->> (hunk-lines-old-lines hunk)
        (filter (fn [[line-num line]]
-                 (= UnifiedHunk$LineType/DELETED (.getType line))))))
+                 (deleted? line)))))
+
+(defn common? [line] (= UnifiedHunk$LineType/COMMON (.getType line)))
+(defn deleted? [line] (= UnifiedHunk$LineType/DELETED (.getType line)))
+(defn added? [line] (= UnifiedHunk$LineType/COMMON (.getType line)))
+
+(->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
+     resource-path
+     slurp
+     ;print)
+     parse-diff
+     .getPatches
+     (map (memfn getHunks))
+     (map #(map hunk-line-range-old %))
+     pprint
+     )
 
 (defn removed-lines
   "Which lines are removed in this patch"
