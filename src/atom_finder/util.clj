@@ -111,6 +111,8 @@
        (nth a k)))
    init ks))
 
+(def flatten1 (partial apply concat))
+
 (defn avg [seq1] (/ (reduce + seq1) (count seq1)))
 
 ;;;;;;;;

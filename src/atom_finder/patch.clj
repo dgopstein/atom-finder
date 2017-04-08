@@ -61,7 +61,7 @@
 
 (defn common? [line] (= UnifiedHunk$LineType/COMMON (.getType line)))
 (defn deleted? [line] (= UnifiedHunk$LineType/DELETED (.getType line)))
-(defn added? [line] (= UnifiedHunk$LineType/COMMON (.getType line)))
+(defn added? [line] (= UnifiedHunk$LineType/ADDED (.getType line)))
 
 (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
      resource-path
