@@ -16,6 +16,11 @@
   [patch]
   (.parse parser (StringReader. patch)))
 
+(defn deleted? [line] (= UnifiedHunk$LineType/DELETED (.getType line)))
+(defn added? [line] (= UnifiedHunk$LineType/ADDED (.getType line)))
+(defn common? [line] (= UnifiedHunk$LineType/COMMON (.getType line)))
+(def uncommon? (complement common?))
+
 ;(def patch (->>
 ;            "97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
 ;            ;"98103e4a9e8ae9e52751c9e96ec46e6095181b69.patch"
@@ -57,21 +62,6 @@
   (->> (hunk-lines-old-lines hunk)
        (filter (fn [[line-num line]]
                  (deleted? line)))))
-
-(defn common? [line] (= UnifiedHunk$LineType/COMMON (.getType line)))
-(defn deleted? [line] (= UnifiedHunk$LineType/DELETED (.getType line)))
-(defn added? [line] (= UnifiedHunk$LineType/ADDED (.getType line)))
-
-(->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
-     resource-path
-     slurp
-     ;print)
-     parse-diff
-     .getPatches
-     (map (memfn getHunks))
-     (map #(map hunk-line-range-old %))
-     pprint
-     )
 
 (defn removed-lines
   "Which lines are removed in this patch"
@@ -146,35 +136,35 @@
 ;    )
 ;  )
 
-;(defn changed-lines-parallel
-;  [patch-source]
-;  (flatten1
-;   (for [patch (.getPatches patch-source)
-;         hunk  (.getHunks patch)]
-;
-;     {(.getOldFile patch)
-;      (->>
-;       (reduce
-;        (fn [h line]
-;          {:old-idx (+ (:old-idx h) (if (added? line) 0 1))
-;           :new-idx (+ (:new-idx h) (if (deleted? line) 0 1))
-;           :old-lines (concat (:old-lines h) [[(:old-idx h) (if (added? line)   nil line)]])
-;           :new-lines (concat (:new-lines h) [[(:new-idx h) (if (deleted? line) nil line)]])
-;           })
-;
-;        {:old-idx (.getOldOffset hunk) :old-lines []
-;         :new-idx (.getNewOffset hunk) :new-lines []}
-;
-;        (.getLines hunk))
-;
-;       (#(dissoc % :old-idx :new-idx))
-;                                        ;(map-values (partial map first))
-;       (map-values #(partition-by (fn [[num line]] (and line (common? line))) %))
-;
-;       )}
-;     )
-;   )
-;  )
+(defn changed-lines-parallel
+  [patch-source]
+  (flatten1
+   (for [patch (.getPatches patch-source)
+         hunk  (.getHunks patch)]
+
+     {(.getOldFile patch)
+      (->>
+       (reduce
+        (fn [h line]
+          {:old-idx (+ (:old-idx h) (if (added? line) 0 1))
+           :new-idx (+ (:new-idx h) (if (deleted? line) 0 1))
+           :old-lines (concat (:old-lines h) [[(:old-idx h) (if (added? line)   nil line)]])
+           :new-lines (concat (:new-lines h) [[(:new-idx h) (if (deleted? line) nil line)]])
+           })
+
+        {:old-idx (.getOldOffset hunk) :old-lines []
+         :new-idx (.getNewOffset hunk) :new-lines []}
+
+        (.getLines hunk))
+
+       (#(dissoc % :old-idx :new-idx))
+                                        ;(map-values (partial map first))
+       (map-values #(partition-by (fn [[num line]] (and line (common? line))) %))
+
+       )}
+     )
+   )
+  )
 
 ;(defn changed-lines-parallel
 ;  [patch-source]
@@ -221,57 +211,122 @@
      (map-values (partial map (partial map first)))
      pprint
      )
+
+;(def hunk (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch"
+;               resource-path slurp parse-diff .getPatches (drop 1) first .getHunks first))
+
+;(defn parallel-hunk-lines [hunk]
+;  (->
+;    (reduce
+;     (fn [h line]
+;       {:old-idx (+ (:old-idx h) (if (added? line) 0 1))
+;        :new-idx (+ (:new-idx h) (if (deleted? line) 0 1))
+;        :old-lines (if (common? line)
+;                     (:old-lines h)
+;                     (conj (:old-lines h) [(:old-idx h) line]))
+;        :new-lines (if (common? line)
+;                     (:new-lines h)
+;                     (conj (:new-lines h) [(:new-idx h) line]))
+;        })
+;     {:old-idx (.getOldOffset hunk)
+;      :new-idx (.getNewOffset hunk)
+;      :old-lines []
+;      :new-lines []}
+;     (.getLines hunk))
+;
+;    (dissoc :old-idx :new-idx)
+;    ))
+
+;(defn parallel-hunk-lines [hunk]
+;  (->
+;   (reduce
+;    (fn [h line]
+;      {:old-idx (+ (:old-idx h) (if (added? line) 0 1))
+;       :new-idx (+ (:new-idx h) (if (deleted? line) 0 1))
+;       :lines (conj (:lines h)
+;                    {:old-idx (if (added? line) nil (:old-idx h))
+;                     :new-idx (if (deleted? line) nil (:new-idx h))
+;                     :line line})})
+;    {:old-idx (dec (.getOldOffset hunk))
+;     :new-idx (dec (.getNewOffset hunk))
+;     :lines []}
+;    (.getLines hunk))
+;
+;   :lines
+;   ))
+
 (defn parallel-hunk-lines [hunk]
-  (reduce
-   (fn [h line]
-     {:old-idx (+ (:old-idx h) (if (added? line) 0 1))
-      :new-idx (+ (:new-idx h) (if (deleted? line) 0 1))
-      :old-lines (if (common? line)
-                   (:old-lines h)
-                   (conj (:old-lines h) [(:old-idx h) line]))
-      :new-lines (if (common? line)
-                   (:new-lines h)
-                   (conj (:new-lines h) [(:new-idx h) line]))
-      })
-   {:old-idx (.getOldOffset hunk)
-    :new-idx (.getNewOffset hunk)
-    :old-lines []
-    :new-lines []}
-   (.getLines hunk)))
+  (->>
+   hunk
+   .getLines
+   (reduce
+    (fn [hs line]
+      (let [h (last hs)]
+        (conj hs
+              {:old-idx (+ (:old-idx h) (if (added? line) 0 1))
+               :new-idx (+ (:new-idx h) (if (deleted? line) 0 1))
+               :line line
+               :type (.getType line)})))
+    [{:old-idx (.getOldOffset hunk)
+      :new-idx (.getNewOffset hunk)}])
+   (drop 1)
+   )
+  )
+
+(->> hunk parallel-hunk-lines
+     pprint)
+
+(defn min-of [lst]
+  (if (empty? lst) nil
+    (apply min lst)))
+
+(defn max-of [lst]
+  (if (empty? lst) nil
+    (apply max lst)))
+
+(defn partitioned-hunk [hunk]
+  (for [group
+        (->> hunk parallel-hunk-lines
+             (partition-by (comp common? :line))
+             (filter (comp uncommon? :line first)))]
+
+    (let [deleted (->> group (filter (comp deleted? :line)))
+          added   (->> group (filter (comp added?   :line)))
+          deleted-idx (map :old-idx deleted)
+          added-idx   (map :new-idx added)]
+      {
+       :old-min      (or (min-of deleted-idx)      (min-of (map :old-idx added)))
+       :old-max (inc (or (max-of deleted-idx) (dec (min-of (map :old-idx added)))))
+       :new-min      (or (min-of added-idx)        (min-of (map :new-idx deleted)))
+       :new-max (inc (or (max-of added-idx)   (dec (min-of (map :new-idx deleted)))))
+       }
+      )))
+
+(->> hunk partitioned-hunk)
+
+(defn patch-lines [diff]
+  (for [patch (.getPatches diff)
+        hunk  (.getHunks patch)]
+    (merge {:file (.getOldFile patch)}
+      (->> hunk
+           parallel-hunk-lines
+           ((flip select-keys) [:old-lines :new-lines])
+           (map-values (partial map first)) ; show only line number, remove line
+           ))
+    ))
 
 (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch"
-     resource-path
-     slurp
-     parse-diff
-     .getPatches
-     ;(mapcat (fn [patch] (map #(vector (str (.getOldFile patch) (hash %1)) %1)
-     ;                         (.getHunks patch))))
-     (map (fn [patch] (map #(vector (.getOldFile patch) (.getOldOffset %1))
-                              (.getHunks patch))))
-     pprint)
-     ;(into {})
-     (map-values #(->> %
-                parallel-hunk-lines
-                ((flip select-keys) [:old-lines :new-lines])
-               (map-values (partial map first)) ; show only line number, remove line
-                ))
-     ;pprint
+     resource-path slurp parse-diff
+     patch-lines
      )
 
+; test patch parser
 (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
      resource-path
      slurp
-     println)
-
-
-; test patch parser
-(->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch"
-     resource-path
-     slurp
      parse-diff
      .getPatches
-     ;(mapcat (fn [patch] (map #(vector (str (.getOldFile patch) (hash %1)) %1)
-     ;                         (.getHunks patch))))
+     (take 2) (drop 1)
      (map (fn [patch] (map #(vector (.getOldFile patch) (.getOldOffset %1))
                               (.getHunks patch))))
      pprint)
