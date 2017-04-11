@@ -12,7 +12,7 @@
     (is (=
          '({:file "gcc/ChangeLog"
             :ranges
-            ({:old [0 0] :new [1 12]}
+            ({:old [1 1] :new [2 13]}
              {:old [15 16] :new [27 28]}
              {:old [26 29] :new [38 40]})}
            {:file "/gcc/config/sparc/sparc.c"
@@ -22,7 +22,7 @@
              {:old [2753 2753] :new [2756 2763]})})
 
          (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
-              parse-diff hunk-line-ranges)
+              parse-diff patch-correspondences)
          ))
     ))
 

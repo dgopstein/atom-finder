@@ -115,6 +115,16 @@
 
 (defn avg [seq1] (/ (reduce + seq1) (count seq1)))
 
+(defn min-of [lst]
+  "Min with a list argument"
+  (if (empty? lst) nil
+    (apply min lst)))
+
+(defn max-of [lst]
+  "Max with a list argument"
+  (if (empty? lst) nil
+    (apply max lst)))
+
 ;;;;;;;;
 ;;   Specific to this project
 ;;;;;;;
