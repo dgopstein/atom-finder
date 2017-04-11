@@ -107,8 +107,8 @@
 
 ;===============================================
 
-;(def hunk (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch"
-;               resource-path slurp parse-diff .getPatches (drop 1) first .getHunks first))
+;(def hunk (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch" resource-path slurp parse-diff .getPatches (drop 1) first .getHunks first))
+;(def hunk (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch" resource-path slurp parse-diff .getPatches first .getHunks (drop 1) first))
 
 (defn parallel-hunk-lines [hunk]
   "Label each line with the line number in their original files"
@@ -123,13 +123,11 @@
                :new-idx (+ (:new-idx h) (if (deleted? line) 0 1))
                :line line
                :type (.getType line)})))
-    [{:old-idx (.getOldOffset hunk)
-      :new-idx (.getNewOffset hunk)}])
-   (drop 1)
+    [{:old-idx (dec (.getOldOffset hunk))
+      :new-idx (dec (.getNewOffset hunk))}])
+   (drop 1) ; remove the initializer
    )
   )
-
-;(->> hunk parallel-hunk-lines pprint)
 
 (defn change-bounds [hunk]
   (str "For every added/removed chunk of lines in this hunk, "
@@ -149,10 +147,10 @@
           deleted-idx (map :old-idx deleted)
           added-idx   (map :new-idx added)]
       {
-       :old-min      (or (min-of deleted-idx)      (min-of (map :old-idx added)))
-       :old-max (inc (or (max-of deleted-idx) (dec (min-of (map :old-idx added)))))
-       :new-min      (or (min-of added-idx)        (min-of (map :new-idx deleted)))
-       :new-max (inc (or (max-of added-idx)   (dec (min-of (map :new-idx deleted)))))
+       :old-min      (or (min-of deleted-idx)            (inc (min-of (map :old-idx added))))
+       :new-min      (or (min-of added-idx)              (inc (min-of (map :new-idx deleted))))
+       :old-max      (or (some-> deleted-idx max-of inc) (inc (min-of (map :old-idx added))))
+       :new-max      (or (some-> added-idx max-of   inc) (inc (min-of (map :new-idx deleted))))
        }
       )))
 
@@ -162,9 +160,14 @@
   (for [patch (.getPatches diff)
         hunk  (.getHunks patch)]
     {:file (.getOldFile patch)
-     :ranges (->> hunk change-bounds)})
+     :ranges (->> hunk change-bounds
+                  (map (fn [x] {:old [(:old-min x) (:old-max x)] :new [(:new-min x) (:new-max x)]})))})
   )
 
-(->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch"
+;(->> hunk parallel-hunk-lines (map #(update-in (dissoc % :line) [:type] str)) pprint)
+
+(->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
      resource-path slurp parse-diff
-     patch-lines)
+     patch-correspondences
+     pprint)
+

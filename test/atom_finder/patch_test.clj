@@ -12,8 +12,8 @@
     (is (=
          '({:file "gcc/ChangeLog"
             :ranges
-            ({:old [1 1] :new [2 13]}
-             {:old [15 16] :new [27 28]}
+            ({:old [1 1] :new [1 13]}
+             {:old [16 17] :new [28 29]}
              {:old [26 29] :new [38 40]})}
            {:file "/gcc/config/sparc/sparc.c"
             :ranges
