@@ -23,5 +23,5 @@
 
          (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
               resource-path slurp parse-diff
-              patch-correspondences)
+              patch-correspondences correspondences-to-ranges)
          ))
