@@ -161,18 +161,20 @@
     (for [patch (.getPatches diff)
           hunk  (.getHunks patch)]
       {:file (.getOldFile patch)
-       :ranges (->> hunk change-bounds
-                    (map (fn [x] {:old [(:old-min x) (:old-max x)]
-                                  :new [(:new-min x) (:new-max x)]})))})
+       :ranges (->> hunk change-bounds)})
+
     (group-dissoc :file)
     (map-values #(apply merge-with concat %))
     (map (fn [[k v]] (merge {:file k} v)))
   ))
 
-;(->> hunk parallel-hunk-lines (map #(update-in (dissoc % :line) [:type] str)) pprint)
+(def correspondences-to-ranges
+  (partial map #(update-in % [:ranges]
+    (partial map (fn [x] {:old [(:old-min x) (:old-max x)]
+                          :new [(:new-min x) (:new-max x)]})))))
 
-;(->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch"
-;     resource-path slurp parse-diff
-;     patch-correspondences
-;     pprint)
+;(def corrs (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch"
+;     resource-path slurp parse-diff patch-correspondences))
+
+
 

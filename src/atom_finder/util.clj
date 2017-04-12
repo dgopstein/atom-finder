@@ -128,7 +128,7 @@
 (defn group-dissoc
   "Group a list of maps by a key, then dissoc that key"
   [key coll]
-  (->> coll (group-by key))
+  (->> coll (group-by key) (map-values (partial map #(dissoc % key)))))
 
 ;;;;;;;;
 ;;   Specific to this project

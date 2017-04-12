@@ -64,3 +64,11 @@
        (is (= {:atom-count-before 25 :atom-count-after 24} (->> atom-lookup :conditional (ba-counts srcs))))
      )))
  )
+
+(let [repo gcc-repo
+      rev-commit (find-rev-commit repo "97574c57cf26ace9b8609575bbab66465924fef7")
+      file-name "gcc/config/sparc/sparc.c"
+      [src-bf src-af] (before-after-data repo rev-commit file-name)]
+
+    (->> src-bf str/split-lines)
+  )
