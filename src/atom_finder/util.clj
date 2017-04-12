@@ -125,6 +125,11 @@
   (if (empty? lst) nil
     (apply max lst)))
 
+(defn group-dissoc
+  "Group a list of maps by a key, then dissoc that key"
+  [key coll]
+  (->> coll (group-by key))
+
 ;;;;;;;;
 ;;   Specific to this project
 ;;;;;;;
