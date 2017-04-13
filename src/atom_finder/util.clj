@@ -394,6 +394,10 @@
        first
        last))
 
+(def find-first (comp first (partial filter)))
+
+(def map-kv (comp (partial into {}) (partial map)))
+
 ; core/org.eclipse.cdt.core/parser/org/eclipse/cdt/internal/core/dom/rewrite/changegenerator/ChangeGenerator.java:getNextSiblingNode(IASTNode node)
 (s/defn next-sibling :- (s/maybe IASTNode)
   [node :- IASTNode]
@@ -427,8 +431,9 @@
 (defmethod loc ASTFileLocation [l]
   (let [offset (.getNodeOffset l)
         length (.getNodeLength l)
-        line   (.getStartingLineNumber l)]
-    {:line line :offset offset :length length}))
+        start-line (.getStartingLineNumber l)
+        end-line  (.getEndingLineNumber l)]
+    {:line start-line :offset offset :length length :start-line start-line :end-line end-line}))
 
 (defmethod loc Object
   [node]

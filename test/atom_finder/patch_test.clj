@@ -25,3 +25,4 @@
               resource-path slurp parse-diff
               patch-correspondences correspondences-to-ranges)
          ))
+    ))

@@ -93,9 +93,11 @@
   "Return the ast of changed files before/after a commit"
   [repo rev-commit :- RevCommit file-name]
   (let [parent-commit (parent-rev-commit repo rev-commit)
+        patch-str     (gitq/changed-files-with-patch repo rev-commit)
         source-before (commit-file-source repo parent-commit file-name)
-        source-after (commit-file-source repo rev-commit file-name)]
+        source-after  (commit-file-source repo rev-commit file-name)]
     {:file file-name
+     :patch-str  patch-str
      :ast-before (parse-source source-before)
      :ast-after  (parse-source source-after)
      :source-before source-before

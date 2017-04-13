@@ -8,6 +8,7 @@
             [atom-finder.results-util :refer :all]
             [atom-finder.source-versions :refer :all]
             [atom-finder.classifier :refer :all]
+            [atom-finder.classifier-util :refer :all]
             [clj-jgit.porcelain  :as gitp]
             [clj-jgit.querying :as gitq]
             [clj-jgit.internal :as giti]
@@ -65,10 +66,17 @@
      )))
  )
 
-(let [repo gcc-repo
+'(let [repo gcc-repo
       rev-commit (find-rev-commit repo "97574c57cf26ace9b8609575bbab66465924fef7")
       file-name "gcc/config/sparc/sparc.c"
-      [src-bf src-af] (before-after-data repo rev-commit file-name)]
+      srcs (before-after-data repo rev-commit file-name)
+      files-ranges (->> srcs :patch-str parse-diff patch-correspondences)]
 
-    (->> src-bf str/split-lines)
-  )
+    ;(->> srcs :source-before clojure.string/split-lines (take 10))
+  (->>
+   (for [file-ranges files-ranges
+         range (:ranges file-ranges)]
+     (line-range-parent (:ast-after srcs) (:new-min range) (:new-max range))
+     )
+   first
+   ))
