@@ -183,8 +183,11 @@
   (let [node-loc (loc node)]
     (and
      node-loc
-     (<= (:start-line node-loc) start-line)
-     (>= (dec (:end-line node-loc) end-line)))))
+     (or (and (<= start-line (:start-line node-loc))
+              (<  (:start-line node-loc) end-line)
+         (<= start-line (:end-line node-loc) end-line)))))
+     ;(<= (:start-line node-loc) start-line)
+     ;(>= (dec (:end-line node-loc)) end-line))))
 
 ;(s/defn line-range-parent? [node :- IASTNode start-line :- s/Int end-line :- s/Int] (and
 ;  ; (contains-offset? node offset)

@@ -135,7 +135,9 @@
                  [true  {:lines [1 2] :node [0 1]}]
                  [true  {:lines [1 2] :node [0]}]
                  [false {:lines [1 2] :node [0 2 0]}]
-                 [true  {:lines [4 5] :node [0 2 1 1 0]}]]]
+                 [true  {:lines [4 5] :node [0 2 1 1 0]}]
+                 [true  {:lines [2 6] :node [0 2 1 1 0]}]
+                 ]]
 
       (doseq [[expected {[start-line end-line] :lines node-path :node}] cases]
         (is (= expected (intersects-line-range? (get-in-tree node-path root) start-line end-line))
