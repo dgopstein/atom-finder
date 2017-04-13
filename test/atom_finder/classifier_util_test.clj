@@ -121,25 +121,41 @@
     ))
 
 (deftest test-intersects-line-range?
-  (testing "Get numeric value from a string"
-    (let [src
-          (clojure.string/join "\n" [
-                                     "int main() {"
-                                     "  int a = 0;"
-                                     "  if (x > 1) {"
-                                     "    a += 1;"
-                                     "  }"
-                                     "}"])
-          root (parse-source src)
-          cases [[false {:lines [1 1] :node [0 1]}] ; ranges are half-open so [1 1) is empty
-                 [true  {:lines [1 2] :node [0 1]}]
-                 [true  {:lines [1 2] :node [0]}]
-                 [false {:lines [1 2] :node [0 2 0]}]
-                 [true  {:lines [4 5] :node [0 2 1 1 0]}]
-                 [true  {:lines [2 6] :node [0 2 1 1 0]}]
-                 ]]
+  (let [src
+        (clojure.string/join "\n" [
+                                   "int main() {"
+                                   "  int a = 0;"
+                                   "  if (x > 1) {"
+                                   "    a += 1;"
+                                   "  }"
+                                   "}"])
+        root (parse-source src)]
+
+    (testing "intersects-line-range?"
+      (let [cases [[false {:lines [1 1] :node [0 1]}] ; ranges are half-open so [1 1) is empty
+                   [true  {:lines [1 2] :node [0 1]}]
+                   [true  {:lines [1 2] :node [0]}]
+                   [false {:lines [1 2] :node [0 2 0]}]
+                   [true  {:lines [4 5] :node [0 2 1 1 0]}]
+                   [true  {:lines [2 6] :node [0 2 1 1 0]}]
+                   ]]
+
+        (doseq [[expected {[start-line end-line] :lines node-path :node}] cases]
+          (is (= expected (intersects-line-range? (get-in-tree node-path root) start-line end-line))
+              [expected {:line [start-line end-line] :node node-path}]))))
+
+    (testing "contained-by-line-range?"
+      (let [cases [[false {:lines [1 1] :node [0 1]}] ; ranges are half-open so [1 1) is empty
+                   [true  {:lines [1 2] :node [0 1]}]
+                   [false {:lines [1 2] :node [0]}]
+                   [true  {:lines [1 8] :node [0]}]
+                   [false {:lines [1 2] :node [0 2 0]}]
+                   [true  {:lines [4 5] :node [0 2 1 1 0]}]
+                   [true  {:lines [2 6] :node [0 2 1 1 0]}]
+                   ]]
 
       (doseq [[expected {[start-line end-line] :lines node-path :node}] cases]
-        (is (= expected (intersects-line-range? (get-in-tree node-path root) start-line end-line))
-            [expected {:line [start-line end-line] :node node-path}]))
-      )))
+        (is (= expected (contained-by-line-range? (get-in-tree node-path root) start-line end-line))
+            [expected {:line [start-line end-line] :node node-path}]))))
+;(->> (get-in-tree [0] root) ;write-ast loc println)
+    ))
