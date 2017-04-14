@@ -134,7 +134,7 @@
     (testing "line range stuff"
       (let [cases
             [
-             [{:parent? false :intersects? false :contained-by? false :contains? false }
+             [{:parent? false :intersects? false :contained-by? false :contains? false}
               {:lines [1 1] :node [0 1]}] ; ranges are half-open so [1 1) is empty
              [{:parent? false :intersects? true  :contained-by? true  :contains? false}
               {:lines [1 2] :node [0 1]}]
@@ -144,9 +144,9 @@
               {:lines [1 8] :node [0]}]
              [{:parent? false :intersects? false :contained-by? false :contains? false}
               {:lines [1 2] :node [0 2 0]}]
-             [{:parent? false :intersects? true :contained-by? true :contains? false}
+             [{:parent? false :intersects? true  :contained-by? true  :contains? false}
               {:lines [2 3] :node [0 2 0]}]
-             [{:parent? false :intersects? true :contained-by? true :contains? false}
+             [{:parent? false :intersects? true  :contained-by? true  :contains? false}
               {:lines [2 3] :node [0 2 0]}]
              [{:parent? false :intersects? true  :contained-by? true  :contains? false}
               {:lines [4 5] :node [0 2 1 1 0]}]
@@ -154,19 +154,20 @@
               {:lines [2 6] :node [0 2 1 1 0]}]
              [{:parent? true  :intersects? true  :contained-by? false :contains? true }
               {:lines [2 6] :node [0 2]}]
-             [{:parent? false :intersects? true  :contained-by? false :contains? true}
+             [{:parent? false :intersects? true  :contained-by? false :contains? true }
               {:lines [2 5] :node [0]}]
              ]]
 
-(doseq [[{parent? :parent? intersects? :intersects? contained-by? :contained-by? contains? :contains?}
-        {[start-line end-line] :lines node-path :node}] cases]
- (is (= intersects? (intersects-line-range? (get-in-tree node-path root) start-line end-line))
-     ["intersects-line-range?" intersects? {:line [start-line end-line] :node node-path}])
- (is (= contained-by? (contained-by-line-range? (get-in-tree node-path root) start-line end-line))
-     ["contained-by-line-range?" contained-by? {:line [start-line end-line] :node node-path}])
- (is (= parent? (line-range-parent? (get-in-tree node-path root) start-line end-line))
-     ["line-range-parent?" parent? {:line [start-line end-line] :node node-path}])
- (is (= contains? (contains-line-range? (get-in-tree node-path root) start-line end-line))
-     ["contains-line-range?" contains? {:line [start-line end-line] :node node-path}])
-    )))
-    ))
+        (doseq [[{parent? :parent? intersects? :intersects? contained-by?
+                  :contained-by? contains? :contains?}
+                 {[start-line end-line] :lines node-path :node}] cases]
+          (is (= intersects? (intersects-line-range? (get-in-tree node-path root) start-line end-line))
+              ["intersects-line-range?" intersects? {:line [start-line end-line] :node node-path}])
+          (is (= contained-by? (contained-by-line-range? (get-in-tree node-path root) start-line end-line))
+              ["contained-by-line-range?" contained-by? {:line [start-line end-line] :node node-path}])
+          (is (= parent? (line-range-parent? (get-in-tree node-path root) start-line end-line))
+              ["line-range-parent?" parent? {:line [start-line end-line] :node node-path}])
+          (is (= contains? (contains-line-range? (get-in-tree node-path root) start-line end-line))
+              ["contains-line-range?" contains? {:line [start-line end-line] :node node-path}])
+          ))))
+    )
