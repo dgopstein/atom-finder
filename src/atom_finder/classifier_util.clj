@@ -183,27 +183,33 @@
   (let [node-loc (loc node)]
     (and
      node-loc
-     (or (and (<= start-line (:start-line node-loc))
-              (<  (:start-line node-loc) end-line))
-         (and (<= start-line (:end-line node-loc))
-              (< (:end-line node-loc) end-line))))))
+     (<= start-line (:end-line node-loc))
+     (<  (:start-line node-loc) end-line))))
 
 (s/defn contained-by-line-range?
-  "Does this node contain the given line range"
+  "Does this line range contain the given node"
   [node :- IASTNode start-line :- s/Int end-line :- s/Int]
   (let [node-loc (loc node)]
     (and
      node-loc
      (<= start-line (:start-line node-loc))
      (<  (:end-line node-loc) end-line))))
-     ;(<= (:start-line node-loc) start-line)
-     ;(>= (dec (:end-line node-loc)) end-line))))
 
-;(s/defn line-range-parent? [node :- IASTNode start-line :- s/Int end-line :- s/Int] (and
-;  ; (contains-offset? node offset)
-;  ; (not (exists? #(contains-offset? % offset) (children node)))))
-;  ))
-;
+(s/defn contains-line-range?
+  "Does this node contain the given line range"
+  [node :- IASTNode start-line :- s/Int end-line :- s/Int]
+  (let [node-loc (loc node)]
+    (and
+     node-loc
+     (>  start-line (:start-line node-loc))
+     (>= (:end-line node-loc) end-line))))
+
+(s/defn line-range-parent? [node :- IASTNode start-line :- s/Int end-line :- s/Int]
+  (and
+    (intersects-line-range? node start-line end-line)
+    (not (contained-by-line-range? node start-line end-line))
+    (every? #(contained-by-line-range? % start-line end-line) (children node))))
+
 (s/defn line-range-parent [node :- IASTNode start-line :- s/Int end-line :- s/Int]
   ;(pprn [start-line end-line])
   (if (= start-line end-line)
