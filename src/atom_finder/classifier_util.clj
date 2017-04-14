@@ -210,13 +210,12 @@
     (not (contained-by-line-range? node start-line end-line))
     (every? #(contained-by-line-range? % start-line end-line) (children node))))
 
+; TODO this is untested, also it should probably use binary search for efficiency
 (s/defn line-range-parent [node :- IASTNode start-line :- s/Int end-line :- s/Int]
-  ;(pprn [start-line end-line])
   (if (= start-line end-line)
     nil
-    (let [kids      (children root)
-          container (find-first #(contains-offset? % offset) kids)]
+    (let [kids      (children node)
+          container (find-first #(line-range-parent? % start-line end-line) kids)]
       (if (nil? container)
-        root
-        (recur container offset))))
-    ))
+        node
+        (recur container start-line end-line)))))
