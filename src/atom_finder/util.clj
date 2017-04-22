@@ -84,6 +84,8 @@
 (defn map-values [f m]
   (reduce merge (map (fn [[k v]] {k (f v)}) m)))
 
+(def transpose (partial apply map vector))
+
 (defn slurp-lines [file]
     (str/split-lines (slurp file)))
 
