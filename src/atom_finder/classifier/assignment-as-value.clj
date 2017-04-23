@@ -7,8 +7,8 @@
   "Is this node an assignment expression"
   [node]
   (and (instance? IASTBinaryExpression node)
-       (contains? #{IASTBinaryExpression/op_assign IASTBinaryExpression/op_binaryAndAssign IASTBinaryExpression/op_binaryXorAssign 
-                    IASTBinaryExpression/op_divideAssign IASTBinaryExpression/op_minusAssign
+       (contains? #{IASTBinaryExpression/op_assign IASTBinaryExpression/op_binaryAndAssign IASTBinaryExpression/op_binaryOrAssign
+                    IASTBinaryExpression/op_binaryXorAssign IASTBinaryExpression/op_divideAssign IASTBinaryExpression/op_minusAssign
                     IASTBinaryExpression/op_moduloAssign IASTBinaryExpression/op_multiplyAssign IASTBinaryExpression/op_plusAssign 
                     IASTBinaryExpression/op_shiftLeftAssign IASTBinaryExpression/op_shiftRightAssign}
              (.getOperator node))))
