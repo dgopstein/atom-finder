@@ -23,7 +23,7 @@
     (let [cases [
                  [false "b = 1 + a++" "b = 1 + a++"]
                  [false "b = 1 + a++" "b = 2 + a++"]
-                 [false "b = 1 + a++" "b = 1 * a++"]
+                 [true "b = 1 + a++" "b = 1 * a++"]
                  [true  "b = 1 + a++" "b = 1 + (a++)"]
                  ]]
 
@@ -58,7 +58,8 @@
                  [true  "(1)" "(2)"]
                  [false  "(1)" "-1"]
                  [false  "+1" "-1"]
-                 [true  "if (1) 2" "if (2) 3"]
+                 [true  "if (1) 2;" "if (2) 3;"]
+                 [false  "2" "3"]
                  ]]
 
       (doseq [[expected a b] cases]

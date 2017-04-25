@@ -55,6 +55,11 @@
 (defn tap [f x] (f x) x)
 (defn pap [x] (tap prn x)) ; print the value of variable and return it
 
+(defmacro =by
+  "Test if arguments are equal after applying f to all of them"
+  [f & args]
+  `(= ~@(map #(list f %) args)))
+
 ; print the name and value of an expression
 (defmacro pprn [x]
   `(let [y# ~x]
