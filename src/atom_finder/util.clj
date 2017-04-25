@@ -226,6 +226,9 @@
 
 (def ast-writer (ASTWriter.))
 (defn write-ast [node] (.write ast-writer node))
+(defn safe-write-ast [node]
+  (try (write-ast node)
+       (catch Exception e "")))
 
 ;; http://stackoverflow.com/questions/23178750/iteratively-apply-function-to-its-result-without-generating-a-seq
 (defn fn-pow
@@ -283,6 +286,16 @@
   (concat
    (when (pred node) [node])
    (mapcat (partial filter-tree pred) (children node))))
+
+(defn mapcat-tree
+  "Find every AST node that matches pred"
+  [f node]
+  (map f (flatten-tree node)))
+
+(defn flatten-tree
+  "Turn an AST into a sequence instead of a list"
+  [node]
+   (cons node (mapcat flatten-tree (children node))))
 
 (defn filter-type
   "Return every example of type"
@@ -439,7 +452,8 @@
 
 (defmethod loc Object
   [node]
-  (loc (.getFileLocation node)))
+  (let [file-location (.getFileLocation node)]
+    (if (nil? file-location) nil (loc file-location))))
 
 (defn errln "println to stderr" [s]
   (binding [*out* *err*] (println s)))
