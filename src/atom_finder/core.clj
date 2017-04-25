@@ -35,12 +35,3 @@
 
 ;sum-found-atoms => {:macro-operator-precedence 1760}
 ;sum-found-atoms => {:macro-operator-precedence  759} # After removing atomic macros (#define M1 123)
-
-(import '(org.eclipse.cdt.core.dom.ast  IASTExpressionStatement IASTNullStatement IASTIfStatement IASTForStatement IASTWhileStatement IASTDoStatement IASTSwitchStatement IASTCompoundStatement)
-20:35:            valid-else-types [IASTIfStatement IASTCompoundStatement]]
-(->> "gcc_cp_pt.c_d430756d2dbcc396347bd60d205ed987716b5ae8" parse-resource
-     (mapcat-tree
-      (fn [node]
-         (any-pred? #(instance? % node) [IfStatement FunctionDefinition])
-        ))
-     (take 20))

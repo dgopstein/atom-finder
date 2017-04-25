@@ -452,8 +452,7 @@
 
 (defmethod loc Object
   [node]
-  (let [file-location (.getFileLocation node)]
-    (if (nil? file-location) nil (loc file-location))))
+  (some->> node .getFileLocation loc))
 
 (defn errln "println to stderr" [s]
   (binding [*out* *err*] (println s)))
