@@ -215,10 +215,8 @@
 (s/defn line-range-parent
   "Search node for the parent of the line range"
   [start-line :- s/Int end-line :- s/Int node :- IASTNode]
-  (if (>= start-line end-line)
-    nil
-    (let [kids      (children node)
-          container (find-first (partial contains-line-range? start-line end-line) kids)]
-      (if (nil? container)
-        node
-        (recur start-line end-line container)))))
+  (let [kids      (children node)
+        container (find-first (partial contains-line-range? start-line end-line) kids)]
+    (if (nil? container)
+      node
+      (recur start-line end-line container))))

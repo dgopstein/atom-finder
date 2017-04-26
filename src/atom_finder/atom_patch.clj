@@ -224,11 +224,11 @@
   (for [range (:ranges corr)]
     (do
     (pprint range)
-    (-> ba :ast-before
+    (->> ba :ast-before
          (line-range-parent (:old-min range) (:old-max range))
-         pprint)
-    (-> ba :ast-after
+         print-tree)
+    (->> ba :ast-after
          (line-range-parent (:new-min range) (:new-max range))
-         pprint)
+         print-tree)
     ))
 )

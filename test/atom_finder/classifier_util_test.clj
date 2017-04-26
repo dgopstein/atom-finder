@@ -186,16 +186,16 @@
 
     (testing "line range parent"
       (let [cases
-            [["CompoundStatement" [3 4]]
-             ;[nil [4 4]]
+            [[[0 2]     [3 4]]
+             [[0 2 1 1] [4 4]]
+             [[0 2 1 1] [4 5]]
+             [[0 2]     [2 4]]
              ]]
 
         (doseq [[expected [min max]] cases]
-          (is (= expected (some->> (line-range-parent min max root) typename))))))
-          ;(is (= expected (typename (line-range-parent min max root)))))))
-    ;(prn (line-range-parent 3 4 root))
-    ;(->> root (get-in-tree [0 2 1]) (def node))
-    ;(->> root (get-in-tree [0 2 1]) (contains-line-range? 3 4))
+          (is (= (some-> expected (get-in-tree root)) (line-range-parent min max root))))))
+
+    ;(->> root (get-in-tree [0 2 1 1]) write-ast)
     )
   )
 
