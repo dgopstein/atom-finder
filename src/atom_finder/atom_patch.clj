@@ -5,6 +5,7 @@
    [atom-finder.classifier :refer :all]
    [atom-finder.source-versions :refer :all]
    [atom-finder.patch :refer :all]
+   [atom-finder.classifier-util :refer :all]
    [atom-finder.results-util :refer :all]
    [atom-finder.atom-stats :refer :all]
    [clojure.pprint :refer [pprint]]
@@ -38,6 +39,7 @@
 ;(def atom-finder (->> atom-lookup :conditional :finder))
 ;(def parent-hash (commit-parent-hash repo commit-hash))
 ;(def rev-commit (first (gitq/rev-list repo)))
+;(def rev-commit (find-rev-commit repo commit-hash))
 
 (s/defn commit-file-source :- String
   "Return full source for each file changed in a commit"
@@ -206,3 +208,27 @@
 ;     (take 1)
 ;     pprint)
 
+(let [ba (last (take 2 (commit-files-before-after repo rev-commit)))
+      corr
+      (->> ba
+           :patch-str
+           parse-diff
+           patch-correspondences
+           (take 2) last
+           )]
+
+  ba   ; {:file "gcc/c-family/c-pretty-print.c", :patch-str "diff --git a/
+       ; (:file :patch-str :ast-before :ast-after :source-before :source-after)
+  corr ; {:file "gcc/c-family/c-pretty-print.c", :ranges ({:old-min 907, :new-min 907, :old-max 916
+
+  (for [range (:ranges corr)]
+    (do
+    (pprint range)
+    (-> ba :ast-before
+         (line-range-parent (:old-min range) (:old-max range))
+         pprint)
+    (-> ba :ast-after
+         (line-range-parent (:new-min range) (:new-max range))
+         pprint)
+    ))
+)

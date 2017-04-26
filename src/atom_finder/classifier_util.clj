@@ -179,7 +179,7 @@
 
 (s/defn intersects-line-range?
   "Does this node contain the given line range"
-  [node :- IASTNode start-line :- s/Int end-line :- s/Int]
+  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
   (let [node-loc (loc node)]
     (and
      node-loc
@@ -188,7 +188,7 @@
 
 (s/defn contained-by-line-range?
   "Does this line range contain the given node"
-  [node :- IASTNode start-line :- s/Int end-line :- s/Int]
+  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
   (let [node-loc (loc node)]
     (and
      node-loc
@@ -197,25 +197,28 @@
 
 (s/defn contains-line-range?
   "Does this node contain the given line range"
-  [node :- IASTNode start-line :- s/Int end-line :- s/Int]
+  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
   (let [node-loc (loc node)]
     (and
      node-loc
      (>  start-line (:start-line node-loc))
      (>= (:end-line node-loc) end-line))))
 
-(s/defn line-range-parent? [node :- IASTNode start-line :- s/Int end-line :- s/Int]
+(s/defn line-range-parent?
+  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
   (and
-    (intersects-line-range? node start-line end-line)
-    (not (contained-by-line-range? node start-line end-line))
-    (every? #(contained-by-line-range? % start-line end-line) (children node))))
+    (intersects-line-range? start-line end-line node)
+    (not (contained-by-line-range? start-line end-line node))
+    (every? (partial contained-by-line-range? start-line end-line) (children node))))
 
 ; TODO this is untested, also it should probably use binary search for efficiency
-(s/defn line-range-parent [node :- IASTNode start-line :- s/Int end-line :- s/Int]
-  (if (= start-line end-line)
+(s/defn line-range-parent
+  "Search node for the parent of the line range"
+  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
+  (if (>= start-line end-line)
     nil
     (let [kids      (children node)
-          container (find-first #(line-range-parent? % start-line end-line) kids)]
+          container (find-first (partial contains-line-range? start-line end-line) kids)]
       (if (nil? container)
         node
-        (recur container start-line end-line)))))
+        (recur start-line end-line container)))))

@@ -156,18 +156,46 @@
               {:lines [2 6] :node [0 2]}]
              [{:parent? false :intersects? true  :contained-by? false :contains? true }
               {:lines [2 5] :node [0]}]
+             ;; A node can only contain a line range if it exists on lines outside that range.
+             ;; if a node exists on each, and is the first and last node on the first and last
+             ;; lines, that's still not enough for containment. A change could be made on the
+             ;; same line before/after the node: "x++;" -> "if (x < 3) x++;"
+             [{:parent? false :intersects? true  :contained-by? false :contains? false}
+              {:lines [3 4] :node [0 2 1]}]
              ]]
 
         (doseq [[{parent? :parent? intersects? :intersects? contained-by?
                   :contained-by? contains? :contains?}
                  {[start-line end-line] :lines node-path :node}] cases]
-          (is (= intersects? (intersects-line-range? (get-in-tree node-path root) start-line end-line))
+          (is (= intersects? (intersects-line-range? start-line end-line (get-in-tree node-path root)))
               ["intersects-line-range?" intersects? {:line [start-line end-line] :node node-path}])
-          (is (= contained-by? (contained-by-line-range? (get-in-tree node-path root) start-line end-line))
+          (is (= contained-by? (contained-by-line-range? start-line end-line (get-in-tree node-path root)))
               ["contained-by-line-range?" contained-by? {:line [start-line end-line] :node node-path}])
-          (is (= parent? (line-range-parent? (get-in-tree node-path root) start-line end-line))
+          (is (= parent? (line-range-parent? start-line end-line (get-in-tree node-path root)))
               ["line-range-parent?" parent? {:line [start-line end-line] :node node-path}])
-          (is (= contains? (contains-line-range? (get-in-tree node-path root) start-line end-line))
+          (is (= contains? (contains-line-range? start-line end-line (get-in-tree node-path root)))
               ["contains-line-range?" contains? {:line [start-line end-line] :node node-path}])
-          ))))
+          )))
+
+    ;; 1 int main() {
+    ;; 2   int a = 0;
+    ;; 3   if (x > 1) {
+    ;; 4     a += 1;
+    ;; 5   }
+    ;; 6 }
+
+    (testing "line range parent"
+      (let [cases
+            [["CompoundStatement" [3 4]]
+             ;[nil [4 4]]
+             ]]
+
+        (doseq [[expected [min max]] cases]
+          (is (= expected (some->> (line-range-parent min max root) typename))))))
+          ;(is (= expected (typename (line-range-parent min max root)))))))
+    ;(prn (line-range-parent 3 4 root))
+    ;(->> root (get-in-tree [0 2 1]) (def node))
+    ;(->> root (get-in-tree [0 2 1]) (contains-line-range? 3 4))
     )
+  )
+

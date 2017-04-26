@@ -76,7 +76,7 @@
   (->>
    (for [file-ranges files-ranges
          range (:ranges file-ranges)]
-     (line-range-parent (:ast-after srcs) (:new-min range) (:new-max range))
+     (line-range-parent (:new-min range) (:new-max range) (:ast-after srcs))
      )
    first
    ))

@@ -97,6 +97,12 @@
 (defn count-lines [str]
     (count (filter #{\newline} str)))
 
+(defn line-range [min max s]
+  "return the line of a string between [min max)"
+  (->> s str/split-lines
+       (drop (dec min))
+       (take (- max min))))
+
 (defn close?
   "Are two numbers approximately equal"
   [tolerance x y]
