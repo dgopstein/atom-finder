@@ -208,7 +208,7 @@
 ;     (take 1)
 ;     pprint)
 
-(let [ba (last (take 2 (commit-files-before-after repo rev-commit)))
+'(let [ba (last (take 2 (commit-files-before-after repo rev-commit)))
       corr
       (->> ba
            :patch-str
