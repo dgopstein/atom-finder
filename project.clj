@@ -17,6 +17,7 @@
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"
                    "resources/APTED_2017-04-05.jar"
+                   "resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
                    "src/test/resources"
                    "src/conf"]
   :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}}
