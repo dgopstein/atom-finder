@@ -20,6 +20,7 @@
                    "resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
                    "src/test/resources"
                    "src/conf"]
+  :java-source-paths ["src/java"]
   :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}}
   :jvm-opts ["-Xss8m"]
   :main atom-finder.core)
