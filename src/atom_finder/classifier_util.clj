@@ -130,3 +130,12 @@
           (instance? IASTFunctionDefinition node))
     node
     (enclosing-function (parent node))))
+
+(def logical-operators #{IASTBinaryExpression/op_equals
+                        IASTBinaryExpression/op_greaterEqual
+                        IASTBinaryExpression/op_greaterThan
+                        IASTBinaryExpression/op_lessThan
+                        IASTBinaryExpression/op_lessEqual
+                        IASTBinaryExpression/op_logicalAnd
+                        IASTBinaryExpression/op_logicalOr
+                        IASTBinaryExpression/op_notequals})
