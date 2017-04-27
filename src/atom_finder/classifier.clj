@@ -43,7 +43,7 @@
 
 (def atoms
   [
-   (ValidatedAtom :preprocessor-in-statement define-parent?              non-toplevel-defines)
+   (ValidatedAtom :preprocessor-in-statement preprocessor-parent?        all-non-toplevel-preprocessors)
    (ValidatedAtom :logic-as-control-flow     logic-as-control-flow-atom? logic-as-control-flow-atoms)
    (ValidatedAtom :conditional               conditional-atom?           (default-finder conditional-atom?))
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
@@ -53,6 +53,7 @@
    (ValidatedAtom :omitted-curly-braces      omitted-curly-braces-atom?  (default-finder omitted-curly-braces-atom?))
    (ValidatedAtom :assignment-as-value       assignment-as-value-atom?   (default-finder assignment-as-value-atom?))
    (ValidatedAtom :macro-operator-precedence macro-def-precedence-atom?  macro-operator-precedence-atoms)
+   (ValidatedAtom :implicit-predicate        implicit-predicate-atom?    (default-finder implicit-predicate-atom?))
    ]
   )
 

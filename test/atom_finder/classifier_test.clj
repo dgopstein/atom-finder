@@ -151,3 +151,7 @@
 (deftest test-assignment-as-value-atom?
   (testing "assignment-as-value-atom? finds all atoms in snippet study code"
     (test-atom-lines "assignment-as-value.c" "<true>" (default-finder assignment-as-value-atom?))))
+
+(deftest test-implicit-predicate-atom?
+  (testing "implicit-predicate-atom? finds all atoms in sample code")
+    (test-atom-lines "implicit-predicate.c" "<true>" (default-finder implicit-predicate-atom?)))
