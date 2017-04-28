@@ -98,18 +98,18 @@
      :nodes-removed (map (memfn getNodeData) (removed-nodes apted a b))}
     ))
 
-(->> (tree-diff ast-a ast-b)
-     (map-values (fn [node] (map #(vector [(typename %1) (write-ast %1)]) node)))
-     pprint
-     )
+;(->> (tree-diff ast-a ast-b)
+;     (map-values (fn [node] (map #(vector [(typename %1) (write-ast %1)]) node)))
+;     pprint
+;     )
 
- (.maxMemory (Runtime/getRuntime))
+ ;(.maxMemory (Runtime/getRuntime))
 
 (def edit-distance (.computeEditDistance apted (diff-nodify ast-a) (diff-nodify ast-b)))
 
-(.computeEditDistance apted ast-before ast-after)
-(added-nodes apted ast-before ast-after)
-(removed-nodes apted ast-before ast-after)
-
-(->> (.computeEditMapping apted)
-     (map pprint))
+;(.computeEditDistance apted ast-before ast-after)
+;(added-nodes apted ast-before ast-after)
+;(removed-nodes apted ast-before ast-after)
+;
+;(->> (.computeEditMapping apted)
+;     (map pprint))

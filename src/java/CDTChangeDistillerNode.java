@@ -8,15 +8,9 @@ public class CDTChangeDistillerNode extends Node {
   private IASTNode node;
 
   public CDTChangeDistillerNode(IASTNode node) {
-    super(JavaEntityType.WILDCARD_TYPE, node.getClass().getName());
-
+    super(JavaEntityType.WILDCARD_TYPE, node.getClass().getSimpleName());
     this.node = node;
-
-    for (IASTNode child : node.getChildren()) {
-      this.add(new CDTChangeDistillerNode(child));
-    }
   }
-
   public IASTNode node() {
     return this.node;
   }
