@@ -143,6 +143,18 @@
   [key coll]
   (->> coll (group-by key) (map-values (partial map #(dissoc % key)))))
 
+; https://gist.github.com/sunng87/13700d3356d5514d35ad
+(defn invoke-private-method [obj fn-name-string & args]
+  (let [m (first (filter (fn [x] (.. x getName (equals fn-name-string)))
+                         (.. obj getClass getDeclaredMethods)))]
+    (. m (setAccessible true))
+    (. m (invoke obj args))))
+
+(defn private-field [obj fn-name-string]
+  (let [m (.. obj getClass (getDeclaredField fn-name-string))]
+    (. m (setAccessible true))
+        (. m (get obj))))
+
 ;;;;;;;;
 ;;   Specific to this project
 ;;;;;;;
