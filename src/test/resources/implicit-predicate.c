@@ -2,13 +2,15 @@ int main()
 {
   int y = 5;
 
+  (y == 5) ? y = 5 : y == 7;
+
   for (int x = 4; 4 != 4; x++);
 
   for (int x = 5; 4 - 4; x++); // <true>
 
   for (int x = 4; 4 == 4; x++);
 
-  for (int x = 4; y = 4; x++); // <true>
+  (y = 4) ? y : y++; // <true>
 
   for (int x = 4; 8 * 9 + 4; x++); // <true>
 
@@ -20,16 +22,22 @@ int main()
 
   if (3 > 6);
 
+  ((y != 5)) ? y : y;
+
   if (sizeof(34)); // <true>
 
-  if (y >= 6);
+  if ((y >= 6));
 
   while (y || 3)
     while (y); // <true>
 
   while (y <= 34);
 
-  while (y && y);
+  (((y = 2))) ? 4 : 5; // <true>
+
+  while (!(y && y));
+
+  if (!(5 == y));
 
   return;
 }
