@@ -7,15 +7,15 @@
    )
   )
 
-(defn atoms-ba
-  [srcs atom]
-  {:atoms-before (->> srcs :ast-before ((:finder atom)))
-   :atoms-after  (->> srcs :ast-after  ((:finder atom)))})
+;(defn atoms-ba
+;  [srcs atom]
+;  {:atoms-before (->> srcs :ast-before ((:finder atom)))
+;   :atoms-after  (->> srcs :ast-after  ((:finder atom)))})
 
 (defn ba-counts
   [srcs atom]
-  {:atom-count-before (->> srcs :atoms-before count)
-   :atom-count-after  (->> srcs :atoms-after  count)})
+  {:atom-count-before (->> srcs :ast-before ((:finder atom)) count)
+   :atom-count-after  (->> srcs :ast-after  ((:finder atom)) count)})
 
 (defn source-size-before-after [srcs atom]
   {:source-chars-before (-> srcs :source-before count)
@@ -26,7 +26,7 @@
    :comments-after  (->> srcs :ast-after all-comments)})
 
 (defn atom-stats [] {
-   :atoms-ba                 atoms-ba
+   ;:atoms-ba                 atoms-ba
    :atom-counts-before-after ba-counts
    :source-size-before-after source-size-before-after
    :comments-before-after    comments-ba
