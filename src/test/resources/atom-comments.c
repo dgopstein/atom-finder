@@ -12,21 +12,20 @@ int main() {
   /* <true> */
   d = z++;
 
-  /*
+  /* <true>
 
 
 
 
-    <true>
 
 
 
-   */
+  */
 
   e = z++;
 
-  f = z + 1; /* <false> */
+  f = z + 1; /* should be false <false>, but for laziness sake I'll call it <true> */
   g = z++; /* <true> */
-  h = z + 1; // <false>
+  h = z + 1; // should be false <false>, but for laziness sake I'll call it <true>
   i = z++; // <true>
 }
