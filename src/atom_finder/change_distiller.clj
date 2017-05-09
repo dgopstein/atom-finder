@@ -25,6 +25,7 @@
   ccd))
 
 (s/defn tree-diff
+  "Construct a TreeDifferencer and calculate its edit script"
   [left :- IASTNode right :- IASTNode]
   (let [tree-differ (TreeDifferencer.)]
     (.calculateEditScript tree-differ (new-root left) (new-root right))
@@ -32,37 +33,43 @@
   ))
 
 (s/defn tree-correspondences
+  "For two trees, associate each node with its closest pair in the other tree"
   [left :- IASTNode right :- IASTNode]
+  (->> (private-field (tree-diff left right) "fMatch")
+       (map (fn [pair] [(.getLeft pair) (.getRight pair)]))
+       (map (partial map (memfn node)))
+    ))
 
-;ch.uzh.ifi.seal.changedistiller.treedifferencing
+(s/defn left->right
+  [correspondences]
+  (->> (tree-correspondences left-node right-node)
+       (map (partial into []))
+       (into {})))
+
+(s/defn right->left
+  [correspondences]
+  (->> (tree-correspondences left-node right-node)
+       (map (partial into []))
+       (into {})))
+
+;(def left-node (parse-frag "int x = 1 + 2; 3"))
+;(def right-node (parse-frag "int x = -(1 * 3)"))
 ;
-;(def node-left (atom_finder.CDTChangeDistillerNode. (parse-frag "int x = 1 + 2")))
-;(def node-right (atom_finder.CDTChangeDistillerNode. (parse-frag "int x = -(1 * 3)")))
-(def node-left (new-root (parse-frag "int x = 1 + 2")))
-(def node-right (new-root (parse-frag "int x = -(1 * 3)")))
-(def tree-differ (TreeDifferencer.))
-(.calculateEditScript tree-differ node-left node-right)
-(println (.getEditScript tree-differ))
-
-
-(do
-  ;(def node-left (->> "gcc_cp_pt.c_d430756d2dbcc396347bd60d205ed987716b5ae8_6000" parse-resource new-root))
-  ;(def node-right (->> "gcc_cp_pt.c_92884c107e041201b33c5d4196fe756c716e8a0c_6000" parse-resource new-root)))
-  (def node-left (->> "meaningful-change-before.c" parse-resource new-root))
-  (def node-right (->> "meaningful-change-after.c" parse-resource new-root)))
-(def tree-differ (TreeDifferencer.))
-(time (.calculateEditScript tree-differ node-left node-right)) ; 4 minutes for 6000 lines, 12ms for 20
-(def fMatch (private-field tree-differ "fMatch"))
-(def es (.getEditScript tree-differ))
-(->> es
-     ;(take 3)
-     pprint
-     )
-
-(->> fMatch
-     (take 10)
-     (map (fn [pair] [(.getLeft pair) (.getRight pair)]))
-     (map (partial map (memfn node)))
-     (map (partial map typename))
-     pprint
-     )
+;(def left-to-right
+;  (->>
+;   (tree-correspondences left-node right-node)
+;   (map (partial into []))
+;   (into {})
+;   ))
+;
+;(def right-to-left (clojure.set/map-invert left-to-right))
+;
+;(->> left-node
+;     flatten-tree
+;     (map left-to-right)
+;     (map write-ast))
+;
+;(->> right-node
+;     flatten-tree
+;     (map right-to-left)
+;     (map write-ast))
