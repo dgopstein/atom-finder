@@ -300,12 +300,16 @@
     ;; candidates may still have deeper branches than the one we came up from
     (filter #(= n (depth %)) candidates)))
 
+(defn flatten-tree [node]
+  (conj (mapcat flatten-tree (children node)) node))
+
+(defn mapcat-tree [f node]
+  (map f (flatten-tree node)))
+
 (defn filter-tree
   "Find every AST node that matches pred"
   [pred node]
-  (concat
-   (when (pred node) [node])
-   (mapcat (partial filter-tree pred) (children node))))
+  (->> node flatten-tree (filter pred)))
 
 (defn filter-type
   "Return every example of type"
