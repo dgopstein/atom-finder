@@ -477,7 +477,7 @@
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
 
-(defn all-comments [node] (.getComments (root-ancestor node)))
+(defn all-comments [node] (->> node root-ancestor .getComments (into [])))
 
 (defn print-node
   "Print the line that contains the node and the lines around it"

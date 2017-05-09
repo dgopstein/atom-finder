@@ -5,17 +5,13 @@
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTExpressionList IASTForStatement IASTFunctionDefinition]
+           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
            [ch.uzh.ifi.seal.changedistiller.treedifferencing Node TreeDifferencer]
            [ch.uzh.ifi.seal.changedistiller.model.classifiers EntityType java.JavaEntityType]))
-
-;(for [child (.children (atom_finder.CDTChangeDistillerNode. (parse-frag "1 + 2")))] (pprint child))
-
-;(def kids (.children (atom_finder.CDTChangeDistillerNode. (parse-frag "1 + 2"))))
 
 (defn new-ccd [node label]
   (let [ccd (atom_finder.CDTChangeDistillerNode. node)]
     (doseq [child (children node)]
-      ;(prn (str "adding " child))
       (.add ccd (new-ccd child (typename child))))
     ccd))
 
@@ -32,44 +28,46 @@
     tree-differ
   ))
 
-(s/defn tree-correspondences
-  "For two trees, associate each node with its closest pair in the other tree"
-  [left :- IASTNode right :- IASTNode]
-  (->> (private-field (tree-diff left right) "fMatch")
+(defn new-nodes [nodes]
+  "A 1-level tree. One artificial root with the given nodes as children."
+  (let [root (atom_finder.CDTChangeDistillerNode. (CPPASTTranslationUnit.))]
+    (doseq [node nodes]
+      (.add root (atom_finder.CDTChangeDistillerNode. node)))
+    root))
+
+(s/defn flat-diff
+  "Diff two flat lists of nodes (useful for comments/macros)"
+  [lefts :- [IASTNode] rights :- [IASTNode]]
+  (let [tree-differ (TreeDifferencer.)]
+    (.calculateEditScript tree-differ (new-nodes lefts) (new-nodes rights))
+    tree-differ
+  ))
+
+(defn correspondences
+  [tree-differ]
+  (->> (private-field tree-differ "fMatch")
        (map (fn [pair] [(.getLeft pair) (.getRight pair)]))
        (map (partial map (memfn node)))
     ))
 
-(s/defn left->right
+(s/defn tree-correspondences
+  "For two trees, associate each node with its closest pair in the other tree"
+  [left :- IASTNode right :- IASTNode]
+  (correspondences (tree-diff left right) "fMatch"))
+
+(defn left->right
   [correspondences]
-  (->> (tree-correspondences left-node right-node)
+  (->> correspondences
        (map (partial into []))
        (into {})))
 
-(s/defn right->left
-  [correspondences]
-  (->> (tree-correspondences left-node right-node)
-       (map (partial into []))
-       (into {})))
+(def right->left (comp clojure.set/map-invert left->right))
 
-;(def left-node (parse-frag "int x = 1 + 2; 3"))
-;(def right-node (parse-frag "int x = -(1 * 3)"))
-;
-;(def left-to-right
-;  (->>
-;   (tree-correspondences left-node right-node)
-;   (map (partial into []))
-;   (into {})
-;   ))
-;
-;(def right-to-left (clojure.set/map-invert left-to-right))
-;
-;(->> left-node
-;     flatten-tree
-;     (map left-to-right)
-;     (map write-ast))
-;
-;(->> right-node
-;     flatten-tree
-;     (map right-to-left)
-;     (map write-ast))
+(->>
+  (flat-diff
+    (->> "meaningful-change-before.c" parse-resource all-comments)
+    (->> "meaningful-change-after.c" parse-resource all-comments))
+  correspondences
+  (map (partial map str))
+  pprint
+  )
