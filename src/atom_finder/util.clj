@@ -464,10 +464,16 @@
   [node]
   (loc (.getFileLocation node)))
 
+(def offset (comp :offset loc))
+(def start-line (comp :start-line loc))
+(def end-line (comp :end-line loc))
+
 (defn errln "println to stderr" [s]
   (binding [*out* *err*] (println s)))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
+
+(defn all-comments [node] (.getComments (root-ancestor node)))
 
 (defn print-node
   "Print the line that contains the node and the lines around it"
