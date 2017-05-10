@@ -71,12 +71,3 @@
  .getDeltas
  (map prn)
  )
-
-(->
- (ObjectDifferBuilder/buildDefault)
- (.compare '("ab" "cd" "ef") '("ab" "cd" "efg" "gh"))
- (private-field "children")
- ;first
- ;.getValue
- ;.getState
- )

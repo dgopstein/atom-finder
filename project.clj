@@ -14,7 +14,6 @@
                  [com.grammarly/omniconf "0.2.5"] ;https://github.com/grammarly/omniconf
                  [org.clojure/data.csv "0.1.3"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
-                 [de.danielbechler/java-object-diff "0.94"]
                  ]
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"
