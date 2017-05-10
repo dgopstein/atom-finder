@@ -14,3 +14,10 @@
   (testing "meaningful changes are detected"
     (test-atom-lines "atom-comments.c" "<true>"
                      #(mapcat last (atom-finder-comments (:post-increment atom-lookup) %)))))
+
+(deftest test-changed-comments
+  (testing "meaningful changes are detected"
+    (changed-comments
+     (parse-resource "meaningful-change-before.c")
+     (parse-resource "meaningful-change-after.c"))
+    ))

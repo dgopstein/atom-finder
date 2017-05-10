@@ -7,7 +7,9 @@
   (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTExpressionList IASTForStatement IASTFunctionDefinition]
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
            [ch.uzh.ifi.seal.changedistiller.treedifferencing Node TreeDifferencer]
-           [ch.uzh.ifi.seal.changedistiller.model.classifiers EntityType java.JavaEntityType]))
+           [ch.uzh.ifi.seal.changedistiller.model.classifiers EntityType java.JavaEntityType]
+           [difflib DiffUtils]
+           ))
 
 (defn new-ccd [node label]
   (let [ccd (atom_finder.CDTChangeDistillerNode. node)]
@@ -25,21 +27,6 @@
   [left :- IASTNode right :- IASTNode]
   (let [tree-differ (TreeDifferencer.)]
     (.calculateEditScript tree-differ (new-root left) (new-root right))
-    tree-differ
-  ))
-
-(defn new-nodes [nodes]
-  "A 1-level tree. One artificial root with the given nodes as children."
-  (let [root (atom_finder.CDTChangeDistillerNode. (CPPASTTranslationUnit.))]
-    (doseq [node nodes]
-      (.add root (atom_finder.CDTChangeDistillerNode. node)))
-    root))
-
-(s/defn flat-diff
-  "Diff two flat lists of nodes (useful for comments/macros)"
-  [lefts :- [IASTNode] rights :- [IASTNode]]
-  (let [tree-differ (TreeDifferencer.)]
-    (.calculateEditScript tree-differ (new-nodes lefts) (new-nodes rights))
     tree-differ
   ))
 
@@ -63,11 +50,33 @@
 
 (def right->left (comp clojure.set/map-invert left->right))
 
+(s/defn added-comments
+  [root-a :- IASTNode root-b :- IASTNode]
+  (->>
+   (diffutils/diff (all-comments root-a) (all-comments root-b))
+
+   (filter )
+   ))
+
 (->>
-  (flat-diff
+ (diffutils/diff
     (->> "meaningful-change-before.c" parse-resource all-comments)
     (->> "meaningful-change-after.c" parse-resource all-comments))
-  correspondences
-  (map (partial map str))
-  pprint
+ .getDeltas
+ count
   )
+
+(->>
+ (DiffUtils/diff '("axb" "lm" "cd" "ij" "ef") '("ab" "lm" "ef" "cd" "gh" "ij"))
+ .getDeltas
+ (map prn)
+ )
+
+(->
+ (ObjectDifferBuilder/buildDefault)
+ (.compare '("ab" "cd" "ef") '("ab" "cd" "efg" "gh"))
+ (private-field "children")
+ ;first
+ ;.getValue
+ ;.getState
+ )

@@ -1,6 +1,5 @@
 int main() {
-  int a;
-  int b;
+  int a, b, c, d, e;
 
   a = b++ + 3;
 
@@ -18,12 +17,15 @@ int main() {
   // Added comment
   a = b++;
 
+  // No static
+  a = c++;
+
   // going to add a line
   // added new line
   // in the middle
   a = b;
 
-  // going to remove
+  // going to
   // in the middle
   a = b;
 }

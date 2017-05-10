@@ -1,6 +1,5 @@
 int main() {
-  int a;
-  int b;
+  int a, b, c, d, e;
 
   b = a + 1;
   b = a + 2;
@@ -17,6 +16,9 @@ int main() {
   a = b;
 
   a = b++;
+
+  // No change
+  a = c++;
 
   // going to add a line
   // in the middle
