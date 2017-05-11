@@ -10,7 +10,6 @@
            [difflib DiffUtils Delta Delta$TYPE]
            ))
 
-
 (s/defn atom-comments
   "For every atom, collect the comments that are near them"
   ([atom-nodes :- [IASTNode] comments :- [IASTComment]]
