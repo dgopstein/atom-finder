@@ -35,3 +35,6 @@
 
 ;sum-found-atoms => {:macro-operator-precedence 1760}
 ;sum-found-atoms => {:macro-operator-precedence  759} # After removing atomic macros (#define M1 123)
+
+;(atom-patch/atoms-changed-in-commit gcc-repo [(->> atom-lookup :omitted-curly-braces)] "bda4a41c0259cba62881181f08fc1e6fcc67d5f7")
+
