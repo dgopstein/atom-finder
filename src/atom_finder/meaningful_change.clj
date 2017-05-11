@@ -7,7 +7,7 @@
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTExpressionList IASTForStatement IASTFunctionDefinition IASTComment]
-           [difflib Delta$TYPE]
+           [difflib DiffUtils Delta Delta$TYPE]
            ))
 
 
@@ -39,10 +39,19 @@
   [atom root]
   (atom-comments ((:finder atom) root) (all-comments root)))
 
+(s/defn diff-nodes :- [{:delta Delta :original s/Any :revised s/Any}]
+  [cmnts-a :- s/Any cmnts-b :- s/Any]
+  (->>
+   (DiffUtils/diff (->> cmnts-a (map str)) (->> cmnts-b (map str)))
+   .getDeltas
+   (map (fn [c] {:delta c
+                 :original (->> c .getOriginal .getPosition (nth cmnts-a))
+                 :revised (->> c .getRevised .getPosition (nth cmnts-b))}))
+   ))
 
 (s/defn atom-comments-added
+  "Which comments were added near atoms"
   [srcs atom]
-
   (->>
    (diff-nodes (->> srcs :ast-before all-comments) (->> srcs :ast-after all-comments))
    (filter #(->> % :delta .getType (= Delta$TYPE/INSERT)))
