@@ -33,6 +33,7 @@
 
 ;
 ;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
+;(do (def repo gcc-repo)(def commit-hash "370e45b9887b6603911bbe1776c556d2404455bf")(def file-name "gcc/c-family/c-pretty-print.c"))
 ;(do (def repo  ag-repo)(def commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c")(def file-name "src/print.c"))
 ;(def atom-classifier conditional-atom?)
 ;(def atom-finder (->> atom-lookup :conditional :finder))
@@ -97,6 +98,7 @@
         source-before (commit-file-source repo parent-commit file-name)
         source-after  (commit-file-source repo rev-commit file-name)]
     {:file file-name
+     ;:rev-commit (str rev-commit)
      :patch-str  patch-str
      :ast-before (parse-source source-before)
      :ast-after  (parse-source source-after)
@@ -177,6 +179,8 @@
 ;(time (find-rev-commit gcc-repo old-commit-hash))
 ;(time (dotimes [n 10] (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash))))
 ;(time (dotimes [n 600] (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo old-commit-hash))))
+
+;(parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash))
 
 (defn log-atoms-changed-all-commits
   [filename repo atoms]

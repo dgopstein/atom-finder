@@ -44,8 +44,8 @@
    (DiffUtils/diff (->> cmnts-a (map str)) (->> cmnts-b (map str)))
    .getDeltas
    (map (fn [c] {:delta c
-                 :original (->> c .getOriginal .getPosition (nth cmnts-a))
-                 :revised (->> c .getRevised .getPosition (nth cmnts-b))}))
+                 :original (->> c .getOriginal .getPosition (safe-nth cmnts-a))
+                 :revised (->> c .getRevised .getPosition (safe-nth cmnts-b))}))
    ))
 
 (s/defn comments-added

@@ -17,20 +17,22 @@
   {:source-chars-before (-> srcs :source-before count)
    :source-chars-after  (-> srcs :source-after count)})
 
-(defn comments-ba [srcs atom]
-  {:comments-before (->> srcs :ast-before all-comments)
-   :comments-after  (->> srcs :ast-after all-comments)})
+(defn ast-size [srcs atom]
+  {:ast-size-before (-> srcs :ast-before flatten-tree count)
+   :ast-size-after  (-> srcs :ast-after flatten-tree count)})
 
 (defn added-comments [srcs atom]
   (let [cmnts-added (comments-added srcs)
-        atom-cmnts-added (atom-comments (:atoms-after srcs) cmnts-added)]
-  {:comments-added cmnts-added
-   :comments-added-near-atoms atom-cmnts-added
-   :comments-added-away-atoms (- cmnts-added atom-cmnts-added)}))
+        atom-cmnts-added (atom-comments (:atoms-after srcs) cmnts-added)
+        n-cmnts-added (count cmnts-added)
+        n-atom-cmnts-added (count atom-cmnts-added)]
+  {:comments-added n-cmnts-added
+   :comments-added-near-atoms n-atom-cmnts-added
+   :comments-added-away-atoms (- n-cmnts-added n-atom-cmnts-added)}))
 
 (defn atom-stats [] {
    :atom-counts-before-after ba-counts
    :source-size-before-after source-size-before-after
-   :comments-before-after    comments-ba
+   :ast-size ast-size
    :added-comments added-comments
    })

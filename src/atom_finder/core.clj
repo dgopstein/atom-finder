@@ -23,7 +23,7 @@
   ;     dorun)
 
   ; 48 hours
-  ;(time (log-atoms-changed-all-commits "gcc-bugs-atoms_2017-03-28_2.edn" gcc-repo atoms))
+  ;(time (log-atoms-changed-all-commits "gcc-bugs-atoms_2017-05-11_0.edn" gcc-repo atoms))
 )
 
 ;(->> "macro-operator-precedence_redis_2017-03-10_1.edn"

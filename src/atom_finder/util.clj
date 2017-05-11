@@ -124,6 +124,9 @@
        (nth a k)))
    init ks))
 
+; https://crossclj.info/ns/logicadb/0.1.0/com.kurogitsune.logicadb.core.html#_safe-nth
+(defn safe-nth [x n] (try (nth x n) (catch Exception e nil)))
+
 (def flatten1 (partial apply concat))
 
 (defn avg [seq1] (/ (reduce + seq1) (count seq1)))
