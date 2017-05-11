@@ -17,13 +17,18 @@ int main() {
   // Added comment
   a = b++;
 
-  // No static
+  // static
   a = c++;
 
   // going to add a line
   // added new line
   // in the middle
   a = b;
+
+  // going to add a line
+  // added new atom-adjacent line
+  // near an atom
+  a = d++;
 
   // going to
   // in the middle

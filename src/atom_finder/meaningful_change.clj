@@ -1,20 +1,22 @@
 (ns atom-finder.meaningful-change
   (:require [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
+            [atom-finder.change-distiller :refer :all]
             [clojure.string :as str]
             [schema.core :as s]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTExpressionList IASTForStatement IASTFunctionDefinition]
+  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTExpressionList IASTForStatement IASTFunctionDefinition IASTComment]
+           [difflib Delta$TYPE]
            ))
 
 
-(defn atom-comments
+(s/defn atom-comments
   "For every atom, collect the comments that are near them"
-  ([atom-nodes root]
+  ([atom-nodes :- [IASTNode] comments :- [IASTComment]]
     (->>
      (loop [atoms atom-nodes
-            comments (all-comments root)
+            comments comments
             atm-cmnts []]
        (if (or (empty? atoms) (empty? comments))
          atm-cmnts
@@ -34,8 +36,20 @@
      )))
 
 (defn atom-finder-comments
-  [atom node]
-  (atom-comments ((:finder atom) node) node))
+  [atom root]
+  (atom-comments ((:finder atom) root) (all-comments root)))
+
+
+(s/defn atom-comments-added
+  [srcs atom]
+
+  (->>
+   (diff-nodes (->> srcs :ast-before all-comments) (->> srcs :ast-after all-comments))
+   (filter #(->> % :delta .getType (= Delta$TYPE/INSERT)))
+   (map :revised)
+   (atom-comments (->> srcs :atoms-after))
+   )
+  )
 
 ;(->> "atom-comments.c"
 ;     parse-resource

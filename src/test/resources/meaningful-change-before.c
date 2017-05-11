@@ -17,15 +17,19 @@ int main() {
 
   a = b++;
 
-  // No change
+  // Static
   a = c++;
 
   // going to add a line
   // in the middle
   a = b;
 
-  // going to remove
-  // this line right here
+  // going to add a line
+  // near an atom
+  a = d++;
+
+  // going to
+  // remove this line
   // in the middle
   a = b;
 }

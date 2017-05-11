@@ -16,8 +16,14 @@
                      #(mapcat last (atom-finder-comments (:post-increment atom-lookup) %)))))
 
 (deftest test-changed-comments
-  (testing "meaningful changes are detected"
-    (changed-comments
-     (parse-resource "meaningful-change-before.c")
-     (parse-resource "meaningful-change-after.c"))
-    ))
+ (testing "meaningful changes are detected"
+   (let [srcs
+         {:ast-before (->> "meaningful-change-before.c" parse-resource)
+          :ast-after (->> "meaningful-change-after.c" parse-resource)
+          :atoms-before (->> "meaningful-change-before.c" parse-resource ((->> :post-increment atom-finder.classifier/atom-lookup :finder)))
+          :atoms-after (->> "meaningful-change-after.c" parse-resource ((->> :post-increment atom-finder.classifier/atom-lookup :finder)))
+          }]
+     (is (= ["// added new atom-adjacent line"]
+            (map (comp str last last)
+                 (atom-comments-added srcs (atom-lookup :post-increment)))))
+   )))

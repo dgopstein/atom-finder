@@ -8,7 +8,7 @@
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
            [ch.uzh.ifi.seal.changedistiller.treedifferencing Node TreeDifferencer]
            [ch.uzh.ifi.seal.changedistiller.model.classifiers EntityType java.JavaEntityType]
-           [difflib DiffUtils]
+           [difflib DiffUtils Delta Delta$TYPE]
            ))
 
 (defn new-ccd [node label]
@@ -50,20 +50,24 @@
 
 (def right->left (comp clojure.set/map-invert left->right))
 
-(s/defn added-comments
-  [root-a :- IASTNode root-b :- IASTNode]
-  (->>
-   (diffutils/diff (all-comments root-a) (all-comments root-b))
+;(def cmnts-a (->> srcs :ast-before all-comments))
+;(def cmnts-b (->> srcs :ast-after all-comments))
 
-   (filter )
+(s/defn diff-nodes :- [{:delta Delta :original s/Any :revised s/Any}]
+  [cmnts-a :- s/Any cmnts-b :- s/Any]
+  (->>
+   (DiffUtils/diff (->> cmnts-a (map str)) (->> cmnts-b (map str)))
+   .getDeltas
+   (map (fn [c] {:delta c
+                 :original (->> c .getOriginal .getPosition (nth cmnts-a))
+                 :revised (->> c .getRevised .getPosition (nth cmnts-b))}))
    ))
 
 (->>
- (diffutils/diff
-    (->> "meaningful-change-before.c" parse-resource all-comments)
-    (->> "meaningful-change-after.c" parse-resource all-comments))
+ (DiffUtils/diff
+    (->> "meaningful-change-before.c" parse-resource all-comments (map str))
+    (->> "meaningful-change-after.c" parse-resource all-comments (map str)))
  .getDeltas
- count
   )
 
 (->>

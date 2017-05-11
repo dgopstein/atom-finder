@@ -60,9 +60,14 @@
      (let [repo gcc-repo
            rev-commit (find-rev-commit repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")
            file-name "gcc/c-family/c-pretty-print.c"
-           srcs (before-after-data repo rev-commit file-name)]
-       (is (= {:atom-count-before 28 :atom-count-after 28} (->> atom-lookup :logic-as-control-flow (ba-counts srcs))))
-       (is (= {:atom-count-before 25 :atom-count-after 24} (->> atom-lookup :conditional (ba-counts srcs))))
+           srcs (before-after-data repo rev-commit file-name)
+           logic-as-control-flow (->> atom-lookup :logic-as-control-flow)
+           conditional (->> atom-lookup :conditional)
+           ]
+       (is (= {:atom-count-before 28 :atom-count-after 28}
+              (ba-counts (atom-specific-srcs srcs logic-as-control-flow) logic-as-control-flow)))
+       (is (= {:atom-count-before 25 :atom-count-after 24}
+              (ba-counts (atom-specific-srcs srcs conditional) conditional)))
      )))
  )
 
