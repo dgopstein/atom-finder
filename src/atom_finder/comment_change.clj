@@ -1,4 +1,4 @@
-(ns atom-finder.meaningful-change
+(ns atom-finder.comment-change
   (:require [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.change-distiller :refer :all]
