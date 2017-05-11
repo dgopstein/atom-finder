@@ -17,7 +17,7 @@ int main() {
 
   a = b++;
 
-  // Static
+  // static
   a = c++;
 
   // going to add a line

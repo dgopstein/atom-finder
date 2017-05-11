@@ -22,7 +22,11 @@
            :atoms-before (->> "comment-change-before.c" parse-resource ((->> :post-increment atom-finder.classifier/atom-lookup :finder)))
            :atoms-after (->> "comment-change-after.c" parse-resource ((->> :post-increment atom-finder.classifier/atom-lookup :finder)))
            }]
-      (is (= ["// added new atom-adjacent line"]
+
+      (is (= ["// Added comment" "// added new line" "// added new atom-adjacent line"]
+             (map str (comments-added srcs))))
+
+      (is (= ["// Added comment" "// added new atom-adjacent line"]
              (map (comp str last last)
-                  (atom-comments-added srcs (atom-lookup :post-increment)))))
+                  (atom-comments-added srcs))))
       )))

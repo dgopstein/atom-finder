@@ -49,39 +49,15 @@
                  :revised (->> c .getRevised .getPosition (nth cmnts-b))}))
    ))
 
-(s/defn atom-comments-added
+(s/defn comments-added
   "Which comments were added near atoms"
-  [srcs atom]
+  [srcs]
   (->>
    (diff-nodes (->> srcs :ast-before all-comments) (->> srcs :ast-after all-comments))
    (filter #(->> % :delta .getType (= Delta$TYPE/INSERT)))
    (map :revised)
-   (atom-comments (->> srcs :atoms-after))
-   )
-  )
+   ))
 
-;(->> "atom-comments.c"
-;     parse-resource
-;     (atom-finder-comments (-> atom-lookup :post-increment))
-;     ;(#(atom-comments ((-> atom-lookup :post-increment :finder) %1) %1))
-;     ;(map (fn [[atm cmnts]] [(write-ast atm) (map str cmnts)]))
-;     (mapcat last)
-;     (map end-line)
-;     pprint
-;     )
-;
-;(->> "atom-comments.c"
-;     parse-resource)
-
-;(->>
-;  {:comments-before (all-comments (parse-resource "meaningful-change-before.c"))
-;   :comments-after  (all-comments (parse-resource "meaningful-change-after.c" ))}
-;  :comments-before
-;  ;(take 2)
-;  ;(drop 1)
-;  (map (comp :line loc))
-;  )
-;
-; (def big-comments (->> atom-finder.constants/big-root all-comments (into [])))
-;(->> big-comments
-;     first)
+(defn atom-comments-added
+  [srcs]
+   (atom-comments (->> srcs :atoms-after) (comments-added srcs)))
