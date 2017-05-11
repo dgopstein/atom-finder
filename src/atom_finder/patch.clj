@@ -173,8 +173,3 @@
   (partial map #(update-in % [:ranges]
     (partial map (fn [x] {:old [(:old-min x) (:old-max x)]
                           :new [(:new-min x) (:new-max x)]})))))
-
-(def corrs (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch"
-     resource-path slurp parse-diff patch-correspondences))
-
-
