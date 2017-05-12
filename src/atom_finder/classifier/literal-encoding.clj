@@ -34,6 +34,6 @@
               ; dec and oct are the same for numbers lower than 8
               ; so bitwise comparisons for literals lower than 8
               ; probably aren't confusing
-              (>= (parse-numeric-literal (.toString %1)) 8))
+              (>= (Math/abs (parse-numeric-literal (write-ast %1))) 8))
          (children node)))
   )

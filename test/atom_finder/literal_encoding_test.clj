@@ -34,9 +34,12 @@
     (let [cases [
             ["1 + 2"     false]
             ["1 & 2"     false]
+            ["-1 & 2"    false]
+            ["1 & -2"    false]
             ["9 & 2"     true]
             ["1 & 02"    false]
             ["9 & 02"    true]
+            ["-9 & 02"   true]
             ["01 & 02"   false]
             ["0x1 & 02"  false]
             ["0x1 & 2"   false]
@@ -44,25 +47,17 @@
             ["1 & 0x2"   false]
             ["9 & 0x2"   true]
             ["~1"        false]
+            ["-~1"       false]
             ["~8"        true]
+            ["~-8"       true]
             ["~9"        true]
-            ["~011"       false]
-            ["~0x11"      false]
-            ["!0x11"      false]
-            ["!11"        false]
+            ["~011"      false]
+            ["~0x11"     false]
+            ["!0x11"     false]
+            ["!11"       false]
                  ]]
 
       (doseq [[expr expected] cases]
         (testing (str "Is this a literal encoding atom: " expr " - " expected)
           (is (= expected (literal-encoding-atom? (parse-expr expr)))))))
     ))
-
-(deftest test-unary-expression-bug
-  (testing "RTX_OK_FOR_OFFSET_P"
-    (is (false?
-         (->> "rtx_ok_for_offset_p.c"
-              parse-resource
-              (get-in-tree [0 2 0 0])
-              ((:finder (atom-lookup :literal-encoding)))
-              )
-    ))))
