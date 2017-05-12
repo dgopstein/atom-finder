@@ -34,6 +34,8 @@
               ; dec and oct are the same for numbers lower than 8
               ; so bitwise comparisons for literals lower than 8
               ; probably aren't confusing
-              (>= (Math/abs (parse-numeric-literal (write-ast %1))) 8))
+              (>= (Math/abs (or (parse-numeric-literal %1)
+                                (parse-numeric-literal (write-ast %1)) ; this is a sloppy shotgun that doesn't work inside macro-expansion
+                             )) 8))
          (children node)))
   )

@@ -114,12 +114,12 @@
 (s/defn atoms-in-file-stats
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs]
-  (for [atom atoms]
+  (doall (for [atom atoms]
       {:atom (:name atom)
        :stats (apply merge
-                     (for [[stat-name f] (atom-stats)]
-                       {stat-name (f (atom-specific-srcs srcs atom) atom)}))}
-     ))
+                    (doall (for [[stat-name f] (atom-stats)]
+                       {stat-name (f (atom-specific-srcs srcs atom) atom)})))}
+     )))
 
 ;(atoms-in-file-stats (vals (select-keys atom-lookup [:post-increment :literal-encoding]))
 ;                     {:ast-before (parse-source "int main() { int x = 1, y; y = x++; }")
@@ -133,9 +133,9 @@
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
-  (for [commit-ba (commit-files-before-after repo rev-commit)]
+  (doall (for [commit-ba (commit-files-before-after repo rev-commit)]
        (merge (select-keys commit-ba [:file])
-        {:atoms (atoms-in-file-stats atoms commit-ba)})))
+        {:atoms (atoms-in-file-stats atoms commit-ba)}))))
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
 
