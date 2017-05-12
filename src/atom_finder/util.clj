@@ -411,7 +411,7 @@
       parse-stmt
       (get-in-tree [0])))
 
-(def parse-file translation-unit)
+(def parse-file (comp translation-unit expand-home))
 
 (defn parse-resource
   "Parse a file in the resource directory"
