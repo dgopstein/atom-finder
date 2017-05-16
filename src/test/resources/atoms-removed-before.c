@@ -1,5 +1,7 @@
 int main() {
-  int a, b, c, d, e;
+  int a, b, c, d, e, f, g, h, i, j;
+
+  a = a++;
 
   a = b++ + 3;
 

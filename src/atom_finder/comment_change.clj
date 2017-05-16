@@ -38,10 +38,10 @@
   [atom root]
   (atom-comments ((:finder atom) root) (all-comments root)))
 
-(s/defn diff-nodes :- [{:delta Delta :original s/Any :revised s/Any}]
-  [cmnts-a :- s/Any cmnts-b :- s/Any]
+(s/defn diff-by :- [{:delta Delta :original s/Any :revised s/Any}]
+  [f cmnts-a :- s/Any cmnts-b :- s/Any]
   (->>
-   (DiffUtils/diff (->> cmnts-a (map str)) (->> cmnts-b (map str)))
+   (DiffUtils/diff (->> cmnts-a (map f)) (->> cmnts-b (map f)))
    .getDeltas
    (map (fn [c] {:delta c
                  :original (->> c .getOriginal .getPosition (safe-nth cmnts-a))
@@ -52,7 +52,7 @@
   "Which comments were added near atoms"
   [srcs]
   (->>
-   (diff-nodes (->> srcs :ast-before all-comments) (->> srcs :ast-after all-comments))
+   (diff-by str (->> srcs :ast-before all-comments) (->> srcs :ast-after all-comments))
    (filter #(->> % :delta .getType (= Delta$TYPE/INSERT)))
    (map :revised)
    ))

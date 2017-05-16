@@ -1,7 +1,7 @@
 (ns atom-finder.atoms-removed
   (:require [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
-            [atom-finder.change-distiller :refer :all]
+            [atom-finder.comment_change :refer :all]
             [atom-finder.atom-patch :refer :all]
             [clojure.string :as str]
             [schema.core :as s]
@@ -21,18 +21,14 @@
 ;       })
 ;     ))
 ;
-;(let [corrs (tree-correspondences (:ast-before srcs) (:ast-after srcs))
-;      l->r (left->right corrs)
-;      ]
+;(->>
+; (diff-by #(pr-str (mapcat-tree typename %1)) (:atoms-before srcs) (:atoms-after srcs))
+; (map (comp write-ast :revised))
+; pprint
+; )
 ;
-;  (->>
-;   (:atoms-before srcs)
-;   (map #(vector %1 (l->r %1)))
-;   (map (partial map write-ast))
-;   pprint
-;  )
-;  )
-
-(defn atoms-removed
-  [srcs]
-   (atom-comments (->> srcs :atoms-after) (comments-added srcs)))
+;(map #(prn (mapcat-tree typename %1)) (:atoms-before srcs))
+;
+;(defn atoms-removed
+;  [srcs]
+;   (atom-comments (->> srcs :atoms-after) (comments-added srcs)))
