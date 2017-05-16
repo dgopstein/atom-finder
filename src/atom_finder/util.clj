@@ -69,6 +69,9 @@
 
 (def not-empty? (comp not empty?))
 
+(defn trunc [s n]
+    (subs s 0 (min (count s) n)))
+
 (defn sym-diff
   "Set symmetric difference - the opposite of the intersection"
   [& args]
@@ -368,6 +371,7 @@
   [filename]
   (some->> filename clojure.java.io/resource clojure.java.io/file .getPath))
 
+(def slurp-resource (comp slurp resource-path))
 
 (defn get-in-tree
   "Find a value in the AST by indexes"

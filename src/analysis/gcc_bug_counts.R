@@ -2,8 +2,8 @@ library(data.table)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-#gcc.bugs.csv <- data.table(read.csv("../../gcc-bugs.csv"))
-gcc.bugs.csv <- data.table(read.csv("../../gcc-bugs_2017-03-28_200.csv"))
+#gcc.bugs.csv <- data.table(read.csv("../data/gcc-bugs.csv"))
+gcc.bugs.csv <- data.table(read.csv("../data/gcc-bugs_2017-03-28_200.csv"))
 gcc.bugs.csv[, source.change := source.chars.after - source.chars.before]
 
 names(gcc.bugs.csv)
@@ -53,6 +53,14 @@ names(cnt.norm.mats) <- cnts.norm$atom
 fishers <- sapply(cnt.norm.mats, function(m) chisq.test(m), simplify=FALSE)
 unlist(lapply(fishers, function(x) x$p.value))
 
-#######
-## NORMALIZE by lines in commit
-############
+####################
+#  Comment Counts
+####################
+counts <- c(195668, 690461173, 2962, 12595897)
+counts <- c(195668, 2962, 690461173, 12595897)
+make.exclusive <- function(a, b, c, d) matrix(c(a, b-a, c, d-c), nrow=2)
+chi.res <- chisq.test(do.call(make.exclusive, as.list(counts)))
+sqrt(chi.res$statistic / sum(counts))
+
+fish.res <- fisher.test(matrix(counts, nrow=2))
+fish.res

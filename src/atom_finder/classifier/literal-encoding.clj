@@ -25,15 +25,27 @@
 
 (defmethod bitwise-op? :default [x] false)
 
+(defn shift-op? [node]
+  (and (instance? IASTBinaryExpression node)
+    (let [bitwise-ops
+          #{IASTBinaryExpression/op_shiftLeft  IASTBinaryExpression/op_shiftLeftAssign
+            IASTBinaryExpression/op_shiftRight IASTBinaryExpression/op_shiftRightAssign}]
+      (contains? bitwise-ops (.getOperator node)))))
+
 (s/defn literal-encoding-atom? :- s/Bool
   "Change of Literal Encoding atom classifier"
   [node :- IASTNode]
   (and (bitwise-op? node)
        (any-pred?
         #(and (= :dec (radix %1))
-              ; dec and oct are the same for numbers lower than 8
-              ; so bitwise comparisons for literals lower than 8
-              ; probably aren't confusing
-              (>= (Math/abs (parse-numeric-literal (write-ast %1))) 8))
-         (children node)))
+                                        ; dec and oct are the same for numbers lower than 8
+                                        ; so bitwise comparisons for literals lower than 8
+                                        ; probably aren't confusing
+              (>= (Math/abs (or (parse-numeric-literal %1)
+                                (parse-numeric-literal (write-ast %1)) ; this is a sloppy shotgun that doesn't work inside macro-expansion
+                                )) 8))
+        (if (shift-op? node)
+          [(.getOperand1 node)]
+          (children node))
+        ))
   )

@@ -55,6 +55,10 @@
             ["~0x11"     false]
             ["!0x11"     false]
             ["!11"       false]
+            ["8 << 2"    true]
+            ["2 << 8"    false]
+            ["#define X 1 << Y\nX" false]
+            ["#define X 9 << Y\nX" true]
                  ]]
 
       (doseq [[expr expected] cases]

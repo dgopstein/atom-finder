@@ -88,7 +88,7 @@
     :else nil))
 
 (s/defmethod parse-numeric-literal IASTLiteralExpression :- (s/maybe s/Num) [node]
-  (parse-numeric-literal (.toString node)))
+  (parse-numeric-literal (String. (.getValue node))))
 
 (s/defmethod parse-numeric-literal String :- (s/maybe s/Num) [s-in]
   (let [s (str/replace s-in #"[uUlL]*$" "")] ; remove suffix

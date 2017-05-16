@@ -97,13 +97,19 @@
         patch-str     (gitq/changed-files-with-patch repo rev-commit)
         source-before (commit-file-source repo parent-commit file-name)
         source-after  (commit-file-source repo rev-commit file-name)]
-    {:file file-name
-     ;:rev-commit (str rev-commit)
-     :patch-str  patch-str
-     :ast-before (parse-source source-before)
-     :ast-after  (parse-source source-after)
-     :source-before source-before
-     :source-after  source-after}))
+    (merge
+     {:file file-name
+      ;:rev-commit (str rev-commit)
+      :patch-str  patch-str
+      }
+     (build-srcs source-before source-after))))
+
+(s/defn build-srcs
+  [source-before :- String source-after :- String]
+  {:ast-before (parse-source source-before)
+   :ast-after  (parse-source source-after)
+   :source-before source-before
+   :source-after  source-after})
 
 (defn atom-specific-srcs
   [srcs atom]
@@ -114,12 +120,12 @@
 (s/defn atoms-in-file-stats
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs]
-  (for [atom atoms]
+  (doall (for [atom atoms]
       {:atom (:name atom)
        :stats (apply merge
-                     (for [[stat-name f] (atom-stats)]
-                       {stat-name (f (atom-specific-srcs srcs atom) atom)}))}
-     ))
+                    (doall (for [[stat-name f] (atom-stats)]
+                       {stat-name (f (atom-specific-srcs srcs atom) atom)})))}
+     )))
 
 ;(atoms-in-file-stats (vals (select-keys atom-lookup [:post-increment :literal-encoding]))
 ;                     {:ast-before (parse-source "int main() { int x = 1, y; y = x++; }")
@@ -133,9 +139,9 @@
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
-  (for [commit-ba (commit-files-before-after repo rev-commit)]
+  (doall (for [commit-ba (commit-files-before-after repo rev-commit)]
        (merge (select-keys commit-ba [:file])
-        {:atoms (atoms-in-file-stats atoms commit-ba)})))
+        {:atoms (atoms-in-file-stats atoms commit-ba)}))))
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
 
@@ -185,14 +191,14 @@
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
   (binding [*out* (clojure.java.io/writer filename)]
-    (println "[")
+    (println "(")
     (->> atoms
          (atoms-changed-all-commits repo)
          (map prn)
          ;(take 10)
          dorun
          time)
-    (println "[")
+    (println ")")
     ))
 
 ;(def filename "gcc-bugs-atoms_2017-03-28_200.edn")

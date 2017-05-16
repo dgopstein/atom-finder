@@ -26,11 +26,26 @@
   ;(time (log-atoms-changed-all-commits "gcc-bugs-atoms_2017-05-11_0.edn" gcc-repo atoms))
 )
 
-;(->> "macro-operator-precedence_redis_2017-03-10_1.edn"
+;(->> "gcc-bugs-atoms_2017-05-11_0.edn"
 ;     read-data
-;     (take 30)
-;     (found-atom-source :macro-operator-precedence)
-;     ;sum-found-atoms
+;     (def mem-data)
+;     )
+;(->> mem-data
+;     flatten-res
+;     (map #(select-keys % [:comments-added-near-atoms :atom-count-after :comments-added-away-atoms  :ast-size-after]))
+;     (map vals)
+;     (def comment-counts)
+;     time
+;     )
+;(->> comment-counts
+;     (remove nil?)
+;     transpose
+;     (map (partial apply +))
+;     ((fn [[a b c d]] [a b c (/ d (count atom-lookup))]))
+;     ((fn [[a b c d]] [(/ a b) (/ c d)]))
+;     (map #(format "%5f" (float %))) ; [commented-C commented-NC]
+;     pprint
+;     ;time
 ;     )
 
 ;sum-found-atoms => {:macro-operator-precedence 1760}
