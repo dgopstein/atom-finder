@@ -89,8 +89,10 @@
 (defn distinct-by [f col]
   (map first (vals (group-by f col))))
 
-(defn map-values [f m]
-  (reduce merge (map (fn [[k v]] {k (f v)}) m)))
+(defn map-values-kv [f m]
+  (reduce merge (map (fn [[k v]] {k (f k v)}) m)))
+
+(defn map-values [f m] (map-values-kv #(f %2) m))
 
 (def transpose (partial apply map vector))
 

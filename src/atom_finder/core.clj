@@ -30,26 +30,73 @@
 ;     read-data
 ;     (def mem-data)
 ;     )
-;(->> mem-data
-;     flatten-res
-;     (map #(select-keys % [:comments-added-near-atoms :atom-count-after :comments-added-away-atoms  :ast-size-after]))
-;     (map vals)
-;     (def comment-counts)
-;     time
-;     )
-;(->> comment-counts
-;     (remove nil?)
-;     transpose
-;     (map (partial apply +))
-;     ((fn [[a b c d]] [a b c (/ d (count atom-lookup))]))
-;     ((fn [[a b c d]] [(/ a b) (/ c d)]))
-;     (map #(format "%5f" (float %))) ; [commented-C commented-NC]
-;     pprint
-;     ;time
-;     )
+(->> mem-data
+     flatten-res
+     (def flat-data))
+(->> flat-data
+     (map #(select-keys % [:atom :comments-added-near-atoms :atom-count-after :comments-added-away-atoms  :ast-size-after]))
+     (map vals)
+     (def comment-counts)
+     time
+     )
+(->> comment-counts
+     (remove nil?)
+     (group-by first); pprint)
+     (map-values
+      (partial map (partial rest))); pprint)
+     (map-values-kv
+      (fn [key val] (->> val
+     transpose
+     (map (partial apply +))
+     ((fn [[a b c d]] [a b c (/ d (count atom-lookup))]))
+     ((fn [[a b c d]] [(/ a b) (/ c d)])) (map #(format "%5f" (float %))) ; [commented-C commented-NC]
+     pr-str (str key ": ")
+     println
+     ;time
+     ))))
 
-;sum-found-atoms => {:macro-operator-precedence 1760}
-;sum-found-atoms => {:macro-operator-precedence  759} # After removing atomic macros (#define M1 123)
+;; Show a couple removed comments
+(->> flat-data
+     (filter (fn [row] (and
+                        (#{:omitted-curly-braces :logic-as-control-flow :conditional}
+                         (:atom row))
+                        (< 0 (:comments-added-near-atoms row))
+                        )))
+     shuffle
+     (take 200)
+     (map #(select-keys % [:atom :revstr :file]))
+     (group-by :atom)
+     (map-values (partial take 10))
+     vals
+     (map (partial map vals))
+     ;(sort-by str)
+     (def comments-files)
+     )
 
-;(atom-patch/atoms-changed-in-commit gcc-repo [(->> atom-lookup :omitted-curly-braces)] "bda4a41c0259cba62881181f08fc1e6fcc67d5f7")
+(defn github-link [rev-str file line]
+  (str "https://github.com/gcc-mirror/gcc/blob/" rev-str "/" file "#L" line))
 
+(let [added-comments
+      (->> comments-files
+           (mapcat identity)
+           ;(map (partial map prn))
+           (mapcat
+            (fn [[atom rev-str file]]
+              (let [srcs (atom-finder.atom-patch/before-after-data
+                          gcc-repo (find-rev-commit gcc-repo rev-str) file)]
+                (for [cmnt (atom-finder.comment-change/comments-added srcs)]
+                  [atom rev-str file srcs cmnt]
+                  )))))]
+  (->> added-comments
+       (map (fn [[atom rev-str file srcs cmnt]]
+         (let [atoms ((:finder (atom atom-lookup)) (:ast-after srcs))
+               acs (atom-finder.comment-change/atom-comments atoms [cmnt])
+               line (:line (loc cmnt))]
+           [atom (count acs) (github-link rev-str file line)]
+           )
+         ))
+     ;first
+     ;(map-values class)
+     (map println)
+       )
+  )
