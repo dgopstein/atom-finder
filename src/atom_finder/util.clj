@@ -132,6 +132,15 @@
 ; https://crossclj.info/ns/logicadb/0.1.0/com.kurogitsune.logicadb.core.html#_safe-nth
 (defn safe-nth [x n] (try (nth x n) (catch Exception e nil)))
 
+; https://rosettacode.org/wiki/Detect_division_by_zero#Clojure
+(defn safe-div [x y]
+  (try (/ x y)
+       (catch ArithmeticException _
+         ;(println "Division by zero caught!")
+         (cond (> x 0)   Double/POSITIVE_INFINITY
+               (zero? x) Double/NaN
+               :else     Double/NEGATIVE_INFINITY))))
+
 (def flatten1 (partial apply concat))
 
 (defn avg [seq1] (/ (reduce + seq1) (count seq1)))
@@ -200,6 +209,11 @@
         p (.getParameterTypes m)]
     (alength p)))
 
+(defn file-ext [file-str]
+  "Get the file extension from a filename"
+  (->> file-str
+       (re-find #"(.*/)?[^/]+\.([^.]+)")
+       last))
 
 (defn children    [^IASTNode node] (.getChildren node))
 (defn parent      [^IASTNode node] (.getParent node))
