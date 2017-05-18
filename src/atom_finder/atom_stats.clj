@@ -38,17 +38,20 @@
         inner-atom-cmnts-added (atom-finder.comment-change/atom-comments inner-atoms cmnts-added)
         outer-atom-cmnts-added (atom-finder.comment-change/atom-comments outer-atoms cmnts-added)
         n-cmnts-added (count cmnts-added)
+        n-inner-cmnts-added (count inner-cmnts-added)
+        n-outer-cmnts-added (count outer-cmnts-added)
         n-inner-atom-cmnts-added (count inner-atom-cmnts-added)
         n-outer-atom-cmnts-added (count outer-atom-cmnts-added)]
   {:comments-added n-cmnts-added
-   :inner-comments-added (count inner-cmnts-added)
-   :outer-comments-added (count outer-cmnts-added)
+   :inner-comments-added n-inner-cmnts-added
+   :outer-comments-added n-outer-cmnts-added
    :comments-added-near-atoms (+ n-inner-atom-cmnts-added n-outer-atom-cmnts-added)
    :inner-comments-added-near-atoms n-inner-atom-cmnts-added
    :outer-comments-added-near-atoms n-outer-atom-cmnts-added
    :comments-added-away-atoms (- n-cmnts-added n-inner-atom-cmnts-added n-outer-atom-cmnts-added)
-   :inner-comments-added-away-atoms (- n-cmnts-added n-outer-atom-cmnts-added)
-   :outer-comments-added-away-atoms (- n-cmnts-added n-inner-atom-cmnts-added)}))
+   :inner-comments-added-away-atoms (- n-inner-cmnts-added n-inner-atom-cmnts-added)
+   :outer-comments-added-away-atoms (- n-outer-cmnts-added n-outer-atom-cmnts-added)
+   }))
 
 (defn atom-stats [] {
    :atom-counts-before-after ba-counts
