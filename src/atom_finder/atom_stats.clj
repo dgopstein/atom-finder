@@ -31,11 +31,14 @@
 ;   :comments-added-near-atoms n-atom-cmnts-added
 ;   :comments-added-away-atoms (- n-cmnts-added n-atom-cmnts-added)}))
 
+;(def srcs (atom-finder.atom-patch/before-after-data gcc-repo (atom-finder.source-versions/find-rev-commit gcc-repo "519d8cb612e9d641d133e4f65b4a48c3ef963f43") "gcc/lra-constraints.c"))
+;(added-comments-context srcs (atom-finder.classifier/atom-lookup :omitted-curly-braces))
+
 (defn added-comments-context [srcs atom]
   (let [cmnts-added (atom-finder.comment-change/comments-added srcs)
         {inner-cmnts-added true outer-cmnts-added false} (group-by in-function? (map offset-parent cmnts-added))
         {inner-atoms true outer-atoms false} (group-by in-function? (:atoms-after srcs))
-        {inner-ast true outer-ast false} (group-by in-function? (:ast-after srcs))
+        {inner-ast true outer-ast false} (group-by in-function? (flatten-tree (:ast-after srcs)))
         inner-atom-cmnts-added (atom-finder.comment-change/atom-comments inner-atoms cmnts-added)
         outer-atom-cmnts-added (atom-finder.comment-change/atom-comments outer-atoms cmnts-added)
         n-cmnts-added (count cmnts-added)
