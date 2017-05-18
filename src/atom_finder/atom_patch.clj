@@ -90,6 +90,13 @@
     [(f (parse-source (commit-file-source repo parent-commit file-name)))
      (f (parse-source (commit-file-source repo rev-commit file-name)))]))
 
+(s/defn build-srcs
+  [source-before :- String source-after :- String]
+  {:ast-before (parse-source source-before)
+   :ast-after  (parse-source source-after)
+   :source-before source-before
+   :source-after  source-after})
+
 (s/defn before-after-data
   "Return the ast of changed files before/after a commit"
   [repo rev-commit :- RevCommit file-name]
@@ -103,13 +110,6 @@
       :patch-str  patch-str
       }
      (build-srcs source-before source-after))))
-
-(s/defn build-srcs
-  [source-before :- String source-after :- String]
-  {:ast-before (parse-source source-before)
-   :ast-after  (parse-source source-after)
-   :source-before source-before
-   :source-after  source-after})
 
 (defn atom-specific-srcs
   [srcs atom]
