@@ -60,8 +60,8 @@
 
    :inner-atom-count (count inner-atoms)
    :outer-atom-count (count outer-atoms)
-   :inner-ast-size
-   :outer-ast-size
+   :inner-ast-size (count inner-ast)
+   :outer-ast-size (count outer-ast)
    }))
 
 (defn atom-stats [] {
