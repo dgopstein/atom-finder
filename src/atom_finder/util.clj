@@ -5,9 +5,9 @@
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
-           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement]
+           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement IASTBinaryExpression]
            [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
-           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
+           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement CPPASTConditionalExpression CPPASTExpressionList]
            [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
@@ -429,4 +429,34 @@
        (if (<= line-num total-line-num) (println (str (+ line-num 1) "    " (nth file-seq line-num))))
 
        (println "===================================================")))))
+
+(defn get-precedence-level
+  "Returns the precedence level of the IASTnode, returns nil otherwise"
+  [node]
+  (let [precedence-list
+        {;"currently supports binary operators(not including sizeof), comma operator and conditional operator"
+         IASTBinaryExpression/op_modulo 5 IASTBinaryExpression/op_multiply 5 IASTBinaryExpression/op_divide 5
+         IASTBinaryExpression/op_plus 6 IASTBinaryExpression/op_minus 6
+         IASTBinaryExpression/op_shiftLeft 7 IASTBinaryExpression/op_shiftRight 7
+         IASTBinaryExpression/op_greaterThan 8 IASTBinaryExpression/op_greaterEqual 8 IASTBinaryExpression/op_lessThan 8 IASTBinaryExpression/op_lessEqual 8
+         IASTBinaryExpression/op_equals 9 IASTBinaryExpression/op_notequals 9
+         IASTBinaryExpression/op_binaryAnd 10
+         IASTBinaryExpression/op_binaryXor 11
+         IASTBinaryExpression/op_binaryOr 12
+         IASTBinaryExpression/op_logicalAnd 13
+         IASTBinaryExpression/op_logicalOr 14
+         IASTBinaryExpression/op_assign 15 IASTBinaryExpression/op_binaryAndAssign 15 IASTBinaryExpression/op_binaryOrAssign 15
+         IASTBinaryExpression/op_binaryXorAssign 15 IASTBinaryExpression/op_divideAssign 15 IASTBinaryExpression/op_minusAssign 15
+         IASTBinaryExpression/op_moduloAssign 15 IASTBinaryExpression/op_multiplyAssign 15 IASTBinaryExpression/op_plusAssign 15 
+         IASTBinaryExpression/op_shiftLeftAssign 15 IASTBinaryExpression/op_shiftRightAssign 15 CPPASTConditionalExpression 15
+         CPPASTExpressionList 16}]
+    (if (instance? IASTBinaryExpression node) (precedence-list (.getOperator node)) (precedence-list (type node)))))
+
+(defn assignment-operator?
+  "Returns true if the operator is an assignment operator"
+  [node]
+  (let [assignment-list 
+        #{IASTBinaryExpression/op_assign IASTBinaryExpression/op_binaryAndAssign IASTBinaryExpression/op_binaryOrAssign IASTBinaryExpression/op_binaryXorAssign IASTBinaryExpression/op_divideAssign IASTBinaryExpression/op_minusAssign IASTBinaryExpression/op_moduloAssign IASTBinaryExpression/op_multiplyAssign IASTBinaryExpression/op_plusAssign IASTBinaryExpression/op_shiftLeftAssign IASTBinaryExpression/op_shiftRightAssign}]
+
+    (if (instance? IASTBinaryExpression node) (contains? assignment-list (.getOperator node)) false)))
 
