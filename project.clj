@@ -23,5 +23,5 @@
                    "src/conf"]
   :java-source-paths ["src/java"]
   :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}}
-  :jvm-opts ["-Xss8m"]
+  :jvm-opts ["-Xss8m" "-Xmx8g"]
   :main atom-finder.core)

@@ -15,6 +15,9 @@
 ;;;   Completely generic utilities
 ;;;;;;
 
+
+(defn heap-size [] (.totalMemory (Runtime/getRuntime)))
+
 ;; print methods of java object
 ;; http://stackoverflow.com/questions/5821286/how-can-i-get-the-methods-of-a-java-class-from-clojure
 (defn java-methods
@@ -143,6 +146,9 @@
 
 (def flatten1 (partial apply concat))
 
+;; Remove entries in a map based on a predicate
+(defn dissoc-by [f m] (->> m (filter (complement f)) (into {})))
+
 (defn avg [seq1] (/ (reduce + seq1) (count seq1)))
 
 (defn min-of [lst]
@@ -211,9 +217,10 @@
 
 (defn file-ext [file-str]
   "Get the file extension from a filename"
-  (->> file-str
-       (re-find #"(.*/)?[^/]+\.([^.]+)")
-       last))
+  (some->>
+   file-str
+   (re-find #"(.*/)?[^/]+\.([^.]+)")
+   last))
 
 (defn children    [^IASTNode node] (.getChildren node))
 (defn parent      [^IASTNode node] (.getParent node))

@@ -92,4 +92,10 @@
       (doseq [[expected filename] cases]
         (is (= expected (file-ext filename)) (list "=" expected filename)))
     ))
+
+  (testing "dissoc-by"
+    (is (= (dissoc-by #(.contains (first %1) "bad")
+                      {"good1" 1, "bad1" 1, "good2" 2, "bad2" 2})
+           {"good1" 1, "good2" 2}))
+    )
   )

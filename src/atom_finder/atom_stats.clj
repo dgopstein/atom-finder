@@ -54,9 +54,9 @@
    :inner-comments-added-near-atoms n-inner-atom-cmnts-added
    :outer-comments-added-near-atoms n-outer-atom-cmnts-added
 
-   :comments-added-away-atoms (- n-cmnts-added n-inner-atom-cmnts-added n-outer-atom-cmnts-added)
-   :inner-comments-added-away-atoms (- n-inner-cmnts-added n-inner-atom-cmnts-added)
-   :outer-comments-added-away-atoms (- n-outer-cmnts-added n-outer-atom-cmnts-added)
+   ;:comments-added-away-atoms (- n-cmnts-added n-inner-atom-cmnts-added n-outer-atom-cmnts-added)
+   ;:inner-comments-added-away-atoms (- n-inner-cmnts-added n-inner-atom-cmnts-added)
+   ;:outer-comments-added-away-atoms (- n-outer-cmnts-added n-outer-atom-cmnts-added)
 
    :inner-atom-count (count inner-atoms)
    :outer-atom-count (count outer-atoms)
@@ -69,4 +69,5 @@
    :source-size-before-after source-size-before-after
    :ast-size ast-size
    :added-comments added-comments-context
+   :count (constantly 1)
    })
