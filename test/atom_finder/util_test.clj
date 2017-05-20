@@ -54,3 +54,23 @@
              (filter-tree (partial instance? IASTLiteralExpression))
              (map write-ast))))
     ))
+
+(deftest util-test
+  (testing "line-range"
+    (let [cases [
+                 [[]  [1 1] "a\nb\nc\n"]
+                 [["a"] [1 2] "a\nb\nc\n"]
+                 [["a" "b"] [1 3] "a\nb\nc\n"]
+                 [["a" "b" "c"] [1 4] "a\nb\nc\n"]
+                 [["b" "c"] [2 4] "a\nb\nc\n"]
+                 [["b" "c"] [2 5] "a\nb\nc\n"]
+                 [[] [6 6] "a\nb\nc\n"]
+                 ]]
+
+      (doseq [[expected [min max] s] cases]
+        (is (= expected (line-range min max s))
+            [expected (str "'" [min max] "' '" s "'")])
+      ))
+    )
+
+  )

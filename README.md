@@ -36,9 +36,7 @@ In order to run this project you should install:
  
  ```clojure
  (->> "wdate-time.c"
-       resource-path
-       slurp
-       parse-source
+       parse-resource
        (get-in-tree [2])
        print-tree)
 ```
@@ -60,3 +58,4 @@ Some other useful functions are:
     write-ast -> Takes an AST and prints out the code (basically the opposite of parsing)
     print-tree -> Prints the whole tree structure of an AST
     get-in-tree -> Digs down into an AST to get at nested children
+    default-finder -> Take a function that returns true/false for a single AST node, and run it over an entire AST

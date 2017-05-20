@@ -53,7 +53,19 @@
     `(list ~@(map str (vec words))))
 
 (defn tap [f x] (f x) x)
-(defn pap [x] (tap prn x))
+(defn pap [x] (tap prn x)) ; print the value of variable and return it
+
+(defmacro =by
+  "Test if arguments are equal after applying f to all of them"
+  [f & args]
+  `(= ~@(map #(list f %) args)))
+
+; print the name and value of an expression
+(defmacro pprn [x]
+  `(let [y# ~x]
+    (do
+      (print (str ~(str x ": ") (prn-str y#)))
+      y#)))
 
 (def not-empty? (comp not empty?))
 
@@ -77,11 +89,19 @@
 (defn map-values [f m]
   (reduce merge (map (fn [[k v]] {k (f v)}) m)))
 
+(def transpose (partial apply map vector))
+
 (defn slurp-lines [file]
     (str/split-lines (slurp file)))
 
 (defn count-lines [str]
     (count (filter #{\newline} str)))
+
+(defn line-range [min max s]
+  "return the line of a string between [min max)"
+  (->> s str/split-lines
+       (drop (dec min))
+       (take (- max min))))
 
 (defn close?
   "Are two numbers approximately equal"
@@ -95,7 +115,48 @@
     v
         (throw (Exception. (str "Key Not Found " k)))))
 
+; http://stackoverflow.com/questions/43213573/get-in-for-lists/43214175#43214175
+(defn get-nth-in [init ks]
+  (reduce
+   (fn [a k]
+     (if (associative? a)
+       (get a k)
+       (nth a k)))
+   init ks))
+
+; https://crossclj.info/ns/logicadb/0.1.0/com.kurogitsune.logicadb.core.html#_safe-nth
+(defn safe-nth [x n] (try (nth x n) (catch Exception e nil)))
+
+(def flatten1 (partial apply concat))
+
 (defn avg [seq1] (/ (reduce + seq1) (count seq1)))
+
+(defn min-of [lst]
+  "Min with a list argument"
+  (if (empty? lst) nil
+    (apply min lst)))
+
+(defn max-of [lst]
+  "Max with a list argument"
+  (if (empty? lst) nil
+    (apply max lst)))
+
+(defn group-dissoc
+  "Group a list of maps by a key, then dissoc that key"
+  [key coll]
+  (->> coll (group-by key) (map-values (partial map #(dissoc % key)))))
+
+; https://gist.github.com/sunng87/13700d3356d5514d35ad
+(defn invoke-private-method [obj fn-name-string & args]
+  (let [m (first (filter (fn [x] (.. x getName (equals fn-name-string)))
+                         (.. obj getClass getDeclaredMethods)))]
+    (. m (setAccessible true))
+    (. m (invoke obj args))))
+
+(defn private-field [obj fn-name-string]
+  (let [m (.. obj getClass (getDeclaredField fn-name-string))]
+    (. m (setAccessible true))
+        (. m (get obj))))
 
 ;;;;;;;;
 ;;   Specific to this project
@@ -114,8 +175,6 @@
     (.getASTTranslationUnit (GPPLanguage/getDefault)
                             (FileContent/createForExternalFileLocation filename)
                             info emptyIncludes nil opts log)))
-
-(def tu translation-unit)
 
 (defn mem-tu
   "Create an AST from in-memory source (name is for documentation only)"
@@ -244,12 +303,16 @@
     ;; candidates may still have deeper branches than the one we came up from
     (filter #(= n (depth %)) candidates)))
 
+(defn flatten-tree [node]
+  (conj (mapcat flatten-tree (children node)) node))
+
+(defn mapcat-tree [f node]
+  (map f (flatten-tree node)))
+
 (defn filter-tree
   "Find every AST node that matches pred"
   [pred node]
-  (concat
-   (when (pred node) [node])
-   (mapcat (partial filter-tree pred) (children node))))
+  (->> node flatten-tree (filter pred)))
 
 (defn filter-type
   "Return every example of type"
@@ -319,21 +382,6 @@
     (str/replace-first s "~" (System/getProperty "user.home"))
         s))
 
-(defn pmap-dir-nodes
-  "Apply a function to the AST of every c file in a directory"
-  [f dirname]
-          (pmap
-           (fn [file]
-             (let [filename (.getPath file)]
-               (try
-                 (f (tu filename))
-                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
-                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
-               )
-             ))
-
-           (c-files dirname)))
-
 (defn write-tempfile
   [content]
   ; https://github.com/clojure-cookbook/clojure-cookbook/blob/master/04_local-io/4-10_using-temp-files.asciidoc
@@ -363,6 +411,13 @@
       parse-stmt
       (get-in-tree [0])))
 
+(def parse-file (comp translation-unit expand-home))
+
+(defn parse-resource
+  "Parse a file in the resource directory"
+  [filename]
+  (->> filename resource-path parse-file))
+
 (defn find-after
   "Take the element after the specified one"
   [coll elem]
@@ -370,6 +425,10 @@
        (filter #(= elem (first %)))
        first
        last))
+
+(def find-first (comp first (partial filter)))
+
+(def map-kv (comp (partial into {}) (partial map)))
 
 ; core/org.eclipse.cdt.core/parser/org/eclipse/cdt/internal/core/dom/rewrite/changegenerator/ChangeGenerator.java:getNextSiblingNode(IASTNode node)
 (s/defn next-sibling :- (s/maybe IASTNode)
@@ -404,17 +463,24 @@
 (defmethod loc ASTFileLocation [l]
   (let [offset (.getNodeOffset l)
         length (.getNodeLength l)
-        line   (.getStartingLineNumber l)]
-    {:line line :offset offset :length length}))
+        start-line (.getStartingLineNumber l)
+        end-line  (.getEndingLineNumber l)]
+    {:line start-line :offset offset :length length :start-line start-line :end-line end-line}))
 
 (defmethod loc Object
   [node]
   (loc (.getFileLocation node)))
 
+(def offset (comp :offset loc))
+(def start-line (comp :start-line loc))
+(def end-line (comp :end-line loc))
+
 (defn errln "println to stderr" [s]
   (binding [*out* *err*] (println s)))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
+
+(defn all-comments [node] (->> node root-ancestor .getComments (into [])))
 
 (defn print-node
   "Print the line that contains the node and the lines around it"
@@ -459,4 +525,20 @@
         #{IASTBinaryExpression/op_assign IASTBinaryExpression/op_binaryAndAssign IASTBinaryExpression/op_binaryOrAssign IASTBinaryExpression/op_binaryXorAssign IASTBinaryExpression/op_divideAssign IASTBinaryExpression/op_minusAssign IASTBinaryExpression/op_moduloAssign IASTBinaryExpression/op_multiplyAssign IASTBinaryExpression/op_plusAssign IASTBinaryExpression/op_shiftLeftAssign IASTBinaryExpression/op_shiftRightAssign}]
 
     (if (instance? IASTBinaryExpression node) (contains? assignment-list (.getOperator node)) false)))
+
+(defn pmap-dir-nodes
+  "Apply a function to the AST of every c file in a directory"
+  [f dirname]
+          (pmap
+           (fn [file]
+             (let [filename (.getPath file)]
+               (try
+                 (f (parse-file filename))
+                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
+                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
+               )
+             ))
+
+           (c-files dirname)))
+
 

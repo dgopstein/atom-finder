@@ -1,51 +1,5 @@
 (in-ns 'atom-finder.classifier)
 
-(defn contains-location?
-  "Does this node contain the given offset/length"
-  [root offset length]
-  (let [root-loc (.getFileLocation root)
-        root-offset (.getNodeOffset root-loc)
-        root-length (.getNodeLength root-loc)]
-
-    ;; The location/offset is fully contained in this node
-    (and (<=    root-offset                 offset)
-         (>= (+ root-offset root-length) (+ offset length)))))
-
-(defn contains-offset?
-  "Does this node contain the given offset"
-  [root offset]
-  (let [root-loc (.getFileLocation root)]
-    (if (nil? root-loc)
-      false
-      (let [root-offset (.getNodeOffset root-loc)]
-        ; (According to VisualVM) The dispatch on these methods
-        ; is a CPU killer. Try to short-circuit if possible.
-        (if (> root-offset offset)
-          false
-          (>= (+ root-offset (.getNodeLength root-loc)) offset))))))
-
-(defn offset-parent?
-  "True if this is deepest AST node that contains an offset"
-  [node offset]
-  (and
-   (contains-offset? node offset)
-   (not (exists? #(contains-offset? % offset) (children node)))))
-
-(defn offset-parent
-  "Find the AST node that contains the whole location offset
-   Assumes that no children of a single parent overlap in terms of offset"
-  [root offset]
-  (let [kids      (children root)
-        container (first (filter #(contains-offset? % offset) kids))]
-    (if (nil? container)
-      root
-      (recur container offset))))
-
-(defn toplevel-offset?
-  "Check if an offset lives in the top level or if it's inside some other node"
-  [root offset]
-  (not-any? #(contains-offset? % offset) (children root)))
-
 (defn macro-in-contexts
   "find a single macro in the given AST"
   [root macro classifier]

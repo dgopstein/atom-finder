@@ -53,3 +53,37 @@
                    (atom-name hash))]))
 
        pprint))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;    Result flattening
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(declare flatten-res)
+
+(defn flatten-seq [sres]
+  ; seq? intentionally doesn't match vectors.
+  ; this distnguishes iterables from tuples.
+  ; I model lists of things as (well) lists,
+  ; and tuples as vectors.
+  (let [[seq-k seq-v] (first (filter (comp seq? last) sres))
+        dissoced (dissoc sres seq-k)]
+
+    (if (nil? seq-k)
+      (list sres)
+      (->> seq-v
+           (map #(merge dissoced %))
+           (mapcat flatten-seq)
+           ))))
+
+(defn flatten-map [mres]
+  (reduce
+   (fn [h [k v]]
+     (cond
+       (map? v) (merge h (flatten-map v))
+       (seq? v) (flatten-res v)
+       :else (assoc h k v)
+       )) {} mres))
+
+(defn flatten-res [fres]
+  (->> (if (seq? fres) fres (list fres))
+       (mapcat flatten-seq)
+       (map flatten-map)))

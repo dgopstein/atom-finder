@@ -6,6 +6,7 @@
    [atom-finder.source-versions :refer :all]
    [atom-finder.patch :refer :all]
    [atom-finder.results-util :refer :all]
+   [atom-finder.atom-stats :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.data.csv :as csv]
    [clojure.java.io :as io]
@@ -29,11 +30,10 @@
 (def AtomFinders [(s/one AtomFinder "atom-finder") AtomFinder])
 (def BeforeAfter [(s/one IASTTranslationUnit "before") (s/one IASTTranslationUnit "after")])
 (def BeforeAfters [(s/one BeforeAfter "commit-file") BeforeAfter])
-;(def BACounts [(s/one s/Num "count-before") (s/one s/Num "count-after")])
-(def BACounts {(s/required-key :count-before) s/Int (s/required-key :count-after) s/Int})
 
 ;
 ;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
+;(do (def repo gcc-repo)(def commit-hash "370e45b9887b6603911bbe1776c556d2404455bf")(def file-name "gcc/c-family/c-pretty-print.c"))
 ;(do (def repo  ag-repo)(def commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c")(def file-name "src/print.c"))
 ;(def atom-classifier conditional-atom?)
 ;(def atom-finder (->> atom-lookup :conditional :finder))
@@ -61,7 +61,7 @@
 ;(print (commit-file-source repo commit-hash "gcc/c-family/ChangeLog"))
 
 ;(commit-file-atom-count gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c" conditional-atom?)
-;(ast-before-after gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c")
+;(before-after-data gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c")
 ;(commit-file-atom-count gcc-repo commit-hash "gcc/c-family/c-pretty-print.c" conditional-atom?)
 
 (s/defn edited-files
@@ -90,53 +90,70 @@
     [(f (parse-source (commit-file-source repo parent-commit file-name)))
      (f (parse-source (commit-file-source repo rev-commit file-name)))]))
 
-(s/defn ast-before-after
+(s/defn before-after-data
   "Return the ast of changed files before/after a commit"
   [repo rev-commit :- RevCommit file-name]
   (let [parent-commit (parent-rev-commit repo rev-commit)
+        patch-str     (gitq/changed-files-with-patch repo rev-commit)
         source-before (commit-file-source repo parent-commit file-name)
-        source-after (commit-file-source repo rev-commit file-name)]
+        source-after  (commit-file-source repo rev-commit file-name)]
     {:file file-name
+     ;:rev-commit (str rev-commit)
+     :patch-str  patch-str
      :ast-before (parse-source source-before)
      :ast-after  (parse-source source-after)
-     :source-chars-before (count source-before)
-     :source-chars-after  (count source-after)}))
+     :source-before source-before
+     :source-after  source-after}))
 
-(s/defn atoms-in-file-counts ;{s/Keyword BACounts}
+(defn atom-specific-srcs
+  [srcs atom]
+  (merge srcs
+         {:atoms-before (->> srcs :ast-before ((:finder atom)))
+          :atoms-after  (->> srcs :ast-after  ((:finder atom)))}))
+
+(s/defn atoms-in-file-stats
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs]
-  (for [atom atoms]
-    {:atom (:name atom)
-     :count-before (->> srcs :ast-before ((:finder atom)) count)
-     :count-after  (->> srcs :ast-after  ((:finder atom)) count)
-     }))
+  (doall (for [atom atoms]
+      {:atom (:name atom)
+       :stats (apply merge
+                    (doall (for [[stat-name f] (atom-stats)]
+                       {stat-name (f (atom-specific-srcs srcs atom) atom)})))}
+     )))
+
+;(atoms-in-file-stats (vals (select-keys atom-lookup [:post-increment :literal-encoding]))
+;                     {:ast-before (parse-source "int main() { int x = 1, y; y = x++; }")
+;                      :ast-after (parse-source "int main() { int x = 1, y; y = x; x++; }")})
 
 (s/defn commit-files-before-after
   "For every file changed in this commit, give both before and after ASTs"
   [repo rev-commit :- RevCommit]
-  (map (partial ast-before-after repo rev-commit)
+  (map (partial before-after-data repo rev-commit)
        (edited-files repo rev-commit)))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
-  (for [commit-ba (commit-files-before-after repo rev-commit)
-        atoms-counts (atoms-in-file-counts atoms commit-ba)]
-       (merge (dissoc commit-ba :ast-before :ast-after) atoms-counts)))
+  (doall (for [commit-ba (commit-files-before-after repo rev-commit)]
+       (merge (select-keys commit-ba [:file])
+        {:atoms (atoms-in-file-stats atoms commit-ba)}))))
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
+
+(defmacro log-err [msg ret x]
+  `(try ~x
+      (catch Exception e# (do (errln (str "-- exception parsing commit: \"" ~msg "\"\n")) ~ret))
+      (catch Error e#     (do (errln (str "-- error parsing commit: \""  ~msg "\"\n")) ~ret))))
 
 (defn parse-commit-for-atom
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
-    (try
-      (doall (for [atom (atoms-changed-in-commit repo atoms rev-commit)]
-        (merge {:revstr commit-hash :bug-ids (bugzilla-ids rev-commit)} atom)))
-      (catch Exception e (do (errln (str "-- exception parsing commit: \"" commit-hash "\"\n")) {:revstr commit-hash}))
-      (catch Error e     (do (errln (str "-- error parsing commit: \""  commit-hash "\"\n")) {:revstr commit-hash})))
-    ))
+    (->>
+     (doall (atoms-changed-in-commit repo atoms rev-commit))
+     (array-map :revstr commit-hash :bug-ids (bugzilla-ids rev-commit) :files)
+     (log-err commit-hash {:revstr commit-hash})
+     )))
 
-      (try (/ 1 0) (catch Exception e "oops"))
-;(pprint (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
+;(pprint (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash)))
 
 (defn atoms-changed-all-commits
   [repo atoms]
@@ -162,6 +179,8 @@
 ;(time (find-rev-commit gcc-repo old-commit-hash))
 ;(time (dotimes [n 10] (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash))))
 ;(time (dotimes [n 600] (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo old-commit-hash))))
+
+;(parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash))
 
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
@@ -193,11 +212,7 @@
     (for [m flat-res]
       (merge m {:n-bugs (-> m :bug-ids count)})))
 
-;(->> (find-rev-commit gcc-repo commit-hash)
-;     (gitq/changed-files-with-patch gcc-repo)
-;     (spit "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931.diff"))
-;     ;(re-seq #"(?m)^-(?!--)") ; removed lines but not files
-;     ;count
-;     )
-     ;println)
+;(->> (atoms-changed-all-commits gcc-repo atoms)
+;     (take 1)
+;     pprint)
 
