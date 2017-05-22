@@ -73,4 +73,29 @@
       ))
     )
 
+  (testing "map-values"
+    (is (= {1 1 2 4 3 9} (map-values #(* %1 %1) {1 1 2 2 3 3})))
+    (is (= {1 "1a" 2 "2b" 3 "3c"} (map-values-kv #(str %1 %2) {1 \a 2 \b 3 \c})))
+    )
+
+  (testing "file-ext"
+    (let [cases [
+                 [nil "gcc/ChangeLog"]
+                 ["c" "gcc/random.c"]
+                 ["cpp" "gcc/random.cpp"]
+                 [nil "gcc/.gitignore"]
+                 [nil ".gitignore"]
+                 ["txt" "gcc/.gitignore.txt"]
+                 ["txt" ".gitignore.txt"]
+                 ]]
+
+      (doseq [[expected filename] cases]
+        (is (= expected (file-ext filename)) (list "=" expected filename)))
+    ))
+
+  (testing "dissoc-by"
+    (is (= (dissoc-by #(.contains (first %1) "bad")
+                      {"good1" 1, "bad1" 1, "good2" 2, "bad2" 2})
+           {"good1" 1, "good2" 2}))
+    )
   )

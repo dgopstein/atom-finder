@@ -90,6 +90,13 @@
     [(f (parse-source (commit-file-source repo parent-commit file-name)))
      (f (parse-source (commit-file-source repo rev-commit file-name)))]))
 
+(s/defn build-srcs
+  [source-before :- String source-after :- String]
+  {:ast-before (parse-source source-before)
+   :ast-after  (parse-source source-after)
+   :source-before source-before
+   :source-after  source-after})
+
 (s/defn before-after-data
   "Return the ast of changed files before/after a commit"
   [repo rev-commit :- RevCommit file-name]
@@ -97,13 +104,12 @@
         patch-str     (gitq/changed-files-with-patch repo rev-commit)
         source-before (commit-file-source repo parent-commit file-name)
         source-after  (commit-file-source repo rev-commit file-name)]
-    {:file file-name
-     ;:rev-commit (str rev-commit)
-     :patch-str  patch-str
-     :ast-before (parse-source source-before)
-     :ast-after  (parse-source source-after)
-     :source-before source-before
-     :source-after  source-after}))
+    (merge
+     {:file file-name
+      ;:rev-commit (str rev-commit)
+      :patch-str  patch-str
+      }
+     (build-srcs source-before source-after))))
 
 (defn atom-specific-srcs
   [srcs atom]
@@ -185,14 +191,14 @@
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
   (binding [*out* (clojure.java.io/writer filename)]
-    (println "[")
+    (println "(")
     (->> atoms
          (atoms-changed-all-commits repo)
          (map prn)
          ;(take 10)
          dorun
          time)
-    (println "[")
+    (println ")")
     ))
 
 ;(def filename "gcc-bugs-atoms_2017-03-28_200.edn")

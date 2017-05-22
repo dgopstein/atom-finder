@@ -8,6 +8,7 @@
             [atom-finder.atoms-in-dir :refer :all]
             [atom-finder.atom-patch :refer :all]
             [atom-finder.source-versions :refer :all]
+            [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.data.csv :as csv]
             [clojure.java.io :as io]
@@ -25,16 +26,3 @@
   ; 48 hours
   ;(time (log-atoms-changed-all-commits "gcc-bugs-atoms_2017-05-11_0.edn" gcc-repo atoms))
 )
-
-;(->> "macro-operator-precedence_redis_2017-03-10_1.edn"
-;     read-data
-;     (take 30)
-;     (found-atom-source :macro-operator-precedence)
-;     ;sum-found-atoms
-;     )
-
-;sum-found-atoms => {:macro-operator-precedence 1760}
-;sum-found-atoms => {:macro-operator-precedence  759} # After removing atomic macros (#define M1 123)
-
-;(atom-patch/atoms-changed-in-commit gcc-repo [(->> atom-lookup :omitted-curly-braces)] "bda4a41c0259cba62881181f08fc1e6fcc67d5f7")
-

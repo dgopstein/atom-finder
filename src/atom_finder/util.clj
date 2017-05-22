@@ -15,6 +15,9 @@
 ;;;   Completely generic utilities
 ;;;;;;
 
+
+(defn heap-size [] (.totalMemory (Runtime/getRuntime)))
+
 ;; print methods of java object
 ;; http://stackoverflow.com/questions/5821286/how-can-i-get-the-methods-of-a-java-class-from-clojure
 (defn java-methods
@@ -69,6 +72,9 @@
 
 (def not-empty? (comp not empty?))
 
+(defn trunc [s n]
+    (subs s 0 (min (count s) n)))
+
 (defn sym-diff
   "Set symmetric difference - the opposite of the intersection"
   [& args]
@@ -86,8 +92,10 @@
 (defn distinct-by [f col]
   (map first (vals (group-by f col))))
 
-(defn map-values [f m]
-  (reduce merge (map (fn [[k v]] {k (f v)}) m)))
+(defn map-values-kv [f m]
+  (reduce merge (map (fn [[k v]] {k (f k v)}) m)))
+
+(defn map-values [f m] (map-values-kv #(f %2) m))
 
 (def transpose (partial apply map vector))
 
@@ -127,7 +135,19 @@
 ; https://crossclj.info/ns/logicadb/0.1.0/com.kurogitsune.logicadb.core.html#_safe-nth
 (defn safe-nth [x n] (try (nth x n) (catch Exception e nil)))
 
+; https://rosettacode.org/wiki/Detect_division_by_zero#Clojure
+(defn safe-div [x y]
+  (try (/ x y)
+       (catch ArithmeticException _
+         ;(println "Division by zero caught!")
+         (cond (> x 0)   Double/POSITIVE_INFINITY
+               (zero? x) Double/NaN
+               :else     Double/NEGATIVE_INFINITY))))
+
 (def flatten1 (partial apply concat))
+
+;; Remove entries in a map based on a predicate
+(defn dissoc-by [f m] (->> m (filter (complement f)) (into {})))
 
 (defn avg [seq1] (/ (reduce + seq1) (count seq1)))
 
@@ -195,6 +215,12 @@
         p (.getParameterTypes m)]
     (alength p)))
 
+(defn file-ext [file-str]
+  "Get the file extension from a filename"
+  (some->>
+   file-str
+   (re-find #"(.*/)?[^/]+\.([^.]+)")
+   last))
 
 (defn children    [^IASTNode node] (.getChildren node))
 (defn parent      [^IASTNode node] (.getParent node))
@@ -368,6 +394,7 @@
   [filename]
   (some->> filename clojure.java.io/resource clojure.java.io/file .getPath))
 
+(def slurp-resource (comp slurp resource-path))
 
 (defn get-in-tree
   "Find a value in the AST by indexes"

@@ -15,6 +15,7 @@
        ClassLoader/getSystemResource
        clojure.java.io/file
        slurp
+       (#(if (= \) (last %1)) %1 (str %1 ")"))) ; read partial files
        read-string))
 
 ; TODO: delete this once log files are generated with hashes
