@@ -74,9 +74,8 @@
   (->> map-list
        (map keep-numeric-vals)
        (apply merge-with +)
-       (map-values-kv
-        (fn [k v]
-          (if (file-level-key? k) (long (/ v n-atoms)) v)))))
+       ;(map-values-kv (fn [k v] (if (file-level-key? k) (long (/ v n-atoms)) v)))
+       ))
 
 (defn stats-by-file-type
   [flat-data]
@@ -90,13 +89,16 @@
 
 (->> flat-data
      ;(filter #(= :omitted-curly-braces (:atom %)))
-     stats-by-file-type
+     (group-by (comp :atom))
+     (map-values stats-by-file-type)
      (def file-type-stats)
      time)
 
-(println (clojure.string/join "," (concat [".ext"] (keys (last (first file-type-stats))))))
-(for [[k v] file-type-stats]
-  (println (clojure.string/join "," (concat [k] (vals v)))))
+(do
+(println (clojure.string/join "," (concat ["atom" ".ext"] (->> file-type-stats first val first val keys))))
+(for [[atom exts] file-type-stats]
+  (for [[ext data] exts]
+    (println (clojure.string/join "," (concat [atom ext] (vals data)))))))
 
 
 (->> "~/opt/src/gcc/gcc/rtl.h"
