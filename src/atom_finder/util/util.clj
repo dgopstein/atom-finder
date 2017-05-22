@@ -1,4 +1,4 @@
-(ns atom-finder.util
+(ns atom-finder.util.util
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
             [schema.core :as s]

@@ -1,6 +1,6 @@
 (ns atom-finder.source-versions-test
   (:require [clojure.test :refer :all]
-            [atom-finder.util :refer :all]
+            [atom-finder.util.util :refer :all]
             [atom-finder.constants :refer :all]
             [atom-finder.patch :refer :all]
             [atom-finder.atom-patch :refer :all]

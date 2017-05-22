@@ -1,8 +1,8 @@
-(ns atom-finder.test-util
+(ns atom-finder.util.test-util
   (:require [clojure.string :as str]
             [clojure.test :refer :all]
             [atom-finder.classifier :refer :all]
-            [atom-finder.util :refer :all]
+            [atom-finder.util.util :refer :all]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]))

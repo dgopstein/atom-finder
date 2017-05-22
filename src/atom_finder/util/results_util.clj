@@ -1,5 +1,5 @@
-(ns atom-finder.results-util
-  (:require [atom-finder.util :refer :all]
+(ns atom-finder.util.results-util
+  (:require [atom-finder.util.util :refer :all]
             [clojure.string :as str]
             [schema.core :as s]
             )

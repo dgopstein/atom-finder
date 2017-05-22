@@ -1,7 +1,7 @@
 (ns atom-finder.atom-stats
   (:require
-   [atom-finder.util :refer :all]
-   [atom-finder.classifier-util :refer :all]
+   [atom-finder.util.util :refer :all]
+   [atom-finder.util.classifier-util :refer :all]
    [atom-finder.constants :refer :all]
    [atom-finder.comment-change :refer :all]
    [clojure.pprint :refer [pprint]]

@@ -1,5 +1,5 @@
 (ns atom-finder.change-distiller
-  (:require [atom-finder.util :refer :all]
+  (:require [atom-finder.util.util :refer :all]
             [clojure.string :as str]
             [schema.core :as s]
             )

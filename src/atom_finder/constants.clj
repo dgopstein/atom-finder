@@ -1,5 +1,5 @@
 (ns atom-finder.constants
-  (:require [atom-finder.util :refer :all]
+  (:require [atom-finder.util.util :refer :all]
             [clj-jgit.porcelain :as gitp]
             [omniconf.core :as cfg]))
 

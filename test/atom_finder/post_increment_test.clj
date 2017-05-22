@@ -1,9 +1,9 @@
 (ns atom-finder.post-increment-test
   (:require [clojure.test :refer :all]
             [schema.test]
-            [atom-finder.util :refer :all]
-            [atom-finder.test-util :refer :all]
-            [atom-finder.classifier-util :refer :all]
+            [atom-finder.util.util :refer :all]
+            [atom-finder.util.test-util :refer :all]
+            [atom-finder.util.classifier-util :refer :all]
             [atom-finder.classifier :refer :all]
             ))
 

@@ -1,5 +1,5 @@
 (ns atom-finder.count-subtrees
-  (:require [atom-finder.util :refer :all]
+  (:require [atom-finder.util.util :refer :all]
             [clojure.data.csv :as csv]
             [clojure.java.io  :as io]
             [clojure.string   :as string]

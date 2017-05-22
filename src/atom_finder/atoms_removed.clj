@@ -1,5 +1,5 @@
 (ns atom-finder.atoms-removed
-  (:require [atom-finder.util :refer :all]
+  (:require [atom-finder.util.util :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.comment_change :refer :all]
             [atom-finder.atom-patch :refer :all]

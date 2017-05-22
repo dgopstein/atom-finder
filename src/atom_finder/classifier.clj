@@ -1,6 +1,6 @@
 (ns atom-finder.classifier
-  (:require [atom-finder.util :refer :all]
-            [atom-finder.classifier-util :refer :all]
+  (:require [atom-finder.util.util :refer :all]
+            [atom-finder.util.classifier-util :refer :all]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]

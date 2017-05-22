@@ -1,9 +1,9 @@
 (ns atom-finder.patch-test
   (:require [clojure.test :refer :all]
-            [atom-finder.util :refer :all]
+            [atom-finder.util.util :refer :all]
             [atom-finder.constants :refer :all]
             [atom-finder.patch :refer :all]
-            [atom-finder.results-util :refer :all]
+            [atom-finder.util.results-util :refer :all]
             [clojure.pprint :refer :all]
             ))
 

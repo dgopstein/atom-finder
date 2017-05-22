@@ -1,5 +1,5 @@
 (ns atom-finder.atoms-in-dir
-  (:require [atom-finder.util :refer :all]
+  (:require [atom-finder.util.util :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.constants :refer :all]
             ))
