@@ -26,18 +26,25 @@
             (for [field fields]
               `(set! (. ~writer ~field) false)))))
 
-
-(defn write-node [node]
+(defn SingleNodeVisitor []
   (let [modificationStore (ASTModificationStore.)
         commentMap (NodeCommentMap.)
-        writer (ChangeGeneratorWriterVisitor. modificationStore nil commentMap)]
+        ;writer-visitor (ChangeGeneratorWriterVisitor. modificationStore nil commentMap)]
+        ]
+    (proxy [ChangeGeneratorWriterVisitor] [modificationStore nil commentMap]
+      (visit [node]
+        (visit-nothing this)
+        (proxy-super visit node))
+      )))
 
-    (visit-nothing writer)
+(SingleNodeVisitor)
 
+(defn write-node [node]
+  (let [writer-visitor (SingleNodeVisitor)]
 		(when (not (nil? node))
-			(.accept node writer))
+			(.accept node writer-visitor))
 
-		(.toString writer)
+		(.toString writer-visitor)
   ))
 
 (->> "a + b"
