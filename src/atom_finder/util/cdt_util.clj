@@ -1,7 +1,6 @@
-(ns atom-finder.util.util
-  (:require [clojure.reflect :as r]
-            [clojure.string :as str]
-            [schema.core :as s]
+(in-ns 'atom-finder.classifier)
+(ns atom-finder.util.cdt-util
+  (:require [schema.core :as s]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
@@ -10,177 +9,6 @@
            [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
            [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
            [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
-
-;;;;;;
-;;;   Completely generic utilities
-;;;;;;
-
-
-(defn heap-size [] (.totalMemory (Runtime/getRuntime)))
-
-;; print methods of java object
-;; http://stackoverflow.com/questions/5821286/how-can-i-get-the-methods-of-a-java-class-from-clojure
-(defn java-methods
-  "list methods of java object"
-  [obj]
-  (->> obj
-       r/reflect
-       (:members)
-       ;(filter :exception-types)
-       (map #(dissoc % :exception-types))
-       (map #(dissoc % :declaring-class))
-       (sort-by :name)
-       ))
-
-(defn public-methods
-  "list public methods of java object"
-  [obj]
-  (->> obj
-       (java-methods)
-       (filter #(:public (:flags %)))
-       ))
-
-(defn ppublic-methods
-  "print public methods of java object"
-  [obj]
-  (->> obj
-       (public-methods)
-       (print-table)
-       ))
-
-(defn errln [& s]
-  (binding [*out* *err*]
-      (println (apply str s))))
-
-(defmacro %w [& words]
-    `(list ~@(map str (vec words))))
-
-(defn tap [f x] (f x) x)
-(defn pap [x] (tap prn x)) ; print the value of variable and return it
-
-(defmacro =by
-  "Test if arguments are equal after applying f to all of them"
-  [f & args]
-  `(= ~@(map #(list f %) args)))
-
-; print the name and value of an expression
-(defmacro pprn [x]
-  `(let [y# ~x]
-    (do
-      (print (str ~(str x ": ") (prn-str y#)))
-      y#)))
-
-(def not-empty? (comp not empty?))
-
-(defn trunc [s n]
-    (subs s 0 (min (count s) n)))
-
-(defn sym-diff
-  "Set symmetric difference - the opposite of the intersection"
-  [& args]
-  (clojure.set/difference
-   (apply clojure.set/union args)
-   (apply clojure.set/intersection args)))
-
-(def any-pred? (comp boolean some))
-(defn exists?
-  ([lst] (any-pred? true? lst))
-  ([pred lst] (any-pred? pred lst)))
-
-(def range-from (partial iterate inc))
-
-(defn distinct-by [f col]
-  (map first (vals (group-by f col))))
-
-(defn map-values-kv [f m]
-  (reduce merge (map (fn [[k v]] {k (f k v)}) m)))
-
-(defn map-values [f m] (map-values-kv #(f %2) m))
-
-(def transpose (partial apply map vector))
-
-(defn slurp-lines [file]
-    (str/split-lines (slurp file)))
-
-(defn count-lines [str]
-    (count (filter #{\newline} str)))
-
-(defn line-range [min max s]
-  "return the line of a string between [min max)"
-  (->> s str/split-lines
-       (drop (dec min))
-       (take (- max min))))
-
-(defn close?
-  "Are two numbers approximately equal"
-  [tolerance x y]
-     (< (Math/abs (- x y)) tolerance))
-
-(defn strict-get
-  "Lookup value in collection and throw exception if it doesn't exist"
-  [m k]
-  (if-let [[k v] (find m k)]
-    v
-        (throw (Exception. (str "Key Not Found " k)))))
-
-; http://stackoverflow.com/questions/43213573/get-in-for-lists/43214175#43214175
-(defn get-nth-in [init ks]
-  (reduce
-   (fn [a k]
-     (if (associative? a)
-       (get a k)
-       (nth a k)))
-   init ks))
-
-; https://crossclj.info/ns/logicadb/0.1.0/com.kurogitsune.logicadb.core.html#_safe-nth
-(defn safe-nth [x n] (try (nth x n) (catch Exception e nil)))
-
-; https://rosettacode.org/wiki/Detect_division_by_zero#Clojure
-(defn safe-div [x y]
-  (try (/ x y)
-       (catch ArithmeticException _
-         ;(println "Division by zero caught!")
-         (cond (> x 0)   Double/POSITIVE_INFINITY
-               (zero? x) Double/NaN
-               :else     Double/NEGATIVE_INFINITY))))
-
-(def flatten1 (partial apply concat))
-
-;; Remove entries in a map based on a predicate
-(defn dissoc-by [f m] (->> m (filter (complement f)) (into {})))
-
-(defn avg [seq1] (/ (reduce + seq1) (count seq1)))
-
-(defn min-of [lst]
-  "Min with a list argument"
-  (if (empty? lst) nil
-    (apply min lst)))
-
-(defn max-of [lst]
-  "Max with a list argument"
-  (if (empty? lst) nil
-    (apply max lst)))
-
-(defn group-dissoc
-  "Group a list of maps by a key, then dissoc that key"
-  [key coll]
-  (->> coll (group-by key) (map-values (partial map #(dissoc % key)))))
-
-; https://gist.github.com/sunng87/13700d3356d5514d35ad
-(defn invoke-private-method [obj fn-name-string & args]
-  (let [m (first (filter (fn [x] (.. x getName (equals fn-name-string)))
-                         (.. obj getClass getDeclaredMethods)))]
-    (. m (setAccessible true))
-    (. m (invoke obj args))))
-
-(defn private-field [obj fn-name-string]
-  (let [m (.. obj getClass (getDeclaredField fn-name-string))]
-    (. m (setAccessible true))
-        (. m (get obj))))
-
-;;;;;;;;
-;;   Specific to this project
-;;;;;;;
 
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))
@@ -209,18 +37,6 @@
     (.getASTTranslationUnit (GPPLanguage/getDefault)
                             (FileContent/create filename (.toCharArray source))
                             info emptyIncludes nil opts log)))
-
-(defn arg-count [f]
-  (let [m (first (.getDeclaredMethods (class f)))
-        p (.getParameterTypes m)]
-    (alength p)))
-
-(defn file-ext [file-str]
-  "Get the file extension from a filename"
-  (some->>
-   file-str
-   (re-find #"(.*/)?[^/]+\.([^.]+)")
-   last))
 
 (defn children    [^IASTNode node] (.getChildren node))
 (defn parent      [^IASTNode node] (.getParent node))
@@ -278,25 +94,6 @@
 
 (def ast-writer (ASTWriter.))
 (defn write-ast [node] (.write ast-writer node))
-
-;; http://stackoverflow.com/questions/23178750/iteratively-apply-function-to-its-result-without-generating-a-seq
-(defn fn-pow
-  [f x n]
-    (nth (iterate f x) n))
-
-; https://gist.github.com/micmarsh/bcbe19c9de8bb7a471bf
-(defn flip [function]
-  (fn
-    ([] (function))
-    ([x] (function x))
-    ([x y] (function y x))
-    ([x y z] (function z y x))
-    ([a b c d] (function d c b a))
-    ([a b c d & rest]
-     (->> rest
-          (concat [a b c d])
-          reverse
-          (apply function)))))
 
 (defn all-parents
   "Get the all grandparents of the node"
@@ -369,33 +166,6 @@
        (map parent)
        distinct))
 
-(defn count-nodes
-  "Count the size of the ast"
-  [node]
-    (inc (reduce + (map count-nodes (children node)))))
-
-(defn c-files
-  "Search directory structure for C-like files"
-  [dirname]
-  (let [dirfile  (clojure.java.io/file dirname)
-        files (file-seq dirfile)
-        exts #{"c" "cc" "cpp" "c++" "h" "hh" "hpp" "h++"}]
-
-    (filter
-     (fn [file]
-       (and
-        (exts (nth (re-find #".*\.([^.]+)" (.getName file)) 1 nil))
-        (.isFile file))
-       )
-     files)))
-
-(defn resource-path
-  "Find the path to a resource"
-  [filename]
-  (some->> filename clojure.java.io/resource clojure.java.io/file .getPath))
-
-(def slurp-resource (comp slurp resource-path))
-
 (defn get-in-tree
   "Find a value in the AST by indexes"
   [indices node]
@@ -403,21 +173,6 @@
     (nil? node) nil
     (empty? indices) node
     :else (recur (rest indices) (nth (children node) (first indices) nil))))
-
-(defn expand-home [s]
-  (if (clojure.string/starts-with? s "~")
-    (str/replace-first s "~" (System/getProperty "user.home"))
-        s))
-
-(defn write-tempfile
-  [content]
-  ; https://github.com/clojure-cookbook/clojure-cookbook/blob/master/04_local-io/4-10_using-temp-files.asciidoc
-  (let [my-temp-file (java.io.File/createTempFile "filename" ".txt")]
-    (with-open [file (clojure.java.io/writer my-temp-file)]
-      (binding [*out* file]
-        (print content)))
-
-    my-temp-file))
 
 (defn parse-source
   "Turn a string of C source code into an AST"
@@ -444,18 +199,6 @@
   "Parse a file in the resource directory"
   [filename]
   (->> filename resource-path parse-file))
-
-(defn find-after
-  "Take the element after the specified one"
-  [coll elem]
-  (->> (map vector coll (rest coll))
-       (filter #(= elem (first %)))
-       first
-       last))
-
-(def find-first (comp first (partial filter)))
-
-(def map-kv (comp (partial into {}) (partial map)))
 
 ; core/org.eclipse.cdt.core/parser/org/eclipse/cdt/internal/core/dom/rewrite/changegenerator/ChangeGenerator.java:getNextSiblingNode(IASTNode node)
 (s/defn next-sibling :- (s/maybe IASTNode)
@@ -502,9 +245,6 @@
 (def start-line (comp :start-line loc))
 (def end-line (comp :end-line loc))
 
-(defn errln "println to stderr" [s]
-  (binding [*out* *err*] (println s)))
-
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
 
 (defn all-comments [node] (->> node root-ancestor .getComments (into [])))
@@ -523,19 +263,7 @@
 
        (println "===================================================")))))
 
-(defn pmap-dir-nodes
-  "Apply a function to the AST of every c file in a directory"
-  [f dirname]
-          (pmap
-           (fn [file]
-             (let [filename (.getPath file)]
-               (try
-                 (f (parse-file filename))
-                 (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
-                 (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
-               )
-             ))
-
-           (c-files dirname)))
-
-
+(defn count-nodes
+  "Count the size of the ast"
+  [node]
+    (inc (reduce + (map count-nodes (children node)))))
