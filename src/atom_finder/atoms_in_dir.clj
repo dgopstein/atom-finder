@@ -20,7 +20,7 @@
   "Find all preprocessor directives not at the top level in directory"
   [dirname atoms]
   (->> dirname
-       (pmap-dir-nodes
+       (pmap-dir-files
         #(vector %1
                (->> %1
                     parse-file

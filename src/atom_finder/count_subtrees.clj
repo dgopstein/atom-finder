@@ -101,7 +101,7 @@
 
 (defn count-in-dir
   [f dirname]
-  (reduce (partial merge-with +) (pmap-dir-nodes f dirname)))
+  (reduce (partial merge-with +) (pmap-dir-files (comp f parse-file) dirname)))
 
 (defn count-nodes-in-dir [dirname]
   (count-in-dir count-nodes dirname))

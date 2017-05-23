@@ -30,7 +30,7 @@
     (str/replace-first s "~" (System/getProperty "user.home"))
         s))
 
-(defn pmap-dir-nodes
+(defn pmap-dir-files
   "Apply a function to the AST of every c file in a directory"
   [f dirname]
           (pmap
