@@ -1,4 +1,5 @@
 (in-ns 'atom-finder.util)
+(require '[clojure.test :refer :all])
 
 (defn find-lines
   "Find all lines marked with <true> in test file"

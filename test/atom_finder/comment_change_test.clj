@@ -1,10 +1,8 @@
 (ns atom-finder.comment-change-test
   (:require [clojure.test :refer :all]
             [schema.test]
-            [atom-finder.util.util :refer :all]
-            [atom-finder.util.test-util :refer :all]
+            [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
-            [atom-finder.util.classifier-util :refer :all]
             [atom-finder.comment-change :refer :all]
             ))
 

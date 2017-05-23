@@ -1,11 +1,9 @@
 (ns atom-finder.omitted-curly-braces-test
   (:require [clojure.test :refer :all]
             [schema.test]
-            [atom-finder.util.util :refer :all]
-            [atom-finder.util.classifier-util :refer :all]
+            [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.constants :refer :all]
-            [atom-finder.util.test-util :refer :all]
             ))
 
 (use-fixtures :once schema.test/validate-schemas)

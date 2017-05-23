@@ -1,4 +1,8 @@
-(in-ns 'atom-finder.classifier)
+(in-ns 'atom-finder.util)
+(import '(org.eclipse.cdt.core.dom.ast
+          IASTNode IASTExpression IASTExpressionList IASTUnaryExpression
+          IASTBinaryExpression IASTLiteralExpression IASTForStatement
+          IASTFunctionDefinition))
 
 (defn default-finder [classifier] (partial filter-tree classifier))
 

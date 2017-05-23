@@ -1,5 +1,5 @@
 (ns atom-finder.atoms-in-dir
-  (:require [atom-finder.util.util :refer :all]
+  (:require [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.constants :refer :all]
             ))
@@ -21,8 +21,9 @@
   [dirname atoms]
   (->> dirname
        (pmap-dir-nodes
-        #(vector (.getFilePath %1)
+        #(vector %1
                (->> %1
+                    parse-file
                     (all-atoms-in-tree atoms)
                     (map-values (partial map (comp :line loc)))
                     )))

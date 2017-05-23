@@ -1,6 +1,6 @@
 (ns atom-finder.util-test
   (:require [clojure.test :refer :all]
-            [atom-finder.util.util :refer :all]
+            [atom-finder.util :refer :all]
             )
   (:import
            [org.eclipse.cdt.core.dom.ast IASTLiteralExpression]))

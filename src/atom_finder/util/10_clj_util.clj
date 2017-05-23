@@ -1,7 +1,4 @@
-(ns atom-finder.util.clj-util
-  (:require  [clojure.string :as str]
-             [schema.core :as s])
-  (:use     [clojure.pprint :only [pprint print-table]]))
+(in-ns 'atom-finder.util)
 
 (defmacro %w [& words]
     `(list ~@(map str (vec words))))

@@ -1,6 +1,6 @@
 (ns atom-finder.patch
   (:require
-   [atom-finder.util.util :refer :all]
+   [atom-finder.util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string])
   (:import

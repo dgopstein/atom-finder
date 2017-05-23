@@ -1,5 +1,5 @@
 (ns atom-finder.core
-  (:require [atom-finder.util.util :refer :all]
+  (:require [atom-finder.util :refer :all]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]

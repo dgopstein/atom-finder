@@ -1,6 +1,6 @@
 (ns atom-finder.ast-diff
   (:require
-   [atom-finder.util.util :refer :all]
+   [atom-finder.util :refer :all]
    [atom-finder.constants :refer :all]
    [clojure.pprint :refer [pprint]]
    [schema.core :as s]

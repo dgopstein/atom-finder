@@ -1,6 +1,4 @@
-(ns atom-finder.util.fs-util
-  (:require [schema.core :as s])
-  (:use     [clojure.pprint :only [pprint print-table]]))
+(in-ns 'atom-finder.util)
 
 (defn c-files
   "Search directory structure for C-like files"
@@ -39,7 +37,7 @@
            (fn [file]
              (let [filename (.getPath file)]
                (try
-                 (f (parse-file filename))
+                 (f filename)
                  (catch Exception e (printf "-- exception parsing file: \"%s\"\n" filename))
                  (catch Error e     (printf "-- error parsing file: \"%s\"\n" filename))
                )

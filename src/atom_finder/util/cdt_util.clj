@@ -1,4 +1,4 @@
-(in-ns 'atom-finder.classifier)
+(in-ns 'atom-finder.util)
 
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))

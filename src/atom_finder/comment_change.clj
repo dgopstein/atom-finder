@@ -1,5 +1,5 @@
 (ns atom-finder.comment-change
-  (:require [atom-finder.util.util :refer :all]
+  (:require [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.change-distiller :refer :all]
             [clojure.string :as str]

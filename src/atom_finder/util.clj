@@ -1,5 +1,5 @@
 (ns atom-finder.util
-  (:require [clojure.reflect :as r]
+  (:require [clojure.reflect :as rflct]
             [clojure.string :as str]
             [schema.core :as s])
   (:use     [clojure.pprint :only [pprint print-table]])
@@ -13,16 +13,18 @@
 
 (s/set-fn-validation! true) ; Globally turn on schema validation
 
-(defn classifier-files []
-  (->> "atom_finder/classifier/"
+(defn load-cljs-in-dir
+  [dir] ; e.g. "classifier/"
+  (->> dir
+       (str "atom_finder/")
        ClassLoader/getSystemResource
        clojure.java.io/file
        file-seq
        (map (memfn getName))
        (filter #(str/ends-with? % ".clj"))
        (map #(str/replace % #"\.clj$" ""))
-       (map (partial str "classifier/"))
-       ))
+       (map (partial str dir))
+       (apply load)
+  ))
 
-; Load all files in the classifier directory
-(apply load (classifier-files))
+(load-cljs-in-dir "util/")

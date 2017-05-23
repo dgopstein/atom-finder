@@ -1,5 +1,5 @@
 (ns atom-finder.tree-diff
-  (:require [atom-finder.util.util :refer :all]
+  (:require [atom-finder.util :refer :all]
             [clojure.string :as str]
             [schema.core :as s]
             )
