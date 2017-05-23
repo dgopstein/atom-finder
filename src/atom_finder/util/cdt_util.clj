@@ -1,14 +1,4 @@
 (in-ns 'atom-finder.classifier)
-(ns atom-finder.util.cdt-util
-  (:require [schema.core :as s]
-            )
-  (:use     [clojure.pprint :only [pprint print-table]])
-  (:import
-           [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement]
-           [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
-           [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
-           [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
-           [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
 
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))

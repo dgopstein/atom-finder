@@ -1,8 +1,4 @@
-(ns atom-finder.util.jvm-util
-  (:require [clojure.reflect :as rflct]
-            [schema.core :as s]
-            )
-  (:use     [clojure.pprint :only [pprint print-table]]))
+(in-ns 'atom-finder.util)
 
 (defn heap-size [] (.totalMemory (Runtime/getRuntime)))
 

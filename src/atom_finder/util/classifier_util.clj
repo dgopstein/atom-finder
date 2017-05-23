@@ -1,12 +1,4 @@
-(ns atom-finder.util.classifier-util
-  (:require [atom-finder.util.util :refer :all]
-            [clojure.string :as str]
-            [schema.core :as s]
-            )
-  (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression
-            IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression
-            IASTExpressionList IASTForStatement IASTFunctionDefinition]))
+(in-ns 'atom-finder.classifier)
 
 (defn default-finder [classifier] (partial filter-tree classifier))
 

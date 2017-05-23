@@ -1,6 +1,4 @@
-(ns atom-finder.util.collection-util
-  (:require [schema.core :as s]))
-
+(in-ns 'atom-finder.util)
 
 (def not-empty? (comp not empty?))
 
