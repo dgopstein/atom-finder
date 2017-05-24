@@ -56,6 +56,9 @@
   [f x n]
     (nth (iterate f x) n))
 
+;; https://stackoverflow.com/questions/44166399/clojure-equivalent-of-scalas-andthen
+(defn and-then [& fns] (apply comp (reverse fns)))
+
 ; https://gist.github.com/micmarsh/bcbe19c9de8bb7a471bf
 (defn flip [function]
   (fn

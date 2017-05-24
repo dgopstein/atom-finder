@@ -54,7 +54,9 @@
         (proxy-super visit node))
       )))
 
-(defn write-node :- s/Str [node :- IASTNode]
+(s/defn write-node-type :- s/Str [node :- IASTNode] (str "<" (typename node) ">"))
+
+(s/defn write-node :- s/Str [node :- IASTNode]
   (let [writer-visitor (SingleNodeVisitor)]
 		(when (not (nil? node))
 			(.accept node writer-visitor))
@@ -65,12 +67,10 @@
         node-str))
   ))
 
-(s/defn write-node-type :- s/Str [node :- IASTNode] (str "<" (typename node) ">"))
-
 (s/defn write-node-valueless :- s/Str
   "Don't write variable names, instead use their type"
   [node :- IASTNode]
-  ((if (instance? IASTName node)
+  ((if (exists? #(instance? % node) [IASTName IASTLiteralExpression])
     write-node-type
     write-node)
    node))
@@ -80,3 +80,4 @@
   ([depth root]
    (concat [(str (str/join (repeat depth " ")) (write-node root))]
            (mapcat (partial write-nodes-with-depth (inc depth)) (children root)))))
+

@@ -5,7 +5,8 @@
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
    [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition
-    IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement IASTName]
+    IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement IASTName
+    IASTBinaryExpression]
    [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
    [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
    [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]))
