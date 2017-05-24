@@ -98,6 +98,9 @@
 (defn flatten-tree [node]
   (conj (mapcat flatten-tree (children node)) node))
 
+(defn flatten-tree-inorder [node]
+  (conj (mapcat flatten-tree (children node)) node))
+
 (defn mapcat-tree [f node]
   (map f (flatten-tree node)))
 

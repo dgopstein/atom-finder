@@ -1,7 +1,6 @@
 (ns atom-finder.comment-change
   (:require [atom-finder.util :refer :all]
-            [atom-finder.classifier :refer :all]
-            [atom-finder.change-distiller :refer :all]
+            [atom-finder.tree-diff.difflib :refer :all]
             [clojure.string :as str]
             [schema.core :as s]
             )
@@ -37,16 +36,6 @@
 (defn atom-finder-comments
   [atom root]
   (atom-comments ((:finder atom) root) (all-comments root)))
-
-(s/defn diff-by :- [{:delta Delta :original s/Any :revised s/Any}]
-  [f cmnts-a :- s/Any cmnts-b :- s/Any]
-  (->>
-   (DiffUtils/diff (->> cmnts-a (map f)) (->> cmnts-b (map f)))
-   .getDeltas
-   (map (fn [c] {:delta c
-                 :original (->> c .getOriginal .getPosition (safe-nth cmnts-a))
-                 :revised (->> c .getRevised .getPosition (safe-nth cmnts-b))}))
-   ))
 
 (s/defn comments-added
   "Which comments were added near atoms"

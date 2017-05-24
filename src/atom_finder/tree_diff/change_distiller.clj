@@ -1,4 +1,4 @@
-(ns atom-finder.change-distiller
+(ns atom-finder.tree-diff.change-distiller
   (:require [atom-finder.util :refer :all]
             [clojure.string :as str]
             [schema.core :as s]

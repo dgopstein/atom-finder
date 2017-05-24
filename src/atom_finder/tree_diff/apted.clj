@@ -1,4 +1,4 @@
-(ns atom-finder.ast-diff
+(ns atom-finder.tree-diff.apted
   (:require
    [atom-finder.util :refer :all]
    [atom-finder.constants :refer :all]

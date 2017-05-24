@@ -1,8 +1,6 @@
-(ns atom-finder.atoms-removed
+(ns atom-finder.tree-diff.difflib
   (:require [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
-            [atom-finder.comment_change :refer :all]
-            [atom-finder.atom-patch :refer :all]
             [clojure.string :as str]
             [schema.core :as s]
             )
@@ -11,6 +9,30 @@
            [difflib DiffUtils Delta Delta$TYPE]
            ))
 
+
+(s/defn diff-by :- [{:delta Delta :original s/Any :revised s/Any}]
+  [f cmnts-a :- [s/Any] cmnts-b :- [s/Any]]
+  (->>
+   (DiffUtils/diff (->> cmnts-a (map f)) (->> cmnts-b (map f)))
+   .getDeltas
+   (map (fn [c] {:delta c
+                 :original (->> c .getOriginal .getPosition (safe-nth cmnts-a))
+                 :revised (->> c .getRevised .getPosition (safe-nth cmnts-b))}))
+   ))
+
+(->> "2 + 3 + 6" parse-frag flatten-tree (map write-node))
+(->> (diff-by write-node (->> "1 + 2 + 5" parse-frag flatten-tree-inorder) (->> "2 + 3 + 6" parse-frag flatten-tree-inorder))
+     ;count
+     (map :revised)
+     (map write-node)
+     )
+
+(s/defn correspondence
+  "Find a mapping between nodes of two ASTs"
+  [a :- IASTNode b :- IASTNode]
+
+  (diff (->> a flatten-tree) (->> flatten-tree b))
+  )
 
 ;(def srcs
 ;  (let [pre-srcs (build-srcs (slurp-resource "atoms-removed-before.c") (slurp-resource "atoms-removed-after.c"))]
