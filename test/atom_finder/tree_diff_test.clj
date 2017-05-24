@@ -63,4 +63,17 @@
       (doseq [[expected a b] cases]
         (is (= expected (node= (parse-frag a) (parse-frag b)))
             [expected (str "'" a "' '" b"'")])
-      ))))
+        ))))
+
+(deftest atoms-removed-test
+  (testing "Which atoms are removed between files"
+    (let [atms-rmvd (atoms-removed
+                     (:finder (atom-lookup :post-increment))
+                     (parse-resource "atoms-removed-before.c")
+                     (parse-resource "atoms-removed-after.c"))
+          lines     (map start-line atms-rmvd)
+          expected-lines (find-lines #"<true>" (resource-path "atoms-removed-after.c"))]
+
+      (is (= expected-lines lines))
+      )
+    ))
