@@ -42,10 +42,6 @@
 
 (defn visit-nothing! [writer] (should-visit! writer false))
 (defn visit-everything! [writer] (should-visit! writer true))
-(defn visit-everything-but-names! [writer]
-  (should-visit! writer true)
-  (set! (. writer shouldVisitNames) false)
-  writer)
 
 (defn SingleNodeVisitor []
   (let [modificationStore (ASTModificationStore.)
@@ -65,9 +61,19 @@
 
 		(let [node-str (str/replace (.toString writer-visitor) #"\s" "")]
       (if (empty? node-str)
-        (str "<" (typename node) ">")
+        (write-node-type node)
         node-str))
   ))
+
+(s/defn write-node-type :- s/Str [node :- IASTNode] (str "<" (typename node) ">"))
+
+(s/defn write-node-valueless :- s/Str
+  "Don't write variable names, instead use their type"
+  [node :- IASTNode]
+  ((if (instance? IASTName node)
+    write-node-type
+    write-node)
+   node))
 
 (s/defn write-nodes-with-depth :- [s/Str]
   ([root :- IASTNode] (write-nodes-with-depth 0 root))
