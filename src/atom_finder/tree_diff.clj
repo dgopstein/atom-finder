@@ -28,6 +28,7 @@
 ;(def b-ast (parse-resource "atoms-removed-after.c"))
 ;(def a (->> a-ast flatten-tree-infixy))
 ;(def b (->> b-ast flatten-tree-infixy))
+;(def post-increment-finder (:finder (atom-finder.classifier/atom-lookup :post-increment)))
 
 (s/defn atoms-removed [finder a :- IASTNode b :- IASTNode]
   (let [a-seq (flatten-tree-infixy a)
@@ -37,6 +38,12 @@
     (->> a finder
          (filter #(not (node= %1 (a->b %1))))
          )))
+
+;(->> (correspondence a b) (def corrs))
+;(->> a-ast post-increment-finder ((flip nth) 2) write-ast)
+;(->> corrs (map (fn [[k v]] [(write-ast k) (write-ast v)])) pprint)
+;(->> (atoms-removed post-increment-finder a-ast b-ast)
+;     (map write-ast))
 
 ;; two files
 ;; corresponding diffs
