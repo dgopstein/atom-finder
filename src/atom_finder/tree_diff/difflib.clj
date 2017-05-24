@@ -20,11 +20,11 @@
                  :revised (->> c .getRevised .getPosition (safe-nth cmnts-b))}))
    ))
 
-(->> "2 + 3 + 6" parse-frag flatten-tree (map write-node))
-(->> (diff-by write-node (->> "1 + 2 + 5" parse-frag flatten-tree-inorder) (->> "2 + 3 + 6" parse-frag flatten-tree-inorder))
+(->> (diff-by write-node (->> "1 + 2 + 5" parse-frag flatten-tree-infixy) (->> "2 + 3 + 6" parse-frag flatten-tree-infixy))
      ;count
-     (map :revised)
-     (map write-node)
+     ;(map :revised)
+     ;(map write-node)
+     (map :delta)
      )
 
 (s/defn correspondence

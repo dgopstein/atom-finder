@@ -40,10 +40,12 @@
               `(set! (. ~writer ~field) ~val))
             [writer])))
 
-(pprint (macroexpand-1 '(should-visit! writer false)))
-
 (defn visit-nothing! [writer] (should-visit! writer false))
 (defn visit-everything! [writer] (should-visit! writer true))
+(defn visit-everything-but-names! [writer]
+  (should-visit! writer true)
+  (set! (. writer shouldVisitNames) false)
+  writer)
 
 (defn SingleNodeVisitor []
   (let [modificationStore (ASTModificationStore.)
@@ -56,7 +58,7 @@
         (proxy-super visit node))
       )))
 
-(defn write-node [node]
+(defn write-node :- s/Str [node :- IASTNode]
   (let [writer-visitor (SingleNodeVisitor)]
 		(when (not (nil? node))
 			(.accept node writer-visitor))
@@ -67,33 +69,8 @@
         node-str))
   ))
 
-(gen-interface
- :name atom-finder.util.INodes
-   :methods [[nodes [] clojure.lang.PersistentVector]])
-
-(defn FlattenInorderVisitor []
-  (let [ns (atom [])]
-    (visit-everything!
-     (proxy [ASTVisitor atom-finder.util.INodes] []
-      (visit [node]
-        (pprn node)
-        (swap! ns #(conj % node))
-        1
-        )
-      (nodes [] @ns)
-        ))))
-
-(defn flatten-tree-inorder [node]
-  (let [flatten-visitor (FlattenInorderVisitor)]
-		(when node
-			(.accept node flatten-visitor))
-
-    (.nodes flatten-visitor)
-    ))
-
-(->> "1 + 2"
-     parse-frag
-     ;flatten-tree
-     flatten-tree-inorder
-     ;(map write-node)
-     )
+(s/defn write-nodes-with-depth :- [s/Str]
+  ([root :- IASTNode] (write-nodes-with-depth 0 root))
+  ([depth root]
+   (concat [(str (str/join (repeat depth " ")) (write-node root))]
+           (mapcat (partial write-nodes-with-depth (inc depth)) (children root)))))

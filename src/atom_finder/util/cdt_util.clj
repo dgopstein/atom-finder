@@ -98,8 +98,12 @@
 (defn flatten-tree [node]
   (conj (mapcat flatten-tree (children node)) node))
 
-(defn flatten-tree-inorder [node]
-  (conj (mapcat flatten-tree (children node)) node))
+(defn flatten-tree-infixy [node]
+  "Approximate an in-order flattening"
+  (if (instance? IASTBinaryExpression node)
+    (concat (flatten-tree-infixy (.getOperand1 node)) [node]
+            (flatten-tree-infixy (.getOperand2 node)))
+    (cons node (mapcat flatten-tree-infixy (children node)))))
 
 (defn mapcat-tree [f node]
   (map f (flatten-tree node)))
