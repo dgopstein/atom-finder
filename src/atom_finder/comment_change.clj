@@ -43,7 +43,7 @@
   (->>
    (diff-by str (->> srcs :ast-before all-comments) (->> srcs :ast-after all-comments))
    (filter #(->> % :delta .getType (= Delta$TYPE/INSERT)))
-   (map :revised)
+   (mapcat :revised)
    ))
 
 (defn atom-comments-added
