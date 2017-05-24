@@ -8,8 +8,7 @@
     IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement]
    [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
    [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
-   [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
-   [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]))
+   [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]))
 
 (s/set-fn-validation! true) ; Globally turn on schema validation
 

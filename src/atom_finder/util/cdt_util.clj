@@ -51,24 +51,6 @@
              (pre-tree f iast-node (inc index)))
            ret))))
 
-(defn print-tree [node]
-  (letfn
-      [(f [node index]
-         (let [offset (format " (offset: %s, %s)"
-                              (-> node .getFileLocation .getNodeOffset)
-                              (-> node .getFileLocation .getNodeLength))]
-
-           (printf "%s -%s %s -> %s\n"
-                   (apply str (repeat index "  "))
-                   (-> node .getClass .getSimpleName)
-                   offset
-                   (-> node .getRawSignature
-                       (str "           ")
-                       (.subSequence 0 10)
-                       (.replaceAll "\n" " \\ ")))))]
-
-    (pre-tree f node)))
-
 (defn depth [node]
   (inc
    (apply max 0
@@ -81,9 +63,6 @@
   (if (leaf? node)
     node
     (flatten (map leaves (children node)))))
-
-(def ast-writer (ASTWriter.))
-(defn write-ast [node] (.write ast-writer node))
 
 (defn all-parents
   "Get the all grandparents of the node"

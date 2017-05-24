@@ -99,3 +99,23 @@
            {"good1" 1, "good2" 2}))
     )
   )
+
+(deftest writer-util-test
+  (testing "write-node"
+    (let [cases [
+                 ["+" "a + b"]
+                 [";" "a + b;"]
+                 ["<IdExpression>" "a"]
+                 ["b" "b" [0]]
+                 ["int" "int a;" [0 0]]
+                 ["()" "f(1)"]
+                 ["3" "3"]
+                 ["*" "*c"]
+                 ["++" "d++"]
+                 ["?:" "1 ? 2 : 3"]
+                 ]]
+
+      (doseq [[expected frag idx] cases]
+        (is (= expected (->> frag parse-frag ((if idx (partial get-in-tree idx) identity)) write-node)) (prn-str [expected frag])))
+    ))
+  )
