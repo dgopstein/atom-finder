@@ -5,7 +5,7 @@
   [dirname]
   (let [dirfile  (clojure.java.io/file dirname)
         files (file-seq dirfile)
-        exts #{"c" "cc" "cpp" "c++" "h" "hh" "hpp" "h++"}]
+        exts #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"}]
 
     (filter
      (fn [file]

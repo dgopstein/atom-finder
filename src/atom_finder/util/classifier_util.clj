@@ -213,11 +213,11 @@
 ; TODO this is untested, also it should probably use binary search for efficiency
 (s/defn line-range-parent
   "Search node for the parent of the line range"
-  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
-  (let [kids      (children node)
+  [start-line :- s/Int end-line :- s/Int root :- IASTNode]
+  (let [kids      (children root)
         container (find-first (partial contains-line-range? start-line end-line) kids)]
     (if (nil? container)
-      node
+      root
       (recur start-line end-line container))))
 
 (defn in-function? [node] (ancestral-instance? IASTFunctionDefinition node))

@@ -41,12 +41,12 @@
 (defn hunk-lines-old-lines
   "Pair each Hunk$Line with the file line number that goes with it"
   [hunk]
-  (let [old-offset (.getOldOffset hunk)]
+  (map vector (range-from (.getOldOffset hunk)) (.getLines hunk)))
 
-    (->> hunk
-         .getLines
-         (map vector (range-from old-offset))
-              )))
+(defn hunk-lines-new-lines
+  "Pair each Hunk$Line with the file line number that goes with it"
+  [hunk]
+  (map vector (range-from (.getNewOffset hunk)) (.getLines hunk)))
 
 (defn hunk-line-range-old
   "The first and last line of every hunk"
@@ -64,7 +64,7 @@
                  (deleted? line)))))
 
 (defn removed-lines
-  "Which lines are removed in this patch"
+  "Which lines are removed in this patch (using Old numbers)"
   [patch]
   (reduce merge
           (for [ptch (->> patch parse-diff .getPatches)]
