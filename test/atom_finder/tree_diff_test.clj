@@ -67,12 +67,11 @@
 
 (deftest atoms-removed-test
   (testing "Which atoms are removed between files"
-    (let [atms-rmvd (atoms-removed
-                     (:finder (atom-lookup :post-increment))
-                     (parse-resource "atoms-removed-before.c")
-                     (parse-resource "atoms-removed-after.c"))
+    (let [a (parse-resource "atoms-removed-before.c")
+          b (parse-resource "atoms-removed-after.c")
+          atms-rmvd (atoms-removed (:finder (atom-lookup :post-increment)) a b)
           lines     (map start-line atms-rmvd)
-          expected-lines (find-lines #"<true>" (resource-path "atoms-removed-after.c"))]
+          expected-lines (find-lines #"<true>" (resource-path "atoms-removed-before.c"))]
 
       (is (= expected-lines lines))
       )
