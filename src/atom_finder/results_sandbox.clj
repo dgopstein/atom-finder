@@ -2,7 +2,7 @@
   (:require
    [atom-finder.util :refer :all]
    [atom-finder.constants :refer :all]
-   [atom-finder.comment-change :refer :all]
+   [atom-finder.atom-stats :refer :all]
    [clojure.pprint :refer [pprint]]
    [schema.core :as s]
    )
