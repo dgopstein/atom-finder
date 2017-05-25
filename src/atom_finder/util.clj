@@ -20,6 +20,7 @@
        ClassLoader/getSystemResource
        clojure.java.io/file
        file-seq
+       sort
        (map (memfn getName))
        (filter #(str/ends-with? % ".clj"))
        (map #(str/replace % #"\.clj$" ""))
