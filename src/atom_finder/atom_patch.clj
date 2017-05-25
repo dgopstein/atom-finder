@@ -119,12 +119,16 @@
 (s/defn atoms-in-file-stats
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs]
-  (doall (for [atom atoms]
-      {:atom (:name atom)
-       :stats (apply merge
-                    (doall (for [[stat-name f] (atom-stats)]
-                       {stat-name (f (atom-specific-srcs srcs atom) atom)})))}
-     )))
+  (doall
+   (for [atom atoms]
+     (let [atom-src (atom-specific-srcs srcs atom)]
+       (if (:ast-before atom-src)
+         {:atom (:name atom)
+          :stats (apply merge
+                        (doall (for [[stat-name f] (atom-stats)]
+                                 {stat-name (f atom-src atom)})))}
+         {:atom (:name atom)})
+     ))))
 
 ;(atoms-in-file-stats (vals (select-keys atom-lookup [:post-increment :literal-encoding]))
 ;                     {:ast-before (parse-source "int main() { int x = 1, y; y = x++; }")
@@ -153,8 +157,9 @@
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
     (->>
-     (doall (atoms-changed-in-commit repo atoms rev-commit))
+     (atoms-changed-in-commit repo atoms rev-commit)
      (array-map :revstr commit-hash :bug-ids (bugzilla-ids rev-commit) :files)
+     doall
      (log-err commit-hash {:revstr commit-hash})
      )))
 

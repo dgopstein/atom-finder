@@ -2,6 +2,7 @@
   (:require
    [atom-finder.util :refer :all]
    [atom-finder.tree-diff.difflib :refer :all]
+   [atom-finder.tree-diff :refer :all]
    [atom-finder.constants :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as str]
@@ -32,9 +33,10 @@
    :ast-size-after  (-> srcs :ast-after flatten-tree count)})
 
 (defn atom-stats [] {
+   :counts (constantly {:count 1})
    :atom-counts-before-after ba-counts
    :source-size-before-after source-size-before-after
    :ast-size ast-size
    :added-comments added-comments-context
-   :count (constantly 1)
+   :removed-atoms removed-atoms-stats
    })

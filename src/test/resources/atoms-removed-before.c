@@ -5,7 +5,7 @@ int main() {
 
   a = b++ + 3;  // <true>
 
-  a = c++ + 4;  // <true> add parens (TODO maybe this should be false, since the atom still happens?)
+  a = c++ + 4;  // <true> add parens (TODO maybe this should be false, since the atom still happens, just nested more?)
 
   a = d++ + 5;  // <false> letter change
 

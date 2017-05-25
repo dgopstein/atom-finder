@@ -114,6 +114,7 @@
                  ["*" "*c"]
                  ["++" "d++"]
                  ["?:" "1 ? 2 : 3"]
+                 ["<ProblemStatement>" "~a+"]
                  ]]
 
       (doseq [[expected frag idx] cases]

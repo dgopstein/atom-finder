@@ -22,5 +22,5 @@
   ;     dorun)
 
   ; 48 hours
-  ;(time (log-atoms-changed-all-commits "gcc-bugs-atoms_2017-05-11_0.edn" gcc-repo atoms))
+  ;(time (log-atoms-changed-all-commits "gcc-bugs-atoms_2017-05-24_0.edn" gcc-repo atoms))
 )

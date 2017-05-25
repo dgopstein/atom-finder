@@ -10,6 +10,9 @@
            ))
 
 (def DiffMap {:delta Delta :original s/Any :revised s/Any s/Any s/Any})
+(def diff-types {Delta$TYPE/INSERT :insert
+                 Delta$TYPE/DELETE :delete
+                 Delta$TYPE/CHANGE :change})
 
 (s/defn diff-by :- [DiffMap]
   [f a :- [s/Any] b :- [s/Any]]
@@ -24,13 +27,20 @@
               {:delta c
                :original (->> a (drop o-pos) (take o-len))
                :revised  (->> b (drop r-pos) (take r-len))
+               :type (->> c .getType diff-types)
                })))
      ))
 
-(s/defn correspondence [a b] ;:- [s/Any] b :- [s/Any] ]; diff-map :- [DiffMap]]
-  (let [diff-map (diff-by write-node-valueless a b)
-        old-lines (->> (remove (->> diff-map (mapcat :original) (into #{})) a))
-        new-lines (->> (remove (->> diff-map (mapcat  :revised) (into #{})) b))]
+(s/defn diff-trees [a :- IASTNode b :- IASTNode]
+  (diff-by write-node-valueless
+           (flatten-tree-infixy a)
+           (flatten-tree-infixy b)))
 
-    (map vector old-lines new-lines)
+(s/defn correspondence
+  ([a :- IASTNode b :- IASTNode]
+   (correspondence (flatten-tree-infixy a) (flatten-tree-infixy b) (diff-trees a b)))
+  ([a :- [s/Any] b :- [s/Any] diff-maps :- [DiffMap]]
+    (map vector
+         (remove (->> diff-maps (mapcat :original) (into #{})) a)
+         (remove (->> diff-maps (mapcat  :revised) (into #{})) b))
   ))

@@ -54,18 +54,19 @@
         (proxy-super visit node))
       )))
 
-(s/defn write-node-type :- s/Str [node :- IASTNode] (str "<" (typename node) ">"))
+(s/defn write-node-type :- s/Str [node :- (s/maybe IASTNode)] (str "<" (and node (typename node)) ">"))
 
 (s/defn write-node :- s/Str [node :- IASTNode]
-  (let [writer-visitor (SingleNodeVisitor)]
-		(when (not (nil? node))
-			(.accept node writer-visitor))
+  (if (or (nil? node) (instance? IASTProblemHolder node))
+    (write-node-type node)
+    (let [writer-visitor (SingleNodeVisitor)]
+      (.accept node writer-visitor)
 
-		(let [node-str (str/replace (.toString writer-visitor) #"\s" "")]
-      (if (empty? node-str)
-        (write-node-type node)
-        node-str))
-  ))
+      (let [node-str (str/replace (.toString writer-visitor) #"\s" "")]
+        (if (empty? node-str)
+          (write-node-type node)
+          node-str))
+      )))
 
 (s/defn write-node-valueless :- s/Str
   "Don't write variable names, instead use their type"
