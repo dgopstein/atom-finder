@@ -1,12 +1,23 @@
 (ns atom-finder.atom-stats
   (:require
    [atom-finder.util :refer :all]
+   [atom-finder.tree-diff.difflib :refer :all]
+   [atom-finder.tree-diff :refer :all]
    [atom-finder.constants :refer :all]
-   [atom-finder.comment-change :refer :all]
    [clojure.pprint :refer [pprint]]
+   [clojure.string :as str]
    [schema.core :as s]
    )
-  )
+  (:use
+   [clojure.pprint :only [pprint print-table]])
+  (:import
+   [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression
+    IASTBinaryExpression IASTLiteralExpression IASTExpressionList
+    IASTForStatement IASTFunctionDefinition IASTComment]
+   [difflib DiffUtils Delta Delta$TYPE]
+   ))
+
+(load-cljs-in-dir "atom_stats/")
 
 (defn ba-counts
   [srcs atom]
@@ -21,18 +32,11 @@
   {:ast-size-before (-> srcs :ast-before flatten-tree count)
    :ast-size-after  (-> srcs :ast-after flatten-tree count)})
 
-(defn added-comments [srcs atom]
-  (let [cmnts-added (comments-added srcs)
-        atom-cmnts-added (atom-comments (:atoms-after srcs) cmnts-added)
-        n-cmnts-added (count cmnts-added)
-        n-atom-cmnts-added (count atom-cmnts-added)]
-  {:comments-added n-cmnts-added
-   :comments-added-near-atoms n-atom-cmnts-added
-   :comments-added-away-atoms (- n-cmnts-added n-atom-cmnts-added)}))
-
 (defn atom-stats [] {
+   :counts (constantly {:count 1})
    :atom-counts-before-after ba-counts
    :source-size-before-after source-size-before-after
    :ast-size ast-size
-   :added-comments added-comments
+   :added-comments added-comments-context
+   :removed-atoms removed-atoms-stats
    })

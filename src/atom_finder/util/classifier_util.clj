@@ -1,10 +1,8 @@
-(ns atom-finder.classifier-util
-  (:require [atom-finder.util :refer :all]
-            [clojure.string :as str]
-            [schema.core :as s]
-            )
-  (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTExpressionList IASTForStatement IASTFunctionDefinition]))
+(in-ns 'atom-finder.util)
+(import '(org.eclipse.cdt.core.dom.ast
+          IASTNode IASTExpression IASTExpressionList IASTUnaryExpression
+          IASTBinaryExpression IASTLiteralExpression IASTForStatement
+          IASTFunctionDefinition))
 
 (defn default-finder [classifier] (partial filter-tree classifier))
 
@@ -162,15 +160,16 @@
    (contains-offset? node offset)
    (not (exists? #(contains-offset? % offset) (children node)))))
 
-(defn offset-parent
+(s/defn offset-parent
   "Find the AST node that contains the whole location offset
    Assumes that no children of a single parent overlap in terms of offset"
-  [root offset]
-  (let [kids      (children root)
-        container (find-first #(contains-offset? % offset) kids)]
-    (if (nil? container)
-      root
-      (recur container offset))))
+  ([root :- IASTNode offset :- s/Int]
+   (let [kids      (children root)
+         container (find-first #(contains-offset? % offset) kids)]
+     (if (nil? container)
+       root
+       (recur container offset))))
+  ([node :- IASTNode] (offset-parent (root-ancestor node) (:offset (loc node)))))
 
 (defn toplevel-offset?
   "Check if an offset lives in the top level or if it's inside some other node"
@@ -220,3 +219,5 @@
     (if (nil? container)
       node
       (recur start-line end-line container))))
+
+(defn in-function? [node] (ancestral-instance? IASTFunctionDefinition node))

@@ -3,7 +3,6 @@
             [atom-finder.util :refer :all]
             [atom-finder.constants :refer :all]
             [atom-finder.patch :refer :all]
-            [atom-finder.results-util :refer :all]
             [clojure.pprint :refer :all]
             ))
 

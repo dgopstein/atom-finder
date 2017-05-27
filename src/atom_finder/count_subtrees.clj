@@ -97,12 +97,12 @@
        (map typename)
        frequencies
        ))
-       
+
 
 (defn count-in-dir
   [f dirname]
-  (reduce (partial merge-with +) (pmap-dir-nodes f dirname)))
-  
+  (reduce (partial merge-with +) (pmap-dir-files (comp f parse-file) dirname)))
+
 (defn count-nodes-in-dir [dirname]
   (count-in-dir count-nodes dirname))
 
@@ -111,7 +111,7 @@
 
 (defn count-expression-parents-in-dir [d dirname]
   (count-in-dir (partial count-non-trivial-expression-parents d) dirname))
-  
+
 (defn count-nodes-in-dirs
   [dirs]
   (csv/write-csv *out*

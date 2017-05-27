@@ -1,11 +1,5 @@
-(ns atom-finder.test-util
-  (:require [clojure.string :as str]
-            [clojure.test :refer :all]
-            [atom-finder.classifier :refer :all]
-            [atom-finder.util :refer :all]
-            )
-  (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]))
+(in-ns 'atom-finder.util)
+(require '[clojure.test :refer :all])
 
 (defn find-lines
   "Find all lines marked with <true> in test file"

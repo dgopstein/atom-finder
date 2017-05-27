@@ -5,7 +5,6 @@
    [atom-finder.classifier :refer :all]
    [atom-finder.source-versions :refer :all]
    [atom-finder.patch :refer :all]
-   [atom-finder.results-util :refer :all]
    [atom-finder.atom-stats :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.data.csv :as csv]
@@ -90,6 +89,13 @@
     [(f (parse-source (commit-file-source repo parent-commit file-name)))
      (f (parse-source (commit-file-source repo rev-commit file-name)))]))
 
+(s/defn build-srcs
+  [source-before :- String source-after :- String]
+  {:ast-before (parse-source source-before)
+   :ast-after  (parse-source source-after)
+   :source-before source-before
+   :source-after  source-after})
+
 (s/defn before-after-data
   "Return the ast of changed files before/after a commit"
   [repo rev-commit :- RevCommit file-name]
@@ -97,13 +103,12 @@
         patch-str     (gitq/changed-files-with-patch repo rev-commit)
         source-before (commit-file-source repo parent-commit file-name)
         source-after  (commit-file-source repo rev-commit file-name)]
-    {:file file-name
-     ;:rev-commit (str rev-commit)
-     :patch-str  patch-str
-     :ast-before (parse-source source-before)
-     :ast-after  (parse-source source-after)
-     :source-before source-before
-     :source-after  source-after}))
+    (merge
+     {:file file-name
+      ;:rev-commit (str rev-commit)
+      :patch-str  patch-str
+      }
+     (build-srcs source-before source-after))))
 
 (defn atom-specific-srcs
   [srcs atom]
@@ -114,12 +119,16 @@
 (s/defn atoms-in-file-stats
   "Check multiple atoms in a single file"
   [atoms :- [Atom] srcs]
-  (doall (for [atom atoms]
-      {:atom (:name atom)
-       :stats (apply merge
-                    (doall (for [[stat-name f] (atom-stats)]
-                       {stat-name (f (atom-specific-srcs srcs atom) atom)})))}
-     )))
+  (doall
+   (for [atom atoms]
+     (let [atom-src (atom-specific-srcs srcs atom)]
+       (if (:ast-before atom-src)
+         {:atom (:name atom)
+          :stats (apply merge
+                        (doall (for [[stat-name f] (atom-stats)]
+                                 {stat-name (f atom-src atom)})))}
+         {:atom (:name atom)})
+     ))))
 
 ;(atoms-in-file-stats (vals (select-keys atom-lookup [:post-increment :literal-encoding]))
 ;                     {:ast-before (parse-source "int main() { int x = 1, y; y = x++; }")
@@ -148,8 +157,9 @@
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
     (->>
-     (doall (atoms-changed-in-commit repo atoms rev-commit))
+     (atoms-changed-in-commit repo atoms rev-commit)
      (array-map :revstr commit-hash :bug-ids (bugzilla-ids rev-commit) :files)
+     doall
      (log-err commit-hash {:revstr commit-hash})
      )))
 
@@ -185,14 +195,14 @@
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
   (binding [*out* (clojure.java.io/writer filename)]
-    (println "[")
+    (println "(")
     (->> atoms
          (atoms-changed-all-commits repo)
          (map prn)
          ;(take 10)
          dorun
          time)
-    (println "[")
+    (println ")")
     ))
 
 ;(def filename "gcc-bugs-atoms_2017-03-28_200.edn")

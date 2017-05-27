@@ -1,10 +1,4 @@
-(ns atom-finder.results-util
-  (:require [atom-finder.util :refer :all]
-            [clojure.string :as str]
-            [schema.core :as s]
-            )
-  (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTUnaryExpression]))
+(in-ns 'atom-finder.util)
 
 ; Utilities for processing the edn output of print-atoms-in-dir
 
@@ -15,6 +9,7 @@
        ClassLoader/getSystemResource
        clojure.java.io/file
        slurp
+       (#(if (= \) (last %1)) %1 (str %1 ")"))) ; read partial files
        read-string))
 
 ; TODO: delete this once log files are generated with hashes
