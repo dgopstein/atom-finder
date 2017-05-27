@@ -156,13 +156,8 @@
 (s/defn offset-parent
   "Find the AST node that contains the whole location offset
    Assumes that no children of a single parent overlap in terms of offset"
-  ([root :- IASTNode offset :- s/Int]
-   (let [kids      (children root)
-         container (find-first #(contains-offset? % offset) kids)]
-     (if (nil? container)
-       root
-       (recur container offset))))
-  ([node :- IASTNode] (offset-parent (root-ancestor node) (:offset (loc node)))))
+  ([root :- IASTNode offset :- s/Int] (binary-search-offset-parent offset root))
+  ([node :- IASTNode] (parent node))) ;(offset-parent (root-ancestor node) (:offset (loc node)))))
 
 (defn toplevel-offset?
   "Check if an offset lives in the top level or if it's inside some other node"

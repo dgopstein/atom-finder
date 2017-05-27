@@ -208,7 +208,7 @@
         length (.getNodeLength l)
         start-line (.getStartingLineNumber l)
         end-line  (.getEndingLineNumber l)]
-    {:line start-line :offset offset :length length :start-line start-line :end-line end-line}))
+    {:line start-line :offset offset :end-offset (+ length offset) :length length :start-line start-line :end-line end-line}))
 
 (defmethod loc Object
   [node]
@@ -217,6 +217,7 @@
 (defmethod loc :default [node] nil) ; catch nulls
 
 (def offset (comp :offset loc))
+(def end-offset (comp :end-offset loc))
 (def start-line (comp :start-line loc))
 (def end-line (comp :end-line loc))
 
@@ -250,59 +251,26 @@
 
   )
 
-(s/defn search-tree-offset-parent :- (s/maybe IASTNode)
+(s/defn binary-search-offset-parent :- (s/maybe IASTNode)
   "binary search the tree for an offset"
   [target :- s/Int root :- IASTNode]
-  (let [{start :offset len :length} (loc root)
-        end (+ start len)
-        kids (children root)]
-    (when (<= start target end)
-      (or (some->> (search-children-offset target kids)
+  (let [{start :offset len :length} (loc root)]
+    (when (<= start target (+ start len))
+      (or (some->> (binary-search-children-offset target (children root))
                    (search-tree-offset-parent target)) ; make tail-recursive?
           root))))
 
-16045
-16103
-(search-tree-offset-parent 16356 atom-finder.constants/big-root)
-
-(s/defn search-children-offset :- (s/maybe IASTNode)
+; https://stackoverflow.com/a/8950240
+(s/defn binary-search-children-offset :- (s/maybe IASTNode)
   [target :- s/Int kids] ; :- [IASTNode]]
-  (pprn [target kids])
   (loop [l 0 h (unchecked-dec (count kids))]
-    (pprn [l h])
     (if (<= h (inc l))
-       (do ;(pprn [(-> kids (nth l) loc) target])
-       (cond
-         (== h -1) nil
-         (contains-offset? (nth kids l) target) (nth kids l)
-         (contains-offset? (nth kids h) target) (nth kids h)
-         :else nil))
-       (let [m (unchecked-add l (bit-shift-right (unchecked-subtract h l) 1))]
-         (if (<= target (-> kids (nth m) offset))
-           (recur l m)
-           (recur (unchecked-inc m) h))))))
-
-(search-children-offset 16045 (->> kid children first children))
-(search-children-offset 16045 (children kid))
-
-(->>
-(search-children-offset 16045
-(->> atom-finder.constants/big-root
-     children
-     ))
-(def kid))
-
-(defn binary-search
-    "Finds earliest occurrence of x in xs (a vector) using binary search."
-  ([xs x]
-   (loop [l 0 h (unchecked-dec (count xs))]
-     (if (<= h (inc l))
-       (cond
-         (== x (xs l)) l
-         (== x (xs h)) h
-         :else nil)
-       (let [m (unchecked-add l (bit-shift-right (unchecked-subtract h l) 1))]
-         (if (< (xs m) x)
-           (recur (unchecked-inc m) h)
-                        (recur l m)))))))
-
+      (cond
+        (== h -1) nil
+        (contains-offset? (nth kids l) target) (nth kids l)
+        (contains-offset? (nth kids h) target) (nth kids h)
+        :else nil)
+      (let [m (unchecked-add l (bit-shift-right (unchecked-subtract h l) 1))]
+        (if (<= target (-> kids (nth m) end-offset))
+          (recur l m)
+          (recur (unchecked-inc m) h))))))

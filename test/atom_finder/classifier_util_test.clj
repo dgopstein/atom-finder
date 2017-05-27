@@ -222,7 +222,7 @@
       )
     )
 
-  (testing "offset-parent?"
+  (testing "offset-parent"
     (let [node (parse-source " int main() {\nint x = 0;\nif (x > 0) {\nx += 1;\n}\nreturn x;\n} ")
           cases [["IfStatement" 26]
                  ["IfStatement" 28]
@@ -233,7 +233,7 @@
                  [nil 80000]
                  ]]
       (for [[expected offset] cases]
-        (is (= expected (typename (offset-parent node offset))) (str "offset: " offset)))
+        (is (= expected (some-> node (offset-parent offset) typename)) (str "offset: " offset)))
       )
     )
   )
