@@ -24,18 +24,16 @@
   [context-classifier root]
   (preprocessors-in-contexts define-only context-classifier root))
 
-(defn non-toplevel-classifier
-  [parent]
-  (not (instance? IASTTranslationUnit parent)))
+(defn non-toplevel? [node] (not (instance? IASTTranslationUnit node)))
 
-(def all-non-toplevel-preprocessor-locs (partial preprocessors-in-contexts all-preprocessor non-toplevel-classifier))
+(def all-non-toplevel-preprocessor-locs (partial preprocessors-in-contexts all-preprocessor non-toplevel?))
 
 (defn all-non-toplevel-preprocessors [root]
   (map #(offset-parent root (:offset %)) (all-non-toplevel-preprocessor-locs root)))
 
 (defn non-toplevel-defines [root]
   (map #(->> % :offset (offset-parent root))
-       (define-in-contexts non-toplevel-classifier root)))
+       (define-in-contexts non-toplevel? root)))
 
 (defn statement-expression-classifier
   [parent]
@@ -57,11 +55,21 @@
        (map offset)
        (exists? (partial offset-parent? node))))
 
-(defn define-parent?
+'(defn define-parent?
   "Is this AST node the direct parent of a preprocessor directive"
   [node]
   (->> node
        root-ancestor
-       (define-in-contexts non-toplevel-classifier)
+       (define-in-contexts non-toplevel?)
        (map :offset)
        (exists? (partial offset-parent? node))))
+
+(defn define-parent?
+  "Is this AST node the direct parent of a preprocessor directive"
+  [node]
+  (and (not (instance? IASTTranslationUnit node))
+       (->> node
+            root-ancestor
+            define-only
+            (map offset)
+            (exists? (partial offset-parent? node)))))
