@@ -9,7 +9,7 @@
           IASTUnaryExpression/op_prefixDecr       IASTUnaryExpression/op_prefixIncr}]
   (cond
     (leaf? node) false
-    (instance? IASTBinaryExpression node) (assignment-operator? node)
+    (instance? IASTBinaryExpression node) (assignment? node)
     (instance? IASTUnaryExpression node) (contains? u-ops (.getOperator node))
     :else (= (typename node) "FunctionCallExpression"))))
 

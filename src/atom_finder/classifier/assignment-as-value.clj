@@ -10,4 +10,4 @@
        (->> node
             value-consuming-children
             (map remove-wrappers)
-            (any-pred? assignment-operator?))))
+            (any-pred? assignment?))))
