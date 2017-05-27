@@ -64,6 +64,20 @@
        (map :offset)
        (exists? (partial offset-parent? node))))
 
+(s/defn offset-range
+  [node :- IASTNode]
+  (when (loc node)
+    (range (offset node) (inc (end-offset node)))))
+
+(s/defn child-offsets :- #{s/Int}
+  "A set of all the offsets directly owned by this node and not its children"
+  [node :- IASTNode]
+  (if (some->> node loc :length (< 0))
+      (->> (offset-range node)
+           (remove (->> node children (mapcat offset-range) set))
+           set))
+    #{})
+
 (defn define-parent?
   "Is this AST node the direct parent of a preprocessor directive"
   [node]
@@ -73,3 +87,14 @@
             define-only
             (map offset)
             (exists? (partial offset-parent? node)))))
+
+(defn define-parent?-offset-sets
+  "Is this AST node the direct parent of a preprocessor directive"
+  [node]
+  (and (not (instance? IASTTranslationUnit node))
+       (->> node
+            root-ancestor
+            define-only
+            (map offset)
+            (any-pred? (child-offsets node))
+            )))
