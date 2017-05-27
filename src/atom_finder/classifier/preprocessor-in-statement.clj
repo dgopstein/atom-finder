@@ -48,13 +48,13 @@
 (defn if-body-classifier [parent]
   (ancestral-instance? IASTIfStatement parent))
 
-(defn preprocessor-parent?
+(defn preprocessor-parent? ; TODO slow on big files
   "Is this AST node the direct parent of a preprocessor directive"
   [node]
   (->> node
        root-ancestor
        all-preprocessor
-       (map (comp :offset loc))
+       (map offset)
        (exists? (partial offset-parent? node))))
 
 (defn define-parent?

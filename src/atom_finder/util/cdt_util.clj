@@ -214,6 +214,8 @@
   [node]
   (loc (.getFileLocation node)))
 
+(defmethod loc :default [node] nil) ; catch nulls
+
 (def offset (comp :offset loc))
 (def start-line (comp :start-line loc))
 (def end-line (comp :end-line loc))
@@ -240,3 +242,38 @@
   "Count the size of the ast"
   [node]
     (inc (reduce + (map count-nodes (children node)))))
+
+(s/defn search-tree-by :- (s/Maybe IASTNode)
+  "binary search the tree for val, after applying (f node)"
+  [f :- (s/=> s/Any IASTNode) val :- s/Any root :- IASTNode]
+
+
+  )
+
+(s/defn search-tree-offset-parent :- (s/Maybe IASTNode)
+  "binary search the tree for an offset"
+  [target :- s/Int root :- IASTNode]
+  (let [{start :offset len :length} (loc root)
+        end (+ start len)
+        kids (children root)]
+    (when (<= start target end)
+      (loop []
+        )
+      )))
+
+
+;
+(defn binary-search
+    "Finds earliest occurrence of x in xs (a vector) using binary search."
+  ([xs x]
+   (loop [l 0 h (unchecked-dec (count xs))]
+     (if (<= h (inc l))
+       (cond
+         (== x (xs l)) l
+         (== x (xs h)) h
+         :else nil)
+       (let [m (unchecked-add l (bit-shift-right (unchecked-subtract h l) 1))]
+         (if (< (xs m) x)
+           (recur (unchecked-inc m) h)
+                        (recur l m)))))))
+

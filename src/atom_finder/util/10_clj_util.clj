@@ -72,3 +72,8 @@
           (concat [a b c d])
           reverse
           (apply function)))))
+
+(defn errln [& s]
+  "println to stderr"
+  (binding [*out* *err*]
+      (println (apply str s))))

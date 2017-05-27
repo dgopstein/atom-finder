@@ -142,16 +142,9 @@
 
 (defn contains-offset?
   "Does this node contain the given offset"
-  [root offset]
-  (let [root-loc (loc root)]
-    (if (nil? root-loc)
-      false
-      (let [root-offset (:offset root-loc)]
-        ; (According to VisualVM) The dispatch on these methods
-        ; is a CPU killer. Try to short-circuit if possible.
-        (and
-         (<= root-offset offset)
-         (>= (+ root-offset (:length root-loc)) offset))))))
+  [node offset]
+    (when-let [{node-offset :offset node-length :length} (some->> node loc)]
+       (<= node-offset offset (+ node-offset node-length))))
 
 (defn offset-parent?
   "True if this is deepest AST node that contains an offset"

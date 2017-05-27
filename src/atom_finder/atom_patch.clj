@@ -148,10 +148,6 @@
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
 
-(defmacro log-err [msg ret x]
-  `(try ~x
-      (catch Exception e# (do (errln (str "-- exception parsing commit: \"" ~msg "\"\n")) ~ret))
-      (catch Error e#     (do (errln (str "-- error parsing commit: \""  ~msg "\"\n")) ~ret))))
 
 (defn parse-commit-for-atom
   [repo atoms rev-commit]

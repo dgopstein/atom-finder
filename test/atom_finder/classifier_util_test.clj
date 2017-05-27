@@ -3,6 +3,7 @@
             [schema.test]
             [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
+            [clojure.pprint :refer [pprint]]
             ))
 
 (use-fixtures :once schema.test/validate-schemas)
@@ -194,6 +195,46 @@
           (is (= (some-> expected (get-in-tree root)) (line-range-parent min max root))))))
 
     ;(->> root (get-in-tree [0 2 1 1]) write-ast)
+    )
+
+  (testing "contains-offset?"
+    (let [src-cases [[(->> "1 + 2" parse-frag) ; => {:offset 13, :length 5}
+                      [[true 13]
+                       [true 14]
+                       [true 18]
+                       [false 12]
+                       [false 19]
+                       [false 0]
+                       [false -1]]]
+                     [(->> "int a(void)" parse-expr (get-in-tree [1 1 1])) ; => {:offset 23, :length 0}
+                      [[true 23]
+                       [false 24]
+                       [false 28]
+                       [false 22]
+                       [false 29]
+                       [false 0]
+                       [false -1]
+                       ]]
+                     [nil [[nil 23]]]]]
+      (for [[node cases]   src-cases
+            [expected offset] cases]
+        (is (= expected (contains-offset? node offset))))
+      )
+    )
+
+  (testing "offset-parent?"
+    (let [node (parse-source " int main() {\nint x = 0;\nif (x > 0) {\nx += 1;\n}\nreturn x;\n} ")
+          cases [["IfStatement" 26]
+                 ["IfStatement" 28]
+                 ["Name" 29]
+                 ["CompoundStatement" 59]
+                 ["TranslationUnit" 0]
+                 ["TranslationUnit" 60]
+                 [nil 80000]
+                 ]]
+      (for [[expected offset] cases]
+        (is (= expected (typename (offset-parent node offset))) (str "offset: " offset)))
+      )
     )
   )
 
