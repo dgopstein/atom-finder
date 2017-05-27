@@ -250,19 +250,48 @@
 
   )
 
-(s/defn search-tree-offset-parent :- (s/Maybe IASTNode)
+(s/defn search-tree-offset-parent :- (s/maybe IASTNode)
   "binary search the tree for an offset"
   [target :- s/Int root :- IASTNode]
   (let [{start :offset len :length} (loc root)
         end (+ start len)
         kids (children root)]
     (when (<= start target end)
-      (loop []
-        )
-      )))
+      (or (some->> (search-children-offset target kids)
+                   (search-tree-offset-parent target)) ; make tail-recursive?
+          root))))
 
+16045
+16103
+(search-tree-offset-parent 16356 atom-finder.constants/big-root)
 
-;
+(s/defn search-children-offset :- (s/maybe IASTNode)
+  [target :- s/Int kids] ; :- [IASTNode]]
+  (pprn [target kids])
+  (loop [l 0 h (unchecked-dec (count kids))]
+    (pprn [l h])
+    (if (<= h (inc l))
+       (do ;(pprn [(-> kids (nth l) loc) target])
+       (cond
+         (== h -1) nil
+         (contains-offset? (nth kids l) target) (nth kids l)
+         (contains-offset? (nth kids h) target) (nth kids h)
+         :else nil))
+       (let [m (unchecked-add l (bit-shift-right (unchecked-subtract h l) 1))]
+         (if (<= target (-> kids (nth m) offset))
+           (recur l m)
+           (recur (unchecked-inc m) h))))))
+
+(search-children-offset 16045 (->> kid children first children))
+(search-children-offset 16045 (children kid))
+
+(->>
+(search-children-offset 16045
+(->> atom-finder.constants/big-root
+     children
+     ))
+(def kid))
+
 (defn binary-search
     "Finds earliest occurrence of x in xs (a vector) using binary search."
   ([xs x]
