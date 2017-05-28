@@ -98,6 +98,14 @@
 (defn flatten-tree [node]
   (conj (mapcat flatten-tree (children node)) node))
 
+(defn flatten-tree-context
+  ([node] (flatten-tree-context {:path []} node))
+  ([context node]
+   (-> (fn [idx node]
+         (flatten-tree-context (update context :path #(conj % idx)) node))
+       (mapcat-indexed (children node))
+       (conj [context node]))))
+
 (defn flatten-tree-infixy [node]
   "Approximate an in-order flattening"
   (if (instance? IASTBinaryExpression node)
@@ -109,6 +117,11 @@
   "Find every AST node that matches pred"
   [pred node]
   (->> node flatten-tree (filter pred)))
+
+(defn filter-tree-context
+  "Find every AST node that matches pred"
+  [pred node]
+  (->> node flatten-tree-context (filter pred)))
 
 (defn filter-type
   "Return every example of type"
