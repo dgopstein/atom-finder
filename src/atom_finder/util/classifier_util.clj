@@ -5,6 +5,28 @@
           IASTFunctionDefinition))
 
 (defn default-finder [classifier] (partial filter-tree classifier))
+(defn default-finder-context [classifier] (partial filter-tree-context classifier 0))
+
+; https://ideone.com/fork/P2876
+(def mapcat-indexed
+  "like mapcat, but expects function of 2 arguments, where first argument is index of sequence element"
+  (comp (partial apply concat) map-indexed))
+
+(defn flatten-tree-context
+  ([node] (flatten-tree-context {:path []} node))
+  ([context node]
+   (-> (fn [idx node]
+         (flatten-tree-context (update context :path #(conj % idx)) node))
+       (mapcat-indexed (children node))
+       (conj [context node]))))
+
+'(->> atom-finder.constants/root
+     ;(get-in-tree [4 2 0 0 1 1 0]))
+     flatten-tree-context
+     pprint)
+
+(defn flatten-tree [node]
+  (conj (mapcat flatten-tree (children node)) node))
 
 (defmacro operation-classifier
   "Identify unary/binary nodes by their operation"

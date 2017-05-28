@@ -88,6 +88,8 @@
             (map offset)
             (exists? (partial offset-parent? node)))))
 
+; TODO binary search the defines?? big-root has 7000 - except there might be multiple, so it has be region binary search
+; or use a stateful atomfinder
 (defn define-parent?-offset-sets
   "Is this AST node the direct parent of a preprocessor directive"
   [node]
