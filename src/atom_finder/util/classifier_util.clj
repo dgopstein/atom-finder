@@ -6,6 +6,7 @@
 
 (defn default-finder [classifier] (partial filter-tree classifier))
 (defn default-finder-context [classifier] (partial filter-tree-context classifier))
+(defn with-context [finder] (fn [context node] (map #(assoc context :node %) (finder node))))
 
 ; https://ideone.com/fork/P2876
 (def mapcat-indexed
