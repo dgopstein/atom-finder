@@ -7,16 +7,14 @@
 (defn default-finder [classifier] (partial filter-tree classifier))
 (defn default-finder-context [classifier] (partial filter-tree-context classifier))
 (defn with-context [finder] (fn [context node] (map #(assoc context :node %) (finder node))))
+;(def root atom-finder.constants/root)
 
-; https://ideone.com/fork/P2876
-(def mapcat-indexed
-  "like mapcat, but expects function of 2 arguments, where first argument is index of sequence element"
-  (comp (partial apply concat) map-indexed))
-
-'(->> atom-finder.constants/root
-     ;(get-in-tree [4 2 0 0 1 1 0]))
-     flatten-tree-context
-     pprint)
+(s/defn context-map :- {IASTNode {s/Any s/Any}}
+  [root]
+  (->> root
+       flatten-tree-context
+       (map (fn [[ctx node]] [node ctx]))
+       (into {})))
 
 (defn flatten-tree [node]
   (conj (mapcat flatten-tree (children node)) node))
@@ -143,36 +141,6 @@
           (instance? IASTFunctionDefinition node))
     node
     (enclosing-function (parent node))))
-
-(defn contains-location?
-  "Does this node contain the given offset/length"
-  [root offset length]
-  (let [root-loc (.getFileLocation root)
-        root-offset (.getNodeOffset root-loc)
-        root-length (.getNodeLength root-loc)]
-
-    ;; The location/offset is fully contained in this node
-    (and (<=    root-offset                 offset)
-         (>= (+ root-offset root-length) (+ offset length)))))
-
-(defn contains-offset?
-  "Does this node contain the given offset"
-  [node offset]
-    (when-let [{node-offset :offset node-length :length} (some->> node loc)]
-       (<= node-offset offset (+ node-offset node-length))))
-
-(defn offset-parent?
-  "True if this is deepest AST node that contains an offset"
-  [node offset]
-  (and
-   (contains-offset? node offset)
-   (not (exists? #(contains-offset? % offset) (children node)))))
-
-(s/defn offset-parent
-  "Find the AST node that contains the whole location offset
-   Assumes that no children of a single parent overlap in terms of offset"
-  ([root :- IASTNode offset :- s/Int] (binary-search-offset-parent offset root))
-  ([node :- IASTNode] (parent node))) ;(offset-parent (root-ancestor node) (:offset (loc node)))))
 
 (defn toplevel-offset?
   "Check if an offset lives in the top level or if it's inside some other node"

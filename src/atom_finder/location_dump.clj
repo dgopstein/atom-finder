@@ -13,45 +13,38 @@
 
 (offset node)
 (def node big-root)
-(->> big-root
-     flatten-tree
-     (map #(map offset (children %)))
-     (take 10)
-     ;(drop 1)
-     (map (partial apply <= 0))
-     (filter false?)
-     count
-     pprint)
 
 (s/defn find-all :- [{:type s/Keyword s/Any s/Any}]
   "Apply every classifier to this node"
   [node :- IASTNode]
-  (->> atoms
-       ((flip conj) {:name :comment :finder all-comments})
-       (mapcat
-        (fn [atom-map]
-          (for [atom ((with-context (:finder atom-map)) node)]
-            (merge {:type (:name atom-map) :node atom} (select-keys (loc atom) [:start-line :end-line :offset :length])))))
-       )
+  (let [contexts (context-map node)]
+    (->> atoms
+         ((flip conj) {:name :comment :finder all-comments})
+         (mapcat
+          (fn [atom-map]
+            (for [atom ((:finder atom-map) node)]
+              (merge {:type (:name atom-map) :node atom}
+                     (select-keys (loc atom) [:start-line :end-line :offset :length])
+                     (contexts atom)
+                     ))))
+         )
+    )
   )
-(->> root find-all (map #(update % :node write-node)) (map prn))
-(->> big-root
-     ;((default-finder omitted-curly-braces-atom?))
-     flatten-tree (take 1) (map classify-all)
-     pprint)
+'(->> atom-finder.constants/big-root
+     find-all
+     (map #(update % :node write-node))
+     (map prn)
+     time
+     )
 
 (defn location-dump [filename]
-  (let [root (parse-file filename)
-        ]
-    {:file filename
-     :comments (->> root all-comments (map start-line))
-     :atoms (->> atoms
-     }
-       )
-  )
+  (map (partial merge {:file filename}) (->> filename parse-file find-all)))
+
+;(->> "/Users/dgopstein/opt/src/gcc/contrib/paranoia.cc" location-dump (map prn))
 
 (->> gcc-path
      (pmap-dir-files location-dump)
-     (map prn)
+     (map (partial map #(update % :node write-node)))
+     (map (partial map prn))
      (take 2)
      dorun)

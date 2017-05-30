@@ -24,6 +24,11 @@
 
 (defn map-values [f m] (map-values-kv #(f %2) m))
 
+; https://ideone.com/fork/P2876
+(def mapcat-indexed
+  "like mapcat, but expects function of 2 arguments, where first argument is index of sequence element"
+  (comp (partial apply concat) map-indexed))
+
 (def transpose (partial apply map vector))
 
 (defn strict-get

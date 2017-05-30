@@ -257,21 +257,34 @@
   [node]
     (inc (reduce + (map count-nodes (children node)))))
 
-(s/defn search-tree-by :- (s/Maybe IASTNode)
+(defn contains-location?
+  "Does this node contain the given offset/length"
+  [root offset length]
+  (let [root-loc (.getFileLocation root)
+        root-offset (.getNodeOffset root-loc)
+        root-length (.getNodeLength root-loc)]
+
+    ;; The location/offset is fully contained in this node
+    (and (<=    root-offset                 offset)
+         (>= (+ root-offset root-length) (+ offset length)))))
+
+(defn contains-offset?
+  "Does this node contain the given offset"
+  [node offset]
+    (when-let [{node-offset :offset node-length :length} (some->> node loc)]
+       (<= node-offset offset (+ node-offset node-length))))
+
+(defn offset-parent?
+  "True if this is deepest AST node that contains an offset"
+  [node offset]
+  (and
+   (contains-offset? node offset)
+   (not (exists? #(contains-offset? % offset) (children node)))))
+
+'(s/defn search-tree-by :- (s/maybe IASTNode)
   "binary search the tree for val, after applying (f node)"
   [f :- (s/=> s/Any IASTNode) val :- s/Any root :- IASTNode]
-
-
   )
-
-(s/defn binary-search-offset-parent :- (s/maybe IASTNode)
-  "binary search the tree for an offset"
-  [target :- s/Int root :- IASTNode]
-  (let [{start :offset len :length} (loc root)]
-    (when (<= start target (+ start len))
-      (or (some->> (binary-search-children-offset target (children root))
-                   (search-tree-offset-parent target)) ; make tail-recursive?
-          root))))
 
 ; https://stackoverflow.com/a/8950240
 (s/defn binary-search-children-offset :- (s/maybe IASTNode)
@@ -287,3 +300,18 @@
         (if (<= target (-> kids (nth m) end-offset))
           (recur l m)
           (recur (unchecked-inc m) h))))))
+
+(s/defn binary-search-offset-parent :- (s/maybe IASTNode)
+  "binary search the tree for an offset"
+  [target :- s/Int root :- IASTNode]
+  (let [{start :offset len :length} (loc root)]
+    (when (<= start target (+ start len))
+      (or (some->> (binary-search-children-offset target (children root))
+                   (binary-search-offset-parent target)) ; make tail-recursive?
+          root))))
+
+(s/defn offset-parent
+  "Find the AST node that contains the whole location offset
+   Assumes that no children of a single parent overlap in terms of offset"
+  ([root :- IASTNode offset :- s/Int] (binary-search-offset-parent offset root))
+  ([node :- IASTNode] (parent node))) ;(offset-parent (root-ancestor node) (:offset (loc node)))))
