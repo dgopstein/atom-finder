@@ -39,6 +39,7 @@
                        (every-pred outer-wrapped-exp? (fn [_] (param-wrapped-macro? node)))]))
 (defmethod macro-def-precedence-atom? IASTPreprocessorMacroDefinition [node]
   (not-any? #(% (.getExpansion node)) [empty? unparsable-exp? outer-wrapped-exp?]))
+(defmethod macro-def-precedence-atom? :default [node] false)
 
 (defn macro-def-precedence-atoms
   "Is the definition of a macro prone to precedence issues"
