@@ -14,5 +14,5 @@
 
 (def root (parse-resource "logic-as-control-flow.c"))
 
-(def big-root     (some->> :big-root     cfg/get expand-home parse-file))
+(def big-root     (when gcc-path (->> "/gcc/config/i386/i386.c" (str gcc-path) parse-file)))
 (def github-top-c (some->> :github-top-c cfg/get expand-home))
