@@ -50,3 +50,7 @@
    file-str
    (re-find #"(.*/)?[^/]+\.([^.]+)")
    last))
+
+(defmacro log-to [filename & stuff]
+  `(binding [*out* (clojure.java.io/writer ~filename)]
+     ~(cons 'do stuff)))

@@ -44,7 +44,9 @@
 
 (->> gcc-path
      (pmap-dir-files location-dump)
-     (map (partial map #(update % :node write-node)))
-     (map (partial map prn))
-     (take 2)
-     dorun)
+     (mapcat (partial map #(update % :node write-node)))
+     (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
+     (map prn)
+     dorun
+     (log-to "location-dump_2017-05-29.txt")
+     )

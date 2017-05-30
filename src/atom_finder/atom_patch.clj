@@ -190,7 +190,7 @@
 
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
-  (binding [*out* (clojure.java.io/writer filename)]
+  (log-to filename
     (println "(")
     (->> atoms
          (atoms-changed-all-commits repo)
