@@ -27,19 +27,13 @@
          )
     )
   )
-'(->> atom-finder.constants/big-root
-     find-all
-     (map #(update % :node write-node))
-     (map prn)
-     time
-     )
 
 (defn location-dump [filename]
   (map (partial merge {:file filename}) (->> filename parse-file find-all)))
 
 ;(->> "/Users/dgopstein/opt/src/gcc/contrib/paranoia.cc" location-dump (map prn))
 
-(->> gcc-path
+'(->> gcc-path
      (pmap-dir-files location-dump)
      (mapcat (partial map #(update % :node write-node)))
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
