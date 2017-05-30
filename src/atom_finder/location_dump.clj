@@ -11,9 +11,6 @@
    )
   )
 
-(offset node)
-(def node big-root)
-
 (s/defn find-all :- [{:type s/Keyword s/Any s/Any}]
   "Apply every classifier to this node"
   [node :- IASTNode]
