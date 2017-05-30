@@ -1,7 +1,5 @@
 (ns atom-finder.constants
   (:require [atom-finder.util :refer :all]
-            [atom-finder.source-versions :refer :all]
-            [atom-finder.atom-patch :refer :all]
             [clj-jgit.porcelain :as gitp]
             [omniconf.core :as cfg]))
 
@@ -18,8 +16,3 @@
 
 (def big-root     (when gcc-path (->> "/gcc/config/i386/i386.c" (str gcc-path) parse-file)))
 (def github-top-c (some->> :github-top-c cfg/get expand-home))
-
-(def big-commit-revstr "d4f474145ae66d041b820f4bf118601451baf261")
-(def big-commit-file "gcc/config/aarch64/arm_neon.h")
-(def big-commit-rev-commit (some-> gcc-repo (find-rev-commit big-commit-revstr)))
-(def big-commit-srcs (when (and gcc-repo big-commit-rev-commit) (before-after-data gcc-repo big-commit-rev-commit big-commit-file)))

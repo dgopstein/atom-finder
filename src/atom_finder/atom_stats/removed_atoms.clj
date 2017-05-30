@@ -28,7 +28,7 @@
 
 ;(->> big-commit-srcs :ast-before flatten-tree count) => 151033 => O(22billion)
 
-(->> ;(removed-atoms-stats big-commit-srcs post-increment)
+'(->> ;(removed-atoms-stats big-commit-srcs post-increment)
      (diff-trees (:ast-before big-commit-srcs) (:ast-after big-commit-srcs))
      pprint
      time
