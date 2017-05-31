@@ -3,8 +3,26 @@
             [atom-finder.util :refer :all]
             [atom-finder.constants :refer :all]
             [atom-finder.patch :refer :all]
+            [atom-finder.tree-diff.difflib :as difflib]
+            [atom-finder.zutubi :as zutubi]
             [clojure.pprint :refer :all]
             ))
+
+(deftest patch-libs-test
+  (testing "Both patch parsers get the same results"
+    (let [patch-str (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" slurp-resource)
+          z-patch (->> patch-str zutubi/parse-diff)
+          d-patch (->> patch-str difflib/parse-diff)]
+      (is (= (->> z-patch patches (mapcat deltas) (map old-offset))
+             (->> d-patch patches (mapcat deltas) (map old-offset))))
+      (is (= (->> z-patch patch-correspondences)
+             (->> d-patch patch-correspondences)))
+      )
+    ))
+    (let [patch-str (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" slurp-resource)]
+      (->> patch-str zutubi/parse-diff patches first deltas (map #(->> % .getNewOffset))))
+    (let [patch-str (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" slurp-resource)]
+      (->> patch-str difflib/parse-diff patches first deltas (map #(->> % .getRevised .getPosition))))
 
 (deftest hunk-line-ranges-test
   (testing "Which lines were added and removed in a hunk"
@@ -21,7 +39,7 @@
              {:old [2752 2752] :new [2756 2764]})})
 
          (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
-              resource-path slurp parse-diff
+              slurp-resource parse-diff
               patch-correspondences correspondences-to-ranges)
          ))
     ))
