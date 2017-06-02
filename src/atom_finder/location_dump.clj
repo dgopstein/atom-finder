@@ -48,7 +48,7 @@
                                      (->> root flatten-tree-context (map (fn [[ctx n]] (assoc ctx :node n))))
                                      all-atoms)]
     (map (partial merge {:file filename})
-         (concat all-atoms (map #(merge {:type :non-atom} %1 (loc-data (:node %1))) (pprn non-atoms))))))
+         (concat all-atoms (map #(merge {:type :non-atom} %1 (loc-data (:node %1))) non-atoms)))))
 
 
 ;(->> "/Users/dgopstein/opt/src/gcc/contrib/paranoia.cc" location-dump-atoms-and-non-atoms (map prn))
