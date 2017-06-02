@@ -13,16 +13,17 @@
     (let [patch-str (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" slurp-resource)
           z-patch (->> patch-str zutubi/parse-diff)
           d-patch (->> patch-str difflib/parse-diff)]
-      (is (= (->> z-patch patches (mapcat deltas) (map old-offset))
-             (->> d-patch patches (mapcat deltas) (map old-offset))))
-      (is (= (->> z-patch patch-correspondences)
-             (->> d-patch patch-correspondences)))
+      (is (= (->> z-patch (mapcat deltas) (map old-offset))
+             (->> d-patch (mapcat deltas) (map old-offset)))))
+      ;(is (= (->> z-patch patch-correspondences)
+      ;      (->> d-patch patch-correspondences)))
       )
     ))
     (let [patch-str (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" slurp-resource)]
-      (->> patch-str zutubi/parse-diff patches first deltas (map #(->> % .getNewOffset))))
+      (->> patch-str zutubi/parse-diff first deltas (map #(->> % .getNewOffset))))
     (let [patch-str (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch" slurp-resource)]
-      (->> patch-str difflib/parse-diff patches first deltas (map #(->> % .getRevised .getPosition))))
+      (->> patch-str difflib/parse-diff last deltas first .getOriginal))
+           (mapcat deltas) (map #(->> % .getRevised .getPosition))))
 
 (deftest hunk-line-ranges-test
   (testing "Which lines were added and removed in a hunk"

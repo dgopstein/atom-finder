@@ -4,6 +4,7 @@
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    [schema.core :as s]
+   [atom-finder.zutubi :as zutubi]
    )
   (:import
    [java.io ByteArrayInputStream StringReader]
@@ -18,13 +19,6 @@
 ;            ;"bf8e44c9e49d658635b5a2ea4905333fa8845d1f.patch"
 ;            resource-path slurp))
 
-(defmulti patches "Get patches from a diff file" class)
-(s/defmethod patches difflib.Patch :- [difflib.Patch]
-  [p]
-  ;; This model assumes each patch only contains one patch... so return it
-  [p])
-(s/defmethod patches com.zutubi.diff.PatchFile :- [com.zutubi.diff.Patch]
-  [p] (.getPatches p))
 
 (defmulti deltas "Get deltas/hunks from a patch" class)
 (s/defmethod deltas difflib.Patch :- [difflib.Delta]
@@ -48,8 +42,7 @@
   "Which lines are contained in this patch"
   [patch]
   (->> patch
-       parse-diff
-       patches
+       zutubi/parse-diff
       (mapcat #(deltas %))
       (map (fn [hunk] [(.getOldOffset hunk) (.getOldLength hunk) (.getNewOffset hunk) (.getNewLength hunk)] ))
   ))
@@ -77,13 +70,13 @@
   [hunk]
   (->> (hunk-lines-old-lines hunk)
        (filter (fn [[line-num line]]
-                 (deleted? line)))))
+                 (zutubi/deleted? line)))))
 
 (defn removed-lines
   "Which lines are removed in this patch (using Old numbers)"
   [patch]
   (reduce merge
-          (for [ptch (->> patch parse-diff )]
+          (for [ptch (->> patch zutubi/parse-diff)]
             { (.getOldFile ptch)
              (->> ptch deltas
                   (map deleted-lines-hunk)
@@ -94,8 +87,7 @@
   "list of files removed in this patch"
   [patch]
   (->> patch
-       parse-diff
-       patches
+       zutubi/parse-diff
        (map (memfn getOldFile))
        set
        ))
@@ -104,8 +96,7 @@
   "list of files removed in this patch"
   [patch]
   (->> patch
-       parse-diff
-       patches
+       zutubi/parse-diff
        (map (memfn getNewFile))
        set
        ))
@@ -114,8 +105,7 @@
   "list of files changed in this patch"
   [patch]
   (->> patch
-       parse-diff
-       patches
+       zutubi/parse-diff
        (mapcat #(vector (.getOldFile %1) (.getNewFile %1)))
        set
        ))
@@ -123,8 +113,8 @@
 
 ;===============================================
 
-;(def hunk (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch" resource-path slurp parse-diff patches (drop 1) first deltas first))
-;(def hunk (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch" resource-path slurp parse-diff patches first deltas (drop 1) first))
+;(def hunk (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch" resource-path slurp zutubi/parse-diff (drop 1) first deltas first))
+;(def hunk (->> "patch/gcc_97574c57cf26ace9b8609575bbab66465924fef7.patch" resource-path slurp zutubi/parse-diff first deltas (drop 1) first))
 
 (defn parallel-hunk-lines [hunk]
   "Label each line with the line number in their original files"
@@ -135,8 +125,8 @@
     (fn [hs line]
       (let [h (last hs)]
         (conj hs
-              {:old-idx (+ (:old-idx h) (if (added? line) 0 1))
-               :new-idx (+ (:new-idx h) (if (deleted? line) 0 1))
+              {:old-idx (+ (:old-idx h) (if (zutubi/added? line) 0 1))
+               :new-idx (+ (:new-idx h) (if (zutubi/deleted? line) 0 1))
                :line line
                :type (.getType line)})))
     [{:old-idx (dec (.getOldOffset hunk))
@@ -155,11 +145,11 @@
        "inserted instead of old line 2.")
   (for [group
         (->> hunk parallel-hunk-lines
-             (partition-by (comp common? :line))
-             (filter (comp uncommon? :line first)))]
+             (partition-by (comp zutubi/common? :line))
+             (filter (comp zutubi/uncommon? :line first)))]
 
-    (let [deleted (->> group (filter (comp deleted? :line)))
-          added   (->> group (filter (comp added?   :line)))
+    (let [deleted (->> group (filter (comp zutubi/deleted? :line)))
+          added   (->> group (filter (comp zutubi/added?   :line)))
           deleted-idx (map :old-idx deleted)
           added-idx   (map :new-idx added)]
       {
@@ -174,7 +164,7 @@
 
 (defn patch-correspondences [diff]
   (->>
-    (for [patch (patches diff)
+    (for [patch diff
           hunk  (deltas patch)]
       {:file (.getOldFile patch)
        :ranges (->> hunk change-bounds)})

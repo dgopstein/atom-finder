@@ -14,7 +14,7 @@
 
 (defn parse-diff
   [patch]
-  (.parse parser (StringReader. patch)))
+  (.getPatches (.parse parser (StringReader. patch))))
 
 (defn deleted? [line] (= UnifiedHunk$LineType/DELETED (.getType line)))
 (defn added? [line] (= UnifiedHunk$LineType/ADDED (.getType line)))

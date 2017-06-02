@@ -56,5 +56,12 @@ first
   ))
 
 
-(s/defn parse-diff :- difflib.Patch [s :- s/Str]
-  (->> s str/split-lines DiffUtils/parseUnifiedDiff))
+(s/defn parse-diff ;:- difflib.Patch
+  [s :- s/Str]
+  (->> s
+       ;; split the diff into multiple patch at "+++" as in
+       ;; java-diff-utils/src/main/java/difflib/DiffUtils.java:54
+       ((flip str/split) #"(?m)^(?=\+\+\+)")
+       rest
+       (map str/split-lines)
+       (map #(DiffUtils/parseUnifiedDiff %))))
