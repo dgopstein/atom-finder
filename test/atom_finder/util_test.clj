@@ -115,9 +115,10 @@
                  ["++" "d++"]
                  ["?:" "1 ? 2 : 3"]
                  ["<ProblemStatement>" "~a+"]
+                 ["=" "x = {}"] ; gcc/libstdc++-v3/testsuite/21_strings/basic_string_view/operations/find/wchar_t/2.cc:149
                  ]]
 
       (doseq [[expected frag idx] cases]
         (is (= expected (->> frag parse-frag ((if idx (partial get-in-tree idx) identity)) write-node)) (prn-str [expected frag])))
-    ))
+      ))
   )

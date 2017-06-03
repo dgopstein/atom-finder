@@ -43,6 +43,11 @@
 (defn visit-nothing! [writer] (should-visit! writer false))
 (defn visit-everything! [writer] (should-visit! writer true))
 
+(defmulti  printable-node? "Is this node non-degenerate" class)
+(defmethod printable-node? :default [node] true) ;; most nodes can be printed
+(defmethod printable-node? IASTBinaryExpression
+  [node] (.getOperand2 node)) ;; if there's no second operand it can't be printed. e.g. "x = {}"
+
 (defn SingleNodeVisitor []
   (let [modificationStore (ASTModificationStore.)
         commentMap (NodeCommentMap.)
@@ -50,8 +55,11 @@
         ]
     (proxy [ChangeGeneratorWriterVisitor] [modificationStore nil commentMap]
       (visit [node]
-        (visit-nothing! this)
-        (proxy-super visit node))
+        (if (printable-node? node)
+          (do
+            (visit-nothing! this)
+            (proxy-super visit node))
+          0))
       )))
 
 (s/defn write-node-type :- s/Str [node :- (s/maybe IASTNode)] (str "<" (and node (typename node)) ">"))
@@ -62,7 +70,7 @@
     (let [writer-visitor (SingleNodeVisitor)]
       (.accept node writer-visitor)
 
-      (let [node-str (str/replace (.toString writer-visitor) #"\s" "")]
+      (let [node-str (str/replace (or (.toString writer-visitor) "") #"\s" "")]
         (if (empty? node-str)
           (write-node-type node)
           node-str))

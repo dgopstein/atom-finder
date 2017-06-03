@@ -48,10 +48,13 @@
                                      (->> root flatten-tree-context (map (fn [[ctx n]] (assoc ctx :node n))))
                                      all-atoms)]
     (map (partial merge {:file filename})
-         (concat all-atoms (map #(merge {:type :non-atom} %1 (loc-data (:node %1))) (pprn non-atoms))))))
+         (concat all-atoms (map #(merge {:type :non-atom} %1 (loc-data (:node %1))) non-atoms)))))
 
 
 ;(->> "/Users/dgopstein/opt/src/gcc/contrib/paranoia.cc" location-dump-atoms-and-non-atoms (map prn))
+
+(defn now [] (java.util.Date.))
+(->> (now) println)
 
 (->> gcc-path
      (pmap-dir-files location-dump-atoms-and-non-atoms)
@@ -59,8 +62,8 @@
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
      (map (juxt :file :type :start-line :end-line :depth))
      (map prn)
-     (take 50000)
+     ;(take 50000)
      dorun
-     ;(log-to "location-dump_2017-05-29.txt")
+     (log-to "location-dump_non-atoms_2017-06-02.txt")
      time
      )

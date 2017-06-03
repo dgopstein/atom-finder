@@ -4,7 +4,10 @@
     `(list ~@(map str (vec words))))
 
 (defn tap [f x] (f x) x)
-(defn pap [x] (tap prn x)) ; print the value of variable and return it
+(defn pap
+  "print the value of the argument and return it; optionally modified by a function"
+  ([x] (tap prn x))
+  ([f x] (tap (comp prn f) x)))
 
 (defmacro =by
   "Test if arguments are equal after applying f to all of them"
