@@ -44,8 +44,11 @@
 (defn location-dump-atoms-and-non-atoms [filename]
   (let [root      (->> filename parse-file)
         all-atoms (find-all root)
+        all-nodes (->> root flatten-tree-context (map (fn [[ctx n]] (assoc ctx :node n))))
+        all-macro (->> root all-preprocessor (map #(array-map :node %)))
+        all-nodes-macro (concat all-nodes all-macro)
         non-atoms (set-difference-by :node
-                                     (->> root flatten-tree-context (map (fn [[ctx n]] (assoc ctx :node n))))
+                                     all-nodes-macro
                                      all-atoms)]
     (map (partial merge {:file filename})
          (concat all-atoms (map #(merge {:type :non-atom} %1 (loc-data (:node %1))) non-atoms)))))
@@ -60,11 +63,12 @@
      (pmap-dir-files location-dump-atoms-and-non-atoms)
      (mapcat (partial map #(update % :node write-node)))
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
+     (map (fn [m] (update m :file #(subs % (- (count gcc-path) 3))))) ; remove gcc-path prefix from file paths
      (map (juxt :file :type :start-line :end-line :depth))
      (map prn)
      (take 50000)
      dorun
-     (log-to "location-dump_non-atoms_2017-06-02.txt")
+     (log-to "location-dump_non-atoms_2017-06-05.txt")
      time
      )
 
@@ -101,4 +105,11 @@
      (map (fn [lst] [(first (first lst)) (map rest lst)]))
      (map process-dump-file)
      pprint
+     )
+
+(->> "/Users/dgopstein/opt/src/gcc/libatomic/gload.c"
+     parse-file
+     all-preprocessor
+     (map loc)
+     (map prn)
      )
