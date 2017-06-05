@@ -62,8 +62,43 @@
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
      (map (juxt :file :type :start-line :end-line :depth))
      (map prn)
-     ;(take 50000)
+     (take 50000)
      dorun
      (log-to "location-dump_non-atoms_2017-06-02.txt")
      time
+     )
+
+(defn read-lines
+  "read edn file with one entry per line"
+  [filename]
+  (->> filename
+       slurp-lines
+       (map read-string)
+       ))
+
+(->> "tmp/location-dump_non-atoms_2017-06-02.txt_100000"
+     read-lines
+     (def location-dump-data)
+     time
+     )
+
+(defn process-dump-file
+  [[filename atoms-lst]]
+  (let [atoms (map (fn [[atom start-line end-line depth]]
+                     {:atom atom :start-line start-line :end-line end-line :depth depth}) atoms-lst)
+        comments (filter #(= :comment (:atom %)) atoms)]
+    (for [comment comments]
+      (let [next-line (->> atoms (map :start-line) (filter #(<= (:end-line comment) %)) min-of) ; next non-blank line after comment
+            next-line-items (filter #(= next-line (:start-line %)) atoms)
+            next-line-counts (frequencies next-line-items)]
+        (pprn [filename comment next-line next-line-counts])
+        next-line-counts
+      ))))
+
+(->> location-dump-data
+     (take 50)
+     (partition-by first)
+     (map (fn [lst] [(first (first lst)) (map rest lst)]))
+     (map process-dump-file)
+     pprint
      )
