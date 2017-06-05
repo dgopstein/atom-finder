@@ -54,9 +54,9 @@
 ;(->> "/Users/dgopstein/opt/src/gcc/contrib/paranoia.cc" location-dump-atoms-and-non-atoms (map prn))
 
 (defn now [] (java.util.Date.))
-(->> (now) println)
+'(->> (now) println)
 
-(->> gcc-path
+'(->> gcc-path
      (pmap-dir-files location-dump-atoms-and-non-atoms)
      (mapcat (partial map #(update % :node write-node)))
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
@@ -95,7 +95,7 @@
         next-line-counts
       ))))
 
-(->> location-dump-data
+'(->> location-dump-data
      (take 50)
      (partition-by first)
      (map (fn [lst] [(first (first lst)) (map rest lst)]))
