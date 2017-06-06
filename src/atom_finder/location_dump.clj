@@ -23,12 +23,12 @@
 
 
 ;(->> "/Users/dgopstein/opt/src/gcc/contrib/paranoia.cc" location-dump-atoms-and-non-atoms (map prn))
-(->> "/Users/dgopstein/opt/src/gcc/libatomic/gload.c" location-dump-atoms-and-non-atoms (map prn))
+'(->> "/Users/dgopstein/opt/src/gcc/libatomic/gload.c" location-dump-atoms-and-non-atoms (map prn))
 
 (defn now [] (java.util.Date.))
 '(->> (now) println)
 
-(->> (str gcc-path "/libatomic")
+'(->> (str gcc-path "/libatomic")
      (pmap-dir-files location-dump-atoms-and-non-atoms)
      (mapcat (partial map #(update % :node write-node)))
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
@@ -49,7 +49,7 @@
        (map read-string)
        ))
 
-(->> "tmp/location-dump_non-atoms_2017-06-05_1.txt"
+'(->> "tmp/location-dump_non-atoms_2017-06-05_1.txt"
      read-lines
      (take 1000000)
      (def location-dump-data)
@@ -93,7 +93,7 @@
          }
       ))))
 
-(->> location-dump-data
+'(->> location-dump-data
      (partition-by first)
      (map (fn [lst] [(first (first lst)) (map rest lst)]))
      (drop 240)(take 3)
@@ -101,7 +101,7 @@
      pprint
      )
 
-(->> (str gcc-path "/libstdc++-v3/include/ext/mt_allocator.h")
+'(->> (str gcc-path "/libstdc++-v3/include/ext/mt_allocator.h")
      parse-file
      flatten-tree
      (map start-line)
