@@ -58,7 +58,7 @@
 '(->> "/Users/dgopstein/opt/src/gcc/libatomic/gload.c" location-dump-atoms-and-non-atoms (map prn))
 
 (defn now [] (java.util.Date.))
-'(->> (now) println)
+(->> (now) println)
 
 '(->> (str gcc-path "/libatomic")
      (pmap-dir-files location-dump-atoms-and-non-atoms)
@@ -81,9 +81,9 @@
        (map read-string)
        ))
 
-'(->> "tmp/location-dump_non-atoms_2017-06-05_1.txt"
+(->> "location-dump_non-atoms_2017-06-05_1.txt"
      read-lines
-     (take 1000000)
+     ;(take 1000000)
      (def location-dump-data)
      time
      )
@@ -95,46 +95,51 @@
         {comments true non-comments false} (group-by #(= :comment (:type %)) nodes)
         all-line-items (->> nodes (filter :start-line) (group-by :start-line)) ; :start-line -> node
         ]
-    (for [comment comments]
-      (let [endl (:end-line comment)
-            startl (:start-line comment)
-            max-n 10
-            line-items (->> all-line-items
-                            (filter (fn [[line-num items]]
-                                      (<= endl line-num (+ endl max-n))))
-                            (into {})
-                            ((fn [m] (update m startl (partial remove #{comment})))) ; remove this comment from consideration
-                            ) ; limit the lines we look at to ones near-ish this comment
-            type-count (fn [nodes] (->> nodes (map :type) frequencies))
-            ;inline? (boolean (some #(= (:start-line %) (:start-line comment)) non-comments))
-            same-line-items (line-items startl)
-            next-line (->> line-items keys (filter #(< endl %)) min-of); next non-blank line after comment
-            next-line-items (line-items next-line)
-            next-N-lines-items (fn [n] (->> line-items
-                                            (filter (fn [[line-num items]]
-                                                      (>= (+ n endl) line-num)))
-                                            (mapcat last)))
-            ]
-        {:file filename
-         :comment comment
-         :same-line (type-count same-line-items)
-         :next-line (type-count next-line-items)
-         :next-line-n next-line
-         :next-5-lines (type-count (next-N-lines-items 5))
-         :next-10-lines (type-count (next-N-lines-items 10))
-         }
-      ))))
+    (->>
+      (for [comment comments]
+        (let [endl (:end-line comment)
+              startl (:start-line comment)
+              max-n 10
+              line-items (->> all-line-items
+                              (filter (fn [[line-num items]]
+                                        (<= endl line-num (+ endl max-n))))
+                              (into {})
+                              ((fn [m] (update m startl (partial remove #{comment})))) ; remove this comment from consideration
+                              ) ; limit the lines we look at to ones near-ish this comment
+              type-count (fn [nodes] (->> nodes (map :type) frequencies))
+              ;inline? (boolean (some #(= (:start-line %) (:start-line comment)) non-comments))
+              same-line-items (line-items startl)
+              next-line (->> line-items keys (filter #(< endl %)) min-of); next non-blank line after comment
+              next-line-items (line-items next-line)
+              next-N-lines-items (fn [n] (->> line-items
+                                              (filter (fn [[line-num items]]
+                                                        (>= (+ n endl) line-num)))
+                                              (mapcat last)))
+              ]
+          {;:file filename
+           ;:comment comment
+           :same-line (type-count same-line-items)
+           :next-line (type-count next-line-items)
+           ;:next-line-n next-line
+           :next-5-lines (type-count (next-N-lines-items 5))
+           :next-10-lines (type-count (next-N-lines-items 10))
+           }
+          ))
+      (apply merge-with (partial merge-with +))
+      (merge {:file filename})
+      )))
 
-'(->> location-dump-data
+  ;(apply merge-with (partial merge-with +) [{:a {:d 1 :e 4}} {:a {:d 3 :e 1}}])
+
+;(->> "location-dump_non-atoms_2017-06-05_1.txt"
+;     read-lines
+(->> location-dump-data
      (partition-by first)
      (map (fn [lst] [(first (first lst)) (map rest lst)]))
-     (drop 240)(take 3)
+     ;(drop 740)(take 3)
      (map process-dump-file)
-     pprint
-     )
-
-'(->> (str gcc-path "/libstdc++-v3/include/ext/mt_allocator.h")
-     parse-file
-     flatten-tree
-     (map start-line)
+     (map prn)
+     dorun
+     (log-to "location-dump_comment-sums_2017-06-05_1.txt")
+     time
      )
