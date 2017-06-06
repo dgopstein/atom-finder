@@ -14,7 +14,39 @@
 (defn loc-data [node]
   (select-keys (loc node) [:start-line :end-line :offset :length]))
 
-(s/defn find-all :- [{:type s/Keyword s/Anyodes all-macro)
+(s/defn find-all :- [{:type s/Keyword s/Any s/Any}]
+  "Apply every classifier to this node"
+  [node :- IASTNode]
+  (let [contexts (context-map node)]
+    (->> atoms
+         ((flip conj) {:name :comment :finder all-comments})
+         (mapcat
+          (fn [atom-map]
+            (for [atom ((:finder atom-map) node)]
+              (merge {:type (:name atom-map) :node atom}
+                     (loc-data atom)
+                     (contexts atom)
+                     ))))
+         )
+    )
+  )
+
+(s/defn set-difference-by
+  "set-difference after applying a function to each element"
+  [f s1 s2]
+  (let [m1 (zipmap (map f s1) s1)]
+    (vals (apply dissoc m1 (map f s2)))))
+'(set-difference-by #(* %1 %1) [1 2 3] [-1 2 -4])
+
+(defn location-dump-atoms [filename]
+  (map (partial merge {:file filename}) (->> filename parse-file find-all)))
+
+(defn location-dump-atoms-and-non-atoms [filename]
+  (let [root      (->> filename parse-file)
+        all-atoms (find-all root)
+        all-nodes (->> root flatten-tree-context (map (fn [[ctx n]] (assoc ctx :node n))))
+        all-macro (->> root all-preprocessor (map #(array-map :node %)))
+        all-nodes-macro (concat all-nodes all-macro)
         non-atoms (set-difference-by :node
                                      all-nodes-macro
                                      all-atoms)]
