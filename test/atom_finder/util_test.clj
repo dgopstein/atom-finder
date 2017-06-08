@@ -118,6 +118,7 @@
                  ["++" "d++"]
                  ["?:" "1 ? 2 : 3"]
                  ["<ProblemStatement>" "~a+"]
+                 ["=" "x = 1"]
                  ["=" "x = {}"] ; gcc/libstdc++-v3/testsuite/21_strings/basic_string_view/operations/find/wchar_t/2.cc:149
                  ]]
 
@@ -126,7 +127,7 @@
       ))
   )
 
-(deftest "keyword-test"
+(deftest keyword-test
   (testing "join-keywords"
     (is (= :abc_efg (join-keywords "_" [:abc :efg])))
     (is (= :abc_efg (join-keywords "_" ["abc" :efg])))

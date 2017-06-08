@@ -43,10 +43,14 @@
 (defn visit-nothing! [writer] (should-visit! writer false))
 (defn visit-everything! [writer] (should-visit! writer true))
 
-(defmulti  printable-node? "Is this node non-degenerate" class)
-(defmethod printable-node? :default [node] true) ;; most nodes can be printed
-(defmethod printable-node? IASTBinaryExpression
-  [node] (.getOperand2 node)) ;; if there's no second operand it can't be printed. e.g. "x = {}"
+(defmulti  fix-node "Remove any nil children" class)
+(defmethod fix-node :default [node] node) ;; most nodes can be printed as-is
+(defmethod fix-node IASTBinaryExpression
+  [node]
+  (if (.getOperand2 node)
+    node
+    (tap #(.setOperand2 %1 (.copy (.getOperand1 %1)))
+         (.copy node)))) ;; if there's no second operand use the first one again
 
 (defn SingleNodeVisitor []
   (let [modificationStore (ASTModificationStore.)
@@ -55,11 +59,8 @@
         ]
     (proxy [ChangeGeneratorWriterVisitor] [modificationStore nil commentMap]
       (visit [node]
-        (if (printable-node? node)
-          (do
-            (visit-nothing! this)
-            (proxy-super visit node))
-          0))
+        (visit-nothing! this)
+        (proxy-super visit node))
       )))
 
 (s/defn write-node-type :- s/Str [node :- (s/maybe IASTNode)] (str "<" (and node (typename node)) ">"))
@@ -68,7 +69,7 @@
   (if (or (nil? node) (instance? IASTProblemHolder node))
     (write-node-type node)
     (let [writer-visitor (SingleNodeVisitor)]
-      (.accept node writer-visitor)
+      (.accept (fix-node node) writer-visitor)
 
       (let [node-str (str/replace (or (.toString writer-visitor) "") #"\s" "")]
         (if (empty? node-str)
