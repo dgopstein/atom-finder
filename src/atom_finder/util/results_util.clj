@@ -82,3 +82,46 @@
   (->> (if (seq? fres) fres (list fres))
        (mapcat flatten-seq)
        (map flatten-map)))
+
+(defn merge-down
+  "collapse names of nested maps"
+  [m]
+  (if (not (map? m))
+    m
+    (let [{map-kids true flat-kids false} (->> m (group-by (comp map? last)))
+          flat-map (apply dissoc m (map first map-kids))
+          flattened-kids (apply merge
+                                ;(for [[map-key map-val] map-kids]
+                                  (map-kv (fn [[k v]]
+                                            ([(join-keywords "-" [map-key k])
+                                                        (merge-down v)])
+                                            map-val);)
+                                  ))]
+          (merge (pprn flat-map) (pprn flattened-kids))
+          )
+      ))
+
+(defn merge-down [m]
+  (if (not (map? m))
+    m
+    (->> (pprn m)
+         (mapcat
+          (fn [[k v]]
+            (if (not (map? v))
+              [{k v}]
+              (map-kv #(vector (join-keywords "-" [k %1]) (merge-down %2)) v))))
+         (into {}))))
+
+;(def papply (partial apply))
+
+(defn merge-down
+  ([parent-k m]
+   (if (not (map? m))
+     {parent-k m}
+     (->> m
+          (mapcat (partial apply merge-down))
+          (map (fn [[k v]]
+                 {(if (nil? parent-k) k
+                      (join-keywords "-" [parent-k k])) v}))
+          (into {}))))
+  ([m] (merge-down nil m)))

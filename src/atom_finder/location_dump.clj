@@ -143,3 +143,14 @@
      (log-to "location-dump_comment-sums_2017-06-05_1.txt")
      time
      )
+
+(->> "tmp/location-dump_comment-sums_2017-06-05_1.txt"
+     read-lines
+     (def comment-sums)
+     time
+     )
+
+(->> comment-sums
+     merge-down
+     pprint
+     )

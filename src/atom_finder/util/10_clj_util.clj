@@ -80,3 +80,7 @@
   "println to stderr"
   (binding [*out* *err*]
       (println (apply str s))))
+
+(defn join-keywords
+  ([sep kws] (->> kws (map name) (clojure.string/join sep) keyword))
+  ([kws] (join-keywords "" kws)))

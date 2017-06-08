@@ -167,7 +167,6 @@
     (map-values #(apply merge-with concat %))
     (map (fn [[k v]] (merge {:file k} v)))
   ))
-;(map-kv #(vector (:file %1) (:ranges %1)))
 
 (def correspondences-to-ranges
   (partial map #(update-in % [:ranges]
