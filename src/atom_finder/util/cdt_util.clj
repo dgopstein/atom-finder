@@ -49,6 +49,16 @@
      (conj
            (doseq [iast-node kids]
              (pre-tree f iast-node (inc index)))
+           ret)))
+  ([f node index tree-path]
+
+   (let [kids (children node)
+         kids-last-index (count kids)
+         ret (f node index tree-path)]
+
+     (conj
+           (doseq [[iast-node child-index] (map list kids (range 0 kids-last-index))]
+             (pre-tree f iast-node (inc index) (conj tree-path child-index)))
            ret))))
 
 (defn depth [node]

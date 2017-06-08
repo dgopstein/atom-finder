@@ -6,21 +6,22 @@
 
 (defn print-tree [node]
   (letfn
-      [(f [node index]
+      [(f [node index tree-path]
          (let [offset (format " (offset: %s, %s)"
                               (-> node .getFileLocation .getNodeOffset)
                               (-> node .getFileLocation .getNodeLength))]
 
-           (printf "%s -%s %s -> %s\n"
+           (printf "%s -%s %s %s -> %s\n"
                    (apply str (repeat index "  "))
                    (-> node .getClass .getSimpleName)
+                   (str tree-path)
                    offset
                    (-> node .getRawSignature
                        (str "           ")
                        (.subSequence 0 10)
                        (.replaceAll "\n" " \\ ")))))]
 
-    (pre-tree f node)))
+    (pre-tree f node 1 [])))
 
 (def ast-writer (ASTWriter.))
 (defn write-ast [node] (.write ast-writer node))
