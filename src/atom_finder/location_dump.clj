@@ -5,6 +5,7 @@
    [atom-finder.classifier :refer :all]
    [clojure.pprint :refer [pprint]]
    [schema.core :as s]
+   [clojure.data.csv :as csv]
    )
   (:import
    [org.eclipse.cdt.core.dom.ast IASTNode]
@@ -81,7 +82,7 @@
        (map read-string)
        ))
 
-(->> "location-dump_non-atoms_2017-06-05_1.txt"
+'(->> "location-dump_non-atoms_2017-06-05_1.txt"
      read-lines
      ;(take 1000000)
      (def location-dump-data)
@@ -133,7 +134,7 @@
 
 ;(->> "location-dump_non-atoms_2017-06-05_1.txt"
 ;     read-lines
-(->> location-dump-data
+'(->> location-dump-data
      (partition-by first)
      (map (fn [lst] [(first (first lst)) (map rest lst)]))
      ;(drop 740)(take 3)
@@ -150,7 +151,17 @@
      time
      )
 
+(defn values-at [m keys]
+  (map m keys))
+
+(defn maps-to-csv [filename maps]
+  (let [headers (keys (first maps))]
+    (with-open [writer (clojure.java.io/writer filename)]
+      (csv/write-csv writer (cons headers (map #(values-at % headers) maps))))))
+
 (->> comment-sums
-     merge-down
-     pprint
+     ;(take 100)
+     (map merge-down)
+     (maps-to-csv "comment-sums.csv")
+     ;(map prn)
      )
