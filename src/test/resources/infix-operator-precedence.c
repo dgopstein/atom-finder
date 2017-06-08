@@ -32,4 +32,29 @@ int main(){
   (!a) && b;
 
   b = sizeof(a + b);
+  foo(!a);
+  &a + 2;
+  *a && b;
+  ++a + 1;
+  Obj->a + b;
+
+
+  - 2+3; // <true>
+  - a+b;
+  - a*b;
+  ! 2 || 3;
+  ! a && b; // <true>
+  a && !b;
+  ! a && ! b; // <true>
+  
+
+  *p1 + i1; // <true>
+  *p1 + p2; // <false>
+  *p1 - i1; // <true>
+  *pp1 - p2; // <false>
+
+  (*p1) + i1;
+  *(p1 + i1);
+  p1 + *p2 + i1; // <true>
+
 }

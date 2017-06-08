@@ -38,17 +38,18 @@
       (recur p))))
 
 (defn pre-tree
-  ([f node] (pre-tree f node 1))
-  ([f node index]
+  ([f node] (pre-tree f node 1 []))
+  ([f node index tree-path]
 
    (let [kids (children node)
+         kids-last-index (count kids) 
          ret (case (arg-count f)
                    1 (f node)
-                   2 (f node index))]
+                   3 (f node index tree-path))]
 
      (conj
-           (doseq [iast-node kids]
-             (pre-tree f iast-node (inc index)))
+           (doseq [[iast-node child-index] (map list kids (range 0 kids-last-index))]
+             (pre-tree f iast-node (inc index) (conj tree-path child-index)))
            ret))))
 
 (defn depth [node]
