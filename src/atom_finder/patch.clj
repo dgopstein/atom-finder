@@ -34,7 +34,11 @@
 
 (defmulti old-offset "get the original file offset" class)
 (s/defmethod old-offset difflib.Delta :- s/Int
-  [delta] (->> delta .getOriginal .getPosition inc))
+  [delta]
+  (let [orig-offset (->> delta .getOriginal .getPosition)]
+    (if (< orig-offset 0)
+      (throw (RuntimeException. "Patch doesn't have position information for the requested chunk"))
+      (inc orig-offset))))
 (s/defmethod old-offset com.zutubi.diff.unified.UnifiedHunk :- s/Int
   [hunk] (->> hunk .getOldOffset))
 
