@@ -28,7 +28,7 @@
 (def slurp-resource (comp slurp resource-path))
 
 (defn slurp-lines [file]
-    (str/split-lines (slurp file)))
+  (line-seq (clojure.java.io/reader file)))
 
 (defn expand-home [s]
   (if (clojure.string/starts-with? s "~")

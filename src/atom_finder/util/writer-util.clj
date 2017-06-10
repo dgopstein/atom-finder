@@ -6,21 +6,22 @@
 
 (defn print-tree [node]
   (letfn
-      [(f [node index]
+      [(f [node index tree-path]
          (let [offset (format " (offset: %s, %s)"
                               (-> node .getFileLocation .getNodeOffset)
                               (-> node .getFileLocation .getNodeLength))]
 
-           (printf "%s -%s %s -> %s\n"
+           (printf "%s -%s %s %s -> %s\n"
                    (apply str (repeat index "  "))
                    (-> node .getClass .getSimpleName)
+                   (str tree-path)
                    offset
                    (-> node .getRawSignature
                        (str "           ")
                        (.subSequence 0 10)
                        (.replaceAll "\n" " \\ ")))))]
 
-    (pre-tree f node)))
+    (pre-tree f node 1 [])))
 
 (def ast-writer (ASTWriter.))
 (defn write-ast [node] (.write ast-writer node))
@@ -43,6 +44,15 @@
 (defn visit-nothing! [writer] (should-visit! writer false))
 (defn visit-everything! [writer] (should-visit! writer true))
 
+(defmulti  fix-node "Remove any nil children" class)
+(defmethod fix-node :default [node] node) ;; most nodes can be printed as-is
+(defmethod fix-node IASTBinaryExpression
+  [node]
+  (if (.getOperand2 node)
+    node
+    (tap #(.setOperand2 %1 (.copy (.getOperand1 %1)))
+         (.copy node)))) ;; if there's no second operand use the first one again
+
 (defn SingleNodeVisitor []
   (let [modificationStore (ASTModificationStore.)
         commentMap (NodeCommentMap.)
@@ -60,9 +70,9 @@
   (if (or (nil? node) (instance? IASTProblemHolder node))
     (write-node-type node)
     (let [writer-visitor (SingleNodeVisitor)]
-      (.accept node writer-visitor)
+      (.accept (fix-node node) writer-visitor)
 
-      (let [node-str (str/replace (.toString writer-visitor) #"\s" "")]
+      (let [node-str (str/replace (or (.toString writer-visitor) "") #"\s" "")]
         (if (empty? node-str)
           (write-node-type node)
           node-str))
