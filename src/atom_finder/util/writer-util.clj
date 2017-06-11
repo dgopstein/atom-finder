@@ -23,6 +23,7 @@
 
     (pre-tree f node 1 [])))
 
+
 (def ast-writer (ASTWriter.))
 (defn write-ast [node] (.write ast-writer node))
 
@@ -91,4 +92,10 @@
   ([depth root]
    (concat [(str (str/join (repeat depth " ")) (write-node root))]
            (mapcat (partial write-nodes-with-depth (inc depth)) (children root)))))
+
+(defmacro update-node
+  [f node1 node2]
+  `(let [node# (.copy ~node1)]
+    (~f node# (->> ~node2 .copy))
+    node#))
 
