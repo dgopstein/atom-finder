@@ -40,7 +40,7 @@
    (ValidatedAtom :omitted-curly-braces      omitted-curly-braces-atom?  (default-finder omitted-curly-braces-atom?))
    (ValidatedAtom :assignment-as-value       assignment-as-value-atom?   (default-finder assignment-as-value-atom?))
    (ValidatedAtom :macro-operator-precedence macro-def-precedence-atom?  macro-operator-precedence-atoms)
-   (ValidatedAtom :infix-operator-precedence infix-operator-precedence-atom?  (default-finder infix-operator-precedence-atom?))]
+   ]
   )
 
 (def atom-lookup (into {} (map #(vector (:name %1) %1) atoms)))

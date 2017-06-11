@@ -82,3 +82,16 @@
   (->> (if (seq? fres) fres (list fres))
        (mapcat flatten-seq)
        (map flatten-map)))
+
+(defn merge-down
+  "collapse names of nested maps"
+  ([parent-k m]
+   (if (not (map? m))
+     {parent-k m}
+     (->> m
+          (mapcat (partial apply merge-down))
+          (map (fn [[k v]]
+                 {(if (nil? parent-k) k
+                      (join-keywords "-" [parent-k k])) v}))
+          (into {}))))
+  ([m] (merge-down nil m)))

@@ -26,6 +26,15 @@
    :removed-atoms (count (atoms-removed (:finder atom) a b diff-maps))
    }))
 
+;(->> big-commit-srcs :ast-before flatten-tree count) => 151033 => O(22billion)
+
+'(->> ;(removed-atoms-stats big-commit-srcs post-increment)
+     (diff-trees (:ast-before big-commit-srcs) (:ast-after big-commit-srcs))
+     pprint
+     time
+     )
+
+
 ;(removed-atoms-stats
 ; {:ast-before (parse-frag "1, f(a + b + c)")
 ;  :ast-after (parse-frag "1 + 2")}

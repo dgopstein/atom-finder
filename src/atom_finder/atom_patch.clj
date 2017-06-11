@@ -148,10 +148,6 @@
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
 
-(defmacro log-err [msg ret x]
-  `(try ~x
-      (catch Exception e# (do (errln (str "-- exception parsing commit: \"" ~msg "\"\n")) ~ret))
-      (catch Error e#     (do (errln (str "-- error parsing commit: \""  ~msg "\"\n")) ~ret))))
 
 (defn parse-commit-for-atom
   [repo atoms rev-commit]
@@ -194,7 +190,7 @@
 
 (defn log-atoms-changed-all-commits
   [filename repo atoms]
-  (binding [*out* (clojure.java.io/writer filename)]
+  (log-to filename
     (println "(")
     (->> atoms
          (atoms-changed-all-commits repo)
@@ -226,3 +222,8 @@
 ;     (take 1)
 ;     pprint)
 
+
+(def big-commit-revstr "d4f474145ae66d041b820f4bf118601451baf261")
+(def big-commit-file "gcc/config/aarch64/arm_neon.h")
+(def big-commit-rev-commit (some-> gcc-repo (find-rev-commit big-commit-revstr)))
+(def big-commit-srcs (when (and gcc-repo big-commit-rev-commit) (before-after-data gcc-repo big-commit-rev-commit big-commit-file)))

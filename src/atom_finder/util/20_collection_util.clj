@@ -17,12 +17,20 @@
 (defn distinct-by [f col]
   (map first (vals (group-by f col))))
 
-(def map-kv (comp (partial into {}) (partial map)))
+(defn map-kv [f m]
+  (->> m (map (fn [[k v]] (f k v))) (into {})))
 
 (defn map-values-kv [f m]
   (reduce merge (map (fn [[k v]] {k (f k v)}) m)))
 
 (defn map-values [f m] (map-values-kv #(f %2) m))
+
+(defn map-keys [f m] (map-kv (fn [k v] [(f k) v]) m))
+
+; https://ideone.com/fork/P2876
+(def mapcat-indexed
+  "like mapcat, but expects function of 2 arguments, where first argument is index of sequence element"
+  (comp (partial apply concat) map-indexed))
 
 (def transpose (partial apply map vector))
 

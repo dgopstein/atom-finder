@@ -7,12 +7,12 @@
 (cfg/populate-from-file (some resource-path ["conf.edn" "travis-ci.edn"]))
 
 (def gcc-path (some->> :gcc-path cfg/get expand-home))
-(def ag-path  (some->> :ag-path  cfg/get expand-home))
+(def  ag-path (some->>  :ag-path cfg/get expand-home))
 
 (def gcc-repo (some->> gcc-path gitp/load-repo))
-(def ag-repo  (some->> ag-path  gitp/load-repo))
+(def  ag-repo (some->>  ag-path gitp/load-repo))
 
 (def root (parse-resource "logic-as-control-flow.c"))
 
-(def big-root     (some->> :big-root     cfg/get expand-home parse-file))
+(def big-root     (when gcc-path (->> "/gcc/config/i386/i386.c" (str gcc-path) parse-file)))
 (def github-top-c (some->> :github-top-c cfg/get expand-home))

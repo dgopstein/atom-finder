@@ -8,16 +8,22 @@
    )
   )
 
+(->> "gcc-atom-comment-context_2017-05-17_1.edn"
+     read-data
+     flatten-res
+     (map #(- (:ast-size-after %1) (:ast-size-before %1)))
+     (map prn))
 ;(def mem-data-old mem-data)
 ;(def commen-aggs-old comment-aggs)
 (comment
 (time (do
-(->> "gcc-atom-comment-context_2017-05-17_1.edn"
+(->> ;"gcc-atom-comment-context_2017-05-17_1.edn"
+     "gcc-atom-comment-context_2017-05-17_0.edn"
      read-data
      (def mem-data) time)
 (->> mem-data
      flatten-res
-     (filter :ast-size-before) ; remove commits that didn't parse
+     ;(filter :ast-size-before) ; remove commits that didn't parse
      (def flat-data) time)
 (->> flat-data
      (map #(dissoc % :atom :revstr :bug-ids :file))
@@ -98,3 +104,14 @@
      ;count)
 
 )
+
+(->> flat-data
+     (map (juxt :revstr :file :ast-size-before :ast-size-after))
+     (filter (partial every? identity))
+     (map (fn [[rev file a b]] [rev file a b (- b a)]))
+     (apply max-key last)
+     pprint)
+
+(every? identity [1 2 nil])
+
+(apply max-key last [[1 2] [3 0]])

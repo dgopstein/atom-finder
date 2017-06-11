@@ -78,6 +78,9 @@
     (is (= {1 "1a" 2 "2b" 3 "3c"} (map-values-kv #(str %1 %2) {1 \a 2 \b 3 \c})))
     )
 
+  (testing "map-keys"
+    (is (= {1 1 4 2 9 3} (map-keys #(* %1 %1) {1 1 2 2 3 3}))))
+
   (testing "file-ext"
     (let [cases [
                  [nil "gcc/ChangeLog"]
@@ -115,9 +118,20 @@
                  ["++" "d++"]
                  ["?:" "1 ? 2 : 3"]
                  ["<ProblemStatement>" "~a+"]
+                 ["=" "x = 1"]
+                 ["=" "x = {}"] ; gcc/libstdc++-v3/testsuite/21_strings/basic_string_view/operations/find/wchar_t/2.cc:149
                  ]]
 
       (doseq [[expected frag idx] cases]
         (is (= expected (->> frag parse-frag ((if idx (partial get-in-tree idx) identity)) write-node)) (prn-str [expected frag])))
-    ))
+      ))
   )
+
+(deftest keyword-test
+  (testing "join-keywords"
+    (is (= :abc_efg (join-keywords "_" [:abc :efg])))
+    (is (= :abc_efg (join-keywords "_" ["abc" :efg])))
+    (is (= :abc_efg (join-keywords "_" [:abc "efg"])))
+    (is (= :abc_efg_hij (join-keywords "_" [:abc "efg" :hij])))
+    (is (= :abcefghij (join-keywords [:abc "efg" :hij])))
+  ))

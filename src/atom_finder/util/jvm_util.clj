@@ -32,11 +32,6 @@
        (print-table)
        ))
 
-(defn errln [& s]
-  "println to stderr"
-  (binding [*out* *err*]
-      (println (apply str s))))
-
 ; https://gist.github.com/sunng87/13700d3356d5514d35ad
 (defn invoke-private-method [obj fn-name-string & args]
   (let [m (first (filter (fn [x] (.. x getName (equals fn-name-string)))

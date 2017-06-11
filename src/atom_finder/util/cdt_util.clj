@@ -38,14 +38,23 @@
       (recur p))))
 
 (defn pre-tree
-  ([f node] (pre-tree f node 1 []))
+  ([f node] (pre-tree f node 1))
+  ([f node index]
+
+   (let [kids (children node)
+         ret (case (arg-count f)
+                   1 (f node)
+                   2 (f node index))]
+
+     (conj
+           (doseq [iast-node kids]
+             (pre-tree f iast-node (inc index)))
+           ret)))
   ([f node index tree-path]
 
    (let [kids (children node)
-         kids-last-index (count kids) 
-         ret (case (arg-count f)
-                   1 (f node)
-                   3 (f node index tree-path))]
+         kids-last-index (count kids)
+         ret (f node index tree-path)]
 
      (conj
            (doseq [[iast-node child-index] (map list kids (range 0 kids-last-index))]
@@ -99,6 +108,14 @@
 (defn flatten-tree [node]
   (conj (mapcat flatten-tree (children node)) node))
 
+(defn flatten-tree-context
+  ([node] (flatten-tree-context {:path []} node))
+  ([context node]
+   (-> (fn [idx node]
+         (flatten-tree-context (update context :path #(conj % idx)) node))
+       (mapcat-indexed (children node))
+       (conj [context node]))))
+
 (defn flatten-tree-infixy [node]
   "Approximate an in-order flattening"
   (if (instance? IASTBinaryExpression node)
@@ -110,6 +127,11 @@
   "Find every AST node that matches pred"
   [pred node]
   (->> node flatten-tree (filter pred)))
+
+(defn filter-tree-context
+  "Find every AST node that matches pred"
+  [pred node]
+  (->> node flatten-tree-context (filter pred)))
 
 (defn filter-type
   "Return every example of type"
@@ -209,13 +231,16 @@
         length (.getNodeLength l)
         start-line (.getStartingLineNumber l)
         end-line  (.getEndingLineNumber l)]
-    {:line start-line :offset offset :length length :start-line start-line :end-line end-line}))
+    {:line start-line :offset offset :end-offset (+ length offset) :length length :start-line start-line :end-line end-line}))
 
 (defmethod loc Object
   [node]
   (loc (.getFileLocation node)))
 
+(defmethod loc :default [node] nil) ; catch nulls
+
 (def offset (comp :offset loc))
+(def end-offset (comp :end-offset loc))
 (def start-line (comp :start-line loc))
 (def end-line (comp :end-line loc))
 
@@ -241,3 +266,63 @@
   "Count the size of the ast"
   [node]
     (inc (reduce + (map count-nodes (children node)))))
+
+(defn contains-location?
+  "Does this node contain the given offset/length"
+  [root offset length]
+  (let [root-loc (.getFileLocation root)
+        root-offset (.getNodeOffset root-loc)
+        root-length (.getNodeLength root-loc)]
+
+    ;; The location/offset is fully contained in this node
+    (and (<=    root-offset                 offset)
+         (>= (+ root-offset root-length) (+ offset length)))))
+
+(defn contains-offset?
+  "Does this node contain the given offset"
+  [node offset]
+    (when-let [{node-offset :offset node-length :length} (some->> node loc)]
+       (<= node-offset offset (+ node-offset node-length))))
+
+(defn offset-parent?
+  "True if this is deepest AST node that contains an offset"
+  [node offset]
+  (and
+   (contains-offset? node offset)
+   (not (exists? #(contains-offset? % offset) (children node)))))
+
+'(s/defn search-tree-by :- (s/maybe IASTNode)
+  "binary search the tree for val, after applying (f node)"
+  [f :- (s/=> s/Any IASTNode) val :- s/Any root :- IASTNode]
+  )
+
+; https://stackoverflow.com/a/8950240
+(s/defn binary-search-children-offset :- (s/maybe IASTNode)
+  [target :- s/Int kids] ; :- [IASTNode]]
+  (loop [l 0 h (unchecked-dec (count kids))]
+    (if (<= h (inc l))
+      (cond
+        (== h -1) nil
+        (contains-offset? (nth kids l) target) (nth kids l)
+        (contains-offset? (nth kids h) target) (nth kids h)
+        :else nil)
+      (let [m (unchecked-add l (bit-shift-right (unchecked-subtract h l) 1))]
+        (if (<= target (-> kids (nth m) end-offset))
+          (recur l m)
+          (recur (unchecked-inc m) h))))))
+
+(s/defn binary-search-offset-parent :- (s/maybe IASTNode)
+  "binary search the tree for an offset"
+  [target :- s/Int root :- IASTNode]
+  (let [{start :offset len :length} (loc root)]
+    (when (<= start target (+ start len))
+      (or (some->> (binary-search-children-offset target (children root))
+                   (binary-search-offset-parent target)) ; make tail-recursive?
+          root))))
+
+(s/defn offset-parent
+  "Find the AST node that contains the whole location offset
+   Assumes that no children of a single parent overlap in terms of offset"
+  ([root :- IASTNode offset :- s/Int] (binary-search-offset-parent offset root))
+  ([node :- IASTNode] (parent node))) ;(offset-parent (root-ancestor node) (:offset (loc node)))))
+

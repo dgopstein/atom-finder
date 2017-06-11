@@ -10,21 +10,21 @@
 (deftest preprocessors-in-context-test
   (testing "Macro entirely in context"
     (let [ast (parse-resource "macro-in-expression.c")
-          atoms (preprocessors-in-contexts all-preprocessor non-toplevel-classifier ast)]
+          atoms (preprocessors-in-contexts all-preprocessor non-toplevel? ast)]
 
       (is (= (map :line atoms) '(5 8 11)))
       ))
 
   (testing "Macro starts in context"
     (let [ast (parse-resource "if-starts-in-expression.c")
-          atoms (preprocessors-in-contexts all-preprocessor non-toplevel-classifier ast)]
+          atoms (preprocessors-in-contexts all-preprocessor non-toplevel? ast)]
 
       (is (= (map :line atoms) '(9 11 14 16 18 23))) ; technically 25 should be here too because otherwise it's dependent on which if branch is evaluated
       ))
 
   (testing "Macro applied in function"
     (let [ast (parse-resource "macro-application.c")
-          atoms (preprocessors-in-contexts all-preprocessor non-toplevel-classifier ast)]
+          atoms (preprocessors-in-contexts all-preprocessor non-toplevel? ast)]
 
       (is (= (map :line atoms) '()))
       ))
