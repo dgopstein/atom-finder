@@ -1,7 +1,7 @@
 (ns atom-finder.atom-stats
   (:require
    [atom-finder.util :refer :all]
-   [atom-finder.tree-diff.difflib :refer :all]
+   [atom-finder.tree-diff.difflib :as difflib]
    [atom-finder.tree-diff :refer :all]
    [atom-finder.constants :refer :all]
    [clojure.pprint :refer [pprint]]

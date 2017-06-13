@@ -19,6 +19,9 @@
 ;            ;"bf8e44c9e49d658635b5a2ea4905333fa8845d1f.patch"
 ;            resource-path slurp))
 
+;; java-diff-utils is unsuitable for patches with multiple files therefore
+;; zutubi must be the default diff parser for deserializing patch files
+(def parse-diff zutubi/parse-diff)
 
 (defmulti deltas "Get deltas/hunks from a patch" class)
 (s/defmethod deltas difflib.Patch :- [difflib.Delta]
@@ -41,6 +44,16 @@
       (inc orig-offset))))
 (s/defmethod old-offset com.zutubi.diff.unified.UnifiedHunk :- s/Int
   [hunk] (->> hunk .getOldOffset))
+
+(defmulti new-offset "get the original file offset" class)
+(s/defmethod new-offset difflib.Delta :- s/Int
+  [delta]
+  (let [orig-offset (->> delta .getRevised .getPosition)]
+    (if (< orig-offset 0)
+      (throw (RuntimeException. "Patch doesn't have position information for the requested chunk"))
+      (inc orig-offset))))
+(s/defmethod new-offset com.zutubi.diff.unified.UnifiedHunk :- s/Int
+  [hunk] (->> hunk .getNewOffset))
 
 (defn context-lines
   "Which lines are contained in this patch"
@@ -166,9 +179,9 @@
 
 ;(->> hunk change-bounds)
 
-(defn patch-correspondences [diff]
+(defn patch-line-correspondences [patches]
   (->>
-    (for [patch diff
+    (for [patch patches
           hunk  (deltas patch)]
       {:file (.getOldFile patch)
        :ranges (->> hunk change-bounds)})
