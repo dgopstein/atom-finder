@@ -1,5 +1,13 @@
 (in-ns 'atom-finder.atom-stats)
 
+'(do
+  (def big-commit-revstr "d4f474145ae66d041b820f4bf118601451baf261")
+  (def big-commit-file "gcc/config/aarch64/arm_neon.h")
+  (def big-commit-rev-commit (some-> gcc-repo (atom-finder.source-versions/find-rev-commit big-commit-revstr)))
+  (def big-commit-patch-str (clj-jgit.querying/changed-files-with-patch gcc-repo big-commit-rev-commit))
+  (def big-commit-srcs (when (and gcc-repo big-commit-rev-commit) (atom-finder.atom-patch/before-after-data gcc-repo big-commit-rev-commit big-commit-file)))
+  )
+
 ;(def a-ast (parse-resource "atoms-removed-before.c"))
 ;(def b-ast (parse-resource "atoms-removed-after.c"))
 ;(def a (->> a-ast flatten-tree-infixy))
@@ -33,6 +41,14 @@
      pprint
      time
      )
+
+;(->> big-commit-patch-str atom-finder.tree-diff.difflib/parse-patch .getDeltas first)
+
+'(s/defn patch-correspondence :- [{IASTNode IASTNode}]
+  [s :- s/Str a :- IASTNode b :- IASTNode]
+  (let [lines-before 
+        lines-after]
+  ))
 
 
 ;(removed-atoms-stats

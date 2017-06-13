@@ -14,6 +14,16 @@
                  Delta$TYPE/DELETE :delete
                  Delta$TYPE/CHANGE :change})
 
+(->>
+(DiffUtils/diff ["a" "b"] ["c" "d"])
+.getDeltas
+first
+.getOriginal
+.getPosition
+)
+
+; getLines getPosition last setLines size verify
+
 (s/defn diff-by :- [DiffMap]
   [f a :- [s/Any] b :- [s/Any]]
     (->>
@@ -44,3 +54,14 @@
          (remove (->> diff-maps (mapcat :original) (into #{})) a)
          (remove (->> diff-maps (mapcat  :revised) (into #{})) b))
   ))
+
+
+(s/defn parse-diff ;:- difflib.Patch
+  [s :- s/Str]
+  (->> s
+       ;; split the diff into multiple patch at "+++" as in
+       ;; java-diff-utils/src/main/java/difflib/DiffUtils.java:54
+       ((flip str/split) #"(?m)^(?=\+\+\+)")
+       rest
+       (map str/split-lines)
+       (map #(DiffUtils/parseUnifiedDiff %))))

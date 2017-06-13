@@ -82,18 +82,18 @@
        (map read-string)
        ))
 
-'(->> "location-dump_non-atoms_2017-06-05_1.txt"
+'(->> "tmp/location-dump_non-atoms_2017-06-05_1.txt"
      read-lines
-     ;(take 1000000)
+     ;(take 10)
      (def location-dump-data)
      time
      )
 
 (defn process-dump-file
-  [[filename nodes-lst]]
+  [type [filename nodes-lst]]
   (let [nodes (map (fn [[type start-line end-line depth]]
                      {:type type :start-line start-line :end-line end-line :depth depth}) nodes-lst)
-        {comments true non-comments false} (group-by #(= :comment (:type %)) nodes)
+        {comments true non-comments false} (group-by #(= type (:type %)) nodes)
         all-line-items (->> nodes (filter :start-line) (group-by :start-line)) ; :start-line -> node
         ]
     (->>
@@ -130,22 +130,30 @@
       (merge {:file filename})
       )))
 
-  ;(apply merge-with (partial merge-with +) [{:a {:d 1 :e 4}} {:a {:d 3 :e 1}}])
+(s/defn process-all
+  [files-lines]; :- [[(s/one String "filename") [[]]]]]
+  (for [selector (conj (map :name atoms) :comment)]
+    (->> (for [file-lines files-lines]
+               (dissoc (process-dump-file selector file-lines) :file))
+         (apply merge-with (partial merge-with +))
+         merge-down
+         (#(assoc % :type selector))
+         )))
 
-;(->> "location-dump_non-atoms_2017-06-05_1.txt"
-;     read-lines
+
 '(->> location-dump-data
      (partition-by first)
      (map (fn [lst] [(first (first lst)) (map rest lst)]))
-     ;(drop 740)(take 3)
-     (map process-dump-file)
+     ;(take 20)
+     ;(map prn))
+     process-all
      (map prn)
      dorun
      (log-to "location-dump_comment-sums_2017-06-05_1.txt")
      time
      )
 
-(->> "tmp/location-dump_comment-sums_2017-06-05_1.txt"
+'(->> "tmp/location-dump_comment-sums_2017-06-05_1.txt"
      read-lines
      (def comment-sums)
      time
@@ -159,7 +167,7 @@
     (with-open [writer (clojure.java.io/writer filename)]
       (csv/write-csv writer (cons headers (map #(values-at % headers) maps))))))
 
-(->> comment-sums
+'(->> comment-sums
      ;(take 100)
      (map merge-down)
      (maps-to-csv "comment-sums.csv")
