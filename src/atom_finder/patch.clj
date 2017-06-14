@@ -195,3 +195,11 @@
   (partial map #(update-in % [:ranges]
     (partial map (fn [x] {:old [(:old-min x) (:old-max x)]
                           :new [(:new-min x) (:new-max x)]})))))
+
+(s/defn correspondences-to-range-lists
+  [corrs]
+  (->> corrs
+       correspondences-to-ranges
+       (map #(update-in % [:ranges] (fn [ranges] {:old (map :old ranges)
+                                                  :new (map :new ranges)})))
+  ))

@@ -15,6 +15,8 @@
   (def little-commit-patch-str (clj-jgit.querying/changed-files-with-patch gcc-repo little-commit-rev-commit))
   (def little-commit-patch (->> little-commit-patch-str parse-diff))
   (def little-commit-srcs (when (and gcc-repo little-commit-rev-commit) (atom-finder.atom-patch/before-after-data gcc-repo little-commit-rev-commit little-commit-file)))
+  (def little-commit-old (:ast-before little-commit-srcs))
+  (def little-commit-new (:ast-after little-commit-srcs))
   )
 
 ;(def a-ast (parse-resource "atoms-removed-before.c"))
@@ -53,8 +55,36 @@
 
 ;(->> big-commit-patch-str atom-finder.tree-diff.difflib/parse-patch .getDeltas first)
 
+(def LineRange [(s/one s/Int "min") (s/one s/Int "max")])
+(s/defn changed-range-lines :- #{s/Int}
+  "Set of all the lines changed in a patch"
+  [correspondence-ranges :- [LineRange]]
+  (->> correspondence-ranges
+       (map (fn [[min max]] (range min max)))
+       flatten
+       (into #{})
+       ))
+
+(def Correspondence {:file s/Str :ranges {:old [LineRange] :new [LineRange]}})
+
+(s/defn changed-corrs-lines
+  [corrs :- [Correspondence]]
+  (map #(update-in % [:ranges] (partial map-values changed-range-lines)) corrs))
+
 (s/defn unchanged-ast-nodes
-  [change-ranges :- [[(s/one s/Int "min") (s/one s/Int "max")]] a :- IASTNode
+  [changed-lines :- #{s/Int} a :- IASTNode]
+  (filter-tree #(not-any? changed-lines (lines %)) a))
+
+(-> little-commit-patch
+     patch-line-correspondences
+     correspondences-to-range-lists
+     changed-corrs-lines
+     ((flip find-first) #(= little-commit-file (:file %)))
+     (get-in [:ranges :new])
+     (unchanged-ast-nodes little-commit-new)
+     ((flip map) (comp println write-ast))
+     count
+     )
 
 (s/defn patch-ast-correspondence ;:- [{IASTNode IASTNode}]
   [patch :- Patch a :- IASTNode b :- IASTNode]
@@ -63,13 +93,3 @@
 
     changed-lines-after
   ))
-(->> little-commit-patch
-     patch-line-correspondences
-     (take 1)
-     pprint
-     )
-
-'(->> (patch-ast-correspondence little-commit-patch (:ast-before little-commit-srcs) (:ast-after little-commit-srcs))
-     pprint
-     time
-     )
