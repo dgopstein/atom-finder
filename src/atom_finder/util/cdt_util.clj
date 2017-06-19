@@ -243,7 +243,11 @@
 (def end-offset (comp :end-offset loc))
 (def start-line (comp :start-line loc))
 (def end-line (comp :end-line loc))
-(defn lines [node] (range (start-line node) (end-line (inc node))))
+(defn lines [node]
+  (if-let* [s (start-line node)
+            e (end-line node)]
+    (range s (inc e))
+    []))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
 

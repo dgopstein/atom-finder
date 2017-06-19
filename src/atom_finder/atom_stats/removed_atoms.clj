@@ -2,7 +2,7 @@
 (require '[atom-finder.patch :refer :all])
 (import '(com.zutubi.diff Patch))
 
-'(do
+(do
   (def big-commit-revstr "d4f474145ae66d041b820f4bf118601451baf261")
   (def big-commit-file "gcc/config/aarch64/arm_neon.h")
   (def big-commit-rev-commit (some-> gcc-repo (atom-finder.source-versions/find-rev-commit big-commit-revstr)))
@@ -82,8 +82,12 @@
      ((flip find-first) #(= little-commit-file (:file %)))
      (get-in [:ranges :new])
      (unchanged-ast-nodes little-commit-new)
-     ((flip map) (comp println write-ast))
-     count
+     count pprint
+     )
+
+(->> little-commit-new
+     flatten-tree
+     count pprint
      )
 
 (s/defn patch-ast-correspondence ;:- [{IASTNode IASTNode}]
@@ -93,3 +97,14 @@
 
     changed-lines-after
   ))
+
+'(->> little-commit-old
+     ;(get-in-tree [17])
+     ;(get-in-tree [19])
+     (get-in-tree [19 1 1 1 0])
+     lines)
+     ;flatten-tree (map (comp lines pap)))
+     ;write-ast
+     ;println
+     ;print-tree
+     ;)
