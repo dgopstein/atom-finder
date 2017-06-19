@@ -101,6 +101,18 @@
                       {"good1" 1, "bad1" 1, "good2" 2, "bad2" 2})
            {"good1" 1, "good2" 2}))
     )
+
+  (testing "if-let*"
+    (is (= 2 (if-let* [a 1] 2 3)))
+    (is (= 3 (if-let* [a nil] 2 3)))
+    (is (= 2 (if-let* [a 1 b 4] 2 3)))
+    (is (= 3 (if-let* [a nil b 4] 2 3)))
+    (is (= 3 (if-let* [a 1 b nil] 2 3)))
+    (is (= 3 (if-let* [a nil b nil] 2 3)))
+    (is (= 3 (if-let* [a false b true] 2 3)))
+    (is (= 2 (if-let* [a true b true c true] 2 3)))
+    (is (= 3 (if-let* [a true b true c nil] 2 3)))
+    )
   )
 
 (deftest writer-util-test
