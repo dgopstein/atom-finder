@@ -36,6 +36,6 @@
 
          (->> "patch/97574c57cf26ace9b8609575bbab66465924fef7_partial.patch"
               slurp-resource zutubi/parse-diff
-              patch-correspondences correspondences-to-ranges)
+              patch-line-correspondences correspondences-to-ranges)
          ))
     ))
