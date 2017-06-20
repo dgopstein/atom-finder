@@ -203,3 +203,16 @@
        (map #(update-in % [:ranges] (fn [ranges] {:old (map :old ranges)
                                                   :new (map :new ranges)})))
   ))
+
+(def LineRange [(s/one s/Int "min") (s/one s/Int "max")])
+
+(s/defn intersects?
+  "Do two line-ranges contain the same line"
+  [[s1 e1] :- LineRange [s2 e2] :- LineRange]
+  (or (and (< s1 e2) (<= e2 e1))
+      (and (< s2 e1) (<= e1 e2))))
+
+(s/defn multi-intersects?
+  "Do two groups of line-ranges contain the same line"
+  [r1 :- [LineRange] r2 :- [LineRange]]
+  (any-pred? (fn [r] (any-pred? #(intersects? r %) r2)) r1))

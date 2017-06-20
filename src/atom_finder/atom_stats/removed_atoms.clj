@@ -2,7 +2,7 @@
 (require '[atom-finder.patch :refer :all])
 (import '(com.zutubi.diff Patch))
 
-(do
+'(do
   (def big-commit-revstr "d4f474145ae66d041b820f4bf118601451baf261")
   (def big-commit-file "gcc/config/aarch64/arm_neon.h")
   (def big-commit-rev-commit (some-> gcc-repo (atom-finder.source-versions/find-rev-commit big-commit-revstr)))
@@ -55,7 +55,6 @@
 
 ;(->> big-commit-patch-str atom-finder.tree-diff.difflib/parse-patch .getDeltas first)
 
-(def LineRange [(s/one s/Int "min") (s/one s/Int "max")])
 (s/defn changed-range-lines :- #{s/Int}
   "Set of all the lines changed in a patch"
   [correspondence-ranges :- [LineRange]]
@@ -75,20 +74,27 @@
   [changed-lines :- #{s/Int} a :- IASTNode]
   (filter-tree #(not-any? changed-lines (lines %)) a))
 
-(-> little-commit-patch
+'(-> little-commit-patch
      patch-line-correspondences
      correspondences-to-range-lists
      changed-corrs-lines
      ((flip find-first) #(= little-commit-file (:file %)))
-     (get-in [:ranges :new])
-     (unchanged-ast-nodes little-commit-new)
-     count pprint
+     (get-in [:ranges :old])
      )
 
-(->> little-commit-new
-     flatten-tree
-     count pprint
-     )
+
+'(->> old-unchanged
+    (take 10)
+    (map write-node)
+    prn)
+'(->> new-unchanged
+    (take 10)
+    (map write-node)
+    prn)
+
+'(def diffed-unchanged (time (atom-finder.tree-diff.difflib/diff-by write-node old-unchanged new-unchanged)))
+
+
 
 (s/defn patch-ast-correspondence ;:- [{IASTNode IASTNode}]
   [patch :- Patch a :- IASTNode b :- IASTNode]

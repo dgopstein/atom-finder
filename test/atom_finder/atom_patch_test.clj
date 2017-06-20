@@ -70,21 +70,21 @@
      )))
  )
 
-(let [repo gcc-repo
-      rev-commit (find-rev-commit repo "97574c57cf26ace9b8609575bbab66465924fef7")
-      file-name "gcc/config/sparc/sparc.c"
-      srcs (before-after-data repo rev-commit file-name)
-      files-ranges (->> srcs :patch-str parse-diff patch-line-correspondences)]
+(deftest line-range-test
+  (testing "utilities for line ranges"
+    (let [cases [[[1 1] [1 2] false]
+                 [[1 2] [1 1] false]
+                 [[1 1] [1 1] false]
+                 [[1 1] [0 2] true]
+                 [[0 2] [1 1] true]
+                 [[1 3] [2 3] true]
+                 [[1 3] [2 4] true]
+                 [[1 2] [3 4] false]
+                 [[1 2] [2 4] false]
+                 ]]
+      (for [[a b expected] cases]
+        (is (= expected (intersects? a b)) (str a ", " b " -> " expected))))
 
-  files-ranges
-  ;(correspondences-to-ranges files-ranges)
-  )
-
-    ;(->> srcs :source-before clojure.string/split-lines (take 10))
-  '(->>
-   (for [file-ranges files-ranges
-         range (:ranges file-ranges)]
-     (line-range-parent (:new-min range) (:new-max range) (:ast-after srcs))
-     )
-   first
-   )
+    (is (= true (multi-intersects? [[1 3] [8 10]] [[4 5] [9 10]])))
+    (is (= false (multi-intersects? [[1 3] [8 10]] [[4 5] [19 20]])))
+    ))
