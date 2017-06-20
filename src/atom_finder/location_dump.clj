@@ -6,6 +6,7 @@
    [clojure.pprint :refer [pprint]]
    [schema.core :as s]
    [clojure.data.csv :as csv]
+   [clojure.string :as str]
    )
   (:import
    [org.eclipse.cdt.core.dom.ast IASTNode]
@@ -153,7 +154,7 @@
      time
      )
 
-'(->> "tmp/location-dump_comment-sums_2017-06-05_1.txt"
+(->> "tmp/location-dump_comment-sums_2017-06-11_1.txt"
      read-lines
      (def comment-sums)
      time
@@ -167,9 +168,35 @@
     (with-open [writer (clojure.java.io/writer filename)]
       (csv/write-csv writer (cons headers (map #(values-at % headers) maps))))))
 
-'(->> comment-sums
-     ;(take 100)
-     (map merge-down)
-     (maps-to-csv "comment-sums.csv")
-     ;(map prn)
-     )
+(defn parse-comment-sum-header
+  "Object titled :first-distance-second where first is the class of the first
+   thing found, distance is how far apart we're looking and second is the type
+   of the second thing found"
+  [keywd]
+  (let [[[whole fst dist snd]]
+        (re-seq #":(.*)-(next-\d*|same)-?lines?-(.*)" (str keywd))]
+    (when (nil? dist) (pprn [keywd whole fst dist snd]))
+    [dist fst snd]
+    ))
+
+(def all-type-names (->> atoms (map :name) sort (concat [:comment :non-atom]) (map str) (map #(subs % 1))))
+
+(defn comment-sums-to-proximity-grid
+  [comment-sums]
+
+  (let [merged-sums (->> comment-sums (apply merge-with +))
+        parsed-header (map-keys parse-comment-sum-header merged-sums)
+        dists (->> parsed-header (group-by (comp first first)) (map-values (partial into {})))]
+    (doseq [[dist vals] dists]
+      (println dist)
+      (println (str/join "," (cons "type" all-type-names)))
+      (doseq [snd-type all-type-names]
+        (->> all-type-names
+             (map (fn [fst-type] (vals [dist fst-type snd-type])))
+             (cons snd-type)
+             (str/join ",")
+             println
+             )
+        )))
+  )
+
