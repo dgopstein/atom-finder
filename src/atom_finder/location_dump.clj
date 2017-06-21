@@ -241,8 +241,9 @@
       )
 
 
-'(->> "/Users/dgopstein/opt/src/gcc/contrib/gthr_supp_vxw_5x.c"
+(->> "/Users/dgopstein/opt/src/gcc/contrib/gthr_supp_vxw_5x.c"
      parse-file
-     ;depth
-     write-node
+     all-parents
+     ;write-node
+     (def test-all-parents)
      )

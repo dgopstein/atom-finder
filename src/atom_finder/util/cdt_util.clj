@@ -60,14 +60,6 @@
            (doseq [[iast-node child-index] (map list kids (range 0 kids-last-index))]
              (pre-tree f iast-node (inc index) (conj tree-path child-index)))
            ret))))
-
-(defn height [node]
-  "What is the furthest chain of children under this node"
-  (inc
-   (apply max 0
-          (map height
-               (children node)))))
-
 (defn leaf? [node] (empty? (children node)))
 
 (defn leaves [node]
@@ -79,6 +71,18 @@
   "Get the all grandparents of the node"
   [node]
   (take-while some? (iterate parent node)))
+
+(defn height
+  "What is the furthest chain of children under this node"
+  [node]
+  (inc
+   (apply max 0
+          (map height
+               (children node)))))
+
+(defn depth "How many nodes lie between this one and the root"
+  [node] (->> node all-parents count))
+
 
 (defn ancestor
   "Get the nth grandparent of the node"
