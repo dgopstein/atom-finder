@@ -4,6 +4,7 @@
    [atom-finder.constants :refer :all]
    [atom-finder.classifier :refer :all]
    [clojure.pprint :refer [pprint]]
+   [clojure.set :as set]
    [schema.core :as s]
    [clojure.data.csv :as csv]
    [clojure.string :as str]
@@ -90,6 +91,29 @@
      time
      )
 
+(def asymmetric-dump-data '(
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 120 120 3]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 143 143 5]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 48 48 5]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 139 139 4]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 22 22 5]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 103 103 4]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 16 16 5]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 32 34 8]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :reversed-subscript 14 14 5]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :omitted-curly-braces 14 15 3]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :comment 1 1 nil]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :comment 3 3 nil]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 15 15 7]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 8 8 6]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 2 2 1]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 4 4 4]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 14 14 7]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 10 10 5]
+ ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 15 15 5]
+)
+)
+
 (defn process-dump-file
   [type [filename nodes-lst]]
   (let [nodes (map (fn [[type start-line end-line depth]]
@@ -141,16 +165,16 @@
          (#(assoc % :type selector))
          )))
 
-
-'(->> location-dump-data
-     (partition-by first)
-     (map (fn [lst] [(first (first lst)) (map rest lst)]))
+'(->> location-dump-data)
+(->> asymmetric-dump-data
+     (partition-by first) ; group data by filenames
+     (map (fn [lst] [(first (first lst)) (map rest lst)])) ; remove the redundancy of repeated filenames
      ;(take 20)
      ;(map prn))
      process-all
      (map prn)
      dorun
-     (log-to "location-dump_comment-sums_2017-06-05_1.txt")
+     ;(log-to "location-dump_comment-sums_2017-06-20_asymmetric.txt")
      time
      )
 
@@ -181,7 +205,7 @@
 
 (def all-type-names (->> atoms (map :name) sort (concat [:comment :non-atom]) (map str) (map #(subs % 1))))
 
-(defn comment-sums-to-proximity-grid
+(defn comment-sums-to-proximity-grid-csv
   [comment-sums]
 
   (let [merged-sums (->> comment-sums (apply merge-with +))
@@ -199,4 +223,37 @@
              )
         )))
   )
+
+;; Comment distance by depth
+;; Do comments happen at different frequenceies at different depths
+;; Do AST nodes have comments on the same line, within 10 lines, etc, at different rates at different depths
+
+(defn bin [bool] (if bool 1 0))
+
+(->> location-dump-data count)
+     (take 5000)
+     (partition-by first) ; group data by filenames
+     (map (fn [lst] [(first (first lst)) (map rest lst)])) ; remove the redundancy of repeated filenames
+     (map last)
+     ;(filter (fn [[_ s e _]] (and s e)))
+     (map
+      (fn [atom-positions]
+        (let [comments  (filter (comp #{:comment} first) atom-positions)
+              non-atoms (filter (fn [[t s e d]] (and (= :non-atom t) s e d)) atom-positions)
+              comment-locs (set (mapcat (fn [[_ s e _]] (range s (inc e))) comments))]
+          (reduce
+           (fn [hash [type start end depth]]
+             (merge-with (partial merge-with +) hash
+                         {depth {
+                          :same-line (bin (comment-locs start))
+                          :1-line    (bin (set/intersection comment-locs (set (range (- start 1)  (inc start)))))
+                          :5-line    (bin (set/intersection comment-locs (set (range (- start 5)  (inc start)))))
+                          :10-line   (bin (set/intersection comment-locs (set (range (- start 10) (inc start)))))
+                          }})
+            ) {} non-atoms))))
+     (reduce (partial merge-with (partial merge-with +)))
+     sort
+     pprint
+     time
+     )
 
