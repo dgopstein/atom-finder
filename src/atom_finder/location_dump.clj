@@ -230,13 +230,13 @@
 
 (defn bin [bool] (if bool 1 0))
 
-(->> location-dump-data count)
-     (take 5000)
+(->> location-dump-data
+     ;(take 30000)
      (partition-by first) ; group data by filenames
      (map (fn [lst] [(first (first lst)) (map rest lst)])) ; remove the redundancy of repeated filenames
      (map last)
      ;(filter (fn [[_ s e _]] (and s e)))
-     (map
+     (pmap
       (fn [atom-positions]
         (let [comments  (filter (comp #{:comment} first) atom-positions)
               non-atoms (filter (fn [[t s e d]] (and (= :non-atom t) s e d)) atom-positions)
@@ -246,14 +246,17 @@
              (merge-with (partial merge-with +) hash
                          {depth {
                           :same-line (bin (comment-locs start))
-                          :1-line    (bin (set/intersection comment-locs (set (range (- start 1)  (inc start)))))
-                          :5-line    (bin (set/intersection comment-locs (set (range (- start 5)  (inc start)))))
-                          :10-line   (bin (set/intersection comment-locs (set (range (- start 10) (inc start)))))
+                          :1-line    (bin (not (empty? (set/intersection comment-locs (set (range (- start 1)  (inc start)))))))
+                          :5-line    (bin (not (empty? (set/intersection comment-locs (set (range (- start 5)  (inc start)))))))
+                          :10-line   (bin (not (empty? (set/intersection comment-locs (set (range (- start 10) (inc start)))))))
+                          :non-atoms 1
                           }})
             ) {} non-atoms))))
      (reduce (partial merge-with (partial merge-with +)))
      sort
-     pprint
+     (map (fn [[k v]] (str/join "," (cons k (vals v)))))
+     (take 100) ; depth >100 isn't super relevant
+     (map println)
      time
      )
 
