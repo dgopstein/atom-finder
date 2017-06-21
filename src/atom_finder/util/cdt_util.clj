@@ -330,3 +330,8 @@
    Assumes that no children of a single parent overlap in terms of offset"
   ([root :- IASTNode offset :- s/Int] (binary-search-offset-parent offset root))
   ([node :- IASTNode] (parent node))) ;(offset-parent (root-ancestor node) (:offset (loc node)))))
+
+(s/defn pmap-dir-asts
+  "Apply a function to the root of the AST of every c file in a directory"
+  [f :- (s/=> s/Any [IASTTranslationUnit]) dirname :- s/Str]
+  (pmap-dir-files (comp f parse-file) dirname))

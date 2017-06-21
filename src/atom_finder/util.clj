@@ -6,7 +6,7 @@
   (:import
    [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition
     IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement IASTName
-    IASTBinaryExpression IASTProblem IASTProblemHolder]
+    IASTTranslationUnit IASTBinaryExpression IASTProblem IASTProblemHolder]
    [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
    [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
    [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]))
