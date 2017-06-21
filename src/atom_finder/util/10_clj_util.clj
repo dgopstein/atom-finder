@@ -95,3 +95,6 @@
         (if-let* ~(drop 2 bindings) ~then ~else)
         ~else)
           then)))
+
+(defn bin "Convert a value to 1 or 0 based on its truthiness"
+  [bool] (if bool 1 0))

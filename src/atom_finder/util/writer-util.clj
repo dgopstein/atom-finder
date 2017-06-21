@@ -85,10 +85,3 @@
     write-node-type
     write-node)
    node))
-
-(s/defn write-nodes-with-depth :- [s/Str]
-  ([root :- IASTNode] (write-nodes-with-depth 0 root))
-  ([depth root]
-   (concat [(str (str/join (repeat depth " ")) (write-node root))]
-           (mapcat (partial write-nodes-with-depth (inc depth)) (children root)))))
-

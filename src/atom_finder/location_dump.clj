@@ -91,29 +91,6 @@
      time
      )
 
-(def asymmetric-dump-data '(
- ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 120 120 3]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 143 143 5]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 48 48 5]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 139 139 4]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 22 22 5]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 103 103 4]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 16 16 5]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-1.c" :non-atom 32 34 8]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :reversed-subscript 14 14 5]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :omitted-curly-braces 14 15 3]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :comment 1 1 nil]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :comment 3 3 nil]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 15 15 7]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 8 8 6]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 2 2 1]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 4 4 4]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 14 14 7]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 10 10 5]
- ["gcc/gcc/testsuite/gcc.c-torture/execute/pr22061-1.c" :non-atom 15 15 5]
-)
-)
-
 (defn process-dump-file
   [type [filename nodes-lst]]
   (let [nodes (map (fn [[type start-line end-line depth]]
@@ -166,7 +143,7 @@
          )))
 
 '(->> location-dump-data)
-(->> asymmetric-dump-data
+'(->> asymmetric-dump-data
      (partition-by first) ; group data by filenames
      (map (fn [lst] [(first (first lst)) (map rest lst)])) ; remove the redundancy of repeated filenames
      ;(take 20)
@@ -178,7 +155,7 @@
      time
      )
 
-(->> "tmp/location-dump_comment-sums_2017-06-11_1.txt"
+'(->> "tmp/location-dump_comment-sums_2017-06-11_1.txt"
      read-lines
      (def comment-sums)
      time
@@ -228,9 +205,7 @@
 ;; Do comments happen at different frequenceies at different depths
 ;; Do AST nodes have comments on the same line, within 10 lines, etc, at different rates at different depths
 
-(defn bin [bool] (if bool 1 0))
-
-(->> location-dump-data
+'(->> location-dump-data
      ;(take 30000)
      (partition-by first) ; group data by filenames
      (map (fn [lst] [(first (first lst)) (map rest lst)])) ; remove the redundancy of repeated filenames
@@ -260,3 +235,14 @@
      time
      )
 
+'(->>  gcc-path
+      (pmap-dir-asts (fn [root] [(.getFilePath root) (filter-tree #(= 0 (depth %)) root)]))
+      (take 10)
+      )
+
+
+'(->> "/Users/dgopstein/opt/src/gcc/contrib/gthr_supp_vxw_5x.c"
+     parse-file
+     ;depth
+     write-node
+     )

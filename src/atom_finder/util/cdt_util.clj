@@ -61,10 +61,11 @@
              (pre-tree f iast-node (inc index) (conj tree-path child-index)))
            ret))))
 
-(defn depth [node]
+(defn height [node]
+  "What is the furthest chain of children under this node"
   (inc
    (apply max 0
-          (map depth
+          (map height
                (children node)))))
 
 (defn leaf? [node] (empty? (children node)))
@@ -97,13 +98,13 @@
   (let [name (-> node .getClass .getSimpleName)]
     (nth (re-find #"AST(.*)" name) 1)))
 
-(defn filter-depth
+(defn filter-height
   "Return every sub-tree of size n"
   [n node]
   ;; start from the leaves of the tree and walk upwards n generations
   (let [candidates (distinct (map (partial ancestor n) (leaves node)))]
     ;; candidates may still have deeper branches than the one we came up from
-    (filter #(= n (depth %)) candidates)))
+    (filter #(= n (height %)) candidates)))
 
 (defn flatten-tree [node]
   (conj (mapcat flatten-tree (children node)) node))
