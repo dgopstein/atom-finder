@@ -32,7 +32,7 @@
   "Which comments were added near atoms"
   [srcs]
   (->>
-   (diff-by str (->> srcs :ast-before all-comments) (->> srcs :ast-after all-comments))
+   (difflib/diff-by str (->> srcs :ast-before all-comments) (->> srcs :ast-after all-comments))
    (filter #(->> % :delta .getType (= Delta$TYPE/INSERT)))
    (mapcat :revised)
    ))

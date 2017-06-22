@@ -5,23 +5,22 @@
           commenthandler.NodeCommentMap changegenerator.ChangeGeneratorWriterVisitor))
 
 (defn print-tree [node]
-  (letfn
-      [(f [node index tree-path]
-         (let [offset (format " (offset: %s, %s)"
-                              (-> node .getFileLocation .getNodeOffset)
-                              (-> node .getFileLocation .getNodeLength))]
+  (pre-tree
+   (fn [node index tree-path]
+     (let [offset (format " (offset: %s, %s)"
+                          (some-> node .getFileLocation .getNodeOffset)
+                          (some-> node .getFileLocation .getNodeLength))]
 
-           (printf "%s -%s %s %s -> %s\n"
-                   (apply str (repeat index "  "))
-                   (-> node .getClass .getSimpleName)
-                   (str tree-path)
-                   offset
-                   (-> node .getRawSignature
-                       (str "           ")
-                       (.subSequence 0 10)
-                       (.replaceAll "\n" " \\ ")))))]
-
-    (pre-tree f node 1 [])))
+       (printf "%s -%s %s %s -> %s\n"
+               (apply str (repeat index "  "))
+               (-> node .getClass .getSimpleName)
+               (str tree-path)
+               offset
+               (-> node .getRawSignature
+                   (str "           ")
+                   (.subSequence 0 10)
+                   (.replaceAll "\n" " \\ ")))))
+   node 1 []))
 
 
 (def ast-writer (ASTWriter.))
@@ -86,16 +85,3 @@
     write-node-type
     write-node)
    node))
-
-(s/defn write-nodes-with-depth :- [s/Str]
-  ([root :- IASTNode] (write-nodes-with-depth 0 root))
-  ([depth root]
-   (concat [(str (str/join (repeat depth " ")) (write-node root))]
-           (mapcat (partial write-nodes-with-depth (inc depth)) (children root)))))
-
-(defmacro update-node
-  [f node1 node2]
-  `(let [node# (.copy ~node1)]
-    (~f node# (->> ~node2 .copy))
-    node#))
-

@@ -5,35 +5,50 @@
   (:import
            [org.eclipse.cdt.core.dom.ast IASTLiteralExpression]))
 
-(deftest count-nodes-test
-  (testing "count-nodes"
-    (is (= 3 (count-nodes (parse-expr "1 + 2"))))
-    (is (= 6 (count-nodes (parse-expr "f(1 + 2)"))))
-    ))
-
-(deftest parse-expr-stmt-test
-  (testing "parse-expr/parse-stmt"
-    (let [sanitize #(clojure.string/replace % #"\s+" " ")]
-      (is (= "1 + 3" (sanitize (write-ast (parse-expr "1 + 3")))))
-      (is (= "1 + 3; " (sanitize (write-ast (parse-stmt "1 + 3;")))))
-      (is (= "{ 1 + 3; f(); } " (sanitize (write-ast (parse-stmt "{1 + 3; f();}")))))
+(deftest cdt-util-test
+  (deftest count-nodes-test
+    (testing "count-nodes"
+      (is (= 3 (count-nodes (parse-expr "1 + 2"))))
+      (is (= 6 (count-nodes (parse-expr "f(1 + 2)"))))
       ))
 
-  (testing "stmt-str?"
-    (is (false? (stmt-str? "1 + 3")))
-    (is (true? (stmt-str? "1 + 3;")))
-    (is (true? (stmt-str? "{ 1 + 3; f(); } ")))
-    )
-  )
+  (deftest parse-expr-stmt-test
+    (testing "parse-expr/parse-stmt"
+      (let [sanitize #(clojure.string/replace % #"\s+" " ")]
+        (is (= "1 + 3" (sanitize (write-ast (parse-expr "1 + 3")))))
+        (is (= "1 + 3; " (sanitize (write-ast (parse-stmt "1 + 3;")))))
+        (is (= "{ 1 + 3; f(); } " (sanitize (write-ast (parse-stmt "{1 + 3; f();}")))))
+        ))
 
-(deftest parse-frag-test
-  (testing "parse-expr"
-    (let [sanitize #(clojure.string/replace % #"\s+" " ")
-          cmp-frag (fn [parser code] (is (= (write-ast (parser code)) (write-ast (parse-frag code)))))]
-      (cmp-frag parse-expr "1 + 3")
-      (cmp-frag parse-stmt "1 + 3;")
-      (cmp-frag parse-stmt "{ 1 + 3; f(); } ")
-    )))
+    (testing "stmt-str?"
+      (is (false? (stmt-str? "1 + 3")))
+      (is (true? (stmt-str? "1 + 3;")))
+      (is (true? (stmt-str? "{ 1 + 3; f(); } ")))
+      )
+    )
+
+  (deftest parse-frag-test
+    (testing "parse-expr"
+      (let [sanitize #(clojure.string/replace % #"\s+" " ")
+            cmp-frag (fn [parser code] (is (= (write-ast (parser code)) (write-ast (parse-frag code)))))]
+        (cmp-frag parse-expr "1 + 3")
+        (cmp-frag parse-stmt "1 + 3;")
+        (cmp-frag parse-stmt "{ 1 + 3; f(); } ")
+      )))
+
+  (testing "height"
+    (is (= 3 (->> "1 + 2;" parse-frag height)))
+    (is (= 2 (->> "1 + 2" parse-frag height))))
+
+  (testing "depth"
+    (let [root (parse-source "int main() { 1 + 2; }")]
+      (is (= 1 (->> root depth)))
+      (is (= 1 (->> root safe-parent depth))) ; there is no parent
+      (is (= 2 (->> root children first depth)))
+      (is (= 3 (->> root children first children first depth)))
+      (is (= 6 (->> root (get-in-tree [0 2 0 0 0]) depth)))
+      ))
+  )
 
 (deftest sym-diff-test
   (testing "sym-diff"
@@ -55,7 +70,16 @@
              (map write-ast))))
     ))
 
-(deftest util-test
+(deftest clj-util-test
+
+  (testing "flatcat"
+    (is (= #{1 2} (set (flatcat [1] [2]))))
+    (is (= #{1 2} (set (flatcat  1  [2]))))
+    (is (= #{1 2} (set (flatcat [1]  2 ))))
+    (is (= #{1 2} (set (flatcat  1   2 ))))
+    (is (= #{[1] 2} (set (flatcat [[1]] 2))))
+    )
+
   (testing "line-range"
     (let [cases [
                  [[]  [1 1] "a\nb\nc\n"]
@@ -100,6 +124,18 @@
     (is (= (dissoc-by #(.contains (first %1) "bad")
                       {"good1" 1, "bad1" 1, "good2" 2, "bad2" 2})
            {"good1" 1, "good2" 2}))
+    )
+
+  (testing "if-let*"
+    (is (= 2 (if-let* [a 1] 2 3)))
+    (is (= 3 (if-let* [a nil] 2 3)))
+    (is (= 2 (if-let* [a 1 b 4] 2 3)))
+    (is (= 3 (if-let* [a nil b 4] 2 3)))
+    (is (= 3 (if-let* [a 1 b nil] 2 3)))
+    (is (= 3 (if-let* [a nil b nil] 2 3)))
+    (is (= 3 (if-let* [a false b true] 2 3)))
+    (is (= 2 (if-let* [a true b true c true] 2 3)))
+    (is (= 3 (if-let* [a true b true c nil] 2 3)))
     )
   )
 

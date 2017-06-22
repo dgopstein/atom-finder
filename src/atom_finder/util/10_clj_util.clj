@@ -84,3 +84,36 @@
 (defn join-keywords
   ([sep kws] (->> kws (map name) (clojure.string/join sep) keyword))
   ([kws] (join-keywords "" kws)))
+
+; https://stackoverflow.com/questions/11676120/why-dont-when-let-and-if-let-support-multiple-bindings-by-default/36160972#36160972
+(defmacro if-let*
+  ([bindings then]
+   `(if-let* ~bindings ~then nil))
+  ([bindings then else]
+   (if (seq bindings)
+     `(if-let [~(first bindings) ~(second bindings)]
+        (if-let* ~(drop 2 bindings) ~then ~else)
+        ~else)
+          then)))
+
+(defn bin "Convert a value to 1 or 0 based on its truthiness"
+  [bool] (if bool 1 0))
+
+
+(defn flatcat
+  "Take two lists/items and merge them"
+  [a b]
+  (cond
+    (and (sequential? a) (sequential? b)) (concat a b)
+    (sequential? a) (conj a b)
+    (sequential? b) (conj b a)
+    :default [a b]))
+
+(defn flatcat [a b]
+  (cond
+    (and (sequential? a) (sequential? b)) (concat a b)
+    (sequential? a) (conj a b)
+    (sequential? b) (conj b a)
+    :default [a b]))
+
+(flatcat [1] [2])
