@@ -36,7 +36,7 @@
         s))
 
 (s/defn pmap-dir-files
-  "Apply a function to the AST of every c file in a directory"
+  "Apply a function to the filename of every c file in a directory"
   [f dirname]
   (pmap
    (fn [file]

@@ -60,13 +60,6 @@
            (doseq [[iast-node child-index] (map list kids (range 0 kids-last-index))]
              (pre-tree f iast-node (inc index) (conj tree-path child-index)))
            ret))))
-
-(defn depth [node]
-  (inc
-   (apply max 0
-          (map depth
-               (children node)))))
-
 (defn leaf? [node] (empty? (children node)))
 
 (defn leaves [node]
@@ -78,6 +71,17 @@
   "Get the all grandparents of the node"
   [node]
   (take-while some? (iterate parent node)))
+
+(defn height
+  "What is the furthest chain of children under this node"
+  [node]
+  (inc
+   (apply max 0
+          (map height
+               (children node)))))
+
+(defn depth "How many nodes lie between this one and the root"
+  [node] (->> node all-parents count))
 
 (defn ancestor
   "Get the nth grandparent of the node"
@@ -97,13 +101,13 @@
   (let [name (-> node .getClass .getSimpleName)]
     (nth (re-find #"AST(.*)" name) 1)))
 
-(defn filter-depth
+(defn filter-height
   "Return every sub-tree of size n"
   [n node]
   ;; start from the leaves of the tree and walk upwards n generations
   (let [candidates (distinct (map (partial ancestor n) (leaves node)))]
     ;; candidates may still have deeper branches than the one we came up from
-    (filter #(= n (depth %)) candidates)))
+    (filter #(= n (height %)) candidates)))
 
 (defn flatten-tree [node]
   (conj (mapcat flatten-tree (children node)) node))
@@ -243,6 +247,11 @@
 (def end-offset (comp :end-offset loc))
 (def start-line (comp :start-line loc))
 (def end-line (comp :end-line loc))
+(defn lines [node]
+  (if-let* [s (start-line node)
+            e (end-line node)]
+    (range s (inc e))
+    []))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
 
@@ -326,3 +335,7 @@
   ([root :- IASTNode offset :- s/Int] (binary-search-offset-parent offset root))
   ([node :- IASTNode] (parent node))) ;(offset-parent (root-ancestor node) (:offset (loc node)))))
 
+(s/defn pmap-dir-asts
+  "Apply a function to the root of the AST of every c file in a directory"
+  [f :- (s/=> s/Any [IASTTranslationUnit]) dirname :- s/Str]
+  (pmap-dir-files (comp f parse-file) dirname))
