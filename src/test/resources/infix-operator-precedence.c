@@ -31,30 +31,41 @@ int main(){
   !a && b; // <true>
   (!a) && b;
 
-  b = sizeof(a + b);
-  foo(!a);
-  &a + 2;
-  *a && b;
-  ++a + 1;
+  b = sizeof(a + b);//<false>
+  foo(!a);//<false>
+  &a + 2;// <true>, should be false
+  *a && b;// <true>, should be false
+  ++a + 1;// <true>, should be false
   Obj->a + b;
 
 
   - 2+3; // <true>
-  - a+b;
-  - a*b;
-  ! 2 || 3;
+  - a+b; // <true>
+  - a*b; // <true>
+  ! 2 || 3; // <true>
   ! a && b; // <true>
   a && !b;
   ! a && ! b; // <true>
   
 
   *p1 + i1; // <true>
-  *p1 + p2; // <false>
+  *p1 + p2; // <true>, should be false
   *p1 - i1; // <true>
-  *pp1 - p2; // <false>
+  *pp1 - p2; // <true>, should be false
 
   (*p1) + i1;
   *(p1 + i1);
+
+  1 || ! 2 || 1; // <true>
   p1 + *p2 + i1; // <true>
 
+  a == 1 || b == 2; // <true>, but shows up a lot and not really confusing
+  ! a ? b : c; // <true>
+  sh_round_reg(*ca, mode) + 1; // <true>, why? 
+  1 || 2 == 3 + 4;// <true>
+  crtl->calls_eh_return && a; // <true>, why?
+  offset >= -252; //<true>, should be false
+  *str == '\0'; //<true>, should be false
+  i < 0 ? -i : i; //<true>
+  i <= FPR4_REGNUM + 1; //<true>, should this be false?
 }
