@@ -238,12 +238,18 @@
 '(->>  gcc-path
       (pmap-dir-asts (fn [root] [(.getFilePath root) (filter-tree #(= 0 (depth %)) root)]))
       (take 10)
+      (filter (comp not empty? last))
+      (take 1)
+      pprint
+      time
       )
 
-
-(->> "/Users/dgopstein/opt/src/gcc/contrib/gthr_supp_vxw_5x.c"
+;; find depth 8 nodes whose parents are on a different line in an 8-heavy file
+'(->> "~/opt/src/gcc/libdecnumber/decCommon.c"
+     expand-home
      parse-file
-     all-parents
-     ;write-node
-     (def test-all-parents)
+     ;print-tree
+     (filter-tree #(and (= 9 (depth %1)) (not= (start-line %1) (start-line (parent %1)))))
+     (map (juxt start-line write-ast))
+     pprint
      )

@@ -83,7 +83,6 @@
 (defn depth "How many nodes lie between this one and the root"
   [node] (->> node all-parents count))
 
-
 (defn ancestor
   "Get the nth grandparent of the node"
   [n node]

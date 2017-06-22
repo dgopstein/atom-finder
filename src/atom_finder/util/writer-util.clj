@@ -5,23 +5,22 @@
           commenthandler.NodeCommentMap changegenerator.ChangeGeneratorWriterVisitor))
 
 (defn print-tree [node]
-  (letfn
-      [(f [node index tree-path]
-         (let [offset (format " (offset: %s, %s)"
-                              (-> node .getFileLocation .getNodeOffset)
-                              (-> node .getFileLocation .getNodeLength))]
+  (pre-tree
+   (fn [node index tree-path]
+     (let [offset (format " (offset: %s, %s)"
+                          (some-> node .getFileLocation .getNodeOffset)
+                          (some-> node .getFileLocation .getNodeLength))]
 
-           (printf "%s -%s %s %s -> %s\n"
-                   (apply str (repeat index "  "))
-                   (-> node .getClass .getSimpleName)
-                   (str tree-path)
-                   offset
-                   (-> node .getRawSignature
-                       (str "           ")
-                       (.subSequence 0 10)
-                       (.replaceAll "\n" " \\ ")))))]
-
-    (pre-tree f node 1 [])))
+       (printf "%s -%s %s %s -> %s\n"
+               (apply str (repeat index "  "))
+               (-> node .getClass .getSimpleName)
+               (str tree-path)
+               offset
+               (-> node .getRawSignature
+                   (str "           ")
+                   (.subSequence 0 10)
+                   (.replaceAll "\n" " \\ ")))))
+   node 1 []))
 
 (def ast-writer (ASTWriter.))
 (defn write-ast [node] (.write ast-writer node))
