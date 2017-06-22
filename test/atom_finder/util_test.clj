@@ -70,7 +70,16 @@
              (map write-ast))))
     ))
 
-(deftest util-test
+(deftest clj-util-test
+
+  (testing "flatcat"
+    (is (= #{1 2} (set (flatcat [1] [2]))))
+    (is (= #{1 2} (set (flatcat  1  [2]))))
+    (is (= #{1 2} (set (flatcat [1]  2 ))))
+    (is (= #{1 2} (set (flatcat  1   2 ))))
+    (is (= #{[1] 2} (set (flatcat [[1]] 2))))
+    )
+
   (testing "line-range"
     (let [cases [
                  [[]  [1 1] "a\nb\nc\n"]

@@ -63,16 +63,16 @@
 (defn now [] (java.util.Date.))
 (->> (now) println)
 
-'(->> (str gcc-path "/libatomic")
+'(->> gcc-path
      (pmap-dir-files location-dump-atoms-and-non-atoms)
      (mapcat (partial map #(update % :node write-node)))
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
      (map (fn [m] (update m :file #(subs % (- (count gcc-path) 3))))) ; remove gcc-path prefix from file paths
      (map (juxt :file :type :start-line :end-line :depth))
      (map prn)
-     (take 50000)
+     ;(take 50)
      dorun
-     ;(log-to "location-dump_non-atoms_2017-06-05.txt")
+     ;(log-to "tmp/location-dump_non-atoms_2017-06-21_1.txt")
      time
      )
 
@@ -241,9 +241,58 @@
       )
 
 
-(->> "/Users/dgopstein/opt/src/gcc/contrib/gthr_supp_vxw_5x.c"
-     parse-file
-     all-parents
-     ;write-node
-     (def test-all-parents)
+;; which nodes make up each depth stratus
+'(->> gcc-path
+     (pmap-dir-files location-dump-atoms-and-non-atoms)
+     (mapcat (partial map #(update % :node write-node)))
+     (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
+     (map (fn [m] (update m :file #(subs % (- (count gcc-path) 3))))) ; remove gcc-path prefix from file paths
+     (group-by :depth)
+     (map-values (partial map :node))
+     ;(map prn)
+     (map-values frequencies)
+     (map-values #(sort-by (comp - last) %))
+     (map-values #(take 5 %))
+     (sort-by first)
+     (take 20)
+     pprint
+     dorun
+     time
+     )
+
+'(->> gcc-path
+     (pmap-dir-files location-dump-atoms-and-non-atoms)
+     (mapcat (partial map #(update % :node write-node)))
+     (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
+     (map (fn [m] (update m :file #(subs % (- (count gcc-path) 3))))) ; remove gcc-path prefix from file paths
+     (partition-by :file) ; group data by filenames
+     (take 100000)
+     (pmap
+      (fn [atom-positions]
+        (let [comments  (filter (comp #{:comment} :type) atom-positions)
+              non-atoms (filter (fn [{t :type s :start-line e :end-line d :depth}] (and (= :non-atom t) s e d)) atom-positions)
+              comment-locs (set (mapcat (fn [{s :start-line e :end-line}] (range s (inc e))) comments))]
+          [(->> atom-positions first :file)
+          (reduce
+           (fn [hash node]
+             (let [{type :type start :start-line end :end-line depth :depth} node]
+             (merge-with (partial merge-with +) hash
+                         {depth {
+                          :same-line (bin (comment-locs start))
+                          :non-atoms 1
+                          }}))
+            ) {} non-atoms)])))
+     ;(reduce (partial merge-with (partial merge-with +)))
+     ;(tap (fn [l] (prn (map #(get-in % [1 8 :same-line]) l))))
+     (filter #(and (some->> (get-in %1 [1 8 :same-line]) (< 100)) (some->> (get-in %1 [1 7 :same-line]) (< 100))))
+     (map-values (partial map-values #(vector (float (safe-div (:same-line %1) (:non-atoms %1))) (:same-line %1) (:non-atoms %1))))
+     (sort-by #(- (get-in %1 [1 8 0]) (get-in %1 [1 7 0])))
+     (take-last 1000)
+     (map (fn [[k v]] [k (sort-by first v)]))
+     ;(map-values #(update-in % [:node] frequencies))
+     ;(map-values (fn [m] (update-in m [:node] #(take 5 (sort-by (comp - last) %)))))
+     ;(sort-by first)
+     (map prn)
+     dorun
+     time
      )

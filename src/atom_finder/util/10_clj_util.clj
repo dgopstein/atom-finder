@@ -98,3 +98,22 @@
 
 (defn bin "Convert a value to 1 or 0 based on its truthiness"
   [bool] (if bool 1 0))
+
+
+(defn flatcat
+  "Take two lists/items and merge them"
+  [a b]
+  (cond
+    (and (sequential? a) (sequential? b)) (concat a b)
+    (sequential? a) (conj a b)
+    (sequential? b) (conj b a)
+    :default [a b]))
+
+(defn flatcat [a b]
+  (cond
+    (and (sequential? a) (sequential? b)) (concat a b)
+    (sequential? a) (conj a b)
+    (sequential? b) (conj b a)
+    :default [a b]))
+
+(flatcat [1] [2])
