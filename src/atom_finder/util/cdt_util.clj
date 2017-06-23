@@ -257,18 +257,18 @@
 
 (defn all-comments [node] (->> node root-ancestor .getComments (into [])))
 
-(defn print-node
+(defn print-node-context
   "Print the line that contains the node and the lines around it"
-  [node]
-  (let [line-num (.getStartingLineNumber (.getFileLocation node)) file-name (.getContainingFilename node)]
-    (with-open [rdr (clojure.java.io/reader file-name)]
-      (let [file-seq (line-seq rdr) total-line-num (count file-seq)]
+  ([node] (print-node-context 2 node))
+  ([n-lines node]
+   (with-open [rdr (clojure.java.io/reader (.getContainingFilename node))]
+     (let [line-num  (start-line node)
+           file-seq (line-seq rdr)
+           first-line (max 0 (- line-num n-lines 1))
+           lines-to-print (->> file-seq (drop first-line) (take (+ n-lines 1 n-lines)))]
        (println "===================================================")
-
-       (if (>= (- line-num 2) 0) (println (str (- line-num 1) "    " (nth file-seq (- line-num 2)))))
-       (println (str line-num ">>>>" (nth file-seq (- line-num 1))))
-       (if (<= line-num total-line-num) (println (str (+ line-num 1) "    " (nth file-seq line-num))))
-
+       (doseq-indexed [line lines-to-print idx]
+         (println (str (+ idx first-line) (if (= (+ idx first-line 1) line-num) " >> " "    ") line)))
        (println "===================================================")))))
 
 (defn count-nodes

@@ -235,15 +235,6 @@
      time
      )
 
-'(->>  gcc-path
-      (pmap-dir-asts (fn [root] [(.getFilePath root) (filter-tree #(= 0 (depth %)) root)]))
-      (take 10)
-      (filter (comp not empty? last))
-      (take 1)
-      pprint
-      time
-      )
-
 ;; find depth 8 nodes whose parents are on a different line in an 8-heavy file
 '(->> "~/opt/src/gcc/libdecnumber/decCommon.c"
      expand-home
@@ -253,9 +244,10 @@
      (map (juxt start-line write-ast))
      pprint     )
 
-;; find depth 8 nodes with comments near them, but not their parents
+;; list of all node type by depth
 '(->> gcc-path
      (pmap-dir-files location-dump-atoms-and-non-atoms)
+     (take 1000)
      (mapcat (partial map #(update % :node write-node)))
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
      (map (fn [m] (update m :file #(subs % (- (count gcc-path) 3))))) ; remove gcc-path prefix from file paths
@@ -264,7 +256,7 @@
      ;(map prn)
      (map-values frequencies)
      (map-values #(sort-by (comp - last) %))
-     (map-values #(take 5 %))
+     (map-values #(take 20 %))
      (sort-by first)
      (take 20)
      pprint
@@ -272,7 +264,8 @@
      time
      )
 
-(->> gcc-path
+;; find depth 8 nodes with comments near them, but not their parents
+'(->> gcc-path
      (pmap-dir-files location-dump-atoms-and-non-atoms)
      (mapcat identity) ;(partial map #(update % :node write-node)))
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
@@ -294,7 +287,7 @@
                          (not (comment-locs (start-line (parent node)))))
                     )
                   ))
-               (map (partial tap (comp print-node :node)))
+               (map (partial tap (comp print-node-context :node)))
                )
                )))
      flatten
