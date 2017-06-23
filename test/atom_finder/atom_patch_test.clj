@@ -21,7 +21,33 @@
           rl    (removed-lines patch)]
 
       (is (= rl {"gcc/ChangeLog" [16 26 27 28 29] "gcc/config/sparc/sparc.c" []}))
-      )))
+      ))
+
+  (when gcc-repo
+    (testing "unchanged-lines"
+      (let [little-commit-revstr "97574c57cf26ace9b8609575bbab66465924fef7"
+            little-commit-file "gcc/config/sparc/sparc.c"
+            little-commit-rev-commit (some-> gcc-repo (atom-finder.source-versions/find-rev-commit little-commit-revstr))
+            little-commit-patch-str (clj-jgit.querying/changed-files-with-patch gcc-repo little-commit-rev-commit)
+            little-commit-patch (->> little-commit-patch-str parse-diff)
+            little-commit-srcs  (atom-finder.atom-patch/before-after-data gcc-repo little-commit-rev-commit little-commit-file)
+            little-commit-old (:ast-before little-commit-srcs)
+            little-commit-new (:ast-after little-commit-srcs)
+            ]
+
+            (-> little-commit-patch
+                patch-line-correspondences
+                correspondences-to-range-lists
+                changed-corrs-lines
+                ((flip find-first) #(= little-commit-file (:file %)))
+                (get-in [:ranges :new])
+                (= 123456789)
+                is
+                )
+     ;(def new-unchanged))
+        )
+      ))
+  )
 
 (deftest flatten-res-test
   (testing "Can data be flattened"

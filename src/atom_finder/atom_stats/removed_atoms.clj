@@ -74,14 +74,29 @@
   [changed-lines :- #{s/Int} a :- IASTNode]
   (filter-tree #(not-any? changed-lines (lines %)) a))
 
-'(-> little-commit-patch
+;; TODO iterate the AST selecting nodes that do(or don't?) intersect with a line range
+(s/defn unchanged-nodes
+  [ranges :- [LineRange] node :- IASTNode] :- [IASTNode]
+  (let [start (start-line node)
+        end (end-line node)
+        my-ranges (->> ranges  ; ranges that overlap this node
+                       (drop-while #(<= (second %) start))
+                       (take-while #(<  (first  %) end)))
+        ]
+    (if (empty? my-ranges)
+      [node]
+      (mapcat (partial unchanged-nodes my-ranges) (children node)))))
+
+;(s/defn old-changed [patch node]
+(-> little-commit-patch
      patch-line-correspondences
      correspondences-to-range-lists
-     changed-corrs-lines
+     ;changed-corrs-lines
      ((flip find-first) #(= little-commit-file (:file %)))
      (get-in [:ranges :old])
+     ((flip unchanged-nodes) little-commit-old)
      )
-
+     ;(def new-unchanged))
 
 '(->> old-unchanged
     (take 10)
@@ -92,10 +107,6 @@
     (map write-node)
     prn)
 
-'(def diffed-unchanged (time (atom-finder.tree-diff.difflib/diff-by write-node old-unchanged new-unchanged)))
-
-
-
 (s/defn patch-ast-correspondence ;:- [{IASTNode IASTNode}]
   [patch :- Patch a :- IASTNode b :- IASTNode]
   (let [changed-lines-before (->> patch deltas (map old-offset))
@@ -104,13 +115,4 @@
     changed-lines-after
   ))
 
-'(->> little-commit-old
-     ;(get-in-tree [17])
-     ;(get-in-tree [19])
-     (get-in-tree [19 1 1 1 0])
-     lines)
-     ;flatten-tree (map (comp lines pap)))
-     ;write-ast
-     ;println
-     ;print-tree
-     ;)
+(def diffed-unchanged (time (atom-finder.tree-diff.difflib/diff-by write-node old-unchanged new-unchanged)))
