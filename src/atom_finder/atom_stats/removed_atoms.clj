@@ -87,25 +87,35 @@
       [node]
       (mapcat (partial unchanged-nodes my-ranges) (children node)))))
 
-;(s/defn old-changed [patch node]
-(-> little-commit-patch
-     patch-line-correspondences
-     correspondences-to-range-lists
-     ;changed-corrs-lines
-     ((flip find-first) #(= little-commit-file (:file %)))
-     (get-in [:ranges :old])
-     ((flip unchanged-nodes) little-commit-old)
-     )
-     ;(def new-unchanged))
+(s/defn unchanged-patch-nodes
+  [little-commit-patch filename type node]
+  (-> little-commit-patch
+      patch-line-correspondences
+      correspondences-to-range-lists
+      ((flip find-first) #(= filename (:file %)))
+      (get-in [:ranges type])
+      (unchanged-nodes node)
+     ))
 
-'(->> old-unchanged
-    (take 10)
+(unchanged-patch-nodes little-commit-patch little-commit-file (get-in-tree [103] little-commit-old))
+
+(->> little-commit-patch-str
+     println)
+(->> little-commit-new
+;static unsigned int sparc_min_arithmetic_precision (void);
+     (get-in-tree [146])
+     write-ast
+     println)
+
+(->> old-unchanged
+    (take 50)
     (map write-node)
     prn)
-'(->> new-unchanged
-    (take 10)
-    (map write-node)
-    prn)
+(->> (map vector old-unchanged new-unchanged)
+    (take 500)
+    (map (partial map #(try (write-ast %) (catch Exception e "") )))
+    (map (partial map #(trunc % 100)))
+    (map pprint))
 
 (s/defn patch-ast-correspondence ;:- [{IASTNode IASTNode}]
   [patch :- Patch a :- IASTNode b :- IASTNode]

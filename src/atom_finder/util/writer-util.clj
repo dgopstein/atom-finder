@@ -24,6 +24,7 @@
 
 (def ast-writer (ASTWriter.))
 (defn write-ast [node] (.write ast-writer node))
+(defn write-ast-safe [node] (try (write-ast node) (catch Exception e "--COULD NOT PARSE--")))
 
 (defmacro should-visit! [writer val]
   "Tell the AST-visitor to visit no types of node"
@@ -84,3 +85,8 @@
     write-node-type
     write-node)
    node))
+
+(defn grep-tree
+  "find the nodes who's syntax match the argument"
+  [s node]
+  (filter-tree #(.contains (write-ast-safe %) s) node))

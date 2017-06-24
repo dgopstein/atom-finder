@@ -83,6 +83,13 @@
 (defn depth "How many nodes lie between this one and the root"
   [node] (->> node all-parents count))
 
+(defn path "How to get from the root to this node"
+  [node]
+  (let [mom (parent node)]
+    (if mom
+      (conj (path mom) (.indexOf (into [] (children mom)) node))
+      [])))
+
 (defn ancestor
   "Get the nth grandparent of the node"
   [n node]

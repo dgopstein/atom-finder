@@ -35,19 +35,12 @@
             little-commit-new (:ast-after little-commit-srcs)
             ]
 
-            (-> little-commit-patch
-                patch-line-correspondences
-                correspondences-to-range-lists
-                changed-corrs-lines
-                ((flip find-first) #(= little-commit-file (:file %)))
-                (get-in [:ranges :new])
-                (= 123456789)
-                is
-                )
-     ;(def new-unchanged))
-        )
-      ))
-  )
+        (->> (unchanged-patch-nodes little-commit-patch little-commit-file :new (get-in-tree [103] little-commit-new))
+             (map write-ast)
+             ;;(map println)
+             nil?
+             is
+             )))))
 
 (deftest flatten-res-test
   (testing "Can data be flattened"
