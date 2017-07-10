@@ -79,25 +79,28 @@
   [ranges :- [LineRange] node :- IASTNode] :- [IASTNode]
   (let [start (start-line node)
         end (end-line node)
-        my-ranges (->> ranges  ; ranges that overlap this node
-                       (drop-while #(<= (second %) start))
-                       (take-while #(<  (first  %) end)))
+        my-ranges (->> ranges ; ranges that overlap this node
+                       (drop-while #(< (second %) (pprn start)))
+                       (take-while #(<=  (first  %) end)))
         ]
     (if (empty? my-ranges)
       [node]
-      (mapcat (partial unchanged-nodes my-ranges) (children node)))))
+      ;TODO (if any children returned nil, then return this one?
+         (mapcat (partial unchanged-nodes my-ranges) (children node)))))
+
+(unchanged-patch-nodes little-commit-patch little-commit-file :new (get-in-tree [103] little-commit-new))
 
 (s/defn unchanged-patch-nodes
-  [little-commit-patch filename type node]
+  [little-commit-patch filename version node]
   (-> little-commit-patch
       patch-line-correspondences
       correspondences-to-range-lists
       ((flip find-first) #(= filename (:file %)))
-      (get-in [:ranges type])
+      (get-in [:ranges version])
       (unchanged-nodes node)
      ))
 
-(unchanged-patch-nodes little-commit-patch little-commit-file (get-in-tree [103] little-commit-old))
+(unchanged-patch-nodes little-commit-patch little-commit-file :old (get-in-tree [103] little-commit-old))
 
 (->> little-commit-patch-str
      println)
