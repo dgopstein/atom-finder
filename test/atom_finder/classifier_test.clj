@@ -146,6 +146,6 @@
   (testing "assignment-as-value-atom? finds all atoms in snippet study code"
     (test-atom-lines "assignment-as-value.c" "<true>" (default-finder assignment-as-value-atom?))))
 
-(deftest test-type-conversion
+(deftest test-repurposed-variable
   (testing "Is a repurposed variable atom here?"
     (test-atom-lines "repurposed_variable.c" "<true>" (default-finder repurposed-variable-atom?))))
