@@ -10,19 +10,22 @@
    [clojure.string :as str]
    )
   (:import
-   [org.eclipse.cdt.core.dom.ast IASTNode]
+   [org.eclipse.cdt.core.dom.ast IASTNode IASTFunctionDefinition]
    )
   )
 
 (defn loc-data [node]
   (select-keys (loc node) [:start-line :end-line :offset :length]))
 
+(def atoms-and-comments (conj atoms {:name :comment :finder all-comments}))
+(def atoms-and-comments-and-functions (conj atoms-and-comments {:name :function :finder (default-finder (partial instance? IASTFunctionDefinition))}))
+
 (s/defn find-all :- [{:type s/Keyword s/Any s/Any}]
   "Apply every classifier to this node"
-  [node :- IASTNode]
+  ([node :- IASTNode] (find-all atoms-and-comments))
+  ([atoms-and node :- IASTNode]
   (let [contexts (context-map node)]
-    (->> atoms
-         ((flip conj) {:name :comment :finder all-comments})
+    (->> atoms-and
          (mapcat
           (fn [atom-map]
             (for [atom ((:finder atom-map) node)]
@@ -32,7 +35,7 @@
                      ))))
          )
     )
-  )
+  ))
 
 (s/defn set-difference-by
   "set-difference after applying a function to each element"
