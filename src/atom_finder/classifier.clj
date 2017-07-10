@@ -1,33 +1,20 @@
 (ns atom-finder.classifier
   (:require [atom-finder.util :refer :all]
-            [atom-finder.classifier-util :refer :all]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             )
   (:import
-   [org.eclipse.cdt.core.dom.ast IASTNode
+   [org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression
     IASTExpression IASTStatement IASTTranslationUnit
-    IASTPreprocessorMacroDefinition IASTIfStatement IASTBinaryExpression]
+    IASTExpressionList IASTExpressionStatement IASTForStatement
+    IASTPreprocessorMacroDefinition IASTIfStatement]
    [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTTranslationUnit]
    [org.eclipse.cdt.internal.core.dom.rewrite.astwriter ASTWriter]
-   [org.eclipse.cdt.internal.core.parser.scanner ASTMacroDefinition]))
+   [org.eclipse.cdt.internal.core.parser.scanner ASTMacroDefinition]
+   ))
 
-(s/set-fn-validation! true) ; Globally turn on schema validation
-
-(defn classifier-files []
-  (->> "atom_finder/classifier/"
-       ClassLoader/getSystemResource
-       clojure.java.io/file
-       file-seq
-       (map (memfn getName))
-       (filter #(str/ends-with? % ".clj"))
-       (map #(str/replace % #"\.clj$" ""))
-       (map (partial str "classifier/"))
-       ))
-
-; Load all files in the classifier directory
-(apply load (classifier-files))
+(load-cljs-in-dir "classifier/")
 
 (def AtomName s/Keyword)
 (def AtomClassifier s/Keyword)
@@ -43,7 +30,7 @@
 
 (def atoms
   [
-   (ValidatedAtom :preprocessor-in-statement preprocessor-parent?        all-non-toplevel-preprocessors)
+   (ValidatedAtom :preprocessor-in-statement define-parent?              non-toplevel-defines)
    (ValidatedAtom :logic-as-control-flow     logic-as-control-flow-atom? logic-as-control-flow-atoms)
    (ValidatedAtom :conditional               conditional-atom?           (default-finder conditional-atom?))
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))

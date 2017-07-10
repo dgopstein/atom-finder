@@ -1,12 +1,23 @@
-(ns atom-finder.classifier-util
-  (:require [atom-finder.util :refer :all]
-            [clojure.string :as str]
-            [schema.core :as s]
-            )
-  (:use     [clojure.pprint :only [pprint print-table]])
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTExpressionList IASTForStatement IASTFunctionDefinition]))
+(in-ns 'atom-finder.util)
+(import '(org.eclipse.cdt.core.dom.ast
+          IASTNode IASTExpression IASTExpressionList IASTUnaryExpression
+          IASTBinaryExpression IASTLiteralExpression IASTForStatement
+          IASTFunctionDefinition))
 
 (defn default-finder [classifier] (partial filter-tree classifier))
+(defn default-finder-context [classifier] (partial filter-tree-context classifier))
+(defn with-context [finder] (fn [context node] (map #(assoc context :node %) (finder node))))
+;(def root atom-finder.constants/root)
+
+(s/defn context-map :- {IASTNode {s/Any s/Any}}
+  [root]
+  (->> root
+       flatten-tree-context
+       (map (fn [[ctx node]] [node ctx]))
+       (into {})))
+
+(defn flatten-tree [node]
+  (conj (mapcat flatten-tree (children node)) node))
 
 (defmacro operation-classifier
   "Identify unary/binary nodes by their operation"
@@ -88,7 +99,7 @@
     :else nil))
 
 (s/defmethod parse-numeric-literal IASTLiteralExpression :- (s/maybe s/Num) [node]
-  (parse-numeric-literal (.toString node)))
+  (parse-numeric-literal (String. (.getValue node))))
 
 (s/defmethod parse-numeric-literal String :- (s/maybe s/Num) [s-in]
   (let [s (str/replace s-in #"[uUlL]*$" "")] ; remove suffix
@@ -130,3 +141,54 @@
           (instance? IASTFunctionDefinition node))
     node
     (enclosing-function (parent node))))
+
+(defn toplevel-offset?
+  "Check if an offset lives in the top level or if it's inside some other node"
+  [root offset]
+  (not-any? #(contains-offset? % offset) (children root)))
+
+(s/defn intersects-line-range?
+  "Does this node contain the given line range"
+  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
+  (let [node-loc (loc node)]
+    (and
+     node-loc
+     (<= start-line (:end-line node-loc))
+     (<  (:start-line node-loc) end-line))))
+
+(s/defn contained-by-line-range?
+  "Does this line range contain the given node"
+  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
+  (let [node-loc (loc node)]
+    (and
+     node-loc
+     (<= start-line (:start-line node-loc))
+     (<  (:end-line node-loc) end-line))))
+
+(s/defn contains-line-range?
+  "Does this node contain the given line range"
+  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
+  (let [node-loc (loc node)]
+    (and
+     node-loc
+     (>  start-line (:start-line node-loc))
+     (>= (:end-line node-loc) end-line))))
+
+(s/defn line-range-parent?
+  [start-line :- s/Int end-line :- s/Int node :- IASTNode]
+  (and
+    (intersects-line-range? start-line end-line node)
+    (not (contained-by-line-range? start-line end-line node))
+    (every? (partial contained-by-line-range? start-line end-line) (children node))))
+
+; TODO this is untested, also it should probably use binary search for efficiency
+(s/defn line-range-parent
+  "Search node for the parent of the line range"
+  [start-line :- s/Int end-line :- s/Int root :- IASTNode]
+  (let [kids      (children root)
+        container (find-first (partial contains-line-range? start-line end-line) kids)]
+    (if (nil? container)
+      root
+      (recur start-line end-line container))))
+
+(defn in-function? [node] (ancestral-instance? IASTFunctionDefinition node))

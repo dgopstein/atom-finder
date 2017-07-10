@@ -1,6 +1,5 @@
-
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast  IASTExpressionStatement IASTNullStatement IASTIfStatement IASTForStatement IASTWhileStatement IASTDoStatement IASTSwitchStatement IASTCompoundStatement)
+(import '(org.eclipse.cdt.core.dom.ast  IASTExpressionStatement IASTNullStatement IASTIfStatement IASTForStatement IASTWhileStatement IASTDoStatement IASTSwitchStatement IASTCompoundStatement IASTMacroExpansionLocation)
         '(org.eclipse.cdt.core.dom.ast.cpp ICPPASTRangeBasedForStatement))
 
 (def omittable-types [IASTForStatement IASTWhileStatement IASTDoStatement  ICPPASTRangeBasedForStatement])
@@ -30,10 +29,12 @@
 
    (instance? IASTIfStatement node) (if-statement-omitted-curly-brace? node)
 
-   (instance? IASTSwitchStatement node) (not(->> node
-                                                 (get-in-tree [1])
-                                                 .getSyntax
-                                                 .toString
-                                                 (= "{")))
+   (instance? IASTSwitchStatement node)
+    (and (not-any? (partial instance? IASTMacroExpansionLocation)
+                   (.getNodeLocations node))
+         (not(->> node
+                  (get-in-tree [1])
+                  .getSyntax
+                  .toString
+                  (= "{"))))
    :else false))
-

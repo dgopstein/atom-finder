@@ -5,7 +5,10 @@
    [atom-finder.classifier :refer :all]
    [atom-finder.source-versions :refer :all]
    [atom-finder.patch :refer :all]
+   [atom-finder.atom-stats :refer :all]
    [clojure.pprint :refer [pprint]]
+   [clojure.data.csv :as csv]
+   [clojure.java.io :as io]
    [clj-jgit.porcelain :as gitp]
    [clj-jgit.querying :as gitq]
    [clj-jgit.internal :as giti]
@@ -15,8 +18,10 @@
    [atom_finder.classifier Atom]
    [org.eclipse.jgit.lib ObjectReader Repository]
    [org.eclipse.jgit.api Git]
+   [org.eclipse.jgit.revwalk RevCommit]
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
-   [org.eclipse.cdt.core.dom.ast IASTTranslationUnit]
+   [org.eclipse.cdt.core.dom.ast IASTTranslationUnit IASTNode]
+   [org.eclipse.cdt.internal.core.dom.parser ASTNode]
    )
   )
 
@@ -27,151 +32,193 @@
 
 ;
 ;(do (def repo gcc-repo)(def commit-hash "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931")(def file-name "gcc/c-family/c-pretty-print.c"))
+;(do (def repo gcc-repo)(def commit-hash "370e45b9887b6603911bbe1776c556d2404455bf")(def file-name "gcc/c-family/c-pretty-print.c"))
 ;(do (def repo  ag-repo)(def commit-hash "05be1eddca2bce1cb923afda2b6ab5e67faa248c")(def file-name "src/print.c"))
 ;(def atom-classifier conditional-atom?)
 ;(def atom-finder (->> atom-lookup :conditional :finder))
 ;(def parent-hash (commit-parent-hash repo commit-hash))
 ;(def rev-commit (first (gitq/rev-list repo)))
 
-(defn find-rev-commit
-  "make a new revwalk to find given commit"
-  [repo commit-hash]
-  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-hash)
-  )
-
-(defn object-loader-string
-  "dump the contents of an ObjectLoader to a String"
-  [loader]
-  (->> loader .getBytes String.))
-
 (s/defn commit-file-source :- String
   "Return full source for each file changed in a commit"
-  [repo :- Git commit-hash :- String file-name :- String]
+  [repo :- Git rev-commit :- RevCommit file-name :- String]
   (let [repository (.getRepository repo)
-        rc (find-rev-commit repo commit-hash)
-        tree      (.getTree rc)
-        tree-walk (doto (TreeWalk. repository) (.setRecursive true) (.addTree tree))
+        tree       (.getTree rev-commit)
+        tree-walk  (doto (TreeWalk. repository) (.setRecursive true) (.addTree tree))
         ]
-    
+
     (.setFilter tree-walk (PathFilter/create file-name)) ; Use PathFilterGroup???? http://download.eclipse.org/jgit/docs/jgit-2.0.0.201206130900-r/apidocs/org/eclipse/jgit/treewalk/filter/PathFilter.html
     (.next tree-walk)
 
     (let [object-id (.getObjectId tree-walk 0)
           loader (.open repository object-id)]
-      (object-loader-string loader)
+      (->> loader .getBytes String.)
       )
   ))
 
-
-;(print (commit-file-source repo commit-hash "gcc/testsuite/g++.dg/debug/dwarf2/integer-typedef.C"))
+;(print (commit-file-source repo (find-rev-commit repo commit-hash) "gcc/testsuite/g++.dg/debug/dwarf2/integer-typedef.C"))
 ;(print (commit-file-source repo commit-hash "gcc/c-family/ChangeLog"))
 
-;(commit-file-atom-count gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931" "gcc/c-family/c-pretty-print.c" conditional-atom?)
+;(commit-file-atom-count gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c" conditional-atom?)
+;(before-after-data gcc-repo (find-rev-commit gcc-repo "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931") "gcc/c-family/c-pretty-print.c")
 ;(commit-file-atom-count gcc-repo commit-hash "gcc/c-family/c-pretty-print.c" conditional-atom?)
 
-(defn commit-file-atom-count
-  "count the occurence of an atom in commit's version of file"
-  [repo commit-hash file-name atom-classifier]
-    (->> (commit-file-source repo commit-hash file-name)
-         parse-source
-         (filter-tree atom-classifier)
-         count ; timing hot spot. Make more efficient atom counting function?
-         ))
-
-(defn edited-files
+(s/defn edited-files
   "which files were edited in commit"
-  [repo commit-hash]
-  (->> (find-rev-commit repo commit-hash)
+  [repo rev-commit :- RevCommit]
+  (->> rev-commit
        (gitq/changed-files repo)
        (filter #(= (last %) :edit))
        (map first)
        ))
 
-
-;(atoms-removed-in-commit repo commit-hash atom-classifier)
 ;(atom-removed-in-commit-file? repo commit-hash "gcc/c-family/ChangeLog" atom-classifier)
 ;(def commit-hash "97574c57cf26ace9b8609575bbab66465924fef7")
 ;(def file-name "gcc/c-family/ChangeLog")
 
-;(apply-before-after repo commit-hash file-name count-nodes)
+;TODO use RevWalk instead of find-rev-commit
+; http://stackoverflow.com/questions/28852698/how-do-i-get-the-tree-from-parent-commits-using-the-jgit-api
+(s/defn parent-rev-commit
+  [repo rev-commit :- RevCommit]
+  (find-rev-commit repo (.name (.getParent rev-commit 0))))
 
-(defn commit-parent-hash
-  [repo commit-hash]
-  (.name (first (.getParents (find-commit repo commit-hash)))))
-
-(defn apply-before-after
+(s/defn apply-before-after
   "parse a commit and it's parent and apply f to the root of both"
-  [repo commit-hash file-name f]
-  (let [parent-hash (commit-parent-hash repo commit-hash)]
-    [(f (parse-source (commit-file-source repo parent-hash file-name)))
-     (f (parse-source (commit-file-source repo commit-hash file-name)))]))
+  [repo rev-commit :- RevCommit file-name f]
+  (let [parent-commit (parent-rev-commit repo rev-commit)]
+    [(f (parse-source (commit-file-source repo parent-commit file-name)))
+     (f (parse-source (commit-file-source repo rev-commit file-name)))]))
 
-(defn source-before-after
+(s/defn build-srcs
+  [source-before :- String source-after :- String]
+  {:ast-before (parse-source source-before)
+   :ast-after  (parse-source source-after)
+   :source-before source-before
+   :source-after  source-after})
+
+(s/defn before-after-data
   "Return the ast of changed files before/after a commit"
-  [repo commit-hash file-name]
-  (apply-before-after repo commit-hash file-name identity))
+  [repo rev-commit :- RevCommit file-name]
+  (let [parent-commit (parent-rev-commit repo rev-commit)
+        patch-str     (gitq/changed-files-with-patch repo rev-commit)
+        source-before (commit-file-source repo parent-commit file-name)
+        source-after  (commit-file-source repo rev-commit file-name)]
+    (merge
+     {:file file-name
+      ;:rev-commit (str rev-commit)
+      :patch-str  patch-str
+      }
+     (build-srcs source-before source-after))))
 
-(s/defn atom-removed-in-file? :- Boolean
-  "Count the number of atoms in two ASTs and see if they've decreased"
-  [atom-finder :- AtomFinder srcs :- BeforeAfter]
-  (apply >
-   (map (comp count atom-finder) srcs)))
+(defn atom-specific-srcs
+  [srcs atom]
+  (merge srcs
+         {:atoms-before (->> srcs :ast-before ((:finder atom)))
+          :atoms-after  (->> srcs :ast-after  ((:finder atom)))}))
 
-(s/defn atoms-removed-in-file :- s/Any ;{s/Keyword s/Boolean}
+(s/defn atoms-in-file-stats
   "Check multiple atoms in a single file"
-  [atoms :- [Atom] srcs :- BeforeAfter]
-  (into {}
-        (map #(vector (:name %1) (atom-removed-in-file? (:finder %1) srcs)) atoms)))
+  [atoms :- [Atom] srcs]
+  (doall
+   (for [atom atoms]
+     (let [atom-src (atom-specific-srcs srcs atom)]
+       (if (:ast-before atom-src)
+         {:atom (:name atom)
+          :stats (apply merge
+                        (doall (for [[stat-name f] (atom-stats)]
+                                 {stat-name (f atom-src atom)})))}
+         {:atom (:name atom)})
+     ))))
 
-(s/defn commit-files-before-after :- {s/Str BeforeAfter}
+;(atoms-in-file-stats (vals (select-keys atom-lookup [:post-increment :literal-encoding]))
+;                     {:ast-before (parse-source "int main() { int x = 1, y; y = x++; }")
+;                      :ast-after (parse-source "int main() { int x = 1, y; y = x; x++; }")})
+
+(s/defn commit-files-before-after
   "For every file changed in this commit, give both before and after ASTs"
-  [repo commit-hash]
-  (->> (edited-files repo commit-hash)
-       (map #(vector %1 (source-before-after repo commit-hash %1)))
-       (into {})
-       ))
+  [repo rev-commit :- RevCommit]
+  (map (partial before-after-data repo rev-commit)
+       (edited-files repo rev-commit)))
 
-(s/defn atom-removed-in-commit? :- s/Bool
-  [atom-finder :- AtomFinder srcs :- BeforeAfters]
-  (exists? (map (partial atom-removed-in-file? atom-finder) srcs)))
+(s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
+  [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
+  (doall (for [commit-ba (commit-files-before-after repo rev-commit)]
+       (merge (select-keys commit-ba [:file])
+        {:atoms (atoms-in-file-stats atoms commit-ba)}))))
 
-(s/defn atoms-removed-in-commit :- {s/Str {s/Keyword s/Bool}}
-  [repo :- Git atoms :- [Atom] commit-hash :- s/Str]
-  (->> (commit-files-before-after repo commit-hash)
-       (map (fn [[file srcs]] [file (atoms-removed-in-file atoms srcs)]))
-       (into {})
-       ))
+;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
 
-(s/defn parse-commit-for-atom
-  ;:- [(s/one s/Str "commit-hash")
-  ;    (s/one {s/Str {s/Keyword s/Bool}} "files")
-  ;    (s/optional #{[(s/one s/Str "name") (s/one s/Int "id")]} "bugs")]
+
+(defn parse-commit-for-atom
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
-    (try
-      [commit-hash
-       (atoms-removed-in-commit repo atoms commit-hash)
-       (bugzilla-ids rev-commit)
-       ]
-      (catch Exception e (do (printf "-- exception parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
-      (catch Error e     (do (printf "-- error parsing commit: \"%s\"\n" commit-hash) [commit-hash nil nil]))
-      )))
+    (->>
+     (atoms-changed-in-commit repo atoms rev-commit)
+     (array-map :revstr commit-hash :bug-ids (bugzilla-ids rev-commit) :files)
+     doall
+     (log-err commit-hash {:revstr commit-hash})
+     )))
 
-(defn atoms-removed-all-commits
+;(pprint (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash)))
+
+(defn atoms-changed-all-commits
   [repo atoms]
   (->>
    (gitq/rev-list repo)
    (pmap (partial parse-commit-for-atom repo atoms))
   ))
 
-;(atoms-removed-in-commit repo "5a59a1ad725b5e332521d0abd7f2f52ec9bb386d" conditional-atom?)
+;(atoms-changed-all-commits gcc-repo atoms)
+;(time (println (map (fn [x] 1) (gitq/rev-list gcc-repo))))
+;(time (println (map (fn [x] 1) (take 200 (atoms-changed-all-commits gcc-repo (take 2 atoms))))))
+; rev-list -> 2543
+; 4   ->  4666
+; 8   ->  4646
+; 20  ->  5000
+; 20  ->  4400
+; 50  -> 22977
+; 100 -> 28277
+; 200 -> 36484
+; 200 -> 31531
+; 200 -> 24806
+;(time (find-rev-commit gcc-repo commit-hash))
+;(time (find-rev-commit gcc-repo old-commit-hash))
+;(time (dotimes [n 10] (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash))))
+;(time (dotimes [n 600] (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo old-commit-hash))))
 
-(defn log-atoms-removed-all-commits
-  [repo]
-  (binding [*out* (clojure.java.io/writer "gcc-logic-as-control-flow-commits.txt")]
+;(parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash))
+
+(defn log-atoms-changed-all-commits
+  [filename repo atoms]
+  (log-to filename
+    (println "(")
     (->> atoms
-         (atoms-removed-all-commits repo)
+         (atoms-changed-all-commits repo)
          (map prn)
-         (take 10)
+         ;(take 10)
          dorun
-         time)))
+         time)
+    (println ")")
+    ))
+
+;(def filename "gcc-bugs-atoms_2017-03-28_200.edn")
+;(def gcc-bugs (->> filename read-data (mapcat identity) (filter :revstr)))
+;(->> gcc-bugs add-convenience-columns (write-res-csv "gcc-bugs_2017-03-28_200.csv"))
+
+(defn write-res-csv
+  [filename flat-res]
+  (with-open [out-file (io/writer filename)]
+    (csv/write-csv out-file
+                   [(->> flat-res first keys
+                        (map #(subs (str %) 1)))])
+    (csv/write-csv out-file (->> flat-res (map vals)))))
+
+(defn add-convenience-columns
+  [flat-res]
+    (for [m flat-res]
+      (merge m {:n-bugs (-> m :bug-ids count)})))
+
+;(->> (atoms-changed-all-commits gcc-repo atoms)
+;     (take 1)
+;     pprint)
+

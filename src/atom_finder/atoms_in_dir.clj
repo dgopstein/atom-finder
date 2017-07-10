@@ -20,9 +20,10 @@
   "Find all preprocessor directives not at the top level in directory"
   [dirname atoms]
   (->> dirname
-       (pmap-dir-nodes
-        #(vector (.getFilePath %1)
+       (pmap-dir-files
+        #(vector %1
                (->> %1
+                    parse-file
                     (all-atoms-in-tree atoms)
                     (map-values (partial map (comp :line loc)))
                     )))

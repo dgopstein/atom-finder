@@ -1,7 +1,4 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast
-          IASTNode IASTBinaryExpression IASTExpressionList
-          IASTExpressionStatement IASTForStatement))
 
 (defn assignment? 
   "Is this node an assignment expression"

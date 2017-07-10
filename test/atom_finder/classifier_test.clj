@@ -2,9 +2,7 @@
   (:require [clojure.test :refer :all]
             [schema.test]
             [atom-finder.util :refer :all]
-            [atom-finder.test-util :refer :all]
             [atom-finder.classifier :refer :all]
-            [atom-finder.classifier-util :refer :all]
             ))
 
 (use-fixtures :once schema.test/validate-schemas)
@@ -66,8 +64,7 @@
 
 (deftest test-logic-as-control-flow-atoms?
   (testing "logic-as-control-flow-atoms finds all atoms in snippet study code"
-    (let [lines  (->> (resource-path "logic-as-control-flow.c")
-                      tu
+    (let [lines  (->> "logic-as-control-flow.c" parse-resource
                       logic-as-control-flow-atoms
                       (map loc)
                       (map :line))]
@@ -77,62 +74,25 @@
 
 (deftest test-conditional-atom?
   (testing "conditional-atom? finds all atoms in snippet study code"
-    (is (= true 
-           (->> "conditional.c" resource-path tu
+    (is (= true
+           (->> "conditional.c" parse-resource
                 (get-in-tree [0 2 1 0 1 1 0])
                 conditional-atom?
                 )))
 
     (is (= false
-           (->> "conditional.c" resource-path tu
+           (->> "conditional.c" parse-resource
                 (get-in-tree [0 2 1 0 1 1])
                 conditional-atom?
                 )))
 
-    (let [lines  (->> (resource-path "conditional.c")
-                      tu
+    (let [lines  (->> "conditional.c" parse-resource
                       (filter-tree conditional-atom?)
                       (map loc)
                       (map :line))]
 
       (is (= lines [4 28 28 28 61]))
     )))
-
-(deftest preprocessors-in-context-test
-  (testing "Macro entirely in context"
-    (let [filename (resource-path "macro-in-expression.c")
-          atoms (preprocessors-in-contexts all-preprocessor non-toplevel-classifier (tu filename))]
-
-      (is (= (map :line atoms) '(5 8 11)))
-      ))
-
-  (testing "Macro starts in context"
-    (let [filename (resource-path "if-starts-in-expression.c")
-          atoms (preprocessors-in-contexts all-preprocessor non-toplevel-classifier (tu filename))]
-
-      (is (= (map :line atoms) '(9 11 14 16 18 23))) ; technically 25 should be here too because otherwise it's dependent on which if branch is evaluated
-      ))
-
-  (testing "Macro applied in function"
-    (let [filename (resource-path "macro-application.c")
-          atoms (preprocessors-in-contexts all-preprocessor non-toplevel-classifier (tu filename))]
-
-      (is (= (map :line atoms) '()))
-      ))
-
-  (testing "Preprocessor from snippet study"
-    (let [filename (resource-path "define-in-if-loop.c")
-          atoms (preprocessors-in-contexts all-preprocessor statement-expression-classifier (tu filename))]
-
-      (is (= (map :line atoms) '(4 7 11)))
-      ))
-
-  (testing "preprocesor-in-statement classifier"
-    (let [pisc (-> atom-lookup (strict-get :preprocessor-in-statement) :classifier)]
-      (is (true? (pisc (parse-expr "1 + \n#define M\n 3"))))
-      (is (false? (pisc (parse-stmt "1 + \n#define M\n 3;"))))
-      (is (false? (pisc (parse-stmt "{ 1 + 3; f(); }"))))
-      )))
 
 (deftest literal-encoding-test
   (testing "utils"
@@ -147,8 +107,7 @@
 (deftest test-reversed-subscript-atom?
   (testing "reversed-subscript-atom? finds all atoms in snippet study code"
 
-    (let [lines  (->> (resource-path "reversed-subscript.c")
-                      tu
+    (let [lines  (->> "reversed-subscript.c" parse-resource
                       (filter-tree reversed-subscript-atom?)
                       (map loc)
                       (map :line))]
@@ -173,10 +132,6 @@
         (testing (str "Is reversed-subscript-atom? - " code " - " sc?)
           (is (= (reversed-subscript-atom? (parse-expr code)) sc?))))
       )))
-
-(deftest test-omitted-curly-braces-atom?
-  (testing "omitted-curly-braces-atom? finds all atoms in snippet study code"
-    (test-atom-lines "omitted-curly-braces.c" "<true>" (default-finder omitted-curly-braces-atom?))))
 
 (deftest comma-operator-test
   (testing "small statements"

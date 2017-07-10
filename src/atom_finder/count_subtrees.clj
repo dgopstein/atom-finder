@@ -42,16 +42,16 @@
                         (map #(str (string/join (repeat d "    ")) (pastr (inc d) %))
                              (children node)))))))
 
-(defn count-nodes-of-depth
-  "count every similar tree of specified depth"
+(defn count-nodes-of-height
+  "count every similar tree of specified height"
   [d root]
   (->> root
-       (filter-depth d)
+       (filter-height d)
        (map astr)
        frequencies))
 
 (defn count-all-expression-parents
-  "Count node structures with expressions as their d'th depth children"
+  "Count node structures with expressions as their d'th height children"
   [d root]
   (->> root
        (filter-instance IASTExpression)
@@ -78,7 +78,7 @@
     (recur (parent node))))
 
 (defn non-trivial-expression-parents
-  "find non-trivial (non-leaf) node structures with expressions as their d'th depth children"
+  "find non-trivial (non-leaf) node structures with expressions as their d'th height children"
   [d root]
   (->> root
        (filter-instance IASTExpression)
@@ -89,7 +89,7 @@
 
 
 (defn count-non-trivial-expression-parents
-  "Count non-trivial (non-leaf) node structures with expressions as their d'th depth children"
+  "Count non-trivial (non-leaf) node structures with expressions as their d'th height children"
   [d root]
   (->> root
        (non-trivial-expression-parents d)
@@ -97,21 +97,21 @@
        (map typename)
        frequencies
        ))
-       
+
 
 (defn count-in-dir
   [f dirname]
-  (reduce (partial merge-with +) (pmap-dir-nodes f dirname)))
-  
+  (reduce (partial merge-with +) (pmap-dir-files (comp f parse-file) dirname)))
+
 (defn count-nodes-in-dir [dirname]
   (count-in-dir count-nodes dirname))
 
-(defn count-nodes-of-depth-in-dir [d dirname]
-  (count-in-dir (partial count-nodes-of-depth d) dirname))
+(defn count-nodes-of-height-in-dir [d dirname]
+  (count-in-dir (partial count-nodes-of-height d) dirname))
 
 (defn count-expression-parents-in-dir [d dirname]
   (count-in-dir (partial count-non-trivial-expression-parents d) dirname))
-  
+
 (defn count-nodes-in-dirs
   [dirs]
   (csv/write-csv *out*

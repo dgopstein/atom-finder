@@ -1,51 +1,5 @@
 (in-ns 'atom-finder.classifier)
 
-(defn contains-location?
-  "Does this node contain the given offset/length"
-  [root offset length]
-  (let [root-loc (.getFileLocation root)
-        root-offset (.getNodeOffset root-loc)
-        root-length (.getNodeLength root-loc)]
-
-    ;; The location/offset is fully contained in this node
-    (and (<=    root-offset                 offset)
-         (>= (+ root-offset root-length) (+ offset length)))))
-
-(defn contains-offset?
-  "Does this node contain the given offset"
-  [root offset]
-  (let [root-loc (.getFileLocation root)]
-    (if (nil? root-loc)
-      false
-      (let [root-offset (.getNodeOffset root-loc)]
-        ; (According to VisualVM) The dispatch on these methods
-        ; is a CPU killer. Try to short-circuit if possible.
-        (if (> root-offset offset)
-          false
-          (>= (+ root-offset (.getNodeLength root-loc)) offset))))))
-
-(defn offset-parent?
-  "True if this is deepest AST node that contains an offset"
-  [node offset]
-  (and
-   (contains-offset? node offset)
-   (not (exists? #(contains-offset? % offset) (children node)))))
-
-(defn offset-parent
-  "Find the AST node that contains the whole location offset
-   Assumes that no children of a single parent overlap in terms of offset"
-  [root offset]
-  (let [kids      (children root)
-        container (first (filter #(contains-offset? % offset) kids))]
-    (if (nil? container)
-      root
-      (recur container offset))))
-
-(defn toplevel-offset?
-  "Check if an offset lives in the top level or if it's inside some other node"
-  [root offset]
-  (not-any? #(contains-offset? % offset) (children root)))
-
 (defn macro-in-contexts
   "find a single macro in the given AST"
   [root macro classifier]
@@ -70,14 +24,16 @@
   [context-classifier root]
   (preprocessors-in-contexts define-only context-classifier root))
 
-(defn non-toplevel-classifier
-  [parent]
-  (not (instance? IASTTranslationUnit parent)))
+(defn non-toplevel? [node] (not (instance? IASTTranslationUnit node)))
 
-(def all-non-toplevel-preprocessor-locs (partial preprocessors-in-contexts all-preprocessor non-toplevel-classifier))
+(def all-non-toplevel-preprocessor-locs (partial preprocessors-in-contexts all-preprocessor non-toplevel?))
 
 (defn all-non-toplevel-preprocessors [root]
   (map #(offset-parent root (:offset %)) (all-non-toplevel-preprocessor-locs root)))
+
+(defn non-toplevel-defines [root]
+  (map #(->> % :offset (offset-parent root))
+       (define-in-contexts non-toplevel? root)))
 
 (defn statement-expression-classifier
   [parent]
@@ -90,21 +46,57 @@
 (defn if-body-classifier [parent]
   (ancestral-instance? IASTIfStatement parent))
 
-(defn preprocessor-in-dir
-  "Find all preprocessor directives not at the top level in directory"
-  [dirname]
-  (time (prn (count
-              (pmap-dir-nodes
-               (fn [root]
-                 (printf "%03d %s\n"
-                         (count (preprocessors-in-contexts define-only expression-classifier root))
-                         (.getFilePath root))) dirname)))))
-
-(defn preprocessor-parent?
+(defn preprocessor-parent? ; TODO slow on big files
   "Is this AST node the direct parent of a preprocessor directive"
   [node]
   (->> node
        root-ancestor
        all-preprocessor
-       (map (comp :offset loc))
+       (map offset)
        (exists? (partial offset-parent? node))))
+
+'(defn define-parent?
+  "Is this AST node the direct parent of a preprocessor directive"
+  [node]
+  (->> node
+       root-ancestor
+       (define-in-contexts non-toplevel?)
+       (map :offset)
+       (exists? (partial offset-parent? node))))
+
+(s/defn offset-range
+  [node :- IASTNode]
+  (when (loc node)
+    (range (offset node) (inc (end-offset node)))))
+
+(s/defn child-offsets :- #{s/Int}
+  "A set of all the offsets directly owned by this node and not its children"
+  [node :- IASTNode]
+  (if (some->> node loc :length (< 0))
+      (->> (offset-range node)
+           (remove (->> node children (mapcat offset-range) set))
+           set))
+    #{})
+
+(defn define-parent?
+  "Is this AST node the direct parent of a preprocessor directive"
+  [node]
+  (and (not (instance? IASTTranslationUnit node))
+       (->> node
+            root-ancestor
+            define-only
+            (map offset)
+            (exists? (partial offset-parent? node)))))
+
+; TODO binary search the defines?? big-root has 7000 - except there might be multiple, so it has be region binary search
+; or use a stateful atomfinder
+(defn define-parent?-offset-sets
+  "Is this AST node the direct parent of a preprocessor directive"
+  [node]
+  (and (not (instance? IASTTranslationUnit node))
+       (->> node
+            root-ancestor
+            define-only
+            (map offset)
+            (any-pred? (child-offsets node))
+            )))

@@ -16,6 +16,6 @@
                  union.c
                  wdate-time.c)]
       (doseq [filename files]
-       (is (instance? org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTTranslationUnit (tu (resource-path filename))) (format "Parsing file: %s" filename))
+       (is (instance? org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTTranslationUnit (parse-resource filename)) (format "Parsing file: %s" filename))
     ))))
 
