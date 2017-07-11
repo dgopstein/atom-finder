@@ -145,3 +145,7 @@
 (deftest test-assignment-as-value-atom?
   (testing "assignment-as-value-atom? finds all atoms in snippet study code"
     (test-atom-lines "assignment-as-value.c" "<true>" (default-finder assignment-as-value-atom?))))
+
+(deftest test-operator-precedence-atom?
+  (testing "operator-precedence-atom? finds all atoms in snippet study code"
+    (test-atom-lines "operator-precedence.c" "<true>" (default-finder operator-precedence-atom?))))

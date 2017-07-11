@@ -17,7 +17,6 @@
    ))
 
 (defn print-atoms-in-dir
-  "Find all preprocessor directives not at the top level in directory"
   [dirname atoms]
   (->> dirname
        (pmap-dir-files
