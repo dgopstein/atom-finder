@@ -117,3 +117,17 @@
     :default [a b]))
 
 (defn now [] (java.util.Date.))
+
+; https://github.com/clojure/clojure/blob/clojure-1.9.0-alpha14/src/clj/clojure/core.clj#L3836
+(defmacro time-mins
+  "Evaluates expr and prints the time it took.  Returns the value of expr."
+  [expr]
+  `(let [start# (. System (nanoTime))
+         ret#   ~expr
+         end#   (. System (nanoTime))
+         diff#  (- end# start#)
+         mins-raw#   (/ (double diff#) (* 60 1000 1000000.0))
+         mins#  (int mins-raw#)
+         secs#  (* 60 (- mins-raw# mins#))]
+     (prn (format "Elapse time: %d:%.2f mins" mins# secs#))
+          ret#))
