@@ -84,3 +84,22 @@
        last))
 
 (def find-first (comp first (partial filter)))
+
+; https://github.com/mikera/clojure-utils/blob/master/src/main/clojure/mikera/cljutils/loops.clj
+(defmacro doseq-indexed
+    "loops over a set of values, binding index-sym to the 0-based index of each value"
+  ([[val-sym values index-sym] & code]
+   `(loop [vals# (seq ~values)
+           ~index-sym (long 0)]
+      (if vals#
+        (let [~val-sym (first vals#)]
+          ~@code
+          (recur (next vals#) (inc ~index-sym)))
+               nil))))
+
+; https://github.com/clojure/clojure-contrib/blob/7f2b012cb679d0ad19f8949c95b7ef479fe1ff22/src/main/clojure/clojure/contrib/seq_utils.clj#L49
+(defn separate
+    "Returns a vector:
+   [ (filter f s), (filter (complement f) s) ]"
+  [f s]
+    [(filter f s) (filter (complement f) s)])
