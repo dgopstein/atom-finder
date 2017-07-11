@@ -339,3 +339,8 @@
   "Apply a function to the root of the AST of every c file in a directory"
   [f :- (s/=> s/Any [IASTTranslationUnit]) dirname :- s/Str]
   (pmap-dir-files (comp f parse-file) dirname))
+
+(s/defn pmap-dir-nodes
+  "Apply a function to the every node of every c file in a directory"
+  [f :- (s/=> s/Any [IASTTranslationUnit]) dirname :- s/Str]
+  (flatten (pmap-dir-asts #(->> % flatten-tree (map f)) dirname)))
