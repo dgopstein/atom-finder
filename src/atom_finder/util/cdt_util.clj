@@ -335,7 +335,7 @@
   ([root :- IASTNode offset :- s/Int] (binary-search-offset-parent offset root))
   ([node :- IASTNode] (parent node))) ;(offset-parent (root-ancestor node) (:offset (loc node)))))
 
-(s/defn pmap-dir-asts
+(s/defn pmap-dir-trees
   "Apply a function to the root of the AST of every c file in a directory"
   [f :- (s/=> s/Any [IASTTranslationUnit]) dirname :- s/Str]
   (pmap-dir-files (comp f parse-file) dirname))
