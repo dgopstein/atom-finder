@@ -22,20 +22,19 @@
 
 (s/defn find-all :- [{:type s/Keyword s/Any s/Any}]
   "Apply every classifier to this node"
-  ([node :- IASTNode] (find-all atoms-and-comments))
+  ([node :- IASTNode] (find-all atoms-and-comments-and-functions node))
   ([atoms-and node :- IASTNode]
-  (let [contexts (context-map node)]
-    (->> atoms-and
-         (mapcat
-          (fn [atom-map]
-            (for [atom ((:finder atom-map) node)]
-              (merge {:type (:name atom-map) :node atom}
-                     (loc-data atom)
-                     (contexts atom)
-                     ))))
-         )
-    )
-  ))
+   (let [contexts (context-map node)]
+     (->> atoms-and
+          (mapcat
+           (fn [atom-map]
+             (for [atom ((:finder atom-map) node)]
+               (merge {:type (:name atom-map) :node atom}
+                      (loc-data atom)
+                      (contexts atom)
+                      )))))
+     ))
+  )
 
 (s/defn set-difference-by
   "set-difference after applying a function to each element"
@@ -61,9 +60,7 @@
 
 
 ;(->> "/Users/dgopstein/opt/src/gcc/contrib/paranoia.cc" location-dump-atoms-and-non-atoms (map prn))
-'(->> "/Users/dgopstein/opt/src/gcc/libatomic/gload.c" location-dump-atoms-and-non-atoms (map prn))
 
-(defn now [] (java.util.Date.))
 (->> (now) println)
 
 '(->> gcc-path

@@ -116,4 +116,4 @@
     (sequential? b) (conj b a)
     :default [a b]))
 
-(flatcat [1] [2])
+(defn now [] (java.util.Date.))

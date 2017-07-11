@@ -96,3 +96,10 @@
           ~@code
           (recur (next vals#) (inc ~index-sym)))
                nil))))
+
+; https://github.com/clojure/clojure-contrib/blob/7f2b012cb679d0ad19f8949c95b7ef479fe1ff22/src/main/clojure/clojure/contrib/seq_utils.clj#L49
+(defn separate
+    "Returns a vector:
+   [ (filter f s), (filter (complement f) s) ]"
+  [f s]
+    [(filter f s) (filter (complement f) s)])
