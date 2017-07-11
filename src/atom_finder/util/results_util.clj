@@ -9,6 +9,7 @@
        ClassLoader/getSystemResource
        clojure.java.io/file
        slurp
+       (#(if (= \( (first %1)) %1 (str "(" %1))) ; read partial files
        (#(if (= \) (last %1)) %1 (str %1 ")"))) ; read partial files
        read-string))
 
