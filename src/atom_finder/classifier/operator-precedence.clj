@@ -51,9 +51,16 @@
 (defn specific-confusing-operator-combination?
   "if the combination of groups of operators exists in this set, then the combination is confusing"
   [combination]
-  (some #(= % combination) (map sort #{[:de_incr :pointer] [:multiply :add] [:arith_unary :add] [:arith_unary :multiply] [:and :add] [:and :multiply] [:and :arith_unary] [:or :add] [:or :multiply] [:or :arith_unary] [:or :and] [:not :add] [:not :multiply] [:not :arith_unary] [:not :and] [:not :or]
-;;[:compare :and] [:compare :or] // Underclassify
-[:compare :not] [:compare :compare] [:pointer :add] [:cond :arith_unary] [:cond :and] [:cond :or] [:cond :not] [:cond :compare] [:cond :cond] [:non-asso :add] [:non-asso :multiply] [:non-asso :arith_unary] [:non-asso :and] [:non-asso :or] [:non-asso :not] [:non-asso :non-asso] [:field_ref :pointer]})))
+  (some #(= % combination) (map sort [[:de_incr :pointer] [:multiply :add] [:arith_unary :add] [:arith_unary :multiply]
+                                      [:and :add] [:and :multiply] [:and :arith_unary] [:or :add]
+                                      [:or :multiply] [:or :arith_unary] [:or :and] [:not :add]
+                                      [:not :multiply] [:not :arith_unary] [:not :and] [:not :or]
+                                      ;;[:compare :and] [:compare :or] // Underclassify
+                                      [:compare :not] [:compare :compare] [:pointer :add] [:cond :arith_unary]
+                                      [:cond :and] [:cond :or] [:cond :not] [:cond :compare]
+                                      [:cond :cond] [:non-asso :add] [:non-asso :multiply] [:non-asso :arith_unary]
+                                      [:non-asso :and] [:non-asso :or] [:non-asso :not] [:non-asso :non-asso]
+                                      [:field_ref :pointer]])))
 
 (def always-confusing-operator-groups
   "If any of these operator groups is used along with another operator, then it is confusing"
@@ -74,11 +81,7 @@
   "returns a collection of operator group pairs between the node and its children
   , if a second parameter is passed, use that as the collection instead of the children"
   ([node]
-   (->> node
-        children
-        (map operator-group)
-        (remove nil?)
-        (map (fn [child-group] (sort [(operator-group node) child-group])))))
+   (group-pair node (children node)))
 
   ([node collection]
    (->> collection
@@ -86,36 +89,32 @@
         (remove nil?)
         (map (fn [child-group] (sort [(operator-group node) child-group]))))))
 
-
-;;
-;;The following 3 functions are for the binary operator special case
-;;
-(defn rvalue-unary-operator?
+;;====================================
+;;For binary operator special case
+;;====================================
+(def rvalue-unary-ops?
   "Is this a unary operator that can operate on an rvalue? (! - + *)"
-  [node]
-  (let [node-group (operator-group node)]
-    (or (= :arith_unary node-group)
-        (= :not node-group)
-        (= :pointer node-group))))
+   (comp #{:arith_unary :not :pointer} operator-group))
 
-(defn unbracktted-unary-in-children
+(defn unparenthesized-unary-in-children
   "Is this node not a bracket and constains unary operator in its children?"
   [node]
-  (if (not= "()" (write-node node))
-      (filter-tree #(rvalue-unary-operator? %) node)))
+  (if (not (paren-node? node))
+      (filter-tree #(rvalue-unary-ops? %) node)))
 
-(defn group-pairs-in-binary-operator
+(defn group-pairs-in-binary-ops
   "Special function for returning a collection of operator group in binary operator's children, binary operator should ignore some groups of operators in its second operand"
   [node]
   (->> (concat [(get-in-tree [0] node)
-                (if (not (rvalue-unary-operator? (get-in-tree [1] node)))
+                (if (not (rvalue-unary-ops? (get-in-tree [1] node)))
                   (get-in-tree [1] node) nil)]
 
-               (unbracktted-unary-in-children (get-in-tree [0] node)))
+               (unparenthesized-unary-in-children (get-in-tree [0] node)))
        (map operator-group)
        (remove nil?)
        (map (fn [child-group] (sort [(operator-group node) child-group])))))
-
+;;====================================
+;;
 
 
 (defn operator-precedence-atom?
@@ -127,5 +126,5 @@
    (not (= :assign (operator-group node)))
 
    (if (instance? IASTBinaryExpression node)
-     (some confusing-operator-combination? (group-pairs-in-binary-operator node))
+     (some confusing-operator-combination? (group-pairs-in-binary-ops node))
      (some confusing-operator-combination? (group-pair node)))))
