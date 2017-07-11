@@ -63,10 +63,10 @@ int main(){
   1 || ! 2 || 1; // <true>
   p1 + *p2 + i1; // <true>
 
-  a == 1 || b == 2; // <true> , is it really?
+  a == 1 || b == 2; // <false> , underclassify
   ! a ? b : c; // <true>
   sh_round_reg(*ca, mode) + 1; // <false>
-  1 || 2 == 3 + 4;// <true> , is it really?
+  1 || 2 == 3 + 4;// <false> , underclassify
   crtl->calls_eh_return && a; // <false>
   offset >= -252; //<false>
   *str == '\0'; // <false>
@@ -95,8 +95,6 @@ int main(){
   - ! 0; //<true>
   ! a && b; //<true>
   ! a || b; //<true>
-  a < b && b == c; //<true>
-  a < b || b == c; //<true>
   ! a == b; //<true>
   a <= b > c; //<true>
   * p1 + p2; //<true>
@@ -115,6 +113,9 @@ int main(){
   ! a - c; //<true>
   a - b - c; //<true>
   * a -> b; //<true>
+
+  a < b && b == c; //<false> 
+  a < b || b == c; //<false>
 
   1 + 1 + 1;
   1 * 1 * 1;

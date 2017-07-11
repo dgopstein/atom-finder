@@ -52,9 +52,7 @@
   "if the combination of groups of operators exists in this set, then the combination is confusing"
   [combination]
   (some #(= % combination) (map sort #{[:de_incr :pointer] [:multiply :add] [:arith_unary :add] [:arith_unary :multiply] [:and :add] [:and :multiply] [:and :arith_unary] [:or :add] [:or :multiply] [:or :arith_unary] [:or :and] [:not :add] [:not :multiply] [:not :arith_unary] [:not :and] [:not :or]
-
-[:compare :and] [:compare :or]
-
+;;[:compare :and] [:compare :or] // Underclassify
 [:compare :not] [:compare :compare] [:pointer :add] [:cond :arith_unary] [:cond :and] [:cond :or] [:cond :not] [:cond :compare] [:cond :cond] [:non-asso :add] [:non-asso :multiply] [:non-asso :arith_unary] [:non-asso :and] [:non-asso :or] [:non-asso :not] [:non-asso :non-asso] [:field_ref :pointer]})))
 
 (def always-confusing-operator-groups
@@ -90,10 +88,10 @@
 
 
 ;;
-;;The following 3 functions are for dealing with the binary operator special case
+;;The following 3 functions are for the binary operator special case
 ;;
 (defn rvalue-unary-operator?
-  "Is this a unary operator that can operate on a rvalue? (! - + *)"
+  "Is this a unary operator that can operate on an rvalue? (! - + *)"
   [node]
   (let [node-group (operator-group node)]
     (or (= :arith_unary node-group)
@@ -120,8 +118,8 @@
 
 
 
-(defn infix-operator-precedence-atom?
-  "Is this node a infix-operator-precedence-atom?"
+(defn operator-precedence-atom?
+  "Is this node an operator-precedence-atom?"
   [node]
   (and
    (operator-group-pair? node)
@@ -131,6 +129,3 @@
    (if (instance? IASTBinaryExpression node)
      (some confusing-operator-combination? (group-pairs-in-binary-operator node))
      (some confusing-operator-combination? (group-pair node)))))
-
-(def count-precedence-atom
-  (->> "~\\opt\\src\\gcc" expand-home (pmap-dir-files translation-unit) (mapcat (default-finder infix-operator-precedence-atom?)) (remove nil?) count))

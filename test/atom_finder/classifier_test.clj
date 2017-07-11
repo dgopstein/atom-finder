@@ -146,6 +146,6 @@
   (testing "assignment-as-value-atom? finds all atoms in snippet study code"
     (test-atom-lines "assignment-as-value.c" "<true>" (default-finder assignment-as-value-atom?))))
 
-(deftest test-infix-operator-precedence-atom?
-  (testing "infix-operator-precedence-atom? finds all atoms in snippet study code"
-    (test-atom-lines "infix-operator-precedence.c" "<true>" (default-finder infix-operator-precedence-atom?))))
+(deftest test-operator-precedence-atom?
+  (testing "operator-precedence-atom? finds all atoms in snippet study code"
+    (test-atom-lines "operator-precedence.c" "<true>" (default-finder operator-precedence-atom?))))
