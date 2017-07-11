@@ -35,6 +35,12 @@
     (str/replace-first s "~" (System/getProperty "user.home"))
         s))
 
+(defn remove-home [s]
+  (let [home (System/getProperty "user.home")]
+    (if (clojure.string/starts-with? s home)
+      (str/replace-first s home "")
+      s)))
+
 (s/defn pmap-dir-files
   "Apply a function to the filename of every c file in a directory"
   [f dirname]

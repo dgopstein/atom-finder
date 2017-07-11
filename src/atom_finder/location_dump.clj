@@ -10,28 +10,30 @@
    [clojure.string :as str]
    )
   (:import
-   [org.eclipse.cdt.core.dom.ast IASTNode]
+   [org.eclipse.cdt.core.dom.ast IASTNode IASTFunctionDefinition]
    )
   )
 
 (defn loc-data [node]
   (select-keys (loc node) [:start-line :end-line :offset :length]))
 
+(def atoms-and-comments (conj atoms {:name :comment :finder all-comments}))
+(def atoms-and-comments-and-functions (conj atoms-and-comments {:name :function :finder (default-finder (partial instance? IASTFunctionDefinition))}))
+
 (s/defn find-all :- [{:type s/Keyword s/Any s/Any}]
   "Apply every classifier to this node"
-  [node :- IASTNode]
-  (let [contexts (context-map node)]
-    (->> atoms
-         ((flip conj) {:name :comment :finder all-comments})
-         (mapcat
-          (fn [atom-map]
-            (for [atom ((:finder atom-map) node)]
-              (merge {:type (:name atom-map) :node atom}
-                     (loc-data atom)
-                     (contexts atom)
-                     ))))
-         )
-    )
+  ([node :- IASTNode] (find-all atoms-and-comments-and-functions node))
+  ([atoms-and node :- IASTNode]
+   (let [contexts (context-map node)]
+     (->> atoms-and
+          (mapcat
+           (fn [atom-map]
+             (for [atom ((:finder atom-map) node)]
+               (merge {:type (:name atom-map) :node atom}
+                      (loc-data atom)
+                      (contexts atom)
+                      )))))
+     ))
   )
 
 (s/defn set-difference-by
@@ -58,9 +60,7 @@
 
 
 ;(->> "/Users/dgopstein/opt/src/gcc/contrib/paranoia.cc" location-dump-atoms-and-non-atoms (map prn))
-'(->> "/Users/dgopstein/opt/src/gcc/libatomic/gload.c" location-dump-atoms-and-non-atoms (map prn))
 
-(defn now [] (java.util.Date.))
 (->> (now) println)
 
 '(->> gcc-path
@@ -235,15 +235,6 @@
      time
      )
 
-'(->>  gcc-path
-      (pmap-dir-asts (fn [root] [(.getFilePath root) (filter-tree #(= 0 (depth %)) root)]))
-      (take 10)
-      (filter (comp not empty? last))
-      (take 1)
-      pprint
-      time
-      )
-
 ;; find depth 8 nodes whose parents are on a different line in an 8-heavy file
 '(->> "~/opt/src/gcc/libdecnumber/decCommon.c"
      expand-home
@@ -253,9 +244,10 @@
      (map (juxt start-line write-ast))
      pprint     )
 
-;; which nodes make up each depth stratus
+;; list of all node type by depth
 '(->> gcc-path
      (pmap-dir-files location-dump-atoms-and-non-atoms)
+     (take 1000)
      (mapcat (partial map #(update % :node write-node)))
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
      (map (fn [m] (update m :file #(subs % (- (count gcc-path) 3))))) ; remove gcc-path prefix from file paths
@@ -264,7 +256,7 @@
      ;(map prn)
      (map-values frequencies)
      (map-values #(sort-by (comp - last) %))
-     (map-values #(take 5 %))
+     (map-values #(take 20 %))
      (sort-by first)
      (take 20)
      pprint
@@ -272,38 +264,34 @@
      time
      )
 
+;; find depth 8 nodes with comments near them, but not their parents
 '(->> gcc-path
      (pmap-dir-files location-dump-atoms-and-non-atoms)
-     (mapcat (partial map #(update % :node write-node)))
+     (mapcat identity) ;(partial map #(update % :node write-node)))
      (map #(merge %1 (if (:path %1) {:depth (count (:path %1))} {})))
      (map (fn [m] (update m :file #(subs % (- (count gcc-path) 3))))) ; remove gcc-path prefix from file paths
      (partition-by :file) ; group data by filenames
-     (take 100000)
+     (take 1000)
      (pmap
       (fn [atom-positions]
         (let [comments  (filter (comp #{:comment} :type) atom-positions)
               non-atoms (filter (fn [{t :type s :start-line e :end-line d :depth}] (and (= :non-atom t) s e d)) atom-positions)
               comment-locs (set (mapcat (fn [{s :start-line e :end-line}] (range s (inc e))) comments))]
-          [(->> atom-positions first :file)
-          (reduce
-           (fn [hash node]
-             (let [{type :type start :start-line end :end-line depth :depth} node]
-             (merge-with (partial merge-with +) hash
-                         {depth {
-                          :same-line (bin (comment-locs start))
-                          :non-atoms 1
-                          }}))
-            ) {} non-atoms)])))
-     ;(reduce (partial merge-with (partial merge-with +)))
-     ;(tap (fn [l] (prn (map #(get-in % [1 8 :same-line]) l))))
-     (filter #(and (some->> (get-in %1 [1 8 :same-line]) (< 100)) (some->> (get-in %1 [1 7 :same-line]) (< 100))))
-     (map-values (partial map-values #(vector (float (safe-div (:same-line %1) (:non-atoms %1))) (:same-line %1) (:non-atoms %1))))
-     (sort-by #(- (get-in %1 [1 8 0]) (get-in %1 [1 7 0])))
-     (take-last 1000)
-     (map (fn [[k v]] [k (sort-by first v)]))
-     ;(map-values #(update-in % [:node] frequencies))
-     ;(map-values (fn [m] (update-in m [:node] #(take 5 (sort-by (comp - last) %)))))
-     ;(sort-by first)
+          ;(pprn non-atoms)
+          (->> non-atoms
+               (filter
+                (fn [hash]
+                  (let [{type :type start :start-line end :end-line depth :depth node :node} hash]
+                    (and (= 8 depth)
+                         (comment-locs start)
+                         (not (comment-locs (start-line (parent node)))))
+                    )
+                  ))
+               (map (partial tap (comp print-node-context :node)))
+               )
+               )))
+     flatten
+     (take 10)
      (map prn)
      dorun
      time
