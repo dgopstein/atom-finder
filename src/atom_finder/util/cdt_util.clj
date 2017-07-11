@@ -343,4 +343,4 @@
 (s/defn pmap-dir-nodes
   "Apply a function to the every node of every c file in a directory"
   [f :- (s/=> s/Any [IASTTranslationUnit]) dirname :- s/Str]
-  (flatten (pmap-dir-asts #(->> % flatten-tree (map f)) dirname)))
+  (flatten (pmap-dir-trees #(->> % flatten-tree (map f)) dirname)))
