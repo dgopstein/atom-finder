@@ -14,9 +14,9 @@
    )
   )
 
-(->> "~/opt/src/linux"
+'(->> "~/opt/src/linux"
       expand-home
-      (pmap-dir-asts
+      (pmap-dir-trees
        (fn [root]
          {:file (str/replace-first (.getFilePath root) #".*(?=linux)" "")
           :atom-counts (map-values #(count ((:finder %) root)) atom-lookup)}))
@@ -26,7 +26,7 @@
       time
       )
 
-(->> "linux-atom-counts_2017-07-06_01.edn"
+'(->> "linux-atom-counts_2017-07-06_01.edn"
      read-data
      (map :atom-counts)
      (reduce (partial merge-with +))
