@@ -33,9 +33,9 @@ int main(){
 
   b = sizeof(a + b);//<false>
   foo(!a);//<false>
-  &a + 2;// <true>, should be false
-  *a && b;// <true>, should be false
-  ++a + 1;// <true>, should be false
+  &a + 2;// <true>, overclassify
+  *a && b;// <false>
+  ++a + 1;// <false>
   Obj->a + b;
 
 
@@ -44,14 +44,18 @@ int main(){
   - a*b; // <true>
   ! 2 || 3; // <true>
   ! a && b; // <true>
-  a && !b;
   ! a && ! b; // <true>
-  
+
+   a && !b;
+   2 + -3;
+   p1 + *p2;
+   a + --b;
+   a % b++;
 
   *p1 + i1; // <true>
-  *p1 + p2; // <true>, should be false
-  *p1 - i1; // <true>
-  *pp1 - p2; // <true>, should be false
+  *p1 + p2; // <true>, overclassify
+  *p1 - i1; // <false>, underclassify
+  *pp1 - p2; // <false>, underclassify
 
   (*p1) + i1;
   *(p1 + i1);
@@ -59,13 +63,89 @@ int main(){
   1 || ! 2 || 1; // <true>
   p1 + *p2 + i1; // <true>
 
-  a == 1 || b == 2; // <true>, but shows up a lot and not really confusing
+  a == 1 || b == 2; // <true> , is it really?
   ! a ? b : c; // <true>
-  sh_round_reg(*ca, mode) + 1; // <true>, why? 
-  1 || 2 == 3 + 4;// <true>
-  crtl->calls_eh_return && a; // <true>, why?
-  offset >= -252; //<true>, should be false
-  *str == '\0'; //<true>, should be false
+  sh_round_reg(*ca, mode) + 1; // <false>
+  1 || 2 == 3 + 4;// <true> , is it really?
+  crtl->calls_eh_return && a; // <false>
+  offset >= -252; //<false>
+  *str == '\0'; // <false>
   i < 0 ? -i : i; //<true>
-  i <= FPR4_REGNUM + 1; //<true>, should this be false?
+  i <= FPR4_REGNUM + 1; //<false>
+
+
+  /*
+
+    The following cases are from the Operator_precedece_.xlsx file
+
+  */
+  1 + 2 * 3; //<true>
+  * str ++; //<true>
+  - a + b; //<true>
+  - a * b; //<true>
+  a + b && c; //<true>
+  a * b && c; //<true>
+  - a && c; //<true>
+  a + b || c; //<true>
+  a * b || c; //<true>
+  - a || c; //<true>
+  a || b && c; //<true>
+  ! a + b; //<true>
+  ! a * b; //<true>
+  - ! 0; //<true>
+  ! a && b; //<true>
+  ! a || b; //<true>
+  a < b && b == c; //<true>
+  a < b || b == c; //<true>
+  ! a == b; //<true>
+  a <= b > c; //<true>
+  * p1 + p2; //<true>
+  & obj + 4; //<true>
+  - a ? b : d; //<true>
+  a && b ? c : d; //<true>
+  a || b ? c : d; //<true>
+  ! a ? c : d; //<true>
+  i < 0 ? -i : i; //<true>
+  a ? 1 ? b : 2 : 3; //<true>
+  a - b + c; //<true>
+  a * b - c; //<true>
+  - a - c; //<true>
+  a - c && b; //<true>
+  a - c || b; //<true>
+  ! a - c; //<true>
+  a - b - c; //<true>
+  * a -> b; //<true>
+
+  1 + 1 + 1;
+  1 * 1 * 1;
+  - - a;
+  a && b && c;
+  a || b || c;
+  ! ! a;
+  1 < 1 + 1;
+  1 < 1 * 3;
+  - a > b;
+  * a * b;
+  - * str;
+  * a && b;
+  ! * a;
+  * str == '\0';
+  & * a;
+  a ? b + c : d;
+  a ? b * c : d;
+  a ? * c : d;
+  a - b == c;
+  * a % b;
+  * a - 1;
+  a ? b - c : d;
+  c + a -> b;
+  a . b * c;
+  - a . b;
+  a . b && c;
+  a . b || c;
+  ! a . b;
+  a . b == c;
+  a . b ? c : d;
+  a . b - c;
+  a . c -> b;
 }
