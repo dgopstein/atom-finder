@@ -51,16 +51,16 @@
 (defn specific-confusing-operator-combination?
   "if the combination of groups of operators exists in this set, then the combination is confusing"
   [combination]
-  (some #(= % combination) (map sort [[:de_incr :pointer] [:multiply :add] [:arith_unary :add] [:arith_unary :multiply]
-                                      [:and :add] [:and :multiply] [:and :arith_unary] [:or :add]
-                                      [:or :multiply] [:or :arith_unary] [:or :and] [:not :add]
-                                      [:not :multiply] [:not :arith_unary] [:not :and] [:not :or]
-                                      ;;[:compare :and] [:compare :or] // Underclassify
-                                      [:compare :not] [:compare :compare] [:pointer :add] [:cond :arith_unary]
-                                      [:cond :and] [:cond :or] [:cond :not] [:cond :compare]
-                                      [:cond :cond] [:non-asso :add] [:non-asso :multiply] [:non-asso :arith_unary]
-                                      [:non-asso :and] [:non-asso :or] [:non-asso :not] [:non-asso :non-asso]
-                                      [:field_ref :pointer]])))
+  (some #(= % combination) (into #{} (map sort [[:de_incr :pointer] [:multiply :add] [:arith_unary :add] [:arith_unary :multiply]
+                                                [:and :add] [:and :multiply] [:and :arith_unary] [:or :add]
+                                                [:or :multiply] [:or :arith_unary] [:or :and] [:not :add]
+                                                [:not :multiply] [:not :arith_unary] [:not :and] [:not :or]
+                                                ;;[:compare :and] [:compare :or] // Underclassify
+                                                [:compare :not] [:compare :compare] [:pointer :add] [:cond :arith_unary]
+                                                [:cond :and] [:cond :or] [:cond :not] [:cond :compare]
+                                                [:cond :cond] [:non-asso :add] [:non-asso :multiply] [:non-asso :arith_unary]
+                                                [:non-asso :and] [:non-asso :or] [:non-asso :not] [:non-asso :non-asso]
+                                                [:field_ref :pointer]]))))
 
 (def always-confusing-operator-groups
   "If any of these operator groups is used along with another operator, then it is confusing"
