@@ -129,5 +129,5 @@
          mins-raw#   (/ (double diff#) (* 60 1000 1000000.0))
          mins#  (int mins-raw#)
          secs#  (* 60 (- mins-raw# mins#))]
-     (prn (format "Elapse time: %d:%.2f mins" mins# secs#))
+     (prn (format "Elapse time: %d:%05.2f mins" mins# secs#))
           ret#))

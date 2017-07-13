@@ -26,14 +26,96 @@
 
   (let [[functions others] (separate #(= :function (:type %)) records)
         in-function? (->> functions
-                          (map (fn [m] [(:offset (pprn m)) (+ (:offset m) (:length m))]))
-                          range-set)]
-    (separate #(in-function? (:offset %)) others)))
+                          (map (fn [m] [(:start m) (:end m)]))
+                          range-set-cc)]
+    (separate #(in-function? (:start %)) others)))
 
-'(->> records
-     separate-by-function
-     (map (partial map :type)))
+'(->> "tmp/location-dump_non-atoms_2017-07-10_1.txt"
+     read-lines
+     (filter (partial every? identity))
+     (def function-dump-data)
+     )
 
+'(pprn (count function-dump-data))
 
+'(->> function-dump-data
+     (map second)
+     frequencies)
 
+'(->> function-dump-data
+     ;(map pap)
+     (partition-by first)
+     (map (partial map (fn [[file type start end depth]] {:file file :type type :start start :end end})))
+     (map #(try (separate-by-function %) (catch Exception e '(({:type :exception})({:type :exception})))))
+     (reduce (fn [[a-true a-false] [b-true b-false]] [(concat a-true b-true) (concat a-false b-false)]))
+     (map (partial map :type))
+     (merge-with +)
+     (map frequencies)
+     pprint
+     time-mins
+     )
 
+(defn not-in-function-by-node
+  "A set of all the AST nodes not inside a function"
+  [root]
+  (if (function-node? root)
+    #{}
+    (apply clojure.set/union (conj (map not-in-function-by-node (children root)) #{root}))))
+
+(defn function-nodes
+  [node]
+   (if (function-node? node)
+     (list node)
+     (mapcat function-nodes (children node))))
+
+(def node-offset-range (juxt offset end-offset))
+
+(defn node-range-set
+  "create a cc range-set from a list of nodes"
+  [nodes]
+  (->> nodes
+       (map node-offset-range)
+       (filter (partial every? identity))))
+
+(defn function-offset-ranges
+  "the closed ranges of what function definitions live"
+  [root]
+  (node-range-set (function-nodes root)))
+
+(def function-offset-range-set (comp range-set-cc function-offset-ranges))
+
+(defn nodes-near-comments-by-function
+  "find all AST nodes (atoms and not) near comments and
+   categorize them by whether their in a function"
+  [root]
+  (let [comments (all-comments root)
+        function-offset-set (function-offset-range-set root)
+        in-function-offset? #(and (not (function-node? %1))
+                                  (offset %1)
+                                  (function-offset-set (offset %1)))
+        [fn-comments global-comments] (separate in-function-offset? comments)
+        [fn-comment-line-set global-comment-line-set] (for [comments [fn-comments global-comments]]
+                                                        (->> comments ; the lines this comment is likely talking about
+                                                           (map (fn [cmnt]
+                                                                  (if (.isBlockComment cmnt)
+                                                                    [(start-line cmnt) (+ (end-line cmnt) 3)]
+                                                                    [(start-line cmnt) (end-line cmnt)])))
+                                                           range-set-cc))
+        ]
+    (->> root
+         flatten-tree
+         (filter offset)
+         (map (fn [node]
+                {;:node node
+                 :in-function? (in-function-offset? node)
+                 :comment ((if (in-function-offset? node) fn-comment-line-set  global-comment-line-set) (start-line node))
+                 }))
+         frequencies
+         )
+    ))
+
+'(->> big-root
+     nodes-near-comments-by-function
+     pprint
+     time-mins
+     )

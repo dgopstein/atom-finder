@@ -112,14 +112,6 @@
 (defn flatten-tree [node]
   (conj (mapcat flatten-tree (children node)) node))
 
-(defn flatten-tree-context
-  ([node] (flatten-tree-context {:path []} node))
-  ([context node]
-   (-> (fn [idx node]
-         (flatten-tree-context (update context :path #(conj % idx)) node))
-       (mapcat-indexed (children node))
-       (conj [context node]))))
-
 (defn flatten-tree-infixy [node]
   "Approximate an in-order flattening"
   (if (instance? IASTBinaryExpression node)
@@ -131,11 +123,6 @@
   "Find every AST node that matches pred"
   [pred node]
   (->> node flatten-tree (filter pred)))
-
-(defn filter-tree-context
-  "Find every AST node that matches pred"
-  [pred node]
-  (->> node flatten-tree-context (filter pred)))
 
 (defn filter-type
   "Return every example of type"
@@ -235,7 +222,9 @@
         length (.getNodeLength l)
         start-line (.getStartingLineNumber l)
         end-line  (.getEndingLineNumber l)]
-    {:line start-line :offset offset :end-offset (+ length offset) :length length :start-line start-line :end-line end-line}))
+    {:line (long start-line)
+     :offset (long offset) :end-offset (long (+ length offset)) :length (long length)
+     :start-line (long start-line) :end-line (long end-line)}))
 
 (defmethod loc Object
   [node]
@@ -252,6 +241,8 @@
             e (end-line node)]
     (range s (inc e))
     []))
+
+(defn filename [node] (.getFileName (.getFileLocation node)))
 
 (defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
 

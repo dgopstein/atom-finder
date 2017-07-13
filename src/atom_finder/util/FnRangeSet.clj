@@ -20,6 +20,7 @@
     `(let [~d ~delegate]
        (reify ~@types ~@body ~@methods))))
 
+;; Add the ability to treat a range-set like a function, like a regular clojure set
 (defn make-ifn
   [tree-set]
   (override-delegate
@@ -31,6 +32,9 @@
   "Take multiple disjoint ranges and construct a function which
     determines whether a number is included in any of the ranges"
   [range-constructor ranges]; :- [[(s/one s/Int "min") (s/one s/Int "max")]]]
+  ;; First construct a mutable TreeRangeSet which will merge overlapping ranges
+  ;; (this causes an exception in ImmutableRangeSet), and then convert it to
+  ;; an ImmutableRangeSet after all overlapping ranges have been resolved
   (let [range-set (doto (TreeRangeSet/create) (.addAll (map range-constructor ranges)))]
     (.build
      (doto (ImmutableRangeSet/builder)

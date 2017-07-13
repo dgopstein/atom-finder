@@ -1,7 +1,8 @@
 (ns atom-finder.util
   (:require [clojure.reflect :as rflct]
             [clojure.string :as str]
-            [schema.core :as s])
+            [schema.core :as s]
+            )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import
    [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition
@@ -9,7 +10,8 @@
     IASTTranslationUnit IASTBinaryExpression IASTProblem IASTProblemHolder]
    [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
    [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
-   [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]))
+   [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
+   ))
 
 (s/set-fn-validation! true) ; Globally turn on schema validation
 

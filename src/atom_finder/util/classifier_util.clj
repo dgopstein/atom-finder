@@ -3,13 +3,32 @@
           IASTNode IASTExpression IASTExpressionList IASTUnaryExpression
           IASTBinaryExpression IASTLiteralExpression IASTForStatement
           IASTFunctionDefinition IASTArraySubscriptExpression IASTCastExpression
-          IASTFunctionCallExpression IASTFieldReference)
+          IASTFunctionCallExpression IASTFieldReference IASTFunctionDefinition)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTExpressionList CPPASTConditionalExpression))
+
+(defn function-node? [node] (instance? IASTFunctionDefinition node))
+
+(defn flatten-tree-context
+  ([node] (flatten-tree-context {:path []} node))
+  ([context node]
+   (-> (fn [idx node]
+         (flatten-tree-context
+          (merge context
+                 {:path         (conj (:path context) idx)
+                  :in-function? (or (:in-function? context) (function-node? node))})
+                               node))
+       (mapcat-indexed (children node))
+       (conj [context node]))))
+
+(defn filter-tree-context
+  "Find every AST node that matches pred"
+  [pred node]
+  (->> node flatten-tree-context (filter pred)))
 
 (defn default-finder [classifier] (partial filter-tree classifier))
 (defn default-finder-context [classifier] (partial filter-tree-context classifier))
 (defn with-context [finder] (fn [context node] (map #(assoc context :node %) (finder node))))
-;(def root atom-finder.constants/root)
+
 
 (s/defn context-map :- {IASTNode {s/Any s/Any}}
   [root]
@@ -208,48 +227,48 @@
     (precedence-list (type node))))
 (defmethod precedence-level IASTUnaryExpression [node]
     (let [precedence-list
-        {IASTUnaryExpression/op_postFixDecr 2 
+        {IASTUnaryExpression/op_postFixDecr 2
          IASTUnaryExpression/op_postFixIncr 2
-         IASTUnaryExpression/op_minus 3 
-         IASTUnaryExpression/op_plus 3 
-         IASTUnaryExpression/op_prefixDecr 3 
-         IASTUnaryExpression/op_prefixIncr 3 
-         IASTUnaryExpression/op_sizeof 3 
-         IASTUnaryExpression/op_amper 3 
-         IASTUnaryExpression/op_star 3 
-         IASTUnaryExpression/op_not 3 
+         IASTUnaryExpression/op_minus 3
+         IASTUnaryExpression/op_plus 3
+         IASTUnaryExpression/op_prefixDecr 3
+         IASTUnaryExpression/op_prefixIncr 3
+         IASTUnaryExpression/op_sizeof 3
+         IASTUnaryExpression/op_amper 3
+         IASTUnaryExpression/op_star 3
+         IASTUnaryExpression/op_not 3
          IASTUnaryExpression/op_tilde 3
          IASTUnaryExpression/op_throw 15}]
     (precedence-list (.getOperator node))))
 (defmethod precedence-level IASTBinaryExpression [node]
     (let [precedence-list
-        {IASTBinaryExpression/op_modulo 5 
+        {IASTBinaryExpression/op_modulo 5
          IASTBinaryExpression/op_multiply 5
          IASTBinaryExpression/op_divide 5
-         IASTBinaryExpression/op_plus 6 
+         IASTBinaryExpression/op_plus 6
          IASTBinaryExpression/op_minus 6
-         IASTBinaryExpression/op_shiftLeft 7 
+         IASTBinaryExpression/op_shiftLeft 7
          IASTBinaryExpression/op_shiftRight 7
-         IASTBinaryExpression/op_greaterThan 8 
-         IASTBinaryExpression/op_greaterEqual 8 
-         IASTBinaryExpression/op_lessThan 8 
+         IASTBinaryExpression/op_greaterThan 8
+         IASTBinaryExpression/op_greaterEqual 8
+         IASTBinaryExpression/op_lessThan 8
          IASTBinaryExpression/op_lessEqual 8
-         IASTBinaryExpression/op_equals 9 
+         IASTBinaryExpression/op_equals 9
          IASTBinaryExpression/op_notequals 9
          IASTBinaryExpression/op_binaryAnd 10
          IASTBinaryExpression/op_binaryXor 11
          IASTBinaryExpression/op_binaryOr 12
          IASTBinaryExpression/op_logicalAnd 13
          IASTBinaryExpression/op_logicalOr 14
-         IASTBinaryExpression/op_assign 15 
-         IASTBinaryExpression/op_binaryAndAssign 15 
+         IASTBinaryExpression/op_assign 15
+         IASTBinaryExpression/op_binaryAndAssign 15
          IASTBinaryExpression/op_binaryOrAssign 15
-         IASTBinaryExpression/op_binaryXorAssign 15 
-         IASTBinaryExpression/op_divideAssign 15 
+         IASTBinaryExpression/op_binaryXorAssign 15
+         IASTBinaryExpression/op_divideAssign 15
          IASTBinaryExpression/op_minusAssign 15
-         IASTBinaryExpression/op_moduloAssign 15 
+         IASTBinaryExpression/op_moduloAssign 15
          IASTBinaryExpression/op_multiplyAssign 15
-         IASTBinaryExpression/op_plusAssign 15 
+         IASTBinaryExpression/op_plusAssign 15
          IASTBinaryExpression/op_shiftLeftAssign 15
          IASTBinaryExpression/op_shiftRightAssign 15}]
     (precedence-list (.getOperator node))))
@@ -257,7 +276,7 @@
 (defn assignment?
   "Returns true if the operator is an assignment operator"
   [node]
-  (let [assignment-list 
+  (let [assignment-list
         #{IASTBinaryExpression/op_assign IASTBinaryExpression/op_binaryAndAssign IASTBinaryExpression/op_binaryOrAssign IASTBinaryExpression/op_binaryXorAssign IASTBinaryExpression/op_divideAssign IASTBinaryExpression/op_minusAssign IASTBinaryExpression/op_moduloAssign IASTBinaryExpression/op_multiplyAssign IASTBinaryExpression/op_plusAssign IASTBinaryExpression/op_shiftLeftAssign IASTBinaryExpression/op_shiftRightAssign}]
 
     (and (instance? IASTBinaryExpression node) (contains? assignment-list (.getOperator node)))))
