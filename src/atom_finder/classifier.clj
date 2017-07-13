@@ -44,3 +44,7 @@
   )
 
 (def atom-lookup (into {} (map #(vector (:name %1) %1) atoms)))
+
+(defn find-all-atoms
+  [root]
+  (map-values (fn [atom] ((:finder atom) root)) atom-lookup))

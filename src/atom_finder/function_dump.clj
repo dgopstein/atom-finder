@@ -85,7 +85,7 @@
 (def function-offset-range-set (comp range-set-cc function-offset-ranges))
 
 (defn nodes-near-comments-by-function
-  "find all AST nodes (atoms and not) near comments and
+  "find all AST nodes near comments and
    categorize them by whether their in a function"
   [root]
   (let [comments (all-comments root)
@@ -104,18 +104,37 @@
         ]
     (->> root
          flatten-tree
+         (concat (all-preprocessor root))
          (filter offset)
          (map (fn [node]
-                {;:node node
-                 :in-function? (in-function-offset? node)
-                 :comment ((if (in-function-offset? node) fn-comment-line-set  global-comment-line-set) (start-line node))
-                 }))
-         frequencies
-         )
+                {node
+                 {:in-function? (in-function-offset? node)
+                  :comment ((if (in-function-offset? node) fn-comment-line-set  global-comment-line-set) (start-line node))
+                  }}))
+         (into {}))
     ))
 
-'(->> big-root
-     nodes-near-comments-by-function
-     pprint
-     time-mins
-     )
+(defn atoms-by-comments&function
+  "Classify every node by whether its an atom,
+   inside a function, and described by a comment"
+  [root]
+  (let [fn-cmnts (nodes-near-comments-by-function root)
+        all-atoms (->> root find-all-atoms (mapcat (fn [[atm nodes]] (map #(vector atm %) nodes))))
+        atom-cmnts     (map (fn [[atom-name node]] (merge {:atom atom-name} (fn-cmnts node))) all-atoms)
+        non-atom-cmnts (map (fn [[node   fn-cmnt]] (merge {:atom nil} fn-cmnt)) (apply dissoc fn-cmnts (map second all-atoms)))
+        ]
+
+    (concat atom-cmnts non-atom-cmnts)
+    ))
+
+'(->> gcc-path
+ (pmap-dir-trees
+  (juxt filename
+        #(->> %
+              atoms-by-comments&function
+              frequencies
+              (sort-by prn-str))))
+ (map prn)
+ (take 3)
+ dorun
+ time-mins)

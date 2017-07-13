@@ -335,3 +335,10 @@
   "Apply a function to the every node of every c file in a directory"
   [f :- (s/=> s/Any [IASTTranslationUnit]) dirname :- s/Str]
   (flatten (pmap-dir-trees #(->> % flatten-tree (map f)) dirname)))
+
+(s/defn tree-path
+  [node]
+  (let [dad (parent node)]
+    (if (nil? dad)
+      []
+      (conj (tree-path dad) (.indexOf (seq (children dad)) node)))))
