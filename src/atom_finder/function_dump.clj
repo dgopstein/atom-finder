@@ -127,7 +127,8 @@
     (concat atom-cmnts non-atom-cmnts)
     ))
 
-'(->> gcc-path
+;; count comments by atoms and function in all of gcc
+(->> gcc-path
  (pmap-dir-trees
   (juxt filename
         #(->> %
@@ -138,3 +139,13 @@
  (take 3)
  dorun
  time-mins)
+
+;; merge all results
+'(->> "tmp/comments-by-atom-function.txt"
+     read-lines
+     (mapcat second)
+     (map (partial apply array-map))
+     (reduce (partial merge-with +))
+     (sort-by prn-str)
+     (map prn)
+     )
