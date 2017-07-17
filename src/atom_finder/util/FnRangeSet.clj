@@ -32,13 +32,7 @@
   "Take multiple disjoint ranges and construct a function which
     determines whether a number is included in any of the ranges"
   [range-constructor ranges]; :- [[(s/one s/Int "min") (s/one s/Int "max")]]]
-  ;; First construct a mutable TreeRangeSet which will merge overlapping ranges
-  ;; (this causes an exception in ImmutableRangeSet), and then convert it to
-  ;; an ImmutableRangeSet after all overlapping ranges have been resolved
-  (let [range-set (doto (TreeRangeSet/create) (.addAll (map range-constructor ranges)))]
-    (.build
-     (doto (ImmutableRangeSet/builder)
-       (.addAll range-set)))))
+  (ImmutableRangeSet/unionOf (map range-constructor ranges)))
 
 (defn range-set-co [ranges] (make-ifn (range-set-constructor (fn [[a b]] (Range/closedOpen a b)) ranges)))
 (defn range-set-cc [ranges] (make-ifn (range-set-constructor (fn [[a b]] (Range/closed a b)) ranges)))
