@@ -1,5 +1,7 @@
 {
-  :gcc-path "~/opt/src/gcc",
   :ag-path "~/opt/src/the_silver_searcher",
+  :gcc-path "~/opt/src/gcc",
+  :linux-path "~/opt/src/linux",
+
   :github-top-c "~/opt/src/github-top-c"
 }

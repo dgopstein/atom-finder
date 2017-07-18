@@ -6,11 +6,13 @@
 ; If there's no specified configuration file, default to the travis-ci file
 (cfg/populate-from-file (some resource-path ["conf.edn" "travis-ci.edn"]))
 
-(def gcc-path (some->> :gcc-path cfg/get expand-home))
-(def  ag-path (some->>  :ag-path cfg/get expand-home))
+(def    ag-path (some->>    :ag-path cfg/get expand-home))
+(def   gcc-path (some->>   :gcc-path cfg/get expand-home))
+(def linux-path (some->> :linux-path cfg/get expand-home))
 
-(def gcc-repo (some->> gcc-path gitp/load-repo))
-(def  ag-repo (some->>  ag-path gitp/load-repo))
+(def    ag-repo (some->>    ag-path gitp/load-repo))
+(def   gcc-repo (some->>   gcc-path gitp/load-repo))
+(def linux-repo (some->> linux-path gitp/load-repo))
 
 (def root (parse-resource "logic-as-control-flow.c"))
 
