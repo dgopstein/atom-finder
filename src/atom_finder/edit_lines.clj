@@ -14,7 +14,6 @@
    [clj-jgit.querying :as gitq]
    [clj-jgit.internal :as giti]
    [schema.core :as s]
-   [swiss.arrows :refer :all]
    )
   (:import
    [atom_finder.classifier Atom]
@@ -31,14 +30,22 @@
   [f repo] ; (f srcs)
   (->>
    (gitq/rev-list repo)
-   (drop 4)
-   (take 4)
-   ;p
-   (map (fn [rev-commit]
+   ;(drop 4)
+   ;(take 4)
+   (pmap (fn [rev-commit]
            (doall (map f (commit-files-before-after repo rev-commit)))))
    flatten1
    )
   )
+
+(defn start-lines-range-set
+  "Returns a range-set of every line that contains the start of an AST node"
+  [nodes]
+  (->> nodes
+       (map start-line)
+       (remove nil?)
+       range-set-canonical
+  ))
 
 (defn edit-lines
   "Is a line that contains at least one atom more likely to change when edits are made?"
@@ -48,8 +55,8 @@
         ;_ (pprn old-change-ranges)
         old-change-range-set (range-set-co old-change-ranges)
         ;_ (pprn old-change-range-set)
-        atom-lines (->> srcs :atoms-before vals flatten (map start-line) (map (fn [s] [s s])) range-set-cc)
-        non-atom-lines (.difference (->> srcs :source-before count-lines long (#(range-set-oc [[0 %]]))) atom-lines)
+        atom-lines (->> srcs :atoms-before vals flatten start-lines-range-set)
+        non-atom-lines (.difference (->> srcs :ast-before flatten-tree start-lines-range-set) atom-lines)
         changed-atom-lines (.intersection old-change-range-set atom-lines)
         changed-non-atom-lines (.intersection non-atom-lines old-change-range-set)
         ]
@@ -63,6 +70,13 @@
 
 '(->> gcc-repo
      (map-all-commits edit-lines)
-     (map pprint)
+     (map prn)
+     (take 100)
      dorun
+     (log-to "tmp/edit-lines-2017-07-18.txt")
      time-mins)
+
+'(->> "tmp/edit-lines-2017-07-18.txt"
+     read-lines
+     (reduce (partial merge-with +))
+     pprint)

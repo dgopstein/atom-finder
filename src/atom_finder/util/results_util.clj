@@ -13,6 +13,15 @@
        (#(if (= \) (last %1)) %1 (str %1 ")"))) ; read partial files
        read-string))
 
+(defn read-lines
+  "read edn file with one entry per line"
+  [filename]
+  (->> filename
+       slurp-lines
+       (map read-string)
+       ))
+
+
 ; TODO: delete this once log files are generated with hashes
 ; instead of arrays
 (defn read-patch-data

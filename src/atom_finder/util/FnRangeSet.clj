@@ -37,6 +37,16 @@
 (defn range-set-oc [ranges] (range-set-constructor (fn [[a b]] (Range/openClosed a b)) ranges))
 (defn range-set-co [ranges] (range-set-constructor (fn [[a b]] (Range/closedOpen a b)) ranges))
 (defn range-set-cc [ranges] (range-set-constructor (fn [[a b]] (Range/closed a b)) ranges))
+(defn range-set-singleton [elems] (range-set-constructor (fn [a] (Range/singleton a)) elems))
+(defn range-set-canonical [elems]
+  (->> elems
+       (map (fn [a] (Range/singleton a)))
+       ImmutableRangeSet/unionOf
+       (#(.canonical % (DiscreteDomain/longs)))))
+
+
+
+
 (def fn-range-set-co (comp make-ifn range-set-co))
 (def fn-range-set-cc (comp make-ifn range-set-cc))
 
@@ -48,7 +58,4 @@
        (map (memfn size))
        (reduce +)
        ))
-
-;rangeSet().asRanges().stream().map(r -> ContiguousSet.create(r, integers())).mapToInt(Set::size).sum();
-
 
