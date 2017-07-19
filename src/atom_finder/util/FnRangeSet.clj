@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.util)
-(import '(com.google.common.collect Range ImmutableRangeSet TreeRangeSet RangeSet))
+(import '(com.google.common.collect Range ImmutableRangeSet TreeRangeSet RangeSet ContiguousSet DiscreteDomain))
 
 ; https://stackoverflow.com/questions/9086926/create-a-proxy-for-an-specific-instance-of-an-object-in-clojure
 ; Facility to create a new object that delegates all its methods to an exist object
@@ -34,5 +34,21 @@
   [range-constructor ranges]; :- [[(s/one s/Int "min") (s/one s/Int "max")]]]
   (ImmutableRangeSet/unionOf (map range-constructor ranges)))
 
-(defn range-set-co [ranges] (make-ifn (range-set-constructor (fn [[a b]] (Range/closedOpen a b)) ranges)))
-(defn range-set-cc [ranges] (make-ifn (range-set-constructor (fn [[a b]] (Range/closed a b)) ranges)))
+(defn range-set-oc [ranges] (range-set-constructor (fn [[a b]] (Range/openClosed a b)) ranges))
+(defn range-set-co [ranges] (range-set-constructor (fn [[a b]] (Range/closedOpen a b)) ranges))
+(defn range-set-cc [ranges] (range-set-constructor (fn [[a b]] (Range/closed a b)) ranges))
+(def fn-range-set-co (comp make-ifn range-set-co))
+(def fn-range-set-cc (comp make-ifn range-set-cc))
+
+(defn count-range-set
+  [range-set]
+  (->> range-set
+       .asRanges
+       (map #(ContiguousSet/create % (DiscreteDomain/longs)))
+       (map (memfn size))
+       (reduce +)
+       ))
+
+;rangeSet().asRanges().stream().map(r -> ContiguousSet.create(r, integers())).mapToInt(Set::size).sum();
+
+

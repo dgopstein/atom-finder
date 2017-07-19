@@ -177,7 +177,7 @@
        }
       )))
 
-;(->> hunk change-bounds)
+(defn patch-change-bounds [patch] (->> patch deltas (map change-bounds)))
 
 (defn patch-line-correspondences [patches]
   (->>
@@ -191,10 +191,16 @@
     (map (fn [[k v]] (merge {:file k} v)))
   ))
 
+(def LineRange [(s/one s/Int "min") (s/one s/Int "max")])
+(def ChangeBound {:old-min s/Int :new-min s/Int :old-max s/Int :new-max s/Int})
+(s/defn change-bound-to-ranges :- {:old LineRange :new LineRange}
+  [change-bound :- ChangeBound]
+  {:old [(:old-min change-bound) (:old-max change-bound)]
+   :new [(:new-min change-bound) (:new-max change-bound)]})
+
 (def correspondences-to-ranges
   (partial map #(update-in % [:ranges]
-    (partial map (fn [x] {:old [(:old-min x) (:old-max x)]
-                          :new [(:new-min x) (:new-max x)]})))))
+    (partial map (fn [x] (change-bound-to-ranges x))))))
 
 (s/defn correspondences-to-range-lists
   [corrs]
@@ -203,8 +209,6 @@
        (map #(update-in % [:ranges] (fn [ranges] {:old (map :old ranges)
                                                   :new (map :new ranges)})))
   ))
-
-(def LineRange [(s/one s/Int "min") (s/one s/Int "max")])
 
 (s/defn intersects?
   "Do two line-ranges contain the same line"

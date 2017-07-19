@@ -27,7 +27,7 @@
   (let [[functions others] (separate #(= :function (:type %)) records)
         in-function? (->> functions
                           (map (fn [m] [(:start m) (:end m)]))
-                          range-set-cc)]
+                          fn-range-set-cc)]
     (separate #(in-function? (:start %)) others)))
 
 '(->> "tmp/location-dump_non-atoms_2017-07-10_1.txt"
@@ -82,7 +82,7 @@
   [root]
   (node-range-set (function-nodes root)))
 
-(def function-offset-range-set (comp range-set-cc function-offset-ranges))
+(def function-offset-range-set (comp fn-range-set-cc function-offset-ranges))
 
 (defn nodes-near-comments-by-function
   "find all AST nodes near comments and
@@ -103,7 +103,7 @@
                                                                   (if (inline-comment? cmnt)
                                                                     [(start-line cmnt) (+ (end-line cmnt) 3)]
                                                                     [(start-line cmnt) (end-line cmnt)])))
-                                                           range-set-cc))
+                                                           fn-range-set-cc))
         ]
     (->> all-nodes
          (concat (all-preprocessor root))
