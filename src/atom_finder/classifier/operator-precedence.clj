@@ -20,7 +20,7 @@
      IASTUnaryExpression/op_amper :pointer
      IASTUnaryExpression/op_star :pointer
      IASTUnaryExpression/op_not :not
-     IASTUnaryExpression/op_tilde :bitwise}]
+     IASTUnaryExpression/op_tilde :bitwise_not}]
     (->> node .getOperator operator-group-table)))
 (defmethod operator-group IASTBinaryExpression [node]
   (if (assignment? node)
@@ -32,52 +32,94 @@
                 IASTBinaryExpression/op_divide :non-asso
                 IASTBinaryExpression/op_plus :add
                 IASTBinaryExpression/op_minus :non-asso
-                IASTBinaryExpression/op_shiftLeft :bitwise
-                IASTBinaryExpression/op_shiftRight :bitwise
+                IASTBinaryExpression/op_shiftLeft :bitwise_bin
+                IASTBinaryExpression/op_shiftRight :bitwise_bin
                 IASTBinaryExpression/op_greaterThan :compare
                 IASTBinaryExpression/op_greaterEqual :compare 
                 IASTBinaryExpression/op_lessThan :compare
                 IASTBinaryExpression/op_lessEqual :compare
                 IASTBinaryExpression/op_equals :compare
                 IASTBinaryExpression/op_notequals :compare
-                IASTBinaryExpression/op_binaryAnd :bitwise
-                IASTBinaryExpression/op_binaryXor :bitwise
-                IASTBinaryExpression/op_binaryOr :bitwise
+                IASTBinaryExpression/op_binaryAnd :bitwise_bin
+                IASTBinaryExpression/op_binaryXor :bitwise_bin
+                IASTBinaryExpression/op_binaryOr :bitwise_bin
                 IASTBinaryExpression/op_logicalAnd :and
                 IASTBinaryExpression/op_logicalOr :or}]
            (->> node .getOperator operator-group-table))))
 
-(def confusing-operator-combination
-  (into #{} (map sort [[:de_incr :pointer] [:multiply :add] [:arith_unary :add] [:arith_unary :multiply]
-                       [:and :add] [:and :multiply] [:and :arith_unary] [:or :add]
-                       [:or :multiply] [:or :arith_unary] [:or :and] [:not :add]
-                       [:not :multiply] [:not :arith_unary] [:not :and] [:not :or]
-                       ;;[:compare :and] [:compare :or] // Underclassify
-                       [:compare :not] [:compare :compare] [:pointer :add] [:cond :arith_unary]
-                       [:cond :and] [:cond :or] [:cond :not] [:cond :compare]
-                       [:cond :cond] [:non-asso :add] [:non-asso :multiply] [:non-asso :arith_unary]
-                       [:non-asso :and] [:non-asso :or] [:non-asso :not] [:non-asso :non-asso]
-                       [:field_ref :pointer]])))
+(def order-insensitive-opt-combination
+  (into #{} (map sort [[:multiply :add] [:and :add] [:and :multiply] [:or :add]
+                       [:or :multiply] [:or :and] [:not :arith_unary]
+                       ;;[:compare :and] [:compare :or] [:compare :compare]// Underclassify
+                       [:cond :cond] [:non-asso :multiply]
+                       [:non-asso :and] [:non-asso :or] [:non-asso :non-asso]
+                       [:field_ref :pointer]
 
-(defn specific-confusing-operator-combination?
-  "if the combination of groups of operators exists in this set, then the combination is confusing"
-  [combination]
-  (confusing-operator-combination combination))
+                       [:bitwise_not :arith_unary] [:bitwise_not :not] [:bitwise_not :pointer]
+                       [:bitwise_bin :add] [:bitwise_bin :multiply] [:bitwise_bin :and] [:biwise_bin :or]
+                       [:bitwise_bin :compare] [:bitwise_bin :pointer] [:bitwise_bin :non-asso]])))
 
-(def always-confusing-operator-groups
-  "If any of these operator groups is used along with another operator, then it is confusing"
-  #{:bitwise :comma})
+(def order-sensitive-opt-combination
+  #{[:pointer :de_incr] [:arith_unary :add] [:arith_unary :multiply] [:arith_unary :and]
+    [:arith_unary :or] [:not :add] [:not :multiply] [:not :and] [:not :or]
+    [:not :compare] [:pointer :add] [:arith_unary :cond] [:and :cond]
+    [:or :cond] [:not :cond] [:compare :cond] [:non-asso :add]
+    [:arith_unary :non-asso] [:not :non-asso]
+
+    [:bitwise_not :add] [:bitwise_not :multiply] [:bitwise_not :or] [:bitwise_not :cond]
+    [:bitwise_not :compare] [:bitwise_not :non-asso] [:bitwise-not :field_ref]
+    [:bitwise_not :de_incr] [:arith_unary :bitwise_bin] [:not :bitwise_bin] [:bitwise_bin :cond]
+    [:bitwise_not :bitwise_bin]})
 
 (defn confusing-operator-combination?
   "Is this combination of the operator groups confusing?"
   [combination]
-  (or (specific-confusing-operator-combination? combination)
-      (some (partial contains? always-confusing-operator-groups) combination)))
+  (or (order-sensitive-opt-combination combination)
+      (order-insensitive-opt-combination (sort combination))
+
+      ;;SPECIAL CASE 1: One of the entry is comma operator;
+      (some (partial = :comma) combination)))
 
 (defn operator-group-pair?
   [node]
   (and (operator-group node)
        (some operator-group (children node))))
+
+(def rvalue-unary-ops?
+  "HELPER:Is this a unary operator that can operate on an rvalue? (! - + *)"
+   (comp #{:arith_unary :not :pointer :bitwise_not} operator-group))
+
+(defn unparenthesized-unary-in-children
+  "HELPER:Is this node not a bracket and constains unary operator in its children?"
+  [node]
+  (if (not (paren-node? node))
+      (filter #(rvalue-unary-ops? %) (children node))))
+
+(defn unary-before-binary-pairs
+  "Special function for returning a collection of unary operator group in the first operand of the binary operator node"
+  [node]
+  (->> (unparenthesized-unary-in-children (get-in-tree [0] node))
+       (map operator-group)
+       (remove nil?)
+       (map (fn [child-group] [child-group (operator-group node)]))))
+
+(defn map-group-pair
+  "map the group-pair based on the type of node"
+  [node child-groups]
+  (let [node-group (operator-group node)]
+    (cond
+           (instance? IASTUnaryExpression node) 
+           [[node-group (nth child-groups 0)]]
+
+           (instance? IASTBinaryExpression node) 
+           (-> node
+                unary-before-binary-pairs
+                (conj [(nth child-groups 0) node-group] [node-group (nth child-groups 1)]))
+
+           (instance? CPPASTConditionalExpression node) 
+           [[(nth child-groups 0) node-group] [node-group (nth child-groups 1)] [node-group (nth child-groups 2)]]
+
+           :else (map (fn [child-group] [node-group child-group]) child-groups))))
 
 (defn group-pair
   "returns a collection of operator group pairs between the node and its children
@@ -88,36 +130,8 @@
   ([node collection]
    (->> collection
         (map operator-group)
-        (remove nil?)
-        (map (fn [child-group] (sort [(operator-group node) child-group]))))))
-
-;;====================================
-;;For binary operator special case
-;;====================================
-(def rvalue-unary-ops?
-  "Is this a unary operator that can operate on an rvalue? (! - + *)"
-   (comp #{:arith_unary :not :pointer} operator-group))
-
-(defn unparenthesized-unary-in-children
-  "Is this node not a bracket and constains unary operator in its children?"
-  [node]
-  (if (not (paren-node? node))
-      (filter-tree #(rvalue-unary-ops? %) node)))
-
-(defn group-pairs-in-binary-ops
-  "Special function for returning a collection of operator group in binary operator's children, binary operator should ignore some groups of operators in its second operand"
-  [node]
-  (->> (concat [(get-in-tree [0] node)
-                (if (not (rvalue-unary-ops? (get-in-tree [1] node)))
-                  (get-in-tree [1] node) nil)]
-
-               (unparenthesized-unary-in-children (get-in-tree [0] node)))
-       (map operator-group)
-       (remove nil?)
-       (map (fn [child-group] (sort [(operator-group node) child-group])))))
-;;====================================
-;;
-
+        (map-group-pair node)
+        (remove (partial some nil?)))))
 
 (defn operator-precedence-atom?
   "Is this node an operator-precedence-atom?"
@@ -127,6 +141,4 @@
 
    (not (= :assign (operator-group node)))
 
-   (if (instance? IASTBinaryExpression node)
-     (some confusing-operator-combination? (group-pairs-in-binary-ops node))
-     (some confusing-operator-combination? (group-pair node)))))
+   (some confusing-operator-combination? (group-pair node))))
