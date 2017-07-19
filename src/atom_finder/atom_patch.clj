@@ -82,19 +82,33 @@
   [repo rev-commit :- RevCommit]
   (find-rev-commit repo (.name (.getParent rev-commit 0))))
 
-(s/defn apply-before-after
+(s/defn apply-before-after ;TODO ineffecient
   "parse a commit and it's parent and apply f to the root of both"
   [repo rev-commit :- RevCommit file-name f]
   (let [parent-commit (parent-rev-commit repo rev-commit)]
     [(f (parse-source (commit-file-source repo parent-commit file-name)))
      (f (parse-source (commit-file-source repo rev-commit file-name)))]))
 
+(s/defn non-atoms
+  "Given an AST and a map of all atoms, return a list of all non-atom nodes"
+  [root all-atoms :- {s/Keyword [IASTNode]}]
+  (let [ungrouped-atoms (set (apply concat (vals all-atoms)))]
+    (remove ungrouped-atoms (flatten-tree root))))
+
 (s/defn build-srcs
   [source-before :- String source-after :- String]
-  {:ast-before (parse-source source-before)
-   :ast-after  (parse-source source-after)
+  (let [ast-before (parse-source source-before)
+        ast-after  (parse-source source-after)
+        atoms-before (find-all-atoms ast-before)
+        atoms-after (find-all-atoms ast-after)]
+  {:ast-before ast-before
+   :ast-after  ast-after
+   :atoms-before atoms-before
+   :atoms-after  atoms-after
+   :non-atoms-before (non-atoms ast-before atoms-before)
+   :non-atoms-after  (non-atoms ast-after atoms-after)
    :source-before source-before
-   :source-after  source-after})
+   :source-after  source-after}))
 
 (s/defn before-after-data
   "Return the ast of changed files before/after a commit"
@@ -137,8 +151,11 @@
 (s/defn commit-files-before-after
   "For every file changed in this commit, give both before and after ASTs"
   [repo rev-commit :- RevCommit]
-  (map (partial before-after-data repo rev-commit)
-       (edited-files repo rev-commit)))
+  (let [patches-str (gitq/changed-files-with-patch repo rev-commit)
+        file-patches (->> patches-str parse-diff (map #(vector (or (.getOldFile %1) (.getNewFile %1)) %1)) (into {}))]
+    (for [filename (edited-files repo rev-commit)]
+      (merge (before-after-data repo rev-commit filename)
+             {:patch (file-patches filename)}))))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]

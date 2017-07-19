@@ -80,6 +80,10 @@
     (is (= #{[1] 2} (set (flatcat [[1]] 2))))
     )
 
+  (testing "flatten1"
+    (is (= [1 2 3] (flatten1 [[1 2] [3]])))
+    (is (= [1 [2] 3] (flatten1 [[1 [2]] [3]]))))
+
   (testing "line-range"
     (let [cases [
                  [[]  [1 1] "a\nb\nc\n"]

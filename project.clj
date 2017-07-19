@@ -15,6 +15,7 @@
                  [org.clojure/data.csv "0.1.3"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
                  [com.google.guava/guava "22.0"]
+                 [swiss-arrows "1.0.0"]
                  ]
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"

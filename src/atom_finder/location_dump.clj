@@ -76,14 +76,6 @@
      time
      )
 
-(defn read-lines
-  "read edn file with one entry per line"
-  [filename]
-  (->> filename
-       slurp-lines
-       (map read-string)
-       ))
-
 '(->> "tmp/location-dump_non-atoms_2017-06-05_1.txt"
      read-lines
      ;(take 10)

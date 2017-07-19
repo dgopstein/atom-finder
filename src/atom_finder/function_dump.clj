@@ -27,7 +27,7 @@
   (let [[functions others] (separate #(= :function (:type %)) records)
         in-function? (->> functions
                           (map (fn [m] [(:start m) (:end m)]))
-                          range-set-cc)]
+                          fn-range-set-cc)]
     (separate #(in-function? (:start %)) others)))
 
 '(->> "tmp/location-dump_non-atoms_2017-07-10_1.txt"
@@ -82,7 +82,7 @@
   [root]
   (node-range-set (function-nodes root)))
 
-(def function-offset-range-set (comp range-set-cc function-offset-ranges))
+(def function-offset-range-set (comp fn-range-set-cc function-offset-ranges))
 
 (defn nodes-near-comments-by-function
   "find all AST nodes near comments and
@@ -93,23 +93,26 @@
         in-function-offset? #(and (not (function-node? %1))
                                   (offset %1)
                                   (function-offset-set (offset %1)))
+        all-nodes  (flatten-tree root)
+        all-node-lines (set (mapcat (juxt start-line end-line) all-nodes))
+        inline-comment? #(all-node-lines (start-line %)) ; does a comment appear on the same line as an AST node
         [fn-comments global-comments] (separate in-function-offset? comments)
         [fn-comment-line-set global-comment-line-set] (for [comments [fn-comments global-comments]]
                                                         (->> comments ; the lines this comment is likely talking about
                                                            (map (fn [cmnt]
-                                                                  (if (.isBlockComment cmnt)
+                                                                  (if (inline-comment? cmnt)
                                                                     [(start-line cmnt) (+ (end-line cmnt) 3)]
                                                                     [(start-line cmnt) (end-line cmnt)])))
-                                                           range-set-cc))
+                                                           fn-range-set-cc))
         ]
-    (->> root
-         flatten-tree
+    (->> all-nodes
          (concat (all-preprocessor root))
          (filter offset)
          (map (fn [node]
                 {node
                  {:in-function? (in-function-offset? node)
                   :comment ((if (in-function-offset? node) fn-comment-line-set  global-comment-line-set) (start-line node))
+                  ;:line (start-line node)
                   }}))
          (into {}))
     ))
@@ -127,14 +130,36 @@
     (concat atom-cmnts non-atom-cmnts)
     ))
 
+;; count comments by atoms and function in all of gcc
+(->> gcc-path
+      (pmap-dir-trees
+       (juxt filename
+             #(->> %
+                   atoms-by-comments&function
+                   frequencies
+                   (sort-by prn-str))))
+      (map prn)
+      ;(take 10)
+      dorun
+      (log-to "tmp/comments-by-atom-function.txt")
+      time-mins)
+
+;; find examples of atoms outside functions
 '(->> gcc-path
- (pmap-dir-trees
-  (juxt filename
-        #(->> %
-              atoms-by-comments&function
-              frequencies
-              (sort-by prn-str))))
- (map prn)
- (take 3)
- dorun
- time-mins)
+     (pmap-dir-trees (juxt filename atoms-by-comments&function))
+     (mapcat (fn [[filename hashes]] (map #(assoc % :file filename) hashes)))
+     (filter :atom)
+     (remove :in-function?)
+     (remove (comp #{:macro-operator-precedence :preprocessor-in-statement} :atom))
+     (take 10)
+     (map prn))
+
+;; merge all results
+'(->> "tmp/comments-by-atom-function.txt"
+     read-lines
+     (mapcat second)
+     (map (partial apply array-map))
+     (reduce (partial merge-with +))
+     (sort-by prn-str)
+     (map prn)
+
