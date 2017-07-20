@@ -1,10 +1,10 @@
-(ns atom-finder.source-versions-test
+(ns atom-finder.bug-densities-test
   (:require [clojure.test :refer :all]
             [atom-finder.util :refer :all]
             [atom-finder.constants :refer :all]
             [atom-finder.patch :refer :all]
             [atom-finder.atom-patch :refer :all]
-            [atom-finder.source-versions :refer :all]
+            [atom-finder.questions.bug-densities :refer :all]
             [atom-finder.classifier :refer :all]
             [clj-jgit.porcelain  :as gitp]
             [clj-jgit.querying :as gitq]

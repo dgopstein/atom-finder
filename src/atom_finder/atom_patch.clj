@@ -3,7 +3,6 @@
    [atom-finder.util :refer :all]
    [atom-finder.constants :refer :all]
    [atom-finder.classifier :refer :all]
-   [atom-finder.source-versions :refer :all]
    [atom-finder.patch :refer :all]
    [atom-finder.atom-stats :refer :all]
    [clojure.pprint :refer [pprint]]
@@ -38,6 +37,12 @@
 ;(def atom-finder (->> atom-lookup :conditional :finder))
 ;(def parent-hash (commit-parent-hash repo commit-hash))
 ;(def rev-commit (first (gitq/rev-list repo)))
+
+(defn find-rev-commit
+  "make a new revwalk to find given commit"
+  [repo commit-hash]
+  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-hash)
+  )
 
 (s/defn commit-file-source :- String
   "Return full source for each file changed in a commit"
@@ -171,7 +176,7 @@
   (let [commit-hash (.name rev-commit)]
     (->>
      (atoms-changed-in-commit repo atoms rev-commit)
-     (array-map :revstr commit-hash :bug-ids (bugzilla-ids rev-commit) :files)
+     (array-map :revstr commit-hash :files)
      doall
      (log-err commit-hash {:revstr commit-hash})
      )))
@@ -229,11 +234,6 @@
                    [(->> flat-res first keys
                         (map #(subs (str %) 1)))])
     (csv/write-csv out-file (->> flat-res (map vals)))))
-
-(defn add-convenience-columns
-  [flat-res]
-    (for [m flat-res]
-      (merge m {:n-bugs (-> m :bug-ids count)})))
 
 ;(->> (atoms-changed-all-commits gcc-repo atoms)
 ;     (take 1)

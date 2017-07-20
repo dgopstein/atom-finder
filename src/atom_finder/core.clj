@@ -5,7 +5,6 @@
             [atom-finder.util :refer :all]
             [atom-finder.atoms-in-dir :refer :all]
             [atom-finder.atom-patch :refer :all]
-            [atom-finder.source-versions :refer :all]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.data.csv :as csv]

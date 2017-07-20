@@ -50,7 +50,7 @@
 ;   :comments-added-near-atoms n-atom-cmnts-added
 ;   :comments-added-away-atoms (- n-cmnts-added n-atom-cmnts-added)}))
 
-;(def srcs (atom-finder.atom-patch/before-after-data gcc-repo (atom-finder.source-versions/find-rev-commit gcc-repo "519d8cb612e9d641d133e4f65b4a48c3ef963f43") "gcc/lra-constraints.c"))
+;(def srcs (atom-finder.atom-patch/before-after-data gcc-repo (atom-finder.atom-patch/find-rev-commit gcc-repo "519d8cb612e9d641d133e4f65b4a48c3ef963f43") "gcc/lra-constraints.c"))
 ;(added-comments-context srcs (atom-finder.classifier/atom-lookup :omitted-curly-braces))
 
 (defn added-comments-context [srcs atom]

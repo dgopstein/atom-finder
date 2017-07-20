@@ -5,13 +5,13 @@
 '(do
   (def big-commit-revstr "d4f474145ae66d041b820f4bf118601451baf261")
   (def big-commit-file "gcc/config/aarch64/arm_neon.h")
-  (def big-commit-rev-commit (some-> gcc-repo (atom-finder.source-versions/find-rev-commit big-commit-revstr)))
+  (def big-commit-rev-commit (some-> gcc-repo (atom-finder.atom-patch/find-rev-commit big-commit-revstr)))
   (def big-commit-patch-str (clj-jgit.querying/changed-files-with-patch gcc-repo big-commit-rev-commit))
   (def big-commit-srcs (when (and gcc-repo big-commit-rev-commit) (atom-finder.atom-patch/before-after-data gcc-repo big-commit-rev-commit big-commit-file)))
 
   (def little-commit-revstr "97574c57cf26ace9b8609575bbab66465924fef7")
   (def little-commit-file "gcc/config/sparc/sparc.c")
-  (def little-commit-rev-commit (some-> gcc-repo (atom-finder.source-versions/find-rev-commit little-commit-revstr)))
+  (def little-commit-rev-commit (some-> gcc-repo (atom-finder.atom-patch/find-rev-commit little-commit-revstr)))
   (def little-commit-patch-str (clj-jgit.querying/changed-files-with-patch gcc-repo little-commit-rev-commit))
   (def little-commit-patch (->> little-commit-patch-str parse-diff))
   (def little-commit-srcs (when (and gcc-repo little-commit-rev-commit) (atom-finder.atom-patch/before-after-data gcc-repo little-commit-rev-commit little-commit-file)))

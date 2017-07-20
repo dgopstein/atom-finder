@@ -5,7 +5,6 @@
             [atom-finder.patch :refer :all]
             [atom-finder.atom-patch :refer :all]
             [atom-finder.atom-stats :refer :all]
-            [atom-finder.source-versions :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.tree-diff :refer :all]
             [clj-jgit.porcelain  :as gitp]
