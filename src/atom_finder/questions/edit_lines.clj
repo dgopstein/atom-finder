@@ -1,4 +1,4 @@
-(ns atom-finder.edit-lines
+(ns atom-finder.questions.edit-lines
   (:require
    [atom-finder.util :refer :all]
    [atom-finder.constants :refer :all]
