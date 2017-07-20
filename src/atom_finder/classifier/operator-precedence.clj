@@ -77,7 +77,7 @@
   (or (order-sensitive-opt-combination combination)
       (order-insensitive-opt-combination (sort combination))
 
-      ;;SPECIAL CASE 1: One of the entry is comma operator;
+      ;;SPECIAL CASE 1: Comma operator in any combination;
       (some (partial = :comma) combination)))
 
 (defn operator-group-pair?
@@ -96,15 +96,15 @@
       (filter #(rvalue-unary-ops? %) (children node))))
 
 (defn unary-before-binary-pairs
-  "Special function for returning a collection of unary operator group in the first operand of the binary operator node"
+  "Special function for returning a collection of unary operator in group pair in the first operand of a binary operator"
   [node]
   (->> (unparenthesized-unary-in-children (get-in-tree [0] node))
        (map operator-group)
        (remove nil?)
        (map (fn [child-group] [child-group (operator-group node)]))))
 
-(defn map-group-pair
-  "map the group-pair based on the type of node"
+(defn group-pairs-in-node
+  "Returns all operator group pairs in a node"
   [node child-groups]
   (let [node-group (operator-group node)]
     (cond
@@ -130,7 +130,7 @@
   ([node collection]
    (->> collection
         (map operator-group)
-        (map-group-pair node)
+        (group-pairs-in-node node)
         (remove (partial some nil?)))))
 
 (defn operator-precedence-atom?
