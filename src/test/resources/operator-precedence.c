@@ -20,13 +20,13 @@ int main(){
   a = 1, 2, 3, b = 2, c = 4; // <true>
   b = a = 1;
   a = 1 + 2;
-  1 + 2 - 3; // <true> due to non-associative operators
+  1 + 2 - 3; // <false>
   1 - 2 - 3; // <true>
   1 - 2 % 3; // <true>
   1 % 3 / 4; // <true>
   a ? 1 ? b : 2 : 3;// <true>
 
-  a <= b == c > d;// <true>
+  a <= b == c > d;// <false>, underclassify
 
   !a && b; // <true>
   (!a) && b;
@@ -96,7 +96,6 @@ int main(){
   ! a && b; //<true>
   ! a || b; //<true>
   ! a == b; //<true>
-  a <= b > c; //<true>
   * p1 + p2; //<true>
   & obj + 4; //<true>
   - a ? b : d; //<true>
@@ -116,6 +115,7 @@ int main(){
 
   a < b && b == c; //<false> 
   a < b || b == c; //<false>
+  a <= b > c; //<false>, underclassify
 
   1 + 1 + 1;
   1 * 1 * 1;
@@ -149,4 +149,21 @@ int main(){
   a . b ? c : d;
   a . b - c;
   a . c -> b;
+
+  /*
+    Parser thinks it's [:comapre :compare]
+    [:compare :compare] is removed from confusing list, might result in underclassify,
+    but the overall data should be more accurate.
+  */
+  simple_value = is_simple<Value_Type>::value;
+
+  a = src2 & ~src0;
+  cerr << endl << endl;
+  ++*this;
+  len1 + len2 - 1;
+  dp->setup & 0x3;
+  e3 | e2 | e1;
+ 
+  ~str++;//<true>
+  --~str;
 }
