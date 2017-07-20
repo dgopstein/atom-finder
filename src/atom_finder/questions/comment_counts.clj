@@ -3,7 +3,7 @@
    [atom-finder.util :refer :all]
    [atom-finder.constants :refer :all]
    [atom-finder.classifier :refer :all]
-   [atom-finder.location-dump :refer :all]
+;   [atom-finder.location-dump :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.set :as set]
    [schema.core :as s]
@@ -15,12 +15,6 @@
    )
   )
 
-'(->>
- (parse-file "~/opt/src/gcc/libdecnumber/decContext.c")
- (find-all atoms-and-comments-and-functions)
- pprint
- )
-
 (defn separate-by-function
   [records] ; {:type :omitted-curly-braces, :start-line 245, :end-line 246, :offset 10887, :length 104, :path [12 2 0]}
 
@@ -29,31 +23,6 @@
                           (map (fn [m] [(:start m) (:end m)]))
                           fn-range-set-cc)]
     (separate #(in-function? (:start %)) others)))
-
-'(->> "tmp/location-dump_non-atoms_2017-07-10_1.txt"
-     read-lines
-     (filter (partial every? identity))
-     (def function-dump-data)
-     )
-
-'(pprn (count function-dump-data))
-
-'(->> function-dump-data
-     (map second)
-     frequencies)
-
-'(->> function-dump-data
-     ;(map pap)
-     (partition-by first)
-     (map (partial map (fn [[file type start end depth]] {:file file :type type :start start :end end})))
-     (map #(try (separate-by-function %) (catch Exception e '(({:type :exception})({:type :exception})))))
-     (reduce (fn [[a-true a-false] [b-true b-false]] [(concat a-true b-true) (concat a-false b-false)]))
-     (map (partial map :type))
-     (merge-with +)
-     (map frequencies)
-     pprint
-     time-mins
-     )
 
 (defn not-in-function-by-node
   "A set of all the AST nodes not inside a function"
@@ -131,7 +100,7 @@
     ))
 
 ;; count comments by atoms and function in all of gcc
-(->> gcc-path
+'(->> gcc-path
       (pmap-dir-trees
        (juxt filename
              #(->> %
@@ -139,7 +108,7 @@
                    frequencies
                    (sort-by prn-str))))
       (map prn)
-      ;(take 10)
+      (take 10)
       dorun
       (log-to "tmp/comments-by-atom-function.txt")
       time-mins)

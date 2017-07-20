@@ -32,6 +32,9 @@
   "like mapcat, but expects function of 2 arguments, where first argument is index of sequence element"
   (comp (partial apply concat) map-indexed))
 
+(defn values-at [m keys]
+  (map m keys))
+
 (def transpose (partial apply map vector))
 
 (defn strict-get
@@ -103,3 +106,10 @@
    [ (filter f s), (filter (complement f) s) ]"
   [f s]
     [(filter f s) (filter (complement f) s)])
+
+(s/defn set-difference-by
+  "set-difference after applying a function to each element"
+  [f s1 s2]
+  (let [m1 (zipmap (map f s1) s1)]
+    (vals (apply dissoc m1 (map f s2)))))
+'(set-difference-by #(* %1 %1) [1 2 3] [-1 2 -4])

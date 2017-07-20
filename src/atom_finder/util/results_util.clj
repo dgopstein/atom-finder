@@ -1,5 +1,7 @@
 (in-ns 'atom-finder.util)
 
+(require '[clojure.data.csv :as csv])
+
 ; Utilities for processing the edn output of print-atoms-in-dir
 
 (defn read-data
@@ -105,3 +107,8 @@
                       (join-keywords "-" [parent-k k])) v}))
           (into {}))))
   ([m] (merge-down nil m)))
+
+(defn maps-to-csv [filename maps]
+  (let [headers (keys (first maps))]
+    (with-open [writer (clojure.java.io/writer filename)]
+      (clojure.data.csv/write-csv writer (cons headers (map #(values-at % headers) maps))))))
