@@ -25,18 +25,6 @@
    )
   )
 
-(defn map-all-commits
-  [f repo] ; (f srcs)
-  (->>
-   (gitq/rev-list repo)
-   ;(drop 4)
-   ;(take 4)
-   (pmap (fn [rev-commit]
-           (doall (map f (commit-files-before-after repo rev-commit)))))
-   flatten1
-   )
-  )
-
 (defn start-lines-range-set
   "Returns a range-set of every line that contains the start of an AST node"
   [nodes]
@@ -68,7 +56,7 @@
                  :n-changed-lines old-change-range-set})))
 
 '(->> gcc-repo
-     (map-all-commits edit-lines)
+     (map-all-commit-files edit-lines)
      (map prn)
      (take 100)
      dorun

@@ -4,6 +4,8 @@
    [clj-jgit.porcelain :as gitp]
    [clj-jgit.querying  :as gitq]
    [atom-finder.patch :refer :all]
+   [atom-finder.atom-patch :refer :all]
+   [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
@@ -23,3 +25,20 @@
        vals
        set
   ))
+
+;(re-seq #"(?:PR|pr).*?(?:(\S+)/)?(\d{5,})" "PR12345")
+
+(defn atom-and-bug-counts
+  "For a given rev-commit, count how many bugs (and atoms before) are in the file"
+  [srcss]
+  (let [n-bugs (->> srcss :rev-commit bugzilla-ids count)
+        n-atoms (->> srcss :srcs (map :atoms-before) (mapcat vals) flatten count)]
+    {:rev-str (:rev-str srcss) :n-bugs n-bugs :n-atoms n-atoms}))
+
+'(->> gcc-repo
+    (map-all-commits atom-and-bug-counts)
+    (take 2)
+    (map prn)
+    dorun
+     ;(log-to "tmp/bug-densities-2017-07-20.txt")
+    time-mins)

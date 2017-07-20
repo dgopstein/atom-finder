@@ -32,14 +32,14 @@
      (= '({:atom :preprocessor-in-statement :count-before 0 :count-after 0})
         (flatten-res {:atom :preprocessor-in-statement,:stats {:atom-counts-before-after {:count-before 0,:count-after 0}}})))
 
-    (is (= '({:revstr "123abc" :atom :preprocessor-in-statement} {:revstr "123abc" :atom :logic-as-control-flow})
-     (flatten-res '{:revstr "123abc" :atoms ({:atom :preprocessor-in-statement} {:atom :logic-as-control-flow})})))
+    (is (= '({:rev-str "123abc" :atom :preprocessor-in-statement} {:rev-str "123abc" :atom :logic-as-control-flow})
+     (flatten-res '{:rev-str "123abc" :atoms ({:atom :preprocessor-in-statement} {:atom :logic-as-control-flow})})))
 
-    (is (= '({:revstr "1a" :file "a.c" :atom :a}
-             {:revstr "1a" :file "a.c" :atom :b}
-             {:revstr "1a" :file "b.c" :atom :a}
-             {:revstr "1a" :file "b.c" :atom :b})
-           (flatten-res '({:revstr "1a" :files
+    (is (= '({:rev-str "1a" :file "a.c" :atom :a}
+             {:rev-str "1a" :file "a.c" :atom :b}
+             {:rev-str "1a" :file "b.c" :atom :a}
+             {:rev-str "1a" :file "b.c" :atom :b})
+           (flatten-res '({:rev-str "1a" :files
                            ({:file "a.c" :atoms ({:atom :a} {:atom :b})}
                             {:file "b.c" :atoms ({:atom :a} {:atom :b})})}))))
     ))

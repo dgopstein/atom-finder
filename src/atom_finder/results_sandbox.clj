@@ -26,7 +26,7 @@
      ;(filter :ast-size-before) ; remove commits that didn't parse
      (def flat-data) time)
 (->> flat-data
-     (map #(dissoc % :atom :revstr :bug-ids :file))
+     (map #(dissoc % :atom :rev-str :bug-ids :file))
      (def comment-counts)
      time
      )
@@ -106,7 +106,7 @@
 )
 
 (->> flat-data
-     (map (juxt :revstr :file :ast-size-before :ast-size-after))
+     (map (juxt :rev-str :file :ast-size-before :ast-size-after))
      (filter (partial every? identity))
      (map (fn [[rev file a b]] [rev file a b (- b a)]))
      (apply max-key last)

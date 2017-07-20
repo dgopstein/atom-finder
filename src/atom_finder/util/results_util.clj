@@ -31,7 +31,7 @@
   [filename]
   (->> filename
        read-data
-       (map (fn [[r, a, b]] (array-map :revstr r :atom-counts a)))
+       (map (fn [[r, a, b]] (array-map :rev-str r :atom-counts a)))
        ))
 
 (defn dedupe-preprocessors

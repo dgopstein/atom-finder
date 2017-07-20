@@ -124,7 +124,7 @@
         source-after  (commit-file-source repo rev-commit file-name)]
     (merge
      {:file file-name
-      ;:rev-commit (str rev-commit)
+      :rev-str (.name rev-commit)
       :patch-str  patch-str
       }
      (build-srcs source-before source-after))))
@@ -160,7 +160,8 @@
         file-patches (->> patches-str parse-diff (map #(vector (or (.getOldFile %1) (.getNewFile %1)) %1)) (into {}))]
     (for [filename (edited-files repo rev-commit)]
       (merge (before-after-data repo rev-commit filename)
-             {:patch (file-patches filename)}))))
+             {:patch (file-patches filename)
+              :rev-commit rev-commit}))))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
@@ -176,9 +177,9 @@
   (let [commit-hash (.name rev-commit)]
     (->>
      (atoms-changed-in-commit repo atoms rev-commit)
-     (array-map :revstr commit-hash :files)
+     (array-map :rev-str commit-hash :files)
      doall
-     (log-err commit-hash {:revstr commit-hash})
+     (log-err commit-hash {:rev-str commit-hash})
      )))
 
 ;(pprint (parse-commit-for-atom gcc-repo atoms (find-rev-commit gcc-repo commit-hash)))
@@ -224,7 +225,7 @@
     ))
 
 ;(def filename "gcc-bugs-atoms_2017-03-28_200.edn")
-;(def gcc-bugs (->> filename read-data (mapcat identity) (filter :revstr)))
+;(def gcc-bugs (->> filename read-data (mapcat identity) (filter :rev-str)))
 ;(->> gcc-bugs add-convenience-columns (write-res-csv "gcc-bugs_2017-03-28_200.csv"))
 
 (defn write-res-csv
@@ -239,3 +240,21 @@
 ;     (take 1)
 ;     pprint)
 
+(defn map-all-commit-files
+  [f repo] ; (f srcs)
+  (->>
+   (gitq/rev-list repo)
+   (pmap (fn [rev-commit]
+           (doall (map f (commit-files-before-after repo rev-commit)))))
+   flatten1
+   ))
+
+(defn map-all-commits
+  [f repo] ; (f srcs)
+  (->>
+   (gitq/rev-list repo)
+   (pmap (fn [rev-commit]
+           (f {:rev-commit rev-commit
+               :rev-str    (.name rev-commit)
+               :srcs       (commit-files-before-after repo rev-commit)})))
+   ))
