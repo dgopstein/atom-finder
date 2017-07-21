@@ -12,6 +12,7 @@
    [clj-jgit.querying :as gitq]
    [clj-jgit.internal :as giti]
    [schema.core :as s]
+   [swiss.arrows :refer :all]
    )
   (:import
    [atom_finder.classifier Atom]
@@ -241,20 +242,24 @@
 ;     pprint)
 
 (defn map-all-commit-files
-  [f repo] ; (f srcs)
+  ([f repo]
+   (map-all-commit-files pmap f repo))
+  ([mapper f repo] ; (f srcs)
   (->>
    (gitq/rev-list repo)
-   (pmap (fn [rev-commit]
+   (mapper (fn [rev-commit]
            (doall (map f (commit-files-before-after repo rev-commit)))))
    flatten1
-   ))
+   )))
 
 (defn map-all-commits
-  [f repo] ; (f srcs)
+  ([f repo]
+   (map-all-commits pmap f repo))
+  ([mapper f repo] ; (f srcs)
   (->>
    (gitq/rev-list repo)
-   (pmap (fn [rev-commit]
+   (mapper (fn [rev-commit]
            (f {:rev-commit rev-commit
                :rev-str    (.name rev-commit)
                :srcs       (commit-files-before-after repo rev-commit)})))
-   ))
+   )))

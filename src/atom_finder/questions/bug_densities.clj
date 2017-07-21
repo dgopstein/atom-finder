@@ -9,6 +9,7 @@
    [atom-finder.util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
+   [swiss.arrows :refer :all]
    ))
 
 (defn bugzilla-ids
@@ -37,17 +38,22 @@
    :n-non-atoms (->> srcss :srcs (map :non-atoms-before) flatten count)
    })
 
-'(->> gcc-repo
+(->> gcc-repo
     (map-all-commits atom-and-bug-counts)
-    (take 100)
     (map prn)
     dorun
-    (log-to "tmp/bug-densities-2017-07-20.txt")
+    (log-to "tmp/bug-densities-2017-07-20_3.txt")
     time-mins)
 
-'(->> "tmp/bug-densities-2017-07-20.txt"
+'(->> "tmp/bug-densities-2017-07-20_2.txt"
      read-lines
      (map #(dissoc % :rev-str))
      (group-by (comp pos? :n-bugs))
      (map-values (partial reduce (partial merge-with +)))
      pprint)
+
+'(-<>
+ (find-rev-commit gcc-repo "f934007a13a700b07d6d7473146cc51ccf5afff1")
+ ;(edited-files gcc-repo)
+ (commit-file-source gcc-repo <> "gcc/cp/pt.c")
+ println)
