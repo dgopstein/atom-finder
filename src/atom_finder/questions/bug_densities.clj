@@ -17,9 +17,9 @@
        ;(#(string/join (.getShortMessage %1) (.getFullMessage %1)))
        .getFullMessage
        ;(prn)
-       (re-seq #"(?:PR|pr).*?(?:(\S+)/)?(\d{5,})")
+       (re-seq #"(?:PR|pr).*?(?:(\S+)/)?(\d{5,9})")
        (#(for [[match branch id] %]
-          {:branch branch :bug-id (Integer/parseInt id)}))
+          {:branch branch :bug-id (Long/parseLong id)}))
        (group-by :bug-id)
        (map-values #(apply max-key (comp count :branch) %))
        vals
