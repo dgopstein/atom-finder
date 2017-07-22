@@ -96,6 +96,13 @@
         ~else)
           then)))
 
+(defmacro when-let*
+  [bindings & then]
+  (if (seq bindings)
+    `(when-let [~(first bindings) ~(second bindings)]
+      (when-let* ~(drop 2 bindings) ~@then))
+     `(do ~@then)))
+
 (defn bin "Convert a value to 1 or 0 based on its truthiness"
   [bool] (if bool 1 0))
 
