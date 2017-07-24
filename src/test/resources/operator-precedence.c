@@ -166,4 +166,7 @@ int main(){
  
   ~str++;//<true>
   --~str;
+
+  a = a << 1 << 2; //<false>, underclassify
+  a = a | 2 & 3; //<true>
 }

@@ -47,10 +47,9 @@
                 IASTBinaryExpression/op_logicalOr :or}]
            (->> node .getOperator operator-group-table))))
 
-(def order-insensitive-opt-combination
+(def order-insensitive-opt-combination-underclassify
   (into #{} (map sort [[:multiply :add] [:and :add] [:and :multiply] [:or :add]
                        [:or :multiply] [:or :and] [:not :arith_unary]
-                       ;;[:compare :and] [:compare :or] [:compare :compare]// Underclassify
                        [:cond :cond] [:non-asso :multiply]
                        [:non-asso :and] [:non-asso :or] [:non-asso :non-asso]
                        [:field_ref :pointer]
@@ -58,6 +57,10 @@
                        [:bitwise_not :arith_unary] [:bitwise_not :not] [:bitwise_not :pointer]
                        [:bitwise_bin :add] [:bitwise_bin :multiply] [:bitwise_bin :and] [:biwise_bin :or]
                        [:bitwise_bin :compare] [:bitwise_bin :pointer] [:bitwise_bin :non-asso]])))
+
+(def order-insensitive-opt-combination-overclassify
+  "Order insensitive combinations that are considered overclassifying"
+  (into #{} (map sort [[:compare :and] [:compare :or] [:compare :compare]])))
 
 (def order-sensitive-opt-combination
   #{[:pointer :de_incr] [:arith_unary :add] [:arith_unary :multiply] [:arith_unary :and]
@@ -71,14 +74,19 @@
     [:bitwise_not :de_incr] [:arith_unary :bitwise_bin] [:not :bitwise_bin] [:bitwise_bin :cond]
     [:bitwise_not :bitwise_bin]})
 
-(defn confusing-operator-combination?
+(defn underclassify-confusing-operator-combination?
   "Is this combination of the operator groups confusing?"
   [combination]
   (or (order-sensitive-opt-combination combination)
-      (order-insensitive-opt-combination (sort combination))
+      (order-insensitive-opt-combination-underclassify (sort combination))
 
-      ;;SPECIAL CASE 1: Comma operator in any combination;
+      ;;SPECIAL CASE: Comma operator in any combination;
       (some (partial = :comma) combination)))
+
+(defn overclassify-confusing-operator-combination?
+  [combination]
+  (or (underclassify-confusing-operator-combination? combination)
+      (order-insensitive-opt-combination-overclassify (sort combination))))
 
 (defn operator-group-pair?
   [node]
@@ -141,4 +149,11 @@
 
    (not (= :assign (operator-group node)))
 
-   (some confusing-operator-combination? (group-pair node))))
+
+   (or
+    ;;SPECIAL CASE 2: [:bitwise_bin :bitwise_bin] is confusing if the two are different
+    (and (= :bitwise_bin (operator-group node))
+        (some #(and (= :bitwise_bin (operator-group %1))
+                    (not (= (.getOperator node) (.getOperator %1)))) (children node)))
+ 
+    (some underclassify-confusing-operator-combination? (group-pair node)))))

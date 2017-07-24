@@ -7,7 +7,7 @@
    [atom-finder.atom-patch :refer :all]
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
-   [atom-finder.classifier :refer [operator-group confusing-operator-combination?]]
+   [atom-finder.classifier :refer [operator-group underclassify-confusing-operator-combination? overclassify-confusing-operator-combination?]]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    )
@@ -37,31 +37,53 @@
               child-group (operator-group (first (children node)))
               opt-group-combination [parent-group child-group]]
 
-             (if 
+             (cond 
+
+                  (and (= :bitwise_bin parent-group)
+                       (= parent-group child-group))
+                  (not (= (.getOperator parent-node) (.getOperator (first (children node)))))
+
+
                  (and (or (instance? IASTBinaryExpression parent-node)
                           (instance? CPPASTConditionalExpression parent-node))
                       (= node (first (children parent-node))))
-               (confusing-operator-combination? (reverse opt-group-combination))
-               (confusing-operator-combination? opt-group-combination))))
+                 (underclassify-confusing-operator-combination? (reverse opt-group-combination))
+               
+                 :else(underclassify-confusing-operator-combination? opt-group-combination))))
 
-(->> "1 - (2 + 3)" parse-expr (get-in-tree [1]) (#(and (atom-without-paren? %)
-                                                       (redundant-paren? %))))
+(->> "(fclose(f1a) == EOF) || (fclose(f1b) | EOF)" parse-expr 
+     ;print-tree
+     (get-in-tree [0])
+     ;print-tree
+     ;redundant-paren?
+     atom-without-paren?
+)
 
 (->> gcc-path
-      (pmap-dir-trees (fn [root] (filter-tree redundant-paren? root)))
-      flatten
-      (remove nil?)
-      ;(map safe-parent)
-      ;(map write-ast)
-      ;(map prn)
-      ;(take 100000)
-      ((fn [a] (prn (count a)) a))
-      (map atom-without-paren?)
-      (remove (fn [input] (or (nil? input) (false? input))))
-      count
-      prn
-      dorun
-      time-mins)
+     (pmap-dir-trees (fn [root] (filter-tree ;redundant-paren?
+                                 #(and (redundant-paren? %)(atom-without-paren? %))
+                                 root)))
+     flatten
+     (remove nil?)
+     (map safe-parent)
+     (map write-ast)
+     (map #(spit "underclas-atom-without.txt" (str % "\r\n") :append true))
+     (take 100)
 
-;total: 392166
-;would-be-atom: 39470
+     ;((fn [a] (prn (count a)) a))
+     ;(map atom-without-paren?)
+     ;(remove (fn [input] (or (nil? input) (false? input))))
+
+     count
+     prn
+     dorun
+     time-mins)
+
+;redundant-total: 392166
+
+;Underclassify:
+;would-be-atom: 66037
+
+;Overclassify:
+;would-be-atom: 75855 
+
