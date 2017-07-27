@@ -24,6 +24,14 @@
                    "src/test/resources"
                    "src/conf"]
   :java-source-paths ["src/java"]
-  :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}}
-  :jvm-opts ["-Xss8m" "-Xmx16g"]
-  :main atom-finder.core)
+  :profiles {:dev             {:dependencies [[org.clojure/test.check "0.9.0"]]}
+             :instrumentation {:main atom-finder.instrumentation
+                               :uberjar-name "instrumentation.jar"
+                               :aot [atom-finder.instrumentation]
+                               :manifest {"Premain-Class" "atom_finder.instrumentation"
+                                          "Agent-Class"   "atom_finder.instrumentation"}
+                               }}
+  :jvm-opts ["-Xss8m" "-Xmx2g"]
+  :main atom-finder.core
+  ;:aot [atom-finder.core]
+)
