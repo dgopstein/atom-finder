@@ -39,10 +39,11 @@
    })
 
 (->> gcc-repo
-    (map-all-commits atom-and-bug-counts)
+    (map-all-commits map atom-and-bug-counts)
     (map prn)
+    (take 3)
     dorun
-    (log-to "tmp/bug-densities-2017-07-20_3.txt")
+    ;(log-to "tmp/bug-densities-2017-07-20_3.txt")
     time-mins)
 
 '(->> "tmp/bug-densities-2017-07-20_2.txt"
@@ -52,8 +53,26 @@
      (map-values (partial reduce (partial merge-with +)))
      pprint)
 
-'(-<>
+'(-<>>
  (find-rev-commit gcc-repo "f934007a13a700b07d6d7473146cc51ccf5afff1")
  ;(edited-files gcc-repo)
- (commit-file-source gcc-repo <> "gcc/cp/pt.c")
- println)
+ ;(commit-file-source gcc-repo <> "gcc/cp/pt.c")
+ ;(before-after-data gcc-repo <> "gcc/cp/pt.c")
+ (commit-files-before-after gcc-repo <>)
+ (map keys)
+ prn
+ time-mins)
+
+;; test code to generate an out-of-memory error (reduce -Xmx for faster results)
+'(-<>>
+ (range)
+ (pap (fn [_] (used-memory)))
+ (map (fn [i] [i (map #(parse-file (str gcc-path %)) ["/gcc/cp/pt.c" "/gcc/config/i386/i386.c"])]))
+ (map #(and (get-in-tree [0] (last (last %1))) (println (first %1) ": " (used-memory))))
+ (take 200)
+ (dorun)
+ prn
+ ((fn [_] (println (used-memory))))
+ time-mins
+ )
+
