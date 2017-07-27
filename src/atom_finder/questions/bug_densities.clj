@@ -38,7 +38,7 @@
    :n-non-atoms (->> srcss :srcs (map :non-atoms-before) flatten count)
    })
 
-(->> gcc-repo
+'(->> gcc-repo
     (map-all-commits map atom-and-bug-counts)
     (map prn)
     (take 3)
