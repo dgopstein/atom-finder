@@ -22,6 +22,9 @@ chi.test(atom.out.fn.with.cmnt, atom.out.fn.no.cmnt, nonatom.out.fn.with.cmnt, n
 # lines edited by atom/non-atom
 n.atom.lines <- 346133
 n.changed.atom.lines <- 2712
-n.non.atom.lines <- 12201031
-n.changed.non.atom.lines <- 164474
+n.non.atom.lines <- 2581923
+n.changed.non.atom.lines <- 19738
+
+n.changed.atom.lines / n.atom.lines
+n.changed.non.atom.lines / n.non.atom.lines
 chi.test(n.atom.lines, n.non.atom.lines, n.changed.atom.lines, n.changed.non.atom.lines)
