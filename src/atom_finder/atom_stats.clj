@@ -37,6 +37,6 @@
    :atom-counts-before-after ba-counts
    :source-size-before-after source-size-before-after
    :ast-size ast-size
-   :added-comments added-comments-context
-   :removed-atoms removed-atoms-stats
+   ;:added-comments added-comments-context
+   ;:removed-atoms removed-atoms-stats
    })

@@ -245,12 +245,12 @@
   ([f repo]
    (map-all-commit-files pmap f repo))
   ([mapper f repo] ; (f srcs)
-  (->>
-   (gitq/rev-list repo)
-   (mapper (fn [rev-commit]
-           (doall (map f (commit-files-before-after repo rev-commit)))))
-   flatten1
-   )))
+   (->>
+    (gitq/rev-list repo)
+    (mapper (fn [rev-commit]
+              (doall (map f (commit-files-before-after repo rev-commit)))))
+    flatten1
+    )))
 
 (defn map-all-commits
   ([f repo]
