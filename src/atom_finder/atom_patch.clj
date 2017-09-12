@@ -259,7 +259,7 @@
   (->>
    (gitq/rev-list repo)
    (mapper (fn [rev-commit]
-           (f {:rev-commit rev-commit
+           (f {:rev-commit (pap rev-commit) ; TODO remove pap
                :rev-str    (.name rev-commit)
                :srcs       (commit-files-before-after repo rev-commit)})))
    )))
