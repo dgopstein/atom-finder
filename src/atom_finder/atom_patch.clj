@@ -5,6 +5,7 @@
    [atom-finder.classifier :refer :all]
    [atom-finder.patch :refer :all]
    [atom-finder.atom-stats :refer :all]
+   [clojail.core :refer [thunk-timeout]]
    [clojure.pprint :refer [pprint]]
    [clojure.data.csv :as csv]
    [clojure.java.io :as io]
@@ -74,6 +75,7 @@
   [repo rev-commit :- RevCommit]
   (->> rev-commit
        (gitq/changed-files repo)
+       ;(with-timeout 5) ; TODO remove?
        (filter #(= (last %) :edit))
        (map first)
        ))
@@ -241,16 +243,14 @@
 ;     (take 1)
 ;     pprint)
 
-(defn map-all-commit-files
-  ([f repo]
-   (map-all-commit-files pmap f repo))
-  ([mapper f repo] ; (f srcs)
-   (->>
-    (gitq/rev-list repo)
-    (mapper (fn [rev-commit]
-              (doall (map f (commit-files-before-after repo rev-commit)))))
-    flatten1
-    )))
+(defmacro with-timeout [time & body]
+  `(try (thunk-timeout (fn [] ~@body) ~time :seconds)
+        (catch java.util.concurrent.TimeoutException e#
+          (do
+            (println (str "Killed operation when it exceded max duration of " ~time ", body: " '~@body))
+            nil))))
+
+;(with-timeout 0.1 (range 1 1000))
 
 (defn map-all-commits
   ([f repo]
@@ -261,5 +261,17 @@
    (mapper (fn [rev-commit]
            (f {:rev-commit (pap rev-commit) ; TODO remove pap
                :rev-str    (.name rev-commit)
-               :srcs       (commit-files-before-after repo rev-commit)})))
+               ;:srcs       (with-timeout 1 ; don't try a single commit for too long
+               ;              (doall (commit-files-before-after repo rev-commit)))})))
+               :srcs (commit-files-before-after repo rev-commit)})))
    )))
+
+(defn map-all-commit-files
+  ([f repo]
+   (map-all-commit-files pmap f repo))
+  ([mapper f repo] ; (f srcs)
+   (->>
+    (map-all-commits mapper repo)
+    (map :srcs)
+    flatten1
+    )))
