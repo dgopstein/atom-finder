@@ -52,24 +52,14 @@
 (defn log-bug-atom-file-correlation
   "For each commit, how many bugs and how many atoms"
   []
-  (let [max-files 1000]
-    (-<>> gcc-repo
-          (map-all-commits map (fn [hash] (update-in hash [:srcs] #(with-timeout 1 (doall %)))))
-          ;(map-all-commits map identity)
-          ;(filter #(> 1000 (count (edited-files gcc-repo (:rev-commit %))))) ; don't process huge commits (memory issues)
-          ;(drop 1562)
-          ;(map #(update-in % [:srcs] (fn [srcs] (take max-files srcs)))) ; truncate large commits
-          ;(filter #(<= max-files (count (:srcs %)))) ; don't process truncated commits
-          ;(drop 15)
-          ;(take 3)
-          ;(for [commit <>] ())
-          ;(map (fn [commit] (with-timeout 1 (doall commit))))
-          (remove nil?)
-          (map atom-and-bug-counts)
-          (map prn)
-          dorun
-          (log-to "tmp/bug-densities-2017-09-14_0.txt")
-          time-mins)))
+  (-<>> gcc-repo
+        (map-all-commits map #(update-in % [:srcs] (fn [files] (with-timeout 20 (doall files)))))
+        (remove nil?)
+        (map atom-and-bug-counts)
+        (map prn)
+        dorun
+        (log-to "tmp/bug-densities-2017-09-14_0.txt")
+        time-mins))
 
 '(defn count-files-in-commits
   "For every commit in GCC how many files were edited"

@@ -259,7 +259,7 @@
   (->>
    (gitq/rev-list repo)
    (mapper (fn [rev-commit]
-           (f {:rev-commit (pap rev-commit) ; TODO remove pap
+           (f {:rev-commit rev-commit
                :rev-str    (.name rev-commit)
                ;:srcs       (with-timeout 1 ; don't try a single commit for too long
                ;              (doall (commit-files-before-after repo rev-commit)))})))
