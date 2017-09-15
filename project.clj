@@ -32,7 +32,7 @@
                                :manifest {"Premain-Class" "atom_finder.instrumentation"
                                           "Agent-Class"   "atom_finder.instrumentation"}
                                }}
-  :jvm-opts ["-Xss8m" "-Xmx4g" "-XX:+HeapDumpOnOutOfMemoryError"]
+  :jvm-opts ["-Xss8m" "-Xmx16g" "-XX:+HeapDumpOnOutOfMemoryError"]
   :main atom-finder.core
   ;:aot [atom-finder.core]
 )

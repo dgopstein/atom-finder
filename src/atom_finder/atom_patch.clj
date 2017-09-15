@@ -159,12 +159,13 @@
 (s/defn commit-files-before-after
   "For every file changed in this commit, give both before and after ASTs"
   [repo rev-commit :- RevCommit]
-  (let [patches-str (gitq/changed-files-with-patch repo rev-commit)
-        file-patches (->> patches-str parse-diff (map #(vector (or (.getOldFile %1) (.getNewFile %1)) %1)) (into {}))]
-    (for [filename (edited-files repo rev-commit)]
-      (merge (before-after-data repo rev-commit filename)
-             {:patch (file-patches filename)
-              :rev-commit rev-commit}))))
+  (log-err (str "commit-files-before-after " (.name rev-commit)) []
+           (let [patches-str (gitq/changed-files-with-patch repo rev-commit)
+                 file-patches (->> patches-str parse-diff (map #(vector (or (.getOldFile %1) (.getNewFile %1)) %1)) (into {}))]
+             (for [filename (edited-files repo rev-commit)]
+               (merge (before-after-data repo rev-commit filename)
+                      {:patch (file-patches filename)
+                       :rev-commit rev-commit})))))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]

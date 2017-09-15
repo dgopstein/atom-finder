@@ -35,12 +35,13 @@
 (defn atom-and-bug-counts
   "For a given rev-commit, count how many bugs (and atoms before) are in the file"
   [srcss]
-  {:rev-str     (->> srcss :rev-str)
-   :n-bugs      (->> srcss :rev-commit bugzilla-ids count)
-   :n-atoms     (->> srcss :srcs (map :atoms-before) (mapcat vals) flatten count)
-   :n-non-atoms (->> srcss :srcs (map :non-atoms-before) flatten count)
-   :time        (now)
-   })
+  (log-err (str "atom-and-bug-counts " (:rev-str srcss)) {}
+             {:rev-str     (->> srcss :rev-str)
+              :n-bugs      (->> srcss :rev-commit bugzilla-ids count)
+              :n-atoms     (->> srcss :srcs (map :atoms-before) (mapcat vals) flatten count)
+              :n-non-atoms (->> srcss :srcs (map :non-atoms-before) flatten count)
+              :time        (now)
+              }))
 
 '(->> "tmp/bug-densities-2017-07-20_2.txt"
      read-lines
@@ -53,73 +54,10 @@
   "For each commit, how many bugs and how many atoms"
   []
   (-<>> gcc-repo
-        (map-all-commits map #(update-in % [:srcs] (fn [files] (with-timeout 20 (doall files)))))
+        (map-all-commits pmap #(update-in % [:srcs] (fn [files] (with-timeout 45 (doall files)))))
         (remove nil?)
         (map atom-and-bug-counts)
         (map prn)
         dorun
-        (log-to "tmp/bug-densities-2017-09-14_0.txt")
+        (log-to "tmp/bug-densities-2017-09-15_0_log_err_45s.txt")
         time-mins))
-
-'(defn count-files-in-commits
-  "For every commit in GCC how many files were edited"
-  [gcc-repo]
-  (->> gcc-repo
-     (map-all-commits map identity)
-     (map :rev-commit)
-     (map (fn [rc] (let [files (edited-files gcc-repo rc)] [(.name rc) (count files) files])))
-     (map prn)
-     dorun
-     (log-to "tmp/commit-files.edn")
-     dorun
-     time-mins))
-
-'(->> gcc-repo
-     (map-all-commits map identity)
-     (map :rev-commit)
-     first
-     ppublic-methods)
-
-;;
-;; DiffFormatter formatter = new DiffFormatter( System.out );
-;; formatter.setRepository( git.getRepository() );
-;; AbstractTreeIterator commitTreeIterator = prepareTreeParser( git.getRepository(),  Constants.HEAD );
-;; FileTreeIterator workTreeIterator = new FileTreeIterator( git.getRepository() );
-;; List<DiffEntry> diffEntries = formatter.scan( commitTreeIterator, workTreeIterator );
-;;
-;; for( DiffEntry entry : diffEntries ) {
-;;   System.out.println( "Entry: " + entry + ", from: " + entry.getOldId() + ", to: " + entry.getNewId() );
-;;   formatter.format( entry );
-;; }
-;;
-
-
-'(defn commit-tree-iterator
-  "Create a TreeIterator from a RevCommit"
-  [repo rev-commit]
-(.newObjectReader (.getRepository repo))
-  (prn repo)
-  (prn rev-commit)
-  (prn (.getObjectId (giti/new-tree-walk repo rev-commit) 0))
-  (prn "ok")
-  (.reset (CanonicalTreeParser.)
-          (.newObjectReader (.getRepository repo))
-          (.getObjectId (giti/new-tree-walk repo rev-commit) 0)))
-
-; http://git.eclipse.org/c/jgit/jgit.git/tree/org.eclipse.jgit.test/tst/org/eclipse/jgit/api/DiffCommandTest.java
-'((defn n-edited-files
-  [repo revstr]
-   (let [rc (find-rev-commit repo revstr)]
-     (.size
-      (doto (.diff gcc-repo)
-        (.setNewTree (commit-tree-iterator repo rc))
-        (.setOldTree (commit-tree-iterator repo (.getParent rc 0)))
-       .call))
-     )
-  ) gcc-repo "acfa6993d9ef04204386ef349bdd025737cdb425")
-
-'(->>
- (map (fn [x] (Thread/sleep 1000)) (range 2))
- (map #(time (dorun %)))
- dorun
- time-mins)

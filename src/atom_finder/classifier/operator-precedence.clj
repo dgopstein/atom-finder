@@ -109,15 +109,15 @@
   (let [node-group (operator-group node)]
     (cond
            (instance? IASTUnaryExpression node) 
-           [[node-group (nth child-groups 0)]]
+           [[node-group (safe-nth child-groups 0)]]
 
            (instance? IASTBinaryExpression node) 
            (-> node
                 unary-before-binary-pairs
-                (conj [(nth child-groups 0) node-group] [node-group (nth child-groups 1)]))
+                (conj [(safe-nth child-groups 0) node-group] [node-group (safe-nth child-groups 1)]))
 
            (instance? CPPASTConditionalExpression node) 
-           [[(nth child-groups 0) node-group] [node-group (nth child-groups 1)] [node-group (nth child-groups 2)]]
+           [[(safe-nth child-groups 0) node-group] [node-group (safe-nth child-groups 1)] [node-group (safe-nth child-groups 2)]]
 
            :else (map (fn [child-group] [node-group child-group]) child-groups))))
 
