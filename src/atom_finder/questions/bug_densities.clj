@@ -54,10 +54,16 @@
   "For each commit, how many bugs and how many atoms"
   []
   (-<>> gcc-repo
-        (map-all-commits pmap #(update-in % [:srcs] (fn [files] (with-timeout 45 (doall files)))))
+        (commits-from <> "6820497104381be44cfbfb3d4f2caffb1d41d30e")
+        (map #(update-in % [:srcs] (fn [files] (with-timeout 45 (doall files)))))
         (remove nil?)
-        (map atom-and-bug-counts)
+        (pmap atom-and-bug-counts)
         (map prn)
         dorun
-        (log-to "tmp/bug-densities-2017-09-15_0_log_err_45s.txt")
+        (log-to "tmp/bug-densities-2017-09-17_2_continued_pt_3.txt")
         time-mins))
+
+'(->> "dbee6ab1e86c44f9dc04fef62edbf4d8ffdc166d"
+     (rev-walk-from gcc-repo)
+     (take 5)
+     (map (memfn name)))

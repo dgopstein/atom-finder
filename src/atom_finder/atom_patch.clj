@@ -169,9 +169,10 @@
            (let [patches-str (gitq/changed-files-with-patch repo rev-commit)
                  file-patches (->> patches-str parse-diff (map #(vector (or (.getOldFile %1) (.getNewFile %1)) %1)) (into {}))]
              (for [filename (edited-files repo rev-commit)]
-               (merge (before-after-data repo rev-commit filename)
-                      {:patch (file-patches filename)
-                       :rev-commit rev-commit})))))
+                (log-err (str {:commit-hash (.name rev-commit) :file filename}) nil
+                         (merge (before-after-data repo rev-commit filename)
+                                {:patch (file-patches filename)
+                                 :rev-commit rev-commit}))))))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
@@ -272,6 +273,16 @@
                ;              (doall (commit-files-before-after repo rev-commit)))})))
                :srcs (commit-files-before-after repo rev-commit)})))
    )))
+
+(defn commits-from
+  [repo commit-hash]
+  (->> commit-hash
+       (rev-walk-from repo)
+       (pmap (fn [rev-commit]
+              (log-err (str "parsing - " (.name rev-commit)) nil
+                       {:rev-commit rev-commit
+                        :rev-str    (.name rev-commit)
+                        :srcs (commit-files-before-after repo rev-commit)})))))
 
 (defn map-all-commit-files
   ([f repo]
