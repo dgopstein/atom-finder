@@ -19,7 +19,7 @@
    [atom_finder.classifier Atom]
    [org.eclipse.jgit.lib ObjectReader Repository]
    [org.eclipse.jgit.api Git]
-   [org.eclipse.jgit.revwalk RevCommit]
+   [org.eclipse.jgit.revwalk RevCommit RevCommitList RevWalk]
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
    [org.eclipse.cdt.core.dom.ast IASTTranslationUnit IASTNode]
    [org.eclipse.cdt.internal.core.dom.parser ASTNode]
@@ -43,8 +43,14 @@
 (defn find-rev-commit
   "make a new revwalk to find given commit"
   [repo commit-hash]
-  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-hash)
-  )
+  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-hash))
+
+(defn rev-walk-from
+  "make a new revwalk to starting at given commit"
+  [repo commit-hash]
+  (let [rev-walk (giti/new-rev-walk repo)]
+    (.markStart rev-walk (gitq/find-rev-commit repo rev-walk commit-hash))
+    rev-walk))
 
 (s/defn commit-file-source :- String
   "Return full source for each file changed in a commit"
