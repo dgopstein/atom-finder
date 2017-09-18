@@ -159,7 +159,7 @@
   "find the nearest ancestor that's a function definition"
   [node]
   (if (or (nil? node)
-          (instance? IASTFunctionDefinition node))
+          (function-node? node))
     node
     (enclosing-function (parent node))))
 

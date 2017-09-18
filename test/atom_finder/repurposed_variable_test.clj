@@ -9,5 +9,5 @@
 
 (deftest repurposed-variable-test
   (testing "Is a type-conversion atom here?"
-    (test-atom-lines "repurposed-variable.c" "<true>" repurposed-variable-finder)))
+    (test-atom-lines "repurposed-variable.c" "<true>" repurposed-variable-atoms)))
 
