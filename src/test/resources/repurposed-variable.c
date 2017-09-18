@@ -14,6 +14,7 @@ int main(int argc, char **argv) {
   // only catch assignments to function arguments
   a[0] = 2; // <false>
   a[argc] = 3; // <false>
-  argv[0] = ''; // <true>
-  argv.x = ''; // <true>
+  argv[0] = ''; // <false> - passed by pointer
+  argv.x = ''; // <false> - passed by pointer
+  argc.x = 2; // <true>
 }

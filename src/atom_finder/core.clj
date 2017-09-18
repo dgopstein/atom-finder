@@ -17,12 +17,4 @@
 ;(set! *warn-on-reflection* true)
 (defn -main
   [& args]
-
-  ;(->> (atom-patch/atoms-changed-all-commits gcc-repo atoms)
-  ;     ;(map prn)
-  ;     (take 10)
-  ;     dorun)
-
-  ; 48 hours
-  ;(time (log-atoms-changed-all-commits "gcc-atom-removed-atoms_2017-05-25_0.edn" gcc-repo atoms))
 )
