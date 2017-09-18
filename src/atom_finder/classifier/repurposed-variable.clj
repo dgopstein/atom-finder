@@ -25,20 +25,15 @@
          (map #(-> % .getDeclarator .getName node-name))
          set)))
 
-(->> "int main(int *a, char &b, long c) { }"
-     parse-source
-     (get-in-tree [0])
-     scalar-param-names
-     )
-
 (defn repurposed-variable-atom?
   ([node] (repurposed-variable-atom? node (scalar-param-names (enclosing-function node))))
   ([node param-names]
    (and (mutatable-op? node)
         (let [lvalue (first (children node))]
-          (or ; argc = 1 OR argv[1] = 1
-           (contains? param-names (node-name lvalue))
-           (contains? param-names (node-name (first (children lvalue)))))))))
+          (or
+           (contains? param-names (node-name lvalue))                     ; argc = 1
+           ;(contains? param-names (node-name (first (children lvalue)))) ; argv[1] = 1
+           )))))
 
 (defn repurposed-variable-atoms
   ([root] (repurposed-variable-atoms root #{}))
@@ -47,8 +42,3 @@
      (if (repurposed-variable-atom? root param-names)
        [root]
        (mapcat #(repurposed-variable-atoms % new-param-names) (children root))))))
-
-(->> "/Users/dgopstein/opt/src/gcc/gcc/config/avr/avr-devices.c"
-     parse-file
-     repurposed-variable-atoms
-     )

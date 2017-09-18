@@ -16,5 +16,5 @@ int main(int argc, char **argv) {
   a[argc] = 3; // <false>
   argv[0] = ''; // <false> - passed by pointer
   argv.x = ''; // <false> - passed by pointer
-  argc.x = 2; // <true>
+  argc.x = 2; // <false> - only care about top-level assignments
 }
