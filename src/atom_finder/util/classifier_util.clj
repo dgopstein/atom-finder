@@ -280,3 +280,13 @@
         #{IASTBinaryExpression/op_assign IASTBinaryExpression/op_binaryAndAssign IASTBinaryExpression/op_binaryOrAssign IASTBinaryExpression/op_binaryXorAssign IASTBinaryExpression/op_divideAssign IASTBinaryExpression/op_minusAssign IASTBinaryExpression/op_moduloAssign IASTBinaryExpression/op_multiplyAssign IASTBinaryExpression/op_plusAssign IASTBinaryExpression/op_shiftLeftAssign IASTBinaryExpression/op_shiftRightAssign}]
 
     (and (instance? IASTBinaryExpression node) (contains? assignment-list (.getOperator node)))))
+
+
+(def logical-operators #{IASTBinaryExpression/op_equals
+                         IASTBinaryExpression/op_greaterEqual
+                         IASTBinaryExpression/op_greaterThan
+                         IASTBinaryExpression/op_lessThan
+                         IASTBinaryExpression/op_lessEqual
+                         IASTBinaryExpression/op_logicalAnd
+                         IASTBinaryExpression/op_logicalOr
+                         IASTBinaryExpression/op_notequals})
