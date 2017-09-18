@@ -6,11 +6,19 @@
            [org.eclipse.cdt.core.dom.ast IASTLiteralExpression]))
 
 (deftest cdt-util-test
-  (deftest count-nodes-test
     (testing "count-nodes"
       (is (= 3 (count-nodes (parse-expr "1 + 2"))))
       (is (= 6 (count-nodes (parse-expr "f(1 + 2)"))))
-      ))
+      )
+
+    (testing "node-name"
+      (is (= "argc"
+             (->>
+              "int main(int argc, char **argv) {argc = 2;}"
+              parse-source
+              (get-in-tree [0 2 0 0 0 0])
+              node-name)
+             )))
 
   (deftest parse-expr-stmt-test
     (testing "parse-expr/parse-stmt"

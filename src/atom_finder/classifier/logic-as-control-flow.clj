@@ -2,7 +2,7 @@
 (import '(org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression IASTUnaryExpression))
 
 (defn mutatable-op?
-  "can this AST node change program state?"
+  "does this node change program state (assuming its not dead/unreachable/repeated code)"
   [node]
   (let [u-ops #{ ; unary operators with side-effects
           IASTUnaryExpression/op_postFixDecr      IASTUnaryExpression/op_postFixIncr
@@ -10,17 +10,21 @@
   (cond
     (leaf? node) false
     (instance? IASTBinaryExpression node) (assignment? node)
-    (instance? IASTUnaryExpression node) (contains? u-ops (.getOperator node))
-    :else (= (typename node) "FunctionCallExpression"))))
+    (instance? IASTUnaryExpression node) (contains? u-ops (.getOperator node)))))
 
-(defn mutatable-expr?
+(defn maybe-mutatable-op?
+  "can this AST node change program state?"
+  [node]
+  (or (mutatable-op? node)
+      (= (typename node) "FunctionCallExpression")))
+
+(defn maybe-mutatable-expr?
   "can this expression contain a node that can change program state?"
   [node]
-
   (cond
     (leaf? node) false
-    (mutatable-op? node) true
-    :else (some? (some mutatable-expr? (children node)))))
+    (maybe-mutatable-op? node) true
+    :else (some? (some maybe-mutatable-expr? (children node)))))
 
 (defn short-circuitable-op?
   "is this operator short-circuitable?"
@@ -35,7 +39,7 @@
   "can this AST node short-circuit?"
   [node]
   (and (short-circuitable-op? node)
-       (mutatable-expr? (get-in-tree [1] node))))
+       (maybe-mutatable-expr? (get-in-tree [1] node))))
 (def logic-as-control-flow-atom? short-circuitable-expr?)
 
 (defn logic-as-control-flow-atoms

@@ -36,8 +36,8 @@
         (is (= (short-circuitable-expr? (parse-expr code)) sc?))))
       ))
 
-(deftest test-mutatable?
-  (let [cases 
+(deftest test-maybe-mutatable?
+  (let [cases
         [["f()"     true]
          ["a = 2"   true]
          ["a = b"   true]
@@ -59,7 +59,7 @@
 
       (doseq [[code sc?] cases]
         (testing (str "Is mutatable? - " code " - " sc?)
-        (is (= (mutatable-expr? (parse-expr code)) sc?)))
+        (is (= (maybe-mutatable-expr? (parse-expr code)) sc?)))
       )))
 
 (deftest test-logic-as-control-flow-atoms?
