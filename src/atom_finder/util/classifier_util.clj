@@ -4,7 +4,7 @@
           IASTBinaryExpression IASTLiteralExpression IASTForStatement
           IASTFunctionDefinition IASTArraySubscriptExpression IASTCastExpression
           IASTFunctionCallExpression IASTFieldReference IASTFunctionDefinition)
-        '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTExpressionList CPPASTConditionalExpression))
+        '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTQualifiedName CPPASTExpressionList CPPASTConditionalExpression CPPASTNewExpression CPPASTDeleteExpression))
 
 (defn function-node? [node] (instance? IASTFunctionDefinition node))
 
@@ -214,14 +214,16 @@
 
 (defn in-function? [node] (ancestral-instance? IASTFunctionDefinition node))
 
-;;Note: Operators missing from the list: (scope/ resolution ::) (memory allocation/ new new[] delete delete[]) (pointer-to-member/ ->* .*)
 (defmulti precedence-level "returns the precedence level of the node" class)
 (defmethod precedence-level :default [node]
   (let [precedence-list
-        {IASTArraySubscriptExpression 2
+        {CPPASTQualifiedName 1 
+         IASTArraySubscriptExpression 2
          IASTFieldReference 2
          IASTCastExpression 2
          IASTFunctionCallExpression 2
+         CPPASTNewExpression 3
+         CPPASTDeleteExpression 3
          CPPASTConditionalExpression 15
          CPPASTExpressionList 16}]
     (precedence-list (type node))))
@@ -242,7 +244,9 @@
     (precedence-list (.getOperator node))))
 (defmethod precedence-level IASTBinaryExpression [node]
     (let [precedence-list
-        {IASTBinaryExpression/op_modulo 5
+        {IASTBinaryExpression/op_pmdot 4
+         IASTBinaryExpression/op_pmarrow 4
+         IASTBinaryExpression/op_modulo 5
          IASTBinaryExpression/op_multiply 5
          IASTBinaryExpression/op_divide 5
          IASTBinaryExpression/op_plus 6

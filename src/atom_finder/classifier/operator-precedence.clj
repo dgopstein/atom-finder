@@ -5,7 +5,7 @@
 (defmulti operator-group"Returns the name of the operator group that the node belongs to, nil not defined in this operator-group" class)
 (defmethod operator-group :default [node]
   (let [operator-group-table
-    {CPPASTConditionalExpression :cond
+    {CPPASTConditionalExpression :ternary
      CPPASTExpressionList :comma
      CPPASTFieldReference :field_ref}]
     (->> node type operator-group-table)))
@@ -50,12 +50,12 @@
 (def order-insensitive-opt-combination-underclassify
   (into #{} (map sort [[:multiply :add] [:and :add] [:and :multiply] [:or :add]
                        [:or :multiply] [:or :and] [:not :arith_unary]
-                       [:cond :cond] [:non-asso :multiply]
+                       [:ternary :ternary] [:non-asso :multiply]
                        [:non-asso :and] [:non-asso :or] [:non-asso :non-asso]
                        [:field_ref :pointer]
 
                        [:bitwise_not :arith_unary] [:bitwise_not :not] [:bitwise_not :pointer]
-                       [:bitwise_bin :add] [:bitwise_bin :multiply] [:bitwise_bin :and] [:biwise_bin :or]
+                       [:bitwise_bin :add] [:bitwise_bin :multiply] [:bitwise_bin :and] [:bitwise_bin :or]
                        [:bitwise_bin :compare] [:bitwise_bin :pointer] [:bitwise_bin :non-asso]])))
 
 (def order-insensitive-opt-combination-overclassify
@@ -65,13 +65,13 @@
 (def order-sensitive-opt-combination
   #{[:pointer :de_incr] [:arith_unary :add] [:arith_unary :multiply] [:arith_unary :and]
     [:arith_unary :or] [:not :add] [:not :multiply] [:not :and] [:not :or]
-    [:not :compare] [:pointer :add] [:arith_unary :cond] [:and :cond]
-    [:or :cond] [:not :cond] [:compare :cond] [:non-asso :add]
+    [:not :compare] [:pointer :add] [:arith_unary :ternary] [:and :ternary]
+    [:or :ternary] [:not :ternary] [:compare :ternary] [:non-asso :add]
     [:arith_unary :non-asso] [:not :non-asso]
 
-    [:bitwise_not :add] [:bitwise_not :multiply] [:bitwise_not :or] [:bitwise_not :cond]
+    [:bitwise_not :add] [:bitwise_not :multiply] [:bitwise_not :or] [:bitwise_not :ternary]
     [:bitwise_not :compare] [:bitwise_not :non-asso] [:bitwise-not :field_ref]
-    [:bitwise_not :de_incr] [:arith_unary :bitwise_bin] [:not :bitwise_bin] [:bitwise_bin :cond]
+    [:bitwise_not :de_incr] [:arith_unary :bitwise_bin] [:not :bitwise_bin] [:bitwise_bin :ternary]
     [:bitwise_not :bitwise_bin]})
 
 (defn underclassify-confusing-operator-combination?
@@ -81,7 +81,7 @@
       (order-insensitive-opt-combination-underclassify (sort combination))
 
       ;;SPECIAL CASE: Comma operator in any combination;
-      (some (partial = :comma) combination)))
+      (if (some (partial = :comma) combination) [:comma :*] false)))
 
 (defn overclassify-confusing-operator-combination?
   [combination]
@@ -117,15 +117,15 @@
   (let [node-group (operator-group node)]
     (cond
            (instance? IASTUnaryExpression node) 
-           [[node-group (nth child-groups 0)]]
+           [[node-group (first child-groups)]]
 
            (instance? IASTBinaryExpression node) 
            (-> node
                 unary-before-binary-pairs
-                (conj [(nth child-groups 0) node-group] [node-group (nth child-groups 1)]))
+                (conj [(first child-groups) node-group] [node-group (second child-groups)]))
 
            (instance? CPPASTConditionalExpression node) 
-           [[(nth child-groups 0) node-group] [node-group (nth child-groups 1)] [node-group (nth child-groups 2)]]
+           [[(first child-groups) node-group] [node-group (second child-groups)] [node-group (nth child-groups 2 nil)]]
 
            :else (map (fn [child-group] [node-group child-group]) child-groups))))
 
@@ -152,8 +152,10 @@
 
    (or
     ;;SPECIAL CASE 2: [:bitwise_bin :bitwise_bin] is confusing if the two are different
-    (and (= :bitwise_bin (operator-group node))
-        (some #(and (= :bitwise_bin (operator-group %1))
-                    (not (= (.getOperator node) (.getOperator %1)))) (children node)))
+    (if 
+        (and (= :bitwise_bin (operator-group node))
+             (some #(and (= :bitwise_bin (operator-group %1))
+                         (not (= (.getOperator node) (.getOperator %1)))) (children node)))
+      [:bitwise_bin :bitwise_bin] false)
  
     (some underclassify-confusing-operator-combination? (group-pair node)))))
