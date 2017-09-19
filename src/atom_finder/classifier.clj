@@ -37,6 +37,7 @@
    (ValidatedAtom :reversed-subscript        reversed-subscript-atom?    (default-finder reversed-subscript-atom?))
    (ValidatedAtom :literal-encoding          literal-encoding-atom?      (default-finder literal-encoding-atom?))
    (ValidatedAtom :post-increment            post-*crement-atom?         (default-finder post-*crement-atom?))
+   (ValidatedAtom :pre-increment             pre-*crement-atom?          (default-finder pre-*crement-atom?))
    (ValidatedAtom :comma-operator            comma-operator-atom?        (default-finder comma-operator-atom?))
    (ValidatedAtom :omitted-curly-braces      omitted-curly-braces-atom?  (default-finder omitted-curly-braces-atom?))
    (ValidatedAtom :assignment-as-value       assignment-as-value-atom?   (default-finder assignment-as-value-atom?))
