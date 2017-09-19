@@ -328,3 +328,11 @@
     (if (nil? dad)
       []
       (conj (tree-path dad) (.indexOf (seq (children dad)) node)))))
+
+; The name of the variable/function/argument/etc
+(import '(org.eclipse.cdt.core.dom.ast IASTName)
+        '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTName CPPASTIdExpression))
+(defmulti node-name class)
+(defmethod node-name CPPASTName [node] (-> node .getSimpleID String.))
+(defmethod node-name CPPASTIdExpression [node] (-> node .getName node-name))
+(defmethod node-name :default [node] nil)

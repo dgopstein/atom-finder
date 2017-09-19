@@ -56,6 +56,9 @@
 ; https://crossclj.info/ns/logicadb/0.1.0/com.kurogitsune.logicadb.core.html#_safe-nth
 (defn safe-nth [x n] (try (nth x n) (catch Exception e nil)))
 
+;; http://blog.jayfields.com/2011/01/clojure-select-keys-select-values-and.html
+(def select-values (comp vals select-keys))
+
 (def flatten1 (partial apply concat))
 
 ;; Remove entries in a map based on a predicate

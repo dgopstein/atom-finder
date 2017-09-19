@@ -15,6 +15,7 @@
                  [org.clojure/data.csv "0.1.3"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
                  [com.google.guava/guava "22.0"]
+                 [clojail "1.0.6"]
                  [swiss-arrows "1.0.0"]
                  ]
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
@@ -24,6 +25,14 @@
                    "src/test/resources"
                    "src/conf"]
   :java-source-paths ["src/java"]
-  :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}}
-  :jvm-opts ["-Xss8m" "-Xmx16g"]
-  :main atom-finder.core)
+  :profiles {:dev             {:dependencies [[org.clojure/test.check "0.9.0"]]}
+             :instrumentation {:main atom-finder.instrumentation
+                               :uberjar-name "instrumentation.jar"
+                               :aot [atom-finder.instrumentation]
+                               :manifest {"Premain-Class" "atom_finder.instrumentation"
+                                          "Agent-Class"   "atom_finder.instrumentation"}
+                               }}
+  :jvm-opts ["-Xss8m" "-Xmx16g" "-XX:+HeapDumpOnOutOfMemoryError"]
+  :main atom-finder.core
+  ;:aot [atom-finder.core]
+)

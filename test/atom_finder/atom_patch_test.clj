@@ -45,6 +45,20 @@
     ))
 
 (when gcc-repo
+  (deftest rev-walk-from-test
+    (is (=
+         (->> "3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
+              (rev-walk-from gcc-repo)
+              (take 5)
+              (map (memfn name)))
+
+         '("3bb246b3c2d11eb3f45fab3b4893d46a47d5f931"
+           "1e0cfd04afdcc703af19856c8f267c1be35c07a5"
+           "8da6e78e68cb290a046135f0d8c5b40e28805f5d"
+           "64215350809ec3d3ed76ab210223819845b4e0cc"
+           "d2dec8eac52852a171be33f7525f9cd5f9ade58c")
+         )))
+
  (deftest apply-before-after-test
    (testing "Count the sizes of programs before and after a commit"
      (let [repo  ag-repo

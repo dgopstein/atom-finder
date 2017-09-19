@@ -159,7 +159,7 @@
   "find the nearest ancestor that's a function definition"
   [node]
   (if (or (nil? node)
-          (instance? IASTFunctionDefinition node))
+          (function-node? node))
     node
     (enclosing-function (parent node))))
 
@@ -277,6 +277,12 @@
          IASTBinaryExpression/op_shiftRightAssign 15}]
     (precedence-list (.getOperator node))))
 
+(defn operator
+  "If this node is an operator, extract it"
+  [node]
+  (when (any-pred? #(instance? % node) [IASTUnaryExpression IASTBinaryExpression])
+    (.getOperator node)))
+
 (defn assignment?
   "Returns true if the operator is an assignment operator"
   [node]
@@ -284,3 +290,13 @@
         #{IASTBinaryExpression/op_assign IASTBinaryExpression/op_binaryAndAssign IASTBinaryExpression/op_binaryOrAssign IASTBinaryExpression/op_binaryXorAssign IASTBinaryExpression/op_divideAssign IASTBinaryExpression/op_minusAssign IASTBinaryExpression/op_moduloAssign IASTBinaryExpression/op_multiplyAssign IASTBinaryExpression/op_plusAssign IASTBinaryExpression/op_shiftLeftAssign IASTBinaryExpression/op_shiftRightAssign}]
 
     (and (instance? IASTBinaryExpression node) (contains? assignment-list (.getOperator node)))))
+
+(def logical-operators #{IASTBinaryExpression/op_equals
+                         IASTBinaryExpression/op_greaterEqual
+                         IASTBinaryExpression/op_greaterThan
+                         IASTBinaryExpression/op_lessThan
+                         IASTBinaryExpression/op_lessEqual
+                         IASTBinaryExpression/op_logicalAnd
+                         IASTBinaryExpression/op_logicalOr
+                         IASTBinaryExpression/op_notequals
+                         IASTUnaryExpression/op_not})

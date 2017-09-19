@@ -1,6 +1,11 @@
 (in-ns 'atom-finder.util)
+(import '(java.lang.instrument Instrumentation))
 
 (defn heap-size [] (.totalMemory (Runtime/getRuntime)))
+(defn free-memory [] (.freeMemory (Runtime/getRuntime)))
+(defn used-memory [] (long (/ (- (heap-size) (free-memory)) (* 1024 1024))))
+
+;(defn object-size [o] (Instrumentation/getObjectSize o))
 
 ;; print methods of java object
 ;; http://stackoverflow.com/questions/5821286/how-can-i-get-the-methods-of-a-java-class-from-clojure

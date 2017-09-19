@@ -36,8 +36,8 @@
         (is (= (short-circuitable-expr? (parse-expr code)) sc?))))
       ))
 
-(deftest test-mutatable?
-  (let [cases 
+(deftest test-maybe-mutatable?
+  (let [cases
         [["f()"     true]
          ["a = 2"   true]
          ["a = b"   true]
@@ -59,7 +59,7 @@
 
       (doseq [[code sc?] cases]
         (testing (str "Is mutatable? - " code " - " sc?)
-        (is (= (mutatable-expr? (parse-expr code)) sc?)))
+        (is (= (maybe-mutatable-expr? (parse-expr code)) sc?)))
       )))
 
 (deftest test-logic-as-control-flow-atoms?
@@ -149,3 +149,7 @@
 (deftest test-operator-precedence-atom?
   (testing "operator-precedence-atom? finds all atoms in snippet study code"
     (test-atom-lines "operator-precedence.c" "<true>" (default-finder operator-precedence-atom?))))
+
+(deftest test-implicit-predicate-atom?
+  (testing "implicit-predicate-atom? finds all atoms in sample code"
+    (test-atom-lines "implicit-predicate.c" "<true>" (default-finder implicit-predicate-atom?))))

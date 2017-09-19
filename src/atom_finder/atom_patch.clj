@@ -5,6 +5,7 @@
    [atom-finder.classifier :refer :all]
    [atom-finder.patch :refer :all]
    [atom-finder.atom-stats :refer :all]
+   [clojail.core :refer [thunk-timeout]]
    [clojure.pprint :refer [pprint]]
    [clojure.data.csv :as csv]
    [clojure.java.io :as io]
@@ -12,12 +13,13 @@
    [clj-jgit.querying :as gitq]
    [clj-jgit.internal :as giti]
    [schema.core :as s]
+   [swiss.arrows :refer :all]
    )
   (:import
    [atom_finder.classifier Atom]
    [org.eclipse.jgit.lib ObjectReader Repository]
    [org.eclipse.jgit.api Git]
-   [org.eclipse.jgit.revwalk RevCommit]
+   [org.eclipse.jgit.revwalk RevCommit RevCommitList RevWalk]
    [org.eclipse.jgit.treewalk TreeWalk filter.PathFilter]
    [org.eclipse.cdt.core.dom.ast IASTTranslationUnit IASTNode]
    [org.eclipse.cdt.internal.core.dom.parser ASTNode]
@@ -41,8 +43,14 @@
 (defn find-rev-commit
   "make a new revwalk to find given commit"
   [repo commit-hash]
-  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-hash)
-  )
+  (gitq/find-rev-commit repo (giti/new-rev-walk repo) commit-hash))
+
+(defn rev-walk-from
+  "make a new revwalk to starting at given commit"
+  [repo commit-hash]
+  (let [rev-walk (giti/new-rev-walk repo)]
+    (.markStart rev-walk (gitq/find-rev-commit repo rev-walk commit-hash))
+    rev-walk))
 
 (s/defn commit-file-source :- String
   "Return full source for each file changed in a commit"
@@ -73,6 +81,7 @@
   [repo rev-commit :- RevCommit]
   (->> rev-commit
        (gitq/changed-files repo)
+       ;(with-timeout 5) ; TODO remove?
        (filter #(= (last %) :edit))
        (map first)
        ))
@@ -156,12 +165,14 @@
 (s/defn commit-files-before-after
   "For every file changed in this commit, give both before and after ASTs"
   [repo rev-commit :- RevCommit]
-  (let [patches-str (gitq/changed-files-with-patch repo rev-commit)
-        file-patches (->> patches-str parse-diff (map #(vector (or (.getOldFile %1) (.getNewFile %1)) %1)) (into {}))]
-    (for [filename (edited-files repo rev-commit)]
-      (merge (before-after-data repo rev-commit filename)
-             {:patch (file-patches filename)
-              :rev-commit rev-commit}))))
+  (log-err (str "commit-files-before-after " (.name rev-commit)) []
+           (let [patches-str (gitq/changed-files-with-patch repo rev-commit)
+                 file-patches (->> patches-str parse-diff (map #(vector (or (.getOldFile %1) (.getNewFile %1)) %1)) (into {}))]
+             (for [filename (edited-files repo rev-commit)]
+                (log-err (str {:commit-hash (.name rev-commit) :file filename}) nil
+                         (merge (before-after-data repo rev-commit filename)
+                                {:patch (file-patches filename)
+                                 :rev-commit rev-commit}))))))
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
@@ -240,21 +251,45 @@
 ;     (take 1)
 ;     pprint)
 
-(defn map-all-commit-files
-  [f repo] ; (f srcs)
-  (->>
-   (gitq/rev-list repo)
-   (pmap (fn [rev-commit]
-           (doall (map f (commit-files-before-after repo rev-commit)))))
-   flatten1
-   ))
+(defmacro with-timeout [time & body]
+  `(try (thunk-timeout (fn [] ~@body) ~time :seconds)
+        (catch java.util.concurrent.TimeoutException e#
+          (do
+            (println (str "Killed operation when it exceded max duration of " ~time ", body: " '~@body))
+            nil))))
+
+;(with-timeout 0.1 (range 1 1000))
 
 (defn map-all-commits
-  [f repo] ; (f srcs)
+  ([f repo]
+   (map-all-commits pmap f repo))
+  ([mapper f repo] ; (f srcs)
   (->>
    (gitq/rev-list repo)
-   (pmap (fn [rev-commit]
+   (mapper (fn [rev-commit]
            (f {:rev-commit rev-commit
                :rev-str    (.name rev-commit)
-               :srcs       (commit-files-before-after repo rev-commit)})))
-   ))
+               ;:srcs       (with-timeout 1 ; don't try a single commit for too long
+               ;              (doall (commit-files-before-after repo rev-commit)))})))
+               :srcs (commit-files-before-after repo rev-commit)})))
+   )))
+
+(defn commits-from
+  [repo commit-hash]
+  (->> commit-hash
+       (rev-walk-from repo)
+       (pmap (fn [rev-commit]
+              (log-err (str "parsing - " (.name rev-commit)) nil
+                       {:rev-commit rev-commit
+                        :rev-str    (.name rev-commit)
+                        :srcs (commit-files-before-after repo rev-commit)})))))
+
+(defn map-all-commit-files
+  ([f repo]
+   (map-all-commit-files pmap f repo))
+  ([mapper f repo] ; (f srcs)
+   (->>
+    (map-all-commits mapper repo)
+    (map :srcs)
+    flatten1
+    )))

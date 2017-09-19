@@ -2,7 +2,9 @@
   (:require
    [atom-finder.util :refer :all]
    [atom-finder.constants :refer :all]
+   [atom-finder.classifier :refer :all]
    [atom-finder.atom-stats :refer :all]
+   [atom-finder.atoms-in-dir :refer :all]
    [clojure.pprint :refer [pprint]]
    [schema.core :as s]
    )
@@ -115,3 +117,10 @@
 (every? identity [1 2 nil])
 
 (apply max-key last [[1 2] [3 0]])
+
+
+(print-atoms-in-dir gcc-path (select-values atom-lookup [:implicit-predicate]))
+(->> "/Users/dgopstein/opt/src/gcc/gcc/common/config/pdp11/pdp11-common.c"
+     "/Users/dgopstein/nyu/confusion/atom-finder/src/test/resources/implicit-predicate.c"
+     parse-file
+     ((default-finder implicit-predicate-atom?)))
