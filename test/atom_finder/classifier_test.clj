@@ -151,5 +151,5 @@
     (test-atom-lines "operator-precedence.c" "<true>" (default-finder operator-precedence-atom?))))
 
 (deftest test-implicit-predicate-atom?
-  (testing "implicit-predicate-atom? finds all atoms in sample code")
-    (test-atom-lines "implicit-predicate.c" "<true>" (default-finder implicit-predicate-atom?)))
+  (testing "implicit-predicate-atom? finds all atoms in sample code"
+    (test-atom-lines "implicit-predicate.c" "<true>" (default-finder implicit-predicate-atom?))))

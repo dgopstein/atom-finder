@@ -273,6 +273,12 @@
          IASTBinaryExpression/op_shiftRightAssign 15}]
     (precedence-list (.getOperator node))))
 
+(defn operator
+  "If this node is an operator, extract it"
+  [node]
+  (when (any-pred? #(instance? % node) [IASTUnaryExpression IASTBinaryExpression])
+    (.getOperator node)))
+
 (defn assignment?
   "Returns true if the operator is an assignment operator"
   [node]
@@ -281,7 +287,6 @@
 
     (and (instance? IASTBinaryExpression node) (contains? assignment-list (.getOperator node)))))
 
-
 (def logical-operators #{IASTBinaryExpression/op_equals
                          IASTBinaryExpression/op_greaterEqual
                          IASTBinaryExpression/op_greaterThan
@@ -289,4 +294,5 @@
                          IASTBinaryExpression/op_lessEqual
                          IASTBinaryExpression/op_logicalAnd
                          IASTBinaryExpression/op_logicalOr
-                         IASTBinaryExpression/op_notequals})
+                         IASTBinaryExpression/op_notequals
+                         IASTUnaryExpression/op_not})

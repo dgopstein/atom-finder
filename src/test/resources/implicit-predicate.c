@@ -2,6 +2,8 @@ int main()
 {
   int y = 5;
 
+  if (y); // <true>
+
   (y == 5) ? y = 5 : y == 7;
 
   for (int x = 4; 4 != 4; x++);
@@ -38,6 +40,10 @@ int main()
   while (!(y && y));
 
   if (!(5 == y));
+
+  !y; // <false>
+
+  !y ? 1 : 2; // <false>
 
   return;
 }
