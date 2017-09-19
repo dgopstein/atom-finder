@@ -119,4 +119,8 @@
 (apply max-key last [[1 2] [3 0]])
 
 
-(print-atoms-in-dir gcc-path (select-values atom-lookup [:repurposed-variable]))
+(print-atoms-in-dir gcc-path (select-values atom-lookup [:implicit-predicate]))
+(->> "/Users/dgopstein/opt/src/gcc/gcc/common/config/pdp11/pdp11-common.c"
+     "/Users/dgopstein/nyu/confusion/atom-finder/src/test/resources/implicit-predicate.c"
+     parse-file
+     ((default-finder implicit-predicate-atom?)))

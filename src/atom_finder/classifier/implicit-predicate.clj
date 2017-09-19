@@ -2,7 +2,7 @@
 (import '(org.eclipse.cdt.core.dom.ast
           IASTIfStatement IASTForStatement IASTWhileStatement
           IASTDoStatement IASTBinaryExpression IASTUnaryExpression)
-        '(org.eclipse.cdt.core.dom.ast IBasicType$Kind))
+        '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind))
 
 (defn condition
   [node]
@@ -15,16 +15,18 @@
                                (constantly nil))
    node))
 
-(defn bool-expr?
+(defn non-bool-expr?
   [node]
   (when (instance? IASTExpression node)
     (some->> node
              .getExpressionType
+             (#(when (instance? IBasicType %1) %1))
              .getKind
-             (= IBasicType$Kind/eBoolean))))
+             (= IBasicType$Kind/eBoolean)
+             not)))
 
 (defn implicit-predicate-atom?
   "Does this AST node have an implicit predicate atom"
   [node]
   (when-let [cond-expr (condition node)]
-    (not (bool-expr? cond-expr))))
+    (non-bool-expr? cond-expr)))

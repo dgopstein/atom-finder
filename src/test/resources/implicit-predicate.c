@@ -45,5 +45,7 @@ int main()
 
   !y ? 1 : 2; // <false>
 
+  if (unknown_type(1)); // <false> can't resolve type
+
   return;
 }
