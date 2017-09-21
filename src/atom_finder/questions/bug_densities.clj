@@ -39,7 +39,7 @@
   (log-err (str "atom-and-bug-counts " (:rev-str srcss)) {}
              {:rev-str     (->> srcss :rev-str)
               :n-bugs      (->> srcss :rev-commit bugzilla-ids count)
-              :n-atoms     (->> srcss :srcs (map :atoms-before) (map (partial map-values count)))
+              :n-atoms     (->> srcss :srcs (map :atoms-before) (map (partial map-values count)) (apply merge-with +))
               :n-non-atoms (->> srcss :srcs (map :non-atoms-before) flatten count)
               :time        (now)
               })
@@ -51,11 +51,11 @@
   (-<>> gcc-repo
         ;(map-all-commits map identity)
         (commits-from <> "d3a3d1a6f5773da52474e77e0bb07319d34ac149")
-        (map #(update-in % [:srcs] (fn [files] (with-timeout 45 (doall files)))))
+        (pmap #(update-in % [:srcs] (fn [files] (with-timeout 45 (doall files)))))
         (remove nil?)
-        (map atom-and-bug-counts)
-        (map prn)
+        (pmap atom-and-bug-counts)
+        (map prn) ; cannot be pmap
         dorun
-        ;(log-to "tmp/bug-densities-2017-09-20-all-atoms.txt")
+        (log-to "tmp/bug-densities-2017-09-21_1-pre-summed.txt")
         time-mins)
   )
