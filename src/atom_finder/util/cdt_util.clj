@@ -337,6 +337,7 @@
   (flatten (pmap-dir-trees #(->> % flatten-tree (map f)) dirname)))
 
 (s/defn tree-path
+  "the path from the root to this node"
   [node]
   (let [dad (parent node)]
     (if (nil? dad)

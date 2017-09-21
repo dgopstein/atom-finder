@@ -5,20 +5,17 @@
       (catch Exception e# (do (errln (str "-- exception parsing commit: \"" ~msg "\"\n")) ~ret))
       (catch Error e#     (do (errln (str "-- error parsing commit: \""  ~msg "\"\n")) ~ret))))
 
+(defn c-file?
+  [filename]
+  (let [exts #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"}]
+    (exts (nth (re-find #".*\.([^.]+)" filename) 1 nil))))
+
 (defn c-files
   "Search directory structure for C-like files"
   [dirname]
   (let [dirfile  (clojure.java.io/file dirname)
-        files (file-seq dirfile)
-        exts #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"}]
-
-    (filter
-     (fn [file]
-       (and
-        (exts (nth (re-find #".*\.([^.]+)" (.getName file)) 1 nil))
-        (.isFile file))
-       )
-     files)))
+        files (file-seq dirfile)]
+    (filter (fn [file] (and (c-file? (.getName file)) (.isFile file))) files)))
 
 (defn resource-path
   "Find the path to a resource"

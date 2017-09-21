@@ -19,7 +19,7 @@
   [node]
   (when (instance? IASTExpression node)
     (some->> node
-             .getExpressionType
+             (#(try (.getExpressionType %) (catch java.lang.ArrayIndexOutOfBoundsException e nil))) ; because of opts[i][j] from /gcc/config/i386/i386.c line 4903
              (#(when (instance? IBasicType %1) %1))
              .getKind
              (= IBasicType$Kind/eBoolean)

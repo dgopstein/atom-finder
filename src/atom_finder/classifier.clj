@@ -27,6 +27,10 @@
   `(Atom. (s/validate AtomName ~name)
           (s/fn ~(symbol (str name "-classifier")) :- Boolean [node# :- IASTNode] (~classifier node#))
           (s/fn ~(symbol (str name "-finder")) :- [IASTNode] [node# :- IASTNode] (~finder node#))
+          ;(s/fn ~(symbol (str name "-classifier")) :- Boolean [node# :- IASTNode]
+          ;  (log-err (str "atom " ~name "-classifier") false (~classifier node#)))
+          ;(s/fn ~(symbol (str name "-finder")) :- [IASTNode]  [node# :- IASTNode]
+          ;  (log-err (str "atom " ~name "-finder") nil (~finder node#)))
   ))
 
 (def atoms

@@ -115,14 +115,23 @@
         ast-after  (parse-source source-after)
         atoms-before (find-all-atoms ast-before)
         atoms-after (find-all-atoms ast-after)]
-  {:ast-before ast-before
-   :ast-after  ast-after
-   :atoms-before atoms-before
-   :atoms-after  atoms-after
+  {:ast-before       ast-before
+   :ast-after        ast-after
+   :atoms-before     atoms-before
+   :atoms-after      atoms-after
    :non-atoms-before (non-atoms ast-before atoms-before)
    :non-atoms-after  (non-atoms ast-after atoms-after)
-   :source-before source-before
-   :source-after  source-after}))
+   :source-before    source-before
+   :source-after     source-after
+   }))
+
+(def empty-srcs
+  {:ast-before       nil
+   :ast-after        nil
+   :atoms-before     (map-values (constantly nil) atom-lookup)
+   :atoms-after      (map-values (constantly nil) atom-lookup)
+   :non-atoms-before nil
+   :non-atoms-after  nil})
 
 (s/defn before-after-data
   "Return the ast of changed files before/after a commit"
@@ -136,6 +145,8 @@
       :rev-str (.name rev-commit)
       :patch-str  patch-str
       }
+
+     ;(if (not (c-file? file-name)) empty-srcs
      (build-srcs source-before source-after))))
 
 (defn atom-specific-srcs
@@ -169,10 +180,10 @@
            (let [patches-str (gitq/changed-files-with-patch repo rev-commit)
                  file-patches (->> patches-str parse-diff (map #(vector (or (.getOldFile %1) (.getNewFile %1)) %1)) (into {}))]
              (for [filename (edited-files repo rev-commit)]
-                (log-err (str {:commit-hash (.name rev-commit) :file filename}) nil
+                ;(log-err (str "c-f-b-a " {:commit-hash (.name rev-commit) :file filename}) nil
                          (merge (before-after-data repo rev-commit filename)
                                 {:patch (file-patches filename)
-                                 :rev-commit rev-commit}))))))
+                                 :rev-commit rev-commit})))));)
 
 (s/defn atoms-changed-in-commit ;:- {s/Str {s/Keyword BACounts}}
   [repo :- Git atoms :- [Atom] rev-commit :- RevCommit]
