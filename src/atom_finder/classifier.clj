@@ -49,6 +49,7 @@
    (ValidatedAtom :operator-precedence       operator-precedence-atom?   (default-finder operator-precedence-atom?))
    (ValidatedAtom :repurposed-variable       repurposed-variable-atom?   repurposed-variable-atoms)
    (ValidatedAtom :implicit-predicate        implicit-predicate-atom?    (default-finder implicit-predicate-atom?))
+   (ValidatedAtom :type-conversion           type-conversion-atom?       (default-finder type-conversion-atom?))
   ])
 
 (def atom-lookup (into {} (map #(vector (:name %1) %1) atoms)))
