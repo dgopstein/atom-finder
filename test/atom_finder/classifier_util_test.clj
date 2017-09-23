@@ -117,7 +117,7 @@
 
       (for [[expr expected] cases]
         (testing (str "Parse numeric literal from string: " expr " - " expected)
-          (is (= (integeral? expr) exected)))))
+          (is (= (integral? expr) expected)))))
     ))
 
 (deftest test-parse-numeric-literal?
