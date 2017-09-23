@@ -72,12 +72,14 @@
       (str/replace #"[bB]" "")
       (Long/parseLong 2)))
 
-(s/defn real-number? :- s/Bool
-  "Is the number represented by this string a Real number"
+(s/defn integral? :- s/Bool
+  "Is the number represented by this string an integer (e.g. not a flaoting point number)"
   [s :- String]
-  (->> s
-       (re-find #"[.eE]")
-       boolean))
+  (not-any? #(re-find % s)
+            [#"\."          ; decimal
+             #"^[^xX]*[eE]" ; exponent character (not in hex)
+             #"p"           ; exponent character (in hex number)
+             ]))
 
 (defmulti radix "In which base is the number specified" class)
 (s/defmethod radix String :- s/Keyword
@@ -125,13 +127,14 @@
 (s/defmethod parse-numeric-literal String :- (s/maybe s/Num) [s-in]
   (let [s (str/replace s-in #"[uUlL]*$" "")] ; remove suffix
     (condp contains? (radix s)
-          #{:oct :dec :hex} (if (real-number? s) (Double/parseDouble s) (Long/decode s))
+          #{:oct :dec :hex} (if (integral? s) (Long/decode s) (Double/parseDouble s))
           #{:bin} (parse-binary-literal s)
           nil)))
 
+(Double/parseDouble "0x756e6547")
+
 (defn log2 [n] (/ (Math/log n) (Math/log 2)))
 (def number-bits "How many bits are requited to store an integer value" log2)
-
 
 (defn remove-wrappers
   "Drill down the tree past expressions that just return the value of their direct children"

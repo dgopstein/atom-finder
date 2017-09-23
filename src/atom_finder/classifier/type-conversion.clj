@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTElaboratedTypeSpecifier IASTSimpleDeclaration IASTDeclaration IASTDeclarator IASTInitializerList IPointerType ISemanticProblem IASTFunctionCallExpression IFunctionType IASTReturnStatement IASTCastExpression)
+(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTElaboratedTypeSpecifier IASTSimpleDeclaration IASTDeclaration IASTDeclarator IASTEqualsInitializer IASTInitializerList IPointerType ISemanticProblem IASTFunctionCallExpression IFunctionType IASTReturnStatement IASTCastExpression)
         '(java.text ParseException)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp.semantics EvalBinding))
 
@@ -97,8 +97,10 @@
 (s/defmethod arg-types IASTBinaryExpression [node]
     (map unify-type [(.getOperand2 node)]))
 (s/defmethod arg-types IASTSimpleDeclaration [node]
-    (keep #(some->> % .getInitializer .getInitializerClause unify-type)
-          (.getDeclarators node)))
+  (keep #(some->> % .getInitializer
+                  ((fn [init] (when (instance? IASTEqualsInitializer init) init)))
+                  .getInitializerClause unify-type)
+        (.getDeclarators node)))
 (s/defmethod arg-types IASTFunctionCallExpression [node]
     (map unify-type (.getArguments node)))
 (s/defmethod arg-types IASTReturnStatement [node]

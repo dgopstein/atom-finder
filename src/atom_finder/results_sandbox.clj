@@ -10,7 +10,7 @@
    )
   )
 
-(->> "gcc-atom-comment-context_2017-05-17_1.edn"
+(->> "Gcc-atom-comment-context_2017-05-17_1.edn"
      read-data
      flatten-res
      (map #(- (:ast-size-after %1) (:ast-size-before %1)))
@@ -124,6 +124,9 @@
      ((default-finder implicit-predicate-atom?)))
 
 (print-atoms-in-dir gcc-path (select-values atom-lookup [:type-conversion]))
+
+(->> "~/opt/src/linux-4.12.4/tools/power/x86/x86_energy_perf_policy/x86_energy_perf_policy.c"
+     (atoms-in-file atoms))
 
 ;(->> "/home/dgopstein/opt/src/gcc/libgfortran/io/unix.c"
 ;     parse-file

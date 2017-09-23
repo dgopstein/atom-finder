@@ -91,6 +91,35 @@
         (is (= expected (->> code parse-expr numeric-literal?)))))))
       )
 
+(deftest test-integeral?
+  (testing "Is a number an integer"
+    (let [cases [
+            ["11"    true]
+            ["011"   true]
+            ["0x11"  true]
+            ["0b11"  true]
+            ["-11"   true]
+            ["-011"  true]
+            ["-0x11" true]
+            ["-0b11" true]
+            ["-0B11" true]
+            ["0x10.1p2"   false]
+            ["010e1"      false]
+            ["0x10.1e3p2" false]
+            ["0x10e3.1p2" false]
+            ["010.1e1"    false]
+            ["12ul"  true]
+            ["012l"  true]
+            ["0x12u" true]
+            [".012" false]
+            ["0x756e6547" true]
+                 ]]
+
+      (for [[expr expected] cases]
+        (testing (str "Parse numeric literal from string: " expr " - " expected)
+          (is (= (integeral? expr) exected)))))
+    ))
+
 (deftest test-parse-numeric-literal?
   (testing "Get numeric value from a string"
     (let [cases [
@@ -112,6 +141,7 @@
             ["012l"  10]
             ["0x12u" 18]
             [".012" 0.012]
+            ["0x756e6547" 1970169159]
                  ]]
 
       (for [[expr expected] cases]

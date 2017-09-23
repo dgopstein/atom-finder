@@ -16,16 +16,20 @@
    (into {})
    ))
 
+(defn atoms-in-file
+  [atoms filename]
+  [filename
+   (->> filename
+        expand-home
+        parse-file
+        (all-atoms-in-tree atoms)
+        (map-values (partial map (comp :line loc)))
+        )])
+
 (defn print-atoms-in-dir
   [dirname atoms]
   (->> dirname
-       (pmap-dir-files
-        #(vector %1
-               (->> %1
-                    parse-file
-                    (all-atoms-in-tree atoms)
-                    (map-values (partial map (comp :line loc)))
-                    )))
+       (pmap-dir-files #(atoms-in-file atoms %))
        (map prn)
        count
        println

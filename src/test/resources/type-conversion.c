@@ -43,6 +43,8 @@ int main() {
   static const struct stream_vtable x = {
     .read = (void *) raw_read
   };
+
+  String s("abc"); // <false>
 }
 
 
