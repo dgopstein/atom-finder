@@ -7,8 +7,8 @@
    [atom-finder.atom-patch :refer :all]
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
-   [atom-finder.classifier :refer [operator-group underclassify-confusing-operator-combination?
-                                   overclassify-confusing-operator-combination? operator-precedence-atom?]]
+   [atom-finder.classifier :refer [operator-group confusing-operator-combination?
+                                   operator-precedence-atom?]]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    )
@@ -49,9 +49,9 @@
                  (and (or (instance? IASTBinaryExpression parent-node)
                           (instance? CPPASTConditionalExpression parent-node))
                       (= node (first (children parent-node))))
-                 (underclassify-confusing-operator-combination? (reverse opt-group-combination))
+                 (confusing-operator-combination? (reverse opt-group-combination))
                
-                 :else(underclassify-confusing-operator-combination? opt-group-combination))))
+                 :else(confusing-operator-combination? opt-group-combination))))
 
 ;
 ;========GENERAL TESTING==============
@@ -63,6 +63,11 @@
      ;redundant-paren?
      atom-without-paren?
 )
+
+(->> "a | b & c" parse-expr
+ ;(get-in-tree [0])
+ operator-precedence-atom?
+ )
 
 (def codebase_name "wcdb")
 
