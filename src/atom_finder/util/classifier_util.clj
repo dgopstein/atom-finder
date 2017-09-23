@@ -124,11 +124,22 @@
 (s/defmethod parse-numeric-literal IASTLiteralExpression :- (s/maybe s/Num) [node]
   (parse-numeric-literal (String. (.getValue node))))
 
+(defn remove-suffix [num-str] (str/replace num-str #"[uUlL]*$" ""))
+(defn remove-prefix [num-str] (str/replace num-str #"^0[bBxX]" ""))
+
 (s/defmethod parse-numeric-literal String :- (s/maybe s/Num) [s-in]
-  (let [s (str/replace s-in #"[uUlL]*$" "")] ; remove suffix
+  (let [s (remove-suffix s-in)] ; remove suffix
     (condp contains? (radix s)
-          #{:oct :dec :hex} (if (integral? s) (Long/decode s) (Double/parseDouble s))
-          #{:bin} (parse-binary-literal s)
+      #{:oct :dec :hex}
+        (if (integral? s)
+          (try
+            (Long/decode s)
+            (catch NumberFormatException e
+              (java.math.BigInteger. (remove-prefix s)
+                                     ({:oct 8 :dec 10 :hex 16} (radix s)))))
+          (Double/parseDouble s))
+      #{:bin}
+        (parse-binary-literal s)
           nil)))
 
 (defn log2 [n] (/ (Math/log n) (Math/log 2)))

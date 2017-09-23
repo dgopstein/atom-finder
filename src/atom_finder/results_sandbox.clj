@@ -125,7 +125,7 @@
 
 (print-atoms-in-dir gcc-path (select-values atom-lookup [:type-conversion]))
 
-(->> "~/opt/src/linux-4.12.4/tools/power/x86/x86_energy_perf_policy/x86_energy_perf_policy.c"
+(->> "/home/dgopstein/opt/src/linux-4.12.4/tools/testing/selftests/x86/mpx-dig.c"
      (atoms-in-file atoms))
 
 ;(->> "/home/dgopstein/opt/src/gcc/libgfortran/io/unix.c"
