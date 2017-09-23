@@ -56,6 +56,6 @@
         (pmap atom-and-bug-counts)
         (map prn) ; cannot be pmap
         dorun
-        (log-to "tmp/bug-densities-2017-09-21_1-pre-summed.txt")
+        (log-to "tmp/bug-densities-2017-09-21_2-type-conversion.txt")
         time-mins)
   )

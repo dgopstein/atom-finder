@@ -30,8 +30,19 @@ int main() {
 
   int V13 = 1, V14 = 2.3; // <true>
 
-  (int) 2.3; // <true>
-  (int) 2;   // <false>
+  (int) 2.3;   // <true>
+  (int) 2;     // <false>
+  (int *) 2.3; // <false> ignore all pointers
+  (int *) 2;   // <false>
+  (char *) 2;  // <false>
+
+  char *c = 2; // <false>
+
+  // crashed in /gcc/libgfortran/io/unix.c
+  static const struct stream_vtable x = { y = 1 };
+  static const struct stream_vtable x = {
+    .read = (void *) raw_read
+  };
 }
 
 
