@@ -14,15 +14,16 @@
    )
   )
 
-'(->> "~/opt/src/linux-4.12.4"
+(->> "~/opt/src/linux-4.12.4"
       expand-home
       (pmap-dir-trees
        (fn [root]
          {:file (str/replace-first (.getFilePath root) #".*(?=linux)" "")
           :atom-counts (map-values #(count ((:finder %) root)) atom-lookup)}))
       (map prn)
+      ;(take 1000)
       dorun
-      (take 10);(log-to "tmp/linux-atom-counts_2017-07-06_01.edn")
+      (log-to "tmp/linux-4.12.4-atom-counts_2017-09-23_0.edn")
       time
       )
 

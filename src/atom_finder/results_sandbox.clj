@@ -128,6 +128,10 @@
 (->> "/home/dgopstein/opt/src/linux-4.12.4/tools/testing/selftests/x86/mpx-dig.c"
      (atoms-in-file atoms))
 
+(bigint 0xffff800000000000)
+
+(java.math.BigInteger. "0xffff800000000000" 16)
+
 ;(->> "/home/dgopstein/opt/src/gcc/libgfortran/io/unix.c"
 ;     parse-file
 (->> "static const struct stream_vtable x = {.read = (void *) raw_read};"

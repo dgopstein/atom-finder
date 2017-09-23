@@ -144,10 +144,10 @@
             ["0x756e6547" 1970169159]
             ["0xffff800000000000" 18446603336221196288]
                  ]]
-
       (for [[expr expected] cases]
         (testing (str "Parse numeric literal from string: " expr " - " expected)
-          (is (close? 0.001 expected (parse-numeric-literal (parse-expr expr)))))))
+          (let [res (parse-numeric-literal (parse-expr expr))]
+            (is (or (= expected (pprn res)) (close? 0.001 expected res)))))))
     ))
 
 (deftest test-intersects-line-range?
