@@ -78,7 +78,9 @@
       (order-insensitive-opt-combination (sort combination))
 
       ;;SPECIAL CASE 1: Comma operator in any combination;
-      (some (partial = :comma) combination)))
+      (some (partial = :comma) combination)
+      ;SPECIAL CASE 2: note that the pair name is not [:bitwise_bin :bitwise-bin]
+      (= [:bitwise--bin :bitwise--bin] combination)))
 
 (defn operator-group-pair?
   [node]
@@ -105,11 +107,17 @@
 
 (defn group-pairs-in-node
   "Returns all operator group pairs in a node"
-  [node child-groups]
-  (let [node-group (operator-group node)]
+  [node child-nodes]
+  (let [node-group (operator-group node) child-groups (map operator-group child-nodes)]
     (cond
            (instance? IASTUnaryExpression node) 
            [[node-group (safe-nth child-groups 0)]]
+
+           ;;SPECIAL CASE 2: Two bitwise_bins that are not the same, note that the group pair name is not [:bitwise_bin and bitwise_bin]
+           (and (and (= :bitwise_bin node-group)
+                     (= :bitwise_bin (safe-nth child-groups 1)))
+                (not (= (.getOperator node) (.getOperator (safe-nth child-nodes 1)))))
+           [[:bitwise--bin :bitwise--bin]]
 
            (instance? IASTBinaryExpression node) 
            (-> node
@@ -129,16 +137,14 @@
 
   ([node collection]
    (->> collection
-        (map operator-group)
         (group-pairs-in-node node)
         (remove (partial some nil?)))))
 
 (defn operator-precedence-atom?
   "Is this node an operator-precedence-atom?"
   [node]
-  (and
-   (operator-group-pair? node)
+  (and (operator-group-pair? node)
 
-   (not (= :assign (operator-group node)))
+       (not (= :assign (operator-group node)))
 
-   (some confusing-operator-combination? (group-pair node))))
+       (some confusing-operator-combination? (group-pair node))))
