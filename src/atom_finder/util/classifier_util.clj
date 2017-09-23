@@ -131,8 +131,6 @@
           #{:bin} (parse-binary-literal s)
           nil)))
 
-(Double/parseDouble "0x756e6547")
-
 (defn log2 [n] (/ (Math/log n) (Math/log 2)))
 (def number-bits "How many bits are requited to store an integer value" log2)
 
