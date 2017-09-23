@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTElaboratedTypeSpecifier IASTSimpleDeclaration IASTDeclaration IASTDeclarator IASTInitializerList ISemanticProblem IASTFunctionCallExpression IFunctionType IASTReturnStatement IASTCastExpression)
+(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTElaboratedTypeSpecifier IASTSimpleDeclaration IASTDeclaration IASTDeclarator IASTInitializerList IPointerType ISemanticProblem IASTFunctionCallExpression IFunctionType IASTReturnStatement IASTCastExpression)
         '(java.text ParseException)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp.semantics EvalBinding))
 
@@ -57,11 +57,15 @@
 (s/defmethod unify-type IASTInitializerList :- (s/maybe FullType) [node]
   ;; x = { y = 1 }
   nil)
+(s/defmethod unify-type IPointerType :- (s/maybe FullType) [node]
+  ;; int x(char *y) { y; }
+  ;;                 ^^^
+  nil)
 (s/defmethod unify-type IASTExpression :- (s/maybe FullType) [node]
-  (some-> node .getExpressionType unify-type (merge {:val node})))
+  (some-<> node .getExpressionType unify-type (merge {:val node})))
 (s/defmethod unify-type ISemanticProblem [node]
   (throw (ParseException. (str "Expression type unknown (" (class node) ")") 0)))
-;(s/defmethod unify-type :default [node] nil) ; TODO investigate that this doesn't generate a lot of false negatives
+(s/defmethod unify-type :default [node] nil) ; TODO investigate that this doesn't generate a lot of false negatives
 
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
 ;(ns-unmap 'atom-finder.classifier 'context-types)
@@ -115,7 +119,7 @@
 (s/defn coercing-node? :- (s/maybe s/Bool)
   "Is one declaration/function-argument/etc coercing?"
   [c-type a-type]
-  (when (not-any? nil? (mapcat vals [c-type a-type]))
+  (when (not-any? nil? (concat [c-type a-type] (mapcat vals [c-type a-type])))
     (let [[context-lower context-upper] (bit-range c-type)]
       (boolean (or
                                         ; real -> int

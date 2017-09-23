@@ -135,10 +135,17 @@
      ((default-finder type-conversion-atom?))
      )
 
+(->> "int x(char *y) { y; }"
+     parse-source
+     (get-in-tree [0 2 0 0])
+     .getExpressionType
+     )
+
 (->> ;"char *V1 = 33333333, V2, *V3"
      "(int *) 2.3"
      parse-frag
      (def node))
-     (->> node .getDeclSpecifier)
-     (->> node .getDeclarators (map (memfn getPointerOperators)) (filter empty?))
-     (->> node type-conversion-atom?)
+(->> node .getTypeId)
+(->> node .getDeclSpecifier)
+(->> node .getDeclarators (map (memfn getPointerOperators)) (filter empty?))
+(->> node type-conversion-atom?)
