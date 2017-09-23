@@ -118,9 +118,27 @@
 
 (apply max-key last [[1 2] [3 0]])
 
-
-(print-atoms-in-dir gcc-path (select-values atom-lookup [:implicit-predicate]))
 (->> "/Users/dgopstein/opt/src/gcc/gcc/common/config/pdp11/pdp11-common.c"
      "/Users/dgopstein/nyu/confusion/atom-finder/src/test/resources/implicit-predicate.c"
      parse-file
      ((default-finder implicit-predicate-atom?)))
+
+(print-atoms-in-dir gcc-path (select-values atom-lookup [:type-conversion]))
+
+;(->> "/home/dgopstein/opt/src/gcc/libgfortran/io/unix.c"
+;     parse-file
+(->> "static const struct stream_vtable x = {.read = (void *) raw_read};"
+     parse-frag
+     ;;print-tree)
+     ;(get-in-tree [0 1 1 0 0 1])
+     ;type-conversion-atom?
+     ((default-finder type-conversion-atom?))
+     )
+
+(->> ;"char *V1 = 33333333, V2, *V3"
+     "(int *) 2.3"
+     parse-frag
+     (def node))
+     (->> node .getDeclSpecifier)
+     (->> node .getDeclarators (map (memfn getPointerOperators)) (filter empty?))
+     (->> node type-conversion-atom?)

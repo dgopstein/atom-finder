@@ -24,6 +24,7 @@
          ["char V1 = 127 + 5" false] ; maybe one day
          ["char V1 = 26" false]
          ["int *V1 = {3, 4, 1, 2}", false]
+         ["char *V1 = 33333333", false]
          ["int V1" false]
          ]]
     (for [[code expected] cases]

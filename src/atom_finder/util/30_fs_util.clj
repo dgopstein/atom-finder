@@ -44,6 +44,7 @@
   (pmap
    (fn [file]
      (let [filename (.getPath file)]
+       ;(f filename)))
        (log-err (format "file: \"%s\"" filename) nil (f filename))))
    (c-files dirname)))
 

@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTSimpleDeclaration IASTDeclaration IASTInitializerList ISemanticProblem IASTFunctionCallExpression IFunctionType IASTReturnStatement IASTCastExpression)
+(import '(org.eclipse.cdt.core.dom.ast IBasicType IBasicType$Kind IASTNode IASTSimpleDeclSpecifier IASTElaboratedTypeSpecifier IASTSimpleDeclaration IASTDeclaration IASTDeclarator IASTInitializerList ISemanticProblem IASTFunctionCallExpression IFunctionType IASTReturnStatement IASTCastExpression)
         '(java.text ParseException)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp.semantics EvalBinding))
 
@@ -8,7 +8,7 @@
 (s/defrecord TD ;TypeDescription
     [number-type :- s/Keyword bits :- s/Int])
 (def FullType {(s/required-key :number-type) s/Keyword
-               (s/required-key :bits) s/Int
+               (s/required-key :bits) (s/maybe s/Int)
                (s/optional-key :unsigned?) s/Bool
                (s/optional-key :val) IASTNode})
 
@@ -43,6 +43,7 @@
 (s/defmethod unsigned? ISemanticProblem [node] nil) ; tread as false, but that's probably ok
 (s/defmethod unsigned? :default [node] (->> node .isUnsigned))
 
+;(ns-unmap 'atom-finder.classifier 'unify-type)
 (defmulti unify-type "Go from an arbitrary java node to it's type in clojure data" class)
 (s/defmethod unify-type IBasicType :- (s/maybe FullType) [node]
   (merge (->> node .getKind basic-type)
@@ -50,13 +51,20 @@
 (s/defmethod unify-type IASTSimpleDeclSpecifier :- (s/maybe FullType) [node]
   (merge (->> node .getType decl-type)
          {:unsigned? (unsigned? node)}))
+(s/defmethod unify-type IASTElaboratedTypeSpecifier :- (s/maybe FullType) [node]
+  ;; static const struct stream_vtable
+  nil)
+(s/defmethod unify-type IASTInitializerList :- (s/maybe FullType) [node]
+  ;; x = { y = 1 }
+  nil)
 (s/defmethod unify-type IASTExpression :- (s/maybe FullType) [node]
-  (merge (->> node .getExpressionType unify-type)
-         {:val node}))
+  (some-> node .getExpressionType unify-type (merge {:val node})))
 (s/defmethod unify-type ISemanticProblem [node]
   (throw (ParseException. (str "Expression type unknown (" (class node) ")") 0)))
+;(s/defmethod unify-type :default [node] nil) ; TODO investigate that this doesn't generate a lot of false negatives
 
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
+;(ns-unmap 'atom-finder.classifier 'context-types)
 (defmulti context-types class)
 (s/defmethod context-types :default [node] nil)
 (s/defmethod context-types IASTFunctionCallExpression [node]
@@ -68,12 +76,17 @@
 (s/defmethod context-types IASTBinaryExpression [node]
     [(->> node .getOperand1 .getExpressionType unify-type)])
 (s/defmethod context-types IASTSimpleDeclaration [node]
-    (repeat (count (.getDeclarators node))
-            (->> node .getDeclSpecifier unify-type)))
+  ;; Don't process any declaration specifiers which have an associated pointer *
+  (->> node
+       .getDeclarators
+       (map (memfn getPointerOperators))
+       (filter empty?)
+       (map (fn [_] (->> node .getDeclSpecifier unify-type)))))
 (s/defmethod context-types IASTReturnStatement [node]
     [(->> node enclosing-function (get-in-tree [0]) unify-type)])
 (s/defmethod context-types IASTCastExpression [node]
-    [(->> node .getTypeId .getDeclSpecifier unify-type)])
+  (when (->> node .getTypeId .getAbstractDeclarator .getPointerOperators empty?)
+    [(->> node .getTypeId .getDeclSpecifier unify-type)]))
 
 (defmulti arg-types class)
 (s/defmethod arg-types :default [node] nil)
@@ -99,21 +112,22 @@
        (map #(- % (first signed-range)) signed-range)
        signed-range))))
 
-(s/defn coercing-node? :- s/Bool
+(s/defn coercing-node? :- (s/maybe s/Bool)
   "Is one declaration/function-argument/etc coercing?"
   [c-type a-type]
-  (let [[context-lower context-upper] (bit-range c-type)]
-    (boolean (or
-     ; real -> int
-     (and (#{:int} (:number-type c-type))
-          (#{:real} (:number-type a-type)))
+  (when (not-any? nil? (mapcat vals [c-type a-type]))
+    (let [[context-lower context-upper] (bit-range c-type)]
+      (boolean (or
+                                        ; real -> int
+                (and (#{:int} (:number-type c-type))
+                     (#{:real} (:number-type a-type)))
 
-     ; large -> small
-     ; signed -> unsigned (and the reverse)
-     (and (numeric-literal? (:val a-type))
-          (#{:int} (:number-type a-type))
-          (not (<= context-lower (parse-numeric-literal (:val a-type)) context-upper))))
-    )))
+                                        ; large -> small
+                                        ; signed -> unsigned (and the reverse)
+                (and (numeric-literal? (:val a-type))
+                     (#{:int} (:number-type a-type))
+                     (not (<= context-lower (parse-numeric-literal (:val a-type)) context-upper))))
+               ))))
 
 (s/defn type-conversion-atom? :- s/Bool
   [node]
