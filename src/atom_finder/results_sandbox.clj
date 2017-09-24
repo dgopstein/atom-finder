@@ -125,7 +125,7 @@
 
 (print-atoms-in-dir gcc-path (select-values atom-lookup [:type-conversion]))
 
-(->> "/home/dgopstein/opt/src/linux-4.12.4/tools/testing/selftests/x86/mpx-dig.c"
+(->> "/home/dgopstein/opt/src/gcc/libstdc++-v3/include/debug/safe_iterator.h"
      (atoms-in-file atoms))
 
 (bigint 0xffff800000000000)

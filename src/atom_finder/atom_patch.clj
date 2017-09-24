@@ -105,8 +105,8 @@
 
 (s/defn non-atoms
   "Given an AST and a map of all atoms, return a list of all non-atom nodes"
-  [root all-atoms :- {s/Keyword [IASTNode]}]
-  (let [ungrouped-atoms (set (apply concat (vals all-atoms)))]
+  [root found-atoms :- {s/Keyword [IASTNode]}]
+  (let [ungrouped-atoms (set (apply concat (vals found-atoms)))]
     (remove ungrouped-atoms (flatten-tree root))))
 
 (s/defn build-srcs

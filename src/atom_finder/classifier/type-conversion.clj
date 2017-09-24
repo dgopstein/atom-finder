@@ -46,11 +46,13 @@
 ;(ns-unmap 'atom-finder.classifier 'unify-type)
 (defmulti unify-type "Go from an arbitrary java node to it's type in clojure data" class)
 (s/defmethod unify-type IBasicType :- (s/maybe FullType) [node]
-  (merge (->> node .getKind basic-type)
-         {:unsigned? (unsigned? node)}))
+  (some-> node .getKind basic-type (merge {:unsigned? (unsigned? node)})))
 (s/defmethod unify-type IASTSimpleDeclSpecifier :- (s/maybe FullType) [node]
-  (merge (->> node .getType decl-type)
-         {:unsigned? (unsigned? node)}))
+  (some-> node .getType decl-type (merge {:unsigned? (unsigned? node)})))
+(s/defmethod unify-type IASTExpression :- (s/maybe FullType) [node]
+  (some-> node .getExpressionType unify-type (merge {:val node})))
+(s/defmethod unify-type ISemanticProblem [node]
+  (throw (ParseException. (str "Expression type unknown (" (class node) ")") 0)))
 (s/defmethod unify-type IASTElaboratedTypeSpecifier :- (s/maybe FullType) [node]
   ;; static const struct stream_vtable
   nil)
@@ -61,10 +63,6 @@
   ;; int x(char *y) { y; }
   ;;                 ^^^
   nil)
-(s/defmethod unify-type IASTExpression :- (s/maybe FullType) [node]
-  (some-<> node .getExpressionType unify-type (merge {:val node})))
-(s/defmethod unify-type ISemanticProblem [node]
-  (throw (ParseException. (str "Expression type unknown (" (class node) ")") 0)))
 (s/defmethod unify-type :default [node] nil) ; TODO investigate that this doesn't generate a lot of false negatives
 
 ; https://www.safaribooksonline.com/library/view/c-in-a/0596006977/ch04.html
