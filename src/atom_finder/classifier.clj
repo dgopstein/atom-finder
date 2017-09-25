@@ -56,4 +56,7 @@
 
 (defn find-all-atoms
   [root]
-  (map-values (fn [atom] ((:finder atom) root)) atom-lookup))
+  (map-values (fn [atom]
+                (log-err (str "finding " (:name atom)) nil
+                         ((:finder atom) root)))
+              atom-lookup))

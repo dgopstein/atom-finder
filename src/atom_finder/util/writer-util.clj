@@ -40,6 +40,9 @@
 
 (def ast-writer (ASTWriter.))
 (defn write-ast [node] (.write ast-writer node))
+(defn safe-write-ast [node]
+  (try (write-ast node)
+       (catch org.eclipse.cdt.internal.core.dom.rewrite.astwriter.ProblemRuntimeException e "<!!!>")))
 
 (defmacro should-visit! [writer val]
   "Tell the AST-visitor to visit no types of node"

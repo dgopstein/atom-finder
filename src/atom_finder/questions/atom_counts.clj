@@ -1,3 +1,6 @@
+;; For a single state (e.g. head, or a sable release) how many atoms
+;; of each type exist in the codebase, relative to total AST nodes
+
 (ns atom-finder.questions.atom-counts
   (:require
    [atom-finder.util :refer :all]
@@ -17,14 +20,12 @@
 
 (defn count-atoms-in-tree
   [root]
-  (let [found-atoms (find-all-atoms root)]
-    (assoc (map-values count found-atoms)
-           :non-atoms (->> found-atoms (non-atoms root) count))))
+  (map-values count find-all-atoms-non-atoms))
 
 (defn count-atoms-in-linux
   []
-(->> ;"~/opt/src/gcc"
-      "~/opt/src/linux-4.12.4"
+(->> "~/opt/src/gcc"
+      ;"~/opt/src/linux-4.12.4"
       expand-home
       (pmap-dir-trees
        (fn [root]
@@ -33,7 +34,7 @@
       (map prn)
       ;(take 1000)
       dorun
-      (log-to "tmp/linux-atom-counts_2017-09-23_1.edn")
+      (log-to "tmp/gcc-atom-counts_2017-09-23_2.edn")
       time-mins
       )
   )

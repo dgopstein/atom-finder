@@ -10,12 +10,15 @@
   (let [exts #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"}]
     (exts (nth (re-find #".*\.([^.]+)" filename) 1 nil))))
 
+(defn files-in-dir
+  [dirname]
+  (->> dirname clojure.java.io/file file-seq))
+
 (defn c-files
   "Search directory structure for C-like files"
   [dirname]
-  (let [dirfile  (clojure.java.io/file dirname)
-        files (file-seq dirfile)]
-    (filter (fn [file] (and (c-file? (.getName file)) (.isFile file))) files)))
+  (filter (fn [file] (and (c-file? (.getName file)) (.isFile file)))
+          (files-in-dir dirname)))
 
 (defn resource-path
   "Find the path to a resource"

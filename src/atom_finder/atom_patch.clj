@@ -109,6 +109,12 @@
   (let [ungrouped-atoms (set (apply concat (vals found-atoms)))]
     (remove ungrouped-atoms (flatten-tree root))))
 
+(s/defn find-all-atoms-non-atoms
+  "Find all atoms and non-atoms in AST"
+  [root]
+  (let [found-atoms (find-all-atoms root)]
+    (assoc found-atoms :non-atoms (non-atoms root found-atoms))))
+
 (s/defn build-srcs
   [source-before :- String source-after :- String]
   (let [ast-before (parse-source source-before)
