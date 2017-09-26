@@ -39,13 +39,11 @@
 (defn range-set-cc [ranges] (range-set-constructor (fn [[a b]] (Range/closed a b)) ranges))
 (defn range-set-singleton [elems] (range-set-constructor (fn [a] (Range/singleton a)) elems))
 (defn range-set-canonical [elems]
+  "[1 2 3 5] => [[1..4), [5..6)]"
   (->> elems
        (map (fn [a] (Range/singleton a)))
-       ImmutableRangeSet/unionOf
-       (#(.canonical % (DiscreteDomain/longs)))))
-
-
-
+       (map #(.canonical % (DiscreteDomain/longs)))
+       ImmutableRangeSet/unionOf))
 
 (def fn-range-set-co (comp make-ifn range-set-co))
 (def fn-range-set-cc (comp make-ifn range-set-cc))
