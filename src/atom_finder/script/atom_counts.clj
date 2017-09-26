@@ -26,8 +26,12 @@
       time
       )
 
-'(->> "linux-atom-counts_2017-07-06_01.edn"
+(->> "linux-atom-counts_2017-09-23_1.edn"
+     ;"gcc-atom-counts_2017-09-23_2.edn"
      read-data
      (map :atom-counts)
      (reduce (partial merge-with +))
-     count)
+     ((fn [h]
+        (println (clojure.string/join "," (keys h) ))
+        (println (clojure.string/join "," (vals h) ))))
+     pprint)

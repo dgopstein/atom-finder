@@ -306,7 +306,7 @@
    (map-all-commit-files pmap f repo))
   ([mapper f repo] ; (f srcs)
    (->>
-    (map-all-commits mapper repo)
+    (map-all-commits mapper f repo)
     (map :srcs)
     flatten1
     )))

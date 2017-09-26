@@ -35,7 +35,9 @@
   ))
 
 (defn edit-lines
-  "Is a line that contains at least one atom more likely to change when edits are made?"
+  "Is a line that contains at least one atom more likely to change
+   (removed/edited [not added, because it didn't exist before])
+   when edits are made?"
   [srcs]
   (let [old-change-ranges (->> srcs :patch patch-change-bounds flatten1
                                (map change-bound-to-ranges) (map :old))

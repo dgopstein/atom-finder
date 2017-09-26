@@ -45,6 +45,16 @@
 (s/defmethod old-offset com.zutubi.diff.unified.UnifiedHunk :- s/Int
   [hunk] (->> hunk .getOldOffset))
 
+(defmulti old-length "get the original file patch length" class)
+;(s/defmethod old-length difflib.Delta :- s/Int
+(s/defmethod old-length com.zutubi.diff.unified.UnifiedHunk :- s/Int
+  [hunk] (->> hunk .getOldLength))
+
+(defmulti new-length "get the revised file patch length" class)
+;(s/defmethod new-length difflib.Delta :- s/Int
+(s/defmethod new-length com.zutubi.diff.unified.UnifiedHunk :- s/Int
+  [hunk] (->> hunk .getNewLength))
+
 (defmulti new-offset "get the original file offset" class)
 (s/defmethod new-offset difflib.Delta :- s/Int
   [delta]
