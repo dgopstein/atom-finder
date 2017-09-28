@@ -8,7 +8,7 @@ file.ext <- function(file.name) strsplit(file.name, ".*\\.")[[1]][2]
 bugs.lines.csv <- data.table(read.csv("../../tmp/bug-lines-2017-09-26_merged_2_3_clean.csv", header=TRUE))
 bugs.lines.csv[, bug := n.bugs > 0]
 bugs.lines.csv[, file.ext := sapply(as.character(file), file.ext)]
-bugs.lines.csv
+head(bugs.lines.csv$rev.str)
 
 bugs.lines.csv[!is.na(n.bugs) & n.changed.non.atom.lines > 0,
                .(atom = mean(n.atom.lines, na.rm=T),
@@ -30,4 +30,4 @@ bugs.atoms.by.ext.long <- bugs.lines.csv[!is.na(n.bugs),
 
 bugs.atoms.by.ext <- reshape(bugs.atoms.by.ext.long, idvar = "file.ext", timevar = "bug", direction = "wide")[order(-count.FALSE)]
 bugs.atoms.by.ext
-write.csv(bugs.atoms.by.ext, file = "bugs-atoms-by-ext_2017-09-28.csv")
+#write.csv(bugs.atoms.by.ext, file = "bugs-atoms-by-ext_2017-09-28.csv")
