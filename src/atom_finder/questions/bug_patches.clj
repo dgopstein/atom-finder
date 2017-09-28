@@ -18,7 +18,7 @@
    [org.eclipse.jgit.treewalk CanonicalTreeParser]))
 
 
-(-<>> gcc-repo
+'(-<>> gcc-repo
      ;(map-all-commit-files identity)
      ;(commits-from <> "5c929e16b8a3a96eb1ef8691fa7b88cb74754005") (mapcat :srcs)
      (commits-from <> "9ab8ac2684b1553dbd9bb656751515a3fb5c218c") (mapcat :srcs)
