@@ -10,11 +10,11 @@
 
 (deftest test-macro-operator-precedence?
   (testing "Is a macro wrapped in a do-while loop?"
-    (test-atom-lines "macro-operator-precedence.c" "<do-wrapped>"
+    (test-atom-lines "macro-operator-precedence-def.c" "<do-wrapped>"
                      #(filter (comp do-wrapped-exp? (memfn getExpansion)) (macro-definitions %))))
 
   (testing "Are macro parameter wrapped in parens?"
-    (test-atom-lines "macro-operator-precedence.c" "<param-wrapped>"
+    (test-atom-lines "macro-operator-precedence-def.c" "<param-wrapped>"
                      #(filter (fn [n] (and (not (unparsable-exp? (.getExpansion n)))
                                     (param-wrapped-macro? n))) (macro-definitions %))))
 
@@ -35,5 +35,5 @@
       (is (= expected (->> code parse-source macro-definitions first param-wrapped-macro?))))))
 
   (testing "Find dangerous macro definitions"
-    (test-atom-lines "macro-operator-precedence.c" "<def-atom>" macro-operator-precedence-atoms))
+    (test-atom-lines "macro-operator-precedence-def.c" "<def-atom>" macro-operator-precedence-atoms))
     )
