@@ -1,4 +1,4 @@
-(ns atom-finder.macro-operator-precedence-test
+(ns atom-finder.macro-operator-precedence-def-test
   (:require [clojure.test :refer :all]
             [schema.test]
             [atom-finder.util :refer :all]
