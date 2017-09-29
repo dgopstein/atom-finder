@@ -29,16 +29,17 @@
       (:line found-atom)))
 
 (->>
- "~/opt/src/gcc_linux"
+ "~/opt/src/linux"
  expand-home
  c-files
  ;(take 100000)
  shuffle
- (take 10000)
+ (take 1000)
  (def random-c-files)
  time-mins
  )
 
+(quote
 (->>
  random-c-files
  (map parse-file)
@@ -46,7 +47,7 @@
   (fn [root]
     (for [[name atms] (find-all-atoms root)
           atm atms]
-      {:file (str/replace-first (.getFilePath root) #".*gcc_linux/" "")
+      {:file (str/replace-first (.getFilePath root) #".*linux/" "")
        :line (start-line atm)
        :type name
        :atom atm})))
@@ -54,8 +55,10 @@
  (def random-atoms)
  time-mins
  )
+)
 
 
+(quote
 (->>
  random-atoms
  (group-by :type)
@@ -63,9 +66,21 @@
  (def grouped-examples)
  time-mins
  )
+)
 
-(->> grouped-examples
+(quote
+ (->> grouped-examples
+     :macro-operator-precedence
+     first
+     :atom
+     class)
+     ;str)
+)
+
+(quote
+ (->> grouped-examples
      (map-values (partial map #(update-in % [:atom] safe-write-ast)))
      (map-values (partial map #(str (github-url %1) "\n\n" (:atom %1) "\n\n--------------\n")))
      (map (fn [[type atoms]] (spit (str "tmp/atom-examples/" (name type) ".txt") (str/join "\n" atoms))))
      )
+ )

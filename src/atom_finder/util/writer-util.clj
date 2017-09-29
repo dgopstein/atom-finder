@@ -2,7 +2,8 @@
 
 (import '(org.eclipse.cdt.internal.core.dom.rewrite
           ASTModificationStore astwriter.ASTWriter astwriter.ASTWriterVisitor
-          commenthandler.NodeCommentMap changegenerator.ChangeGeneratorWriterVisitor))
+          commenthandler.NodeCommentMap changegenerator.ChangeGeneratorWriterVisitor)
+        '(org.eclipse.cdt.core.dom.ast IASTPreprocessorStatement))
 
 (defn print-tree [node]
   (pre-tree
@@ -39,7 +40,10 @@
 
 
 (def ast-writer (ASTWriter.))
-(defn write-ast [node] (.write ast-writer node))
+(defn write-ast [node]
+  (condp instance? node
+      IASTPreprocessorStatement (str node)
+      (.write ast-writer node)))
 (defn safe-write-ast [node]
   (try (write-ast node)
        (catch org.eclipse.cdt.internal.core.dom.rewrite.astwriter.ProblemRuntimeException e "<!!!>")))

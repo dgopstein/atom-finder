@@ -172,7 +172,10 @@
 
       (doseq [[expected frag idx] cases]
         (is (= expected (->> frag parse-frag ((if idx (partial get-in-tree idx) identity)) write-node)) (prn-str [expected frag])))
-      ))
+      )
+
+      (is (= "x=y+z" (->> "#define x y+z" parse-frag all-preprocessor first write-ast)))
+    )
   )
 
 (deftest keyword-test

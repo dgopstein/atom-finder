@@ -212,9 +212,12 @@
   [code]
   (let [parse-stmt-or-expr (fn [code] ((if (stmt-str? code) parse-stmt parse-expr) code))
         node1 (parse-stmt-or-expr code)]
-    (if (instance? IASTProblemStatement node1)
-      (parse-stmt-or-expr (str code ";"))
-      node1)))
+    (cond
+      (nil? node1)
+        (parse-source code)
+      (instance? IASTProblemStatement node1)
+        (parse-stmt-or-expr (str code ";"))
+      :else node1)))
 
 (defmulti loc "Get location information about an AST node" class)
 (defmethod loc ASTFileLocation [l]
