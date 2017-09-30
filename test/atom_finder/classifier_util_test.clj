@@ -267,5 +267,15 @@
         (is (= expected (some-> node (offset-parent offset) typename)) (str "offset: " offset)))
       )
     )
+
+  (testing "location-parent"
+    (let [node (parse-source " int main() {\nint x = 0;\nif (x > 0) {\nx += 1;\n}\nreturn x;\n} ")
+          cases [["IfStatement" 26 0]
+                 ["IfStatement" 26 21]
+                 ["CompoundStatement" 26 22]
+                 ]]
+      (for [[expected offset len] cases]
+        (is (= expected (some->> node (binary-search-location-parent offset len) typename)) (str "offset: " offset)))
+      ))
   )
 

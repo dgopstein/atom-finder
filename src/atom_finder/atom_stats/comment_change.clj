@@ -55,7 +55,7 @@
 
 (defn added-comments-context [srcs atom]
   (let [cmnts-added (comments-added srcs)
-        {inner-cmnts-added true outer-cmnts-added false} (group-by in-function? (map offset-parent cmnts-added))
+        {inner-cmnts-added true outer-cmnts-added false} (group-by in-function? (map parent cmnts-added)) ;; TODO used to be offset-parent instead of parent
         {inner-atoms true outer-atoms false} (group-by in-function? (:atoms-after srcs))
         {inner-ast true outer-ast false} (group-by in-function? (flatten-tree (:ast-after srcs)))
         inner-atom-cmnts-added (atom-comments inner-atoms cmnts-added)

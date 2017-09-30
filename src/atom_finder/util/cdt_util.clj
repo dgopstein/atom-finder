@@ -300,20 +300,25 @@
           (recur l m)
           (recur (unchecked-inc m) h))))))
 
-(s/defn binary-search-offset-parent :- (s/maybe IASTNode)
+(s/defn binary-search-location-parent :- (s/maybe IASTNode)
   "binary search the tree for an offset"
-  [target :- s/Int root :- IASTNode]
+  [target-off :- s/Int target-len :- s/Int root :- IASTNode]
   (let [{start :offset len :length} (loc root)]
-    (when (<= start target (+ start len))
-      (or (some->> (binary-search-children-offset target (children root))
-                   (binary-search-offset-parent target)) ; make tail-recursive?
+    (when (<= start target-off (+ target-off target-len) (+ start len))
+      (or (some->> (binary-search-children-offset target-off (children root))
+                   (binary-search-location-parent target-off target-len)) ; make tail-recursive?
           root))))
 
 (s/defn offset-parent
   "Find the AST node that contains the whole location offset
    Assumes that no children of a single parent overlap in terms of offset"
-  ([root :- IASTNode offset :- s/Int] (binary-search-offset-parent offset root))
-  ([node :- IASTNode] (parent node))) ;(offset-parent (root-ancestor node) (:offset (loc node)))))
+  ([root :- IASTNode offset :- s/Int] (binary-search-location-parent offset 0 root))
+  ([node :- IASTNode] (offset-parent (root-ancestor node) (:offset (loc node)))))
+
+(s/defn location-parent
+  [node :- IASTNode]
+  (let [{start :offset len :length} (loc node)]
+    (binary-search-location-parent start len (root-ancestor node))))
 
 (s/defn pmap-dir-trees
   "Apply a function to the root of the AST of every c file in a directory"

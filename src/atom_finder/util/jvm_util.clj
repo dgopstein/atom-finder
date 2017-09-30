@@ -32,10 +32,14 @@
 (defn ppublic-methods
   "print public methods of java object"
   [obj]
-  (->> obj
-       (public-methods)
-       (print-table)
-       ))
+  (let [simplify-name #(some-> % name (str/split #"\.") last)]
+    (->> obj
+         public-methods
+         (map (partial map-values #(if (seqable? %1)
+                                     (str/join " " (map simplify-name %1))
+                                     (simplify-name %1))))
+         print-table
+         )))
 
 ; https://gist.github.com/sunng87/13700d3356d5514d35ad
 (defn invoke-private-method [obj fn-name-string & args]
