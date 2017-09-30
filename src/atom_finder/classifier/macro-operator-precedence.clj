@@ -22,6 +22,10 @@
        (keep outer-macro-operator-atom?)
        ))
 
+(s/defn macro-inner-precedence-finder
+  [root :- IASTTranslationUnit]
+  [])
+
 '(-<>> "macro-operator-precedence.c"
       resource-path
       parse-file

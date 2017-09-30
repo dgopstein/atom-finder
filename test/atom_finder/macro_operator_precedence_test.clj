@@ -11,4 +11,8 @@
 (deftest test-macro-operator-precedence?
   (testing "Is a macro expanded unsafely into code outside of it?"
     (test-atom-lines "macro-operator-precedence.c" "<outer-atom>"
-                     macro-outer-precedence-finder)))
+                     macro-outer-precedence-finder))
+
+  (testing "Are macro arguments expanded unsafely inside the macro"
+    (test-atom-lines "macro-operator-precedence.c" "<inner-atom>"
+                     macro-inner-precedence-finder)))
