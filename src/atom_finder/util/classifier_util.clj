@@ -226,9 +226,9 @@
 
 (defn in-function? [node] (ancestral-instance? IASTFunctionDefinition node))
 
-(defmulti expr-operator "If the node is an operator expression, return information about its operator" class)
+(def ExprOperator (s/maybe {:enum (s/maybe s/Int) :arity (s/maybe s/Int) :name s/Keyword :precedence s/Int :syntax s/Str}))
 
-(def ExprOperator {:precedence s/Int :syntax s/Str})
+(defmulti expr-operator "If the node is an operator expression, return information about its operator" class)
 
 (s/defmethod expr-operator :default :- ExprOperator [node :- IASTNode]
   (-> node type
@@ -245,19 +245,19 @@
 (s/defmethod expr-operator IASTUnaryExpression :- ExprOperator [node]
   (-> node .getOperator
       {
-       IASTUnaryExpression/op_prefixIncr       {:enum 0  :arity 1 :name :prefixIncr   :precedence 3  :syntax "++x"    }
-       IASTUnaryExpression/op_prefixDecr       {:enum 1  :arity 1 :name :prefixDecr   :precedence 3  :syntax "--x"    }
-       IASTUnaryExpression/op_plus             {:enum 2  :arity 1 :name :plus         :precedence 3  :syntax "+x"     }
-       IASTUnaryExpression/op_minus            {:enum 3  :arity 1 :name :minus        :precedence 3  :syntax "-x"     }
-       IASTUnaryExpression/op_star             {:enum 4  :arity 1 :name :star         :precedence 3  :syntax "*x"     }
-       IASTUnaryExpression/op_amper            {:enum 5  :arity 1 :name :amper        :precedence 3  :syntax "&x"     }
-       IASTUnaryExpression/op_tilde            {:enum 6  :arity 1 :name :tilde        :precedence 3  :syntax "~x"     }
-       IASTUnaryExpression/op_not              {:enum 7  :arity 1 :name :not          :precedence 3  :syntax "!x"     }
-       IASTUnaryExpression/op_sizeof           {:enum 8  :arity 1 :name :sizeof       :precedence 3  :syntax "sizeof" }
-       IASTUnaryExpression/op_postFixIncr      {:enum 9  :arity 1 :name :postFixIncr  :precedence 2  :syntax "x++"    }
-       IASTUnaryExpression/op_postFixDecr      {:enum 10 :arity 1 :name :postFixDecr  :precedence 2  :syntax "x--"    }
-       IASTUnaryExpression/op_throw            {:enum 12 :arity 1 :name :throw        :precedence 15 :syntax "throw"  }}))
-       ;IASTUnaryExpression/op_bracketedPrimary 11
+       IASTUnaryExpression/op_prefixIncr       {:enum 0  :arity 1 :name :prefixIncr       :precedence 3  :syntax "++x"    }
+       IASTUnaryExpression/op_prefixDecr       {:enum 1  :arity 1 :name :prefixDecr       :precedence 3  :syntax "--x"    }
+       IASTUnaryExpression/op_plus             {:enum 2  :arity 1 :name :plus             :precedence 3  :syntax "+x"     }
+       IASTUnaryExpression/op_minus            {:enum 3  :arity 1 :name :minus            :precedence 3  :syntax "-x"     }
+       IASTUnaryExpression/op_star             {:enum 4  :arity 1 :name :star             :precedence 3  :syntax "*x"     }
+       IASTUnaryExpression/op_amper            {:enum 5  :arity 1 :name :amper            :precedence 3  :syntax "&x"     }
+       IASTUnaryExpression/op_tilde            {:enum 6  :arity 1 :name :tilde            :precedence 3  :syntax "~x"     }
+       IASTUnaryExpression/op_not              {:enum 7  :arity 1 :name :not              :precedence 3  :syntax "!x"     }
+       IASTUnaryExpression/op_sizeof           {:enum 8  :arity 1 :name :sizeof           :precedence 3  :syntax "sizeof" }
+       IASTUnaryExpression/op_postFixIncr      {:enum 9  :arity 1 :name :postFixIncr      :precedence 2  :syntax "x++"    }
+       IASTUnaryExpression/op_postFixDecr      {:enum 10 :arity 1 :name :postFixDecr      :precedence 2  :syntax "x--"    }
+       IASTUnaryExpression/op_bracketedPrimary {:enum 11 :arity 1 :name :bracketedPrimary :precedence 0 :syntax "(x)"     }
+       IASTUnaryExpression/op_throw            {:enum 12 :arity 1 :name :throw            :precedence 15 :syntax "throw"  }}))
        ;IASTUnaryExpression/op_typeid ; 13
        ;IASTUnaryExpression/op_typeof ; 14 - deprecated
        ;IASTUnaryExpression/op_sizeofParameterPack ; 16
