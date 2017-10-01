@@ -19,4 +19,8 @@ int main() {
   3*M3;         // <outer-atom>
   3*(M3);
 
+  // gcc/gcc/testsuite/g++.dg/cpp0x/constexpr-63265.C
+  #define LSHIFT 1
+  template <int> struct SW1 {int v = 0;};
+  SW1<LSHIFT>::v;
 }

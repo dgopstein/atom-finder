@@ -230,7 +230,7 @@
 
 (defmulti expr-operator "If the node is an operator expression, return information about its operator" class)
 
-(s/defmethod expr-operator :default :- ExprOperator [node :- IASTNode]
+(s/defmethod expr-operator :default :- ExprOperator [node]
   (-> node type
       {CPPASTQualifiedName            {:enum nil :arity 2   :name :qualified-name  :precedence 1  :syntax "::"       }
        IASTArraySubscriptExpression   {:enum nil :arity 2   :name :array-subscript :precedence 2  :syntax "[]"       }
