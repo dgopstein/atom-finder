@@ -23,7 +23,7 @@
         expand-home
         parse-file
         (all-atoms-in-tree atoms)
-        (map-values (partial map (comp :line loc)))
+       (map-values (partial map (comp :line loc)))
         )])
 
 (defn print-atoms-in-dir

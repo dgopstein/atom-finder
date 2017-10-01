@@ -278,9 +278,9 @@
        IASTBinaryExpression/op_greaterThan       {:enum 9  :arity 2 :name :greaterThan      :precedence 8  :syntax ">"    }
        IASTBinaryExpression/op_lessEqual         {:enum 10 :arity 2 :name :lessEqual        :precedence 8  :syntax "<="   }
        IASTBinaryExpression/op_greaterEqual      {:enum 11 :arity 2 :name :greaterEqual     :precedence 8  :syntax ">="   }
-       IASTBinaryExpression/op_binaryAnd         {:enum 12 :arity 2 :name :binaryAnd        :precedence 10 :syntax "&="   }
-       IASTBinaryExpression/op_binaryXor         {:enum 13 :arity 2 :name :binaryXor        :precedence 11 :syntax "^="   }
-       IASTBinaryExpression/op_binaryOr          {:enum 14 :arity 2 :name :binaryOr         :precedence 12 :syntax "|="   }
+       IASTBinaryExpression/op_binaryAnd         {:enum 12 :arity 2 :name :binaryAnd        :precedence 10 :syntax "&"    }
+       IASTBinaryExpression/op_binaryXor         {:enum 13 :arity 2 :name :binaryXor        :precedence 11 :syntax "^"    }
+       IASTBinaryExpression/op_binaryOr          {:enum 14 :arity 2 :name :binaryOr         :precedence 12 :syntax "|"    }
        IASTBinaryExpression/op_logicalAnd        {:enum 15 :arity 2 :name :logicalAnd       :precedence 13 :syntax "&&"   }
        IASTBinaryExpression/op_logicalOr         {:enum 16 :arity 2 :name :logicalOr        :precedence 14 :syntax "||"   }
        IASTBinaryExpression/op_assign            {:enum 17 :arity 2 :name :assign           :precedence 15 :syntax "="    }

@@ -9,10 +9,10 @@
   ([x] (tap prn x))
   ([f x] (tap (comp prn f) x)))
 
-(defmacro =by
+(defn =by
   "Test if arguments are equal after applying f to all of them"
   [f & args]
-  `(= ~@(map #(list f %) args)))
+  (apply = (map f args)))
 
 ; print the name and value of an expression
 (defmacro pprn [x]
