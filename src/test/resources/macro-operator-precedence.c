@@ -15,9 +15,15 @@ int main() {
   3%(M2(5<4));   // <inner-atom>
   3%(M2((5<4)));
 
-  #define M3 4+1
-  3*M3;         // <outer-atom>
-  3*(M3);
+  #define M3(x,y) x+y+1
+  3*M3(5<4, 7&2);     // <outer-atom> <inner-atom>
+  3*M3((5<4, 7&2));   // <outer-atom>
+  3%(M3(5<4, 7&2));   // <inner-atom>
+  3%(M3((5<4), (7&2)));
+
+  #define M4 4+1
+  3*M4;         // <outer-atom>
+  3*(M4);
 
   // gcc/gcc/testsuite/g++.dg/cpp0x/constexpr-63265.C
   #define LSHIFT 1

@@ -10,7 +10,7 @@
             IASTExpressionList IASTForStatement IASTFunctionDefinition]))
 
 (defn tree= [& nodes]
-  (->> nodes (map write-ast) set count (= 1)))
+  (->> nodes (map write-ast) (apply =)))
 
 (defn node= [a b]
   (when (and a b)
@@ -25,6 +25,14 @@
   (->> (zip-trees a b)
        (every? (partial apply node=))
        not))
+
+(s/defn tree=by
+  "apply a function to every node of multiple trees until a difference occurs"
+  [f & nodes] ; :- [atom-finder.util/ASTTree]]
+  (and (apply = (map (comp pap f ast-node) nodes))
+       (let [kids (map children nodes)]
+         (and (apply = (map count kids))
+              (every? identity (apply (partial map (partial tree=by f)) kids))))))
 
 ;; two files
 ;; corresponding diffs

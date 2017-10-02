@@ -28,10 +28,16 @@
                             (FileContent/create filename (.toCharArray source))
                             info emptyIncludes nil opts log)))
 
-(defn children    [^IASTNode node] (.getChildren node))
-(defn parent      [^IASTNode node] (.getParent node))
-(defn safe-parent [^IASTNode node] (or (.getParent node) node))
-(defn root-ancestor [^IASTNode node]
+(defprotocol ASTTree
+  (ast-node [node])
+  (children [node]))
+(extend-protocol ASTTree IASTNode
+                 (ast-node [node] node)
+                 (children [node] (.getChildren node)))
+
+(defn parent [node] (.getParent node))
+(defn safe-parent [node] (or (.getParent node) node))
+(defn root-ancestor [node]
   (let [p (parent node)]
     (if (nil? p)
       node

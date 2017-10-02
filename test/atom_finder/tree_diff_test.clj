@@ -1,7 +1,6 @@
 (ns atom-finder.tree-diff-test
   (:require [clojure.test :refer :all]
             [atom-finder.util :refer :all]
-            [atom-finder.constants :refer :all]
             [atom-finder.patch :refer :all]
             [atom-finder.atom-patch :refer :all]
             [atom-finder.atom-stats :refer :all]
@@ -29,8 +28,8 @@
             [expected (str "'" a "' '" b"'")])
       ))))
 
-(deftest tree=-test
-  (testing "Which ASTs are equal"
+(deftest tree-diff-test
+  (testing "tree= - Which ASTs are equal"
     (let [cases [
                  [true "b = 1 + a++" "b = 1 + a++"]
                  [true " b  =  1 /*z*/  +  a++ //asf" "b = 1 + a++"]
@@ -42,7 +41,25 @@
       (doseq [[expected a b] cases]
         (is (= expected (tree= (parse-frag a) (parse-frag b)))
             [expected (str "'" a "' '" b"'")])
-      ))))
+        )))
+
+  (testing "tree=by"
+    (let [cases [
+                 [class         true  "b = 1 + a++" "b = 1 + a++"]
+                 [class         true  "b = 1 + a++" "b = 1 + c++"]
+                 [expr-operator true  "b = 1 + a++" "b = 1 + c++"]
+                 [class         true  "b = 1 + a++" "b = 1 + ++c"]
+                 [expr-operator false "b = 1 + a++" "b = 1 + ++c"]
+                 [class         false "b = 1 + a++" "b = 1 + d+c"]
+                 ]]
+      (doseq [[by expected a b] cases]
+        (is (= expected (tree=by by (parse-frag a) (parse-frag b))) [a b]))))
+
+  (testing "prune-terminals"
+    (is (atom-finder.tree-diff/tree=by write-node
+                                       (->> "a + 1" parse-frag seq-tree prune-terminals pprint)
+                                       (->> "c + d" parse-frag seq-tree prune-terminals pprint))))
+  )
 
 (deftest node=-test
   (testing "Which individual nodes are equal"

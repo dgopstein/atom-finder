@@ -1,7 +1,6 @@
 (ns atom-finder.atom-patch
   (:require
    [atom-finder.util :refer :all]
-   [atom-finder.constants :refer :all]
    [atom-finder.classifier :refer :all]
    [atom-finder.patch :refer :all]
    [atom-finder.atom-stats :refer :all]
