@@ -2,6 +2,13 @@
 (import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId)
         '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition))
 
+;;https://stackoverflow.com/questions/9568050/in-clojure-how-to-write-a-function-that-applies-several-string-replacements
+(s/defn replace-map
+  "given an input string and a hash-map, returns a new string with all
+   keys in map found in input replaced with the value of the key"
+  [replacements :- {s/Str s/Str} target :- s/Str]
+    (reduce #(apply str/replace (re-pattern %1) %2) target replacements))
+
 (extend-protocol atom-finder.util/ASTTree clojure.lang.ISeq
   (ast-node [lst] (first lst))
   (children [lst] (rest lst)))
@@ -68,68 +75,79 @@
   [root :- IASTTranslationUnit]
   (->> root .getMacroExpansions (keep outer-macro-operator-atom?)))
 
-(defn parse-expansion-args
-  [expansion]
-  (let [arg-expr (some->> expansion str (re-find #"\w+\((.*)\)") second parse-frag)]
+(s/defn expansion-args-tree
+  "Take the arguments to a macro and parse them into ASTs"
+  [exp :- IASTPreprocessorMacroExpansion]
+  (let [arg-expr (some->> exp str (re-find #"\w+\((.*)\)") second parse-frag)]
     (when arg-expr
       (if (instance? IASTExpressionList arg-expr)
         (children arg-expr)
         [arg-expr]))))
 
-(s/defn macro-ast-replacement
-  "Find every macro parameter and replace it with the AST of its argument,
-   and compare that against the expanded parse"
+(s/defn expansion-args-str
+  "Extract the code in the arguments to a macro"
   [exp :- IASTPreprocessorMacroExpansion]
-  (let [exp-node   (expansion-container exp)
-        unexpanded (some->> exp-node safe-write-ast )
-        exp-args   (some->> unexpanded parse-expansion-args)]
-    [unexpanded (map write-ast exp-args)])
-  )
+  (->> exp expansion-args-tree (map write-ast)))
 
-(s/defn maybe-set-operand
+(s/defn -maybe-set-operand!
+  "Take an identifier, and replace it with its full tree"
   [method node replacements]
-  (when-let* [operand     (call-method (pap node) (pap (str 'get method)))
-                 _           (instance? IASTIdExpression operand)
-                 replacement (-> node (call-method (str 'get method)) .getName str replacements)]
+  (when-let* [operand     (call-method node (str 'get method))
+              _           (instance? IASTIdExpression operand)
+              replacement (-> operand .getName str replacements)]
        (doto node
          (call-method (str 'set method) (.copy replacement)))))
 
-(s/defn replace-identifier!
+(s/defn -replace-identifier!
+  "If this node is capable of causing syntax ambiguities,
+   try replacing parts of it to observe the ambiguity"
   [node :- IASTNode replacements :- {s/Str IASTNode}]
-  (pprn (map-values write-ast replacements))
-  (pap write-ast node)
-  (pap write-ast (condp instance? node
-    IASTUnaryExpression (maybe-set-operand "Operand" node replacements)
-    IASTBinaryExpression (do (maybe-set-operand "Operand1" node replacements)
-                             (maybe-set-operand "Operand2" node replacements))
+  (condp instance? node
+    IASTUnaryExpression      (-maybe-set-operand! "Operand"  node replacements)
+    IASTBinaryExpression (do (-maybe-set-operand! "Operand1" node replacements)
+                             (-maybe-set-operand! "Operand2" node replacements))
       node))
-  )
 
-(s/defn parse-macro-def
+(s/defn parse-macro
   [macro-exp :- IASTPreprocessorMacroExpansion] ;IASTPreprocessorFunctionStyleMacroDefinition]
-  (let [macro-def  (->> macro-exp .getMacroDefinition)
-        params     (->> macro-def .getParameters (map (memfn getParameter)))
-        args       (->> macro-exp parse-expansion-args)
-        param-args (zipmap params args)
-        macro-body (-> macro-def str (str/split #"=" 2) (nth 1) parse-frag)
-        new-body (pap (.copy macro-body))]
-    (->> new-body (filter-tree expr-operator) reverse (map #(replace-identifier! % param-args)) dorun)
-    (write-ast new-body))
-    ;; => -5 + y + 1
-  )
+  (let [macro-def (->> macro-exp .getMacroDefinition)
+        body-str  (-> macro-def str (str/split #"=" 2) (nth 1))]
+    {:def macro-def
+     :exp macro-exp
+     :params-str (->> macro-def .getParameters (map (memfn getParameter)))
+     :args-str   (->> macro-exp expansion-args-str)
+     :args-tree  (->> macro-exp expansion-args-tree)
+     :body-str   body-str
+     :body-tree  (parse-frag body-str)}))
 
-'(->> "#define M2(x,y) x+y+1 \n 3%(M2(5<4,7>2))"
+'((->> "#define M2(x,y) x+y+1 \n 3%(M2(5<4,7>2))"
      ;"#define M2(x,y) x+y+1 \n 3%(M2(5,7))"
      ;;(->> "#define M2(x) x+1 \n M2(2)"
      parse-frag root-ancestor
      .getMacroExpansions first
-     parse-macro-def)
+     ((juxt macro-replace-arg-str macro-replace-arg-tree)) (map write-ast)))
+
+(s/defn macro-replace-arg-str
+  [macro-exp :- IASTPreprocessorMacroExpansion]
+  (let [mac        (parse-macro macro-exp)
+        param-args (zipmap (:params-str mac) (:args-str mac))]
+    (->> mac :body-str pprn (replace-map (pprn param-args)) pprn parse-frag)))
+
+(s/defn macro-replace-arg-tree
+  [macro-exp :- IASTPreprocessorMacroExpansion] ;IASTPreprocessorFunctionStyleMacroDefinition]
+  (let [mac        (parse-macro macro-exp)
+        param-args (zipmap (:params-str mac) (:args-tree mac))
+        new-body   (-> mac :body-tree .copy)]
+
+    (->> new-body (filter-tree expr-operator) reverse (map #(replace-identifier! % param-args)) dorun)
+
+    new-body
+    ))
 
 (s/defn inner-macro-operator-atom? :- (s/maybe IASTNode)
   "Does this expansion lead to a confusion AST tree outside of itself"
   [exp :- IASTPreprocessorMacroExpansion]
-  (let [;arg-nodes (parse-expansion-args expansion)
-        expanded   (->> exp location-parent greatest-trivial-parent)
+  (let [expanded   (->> exp location-parent greatest-trivial-parent)
         unexpanded (->> exp .getMacroDefinition .getExpansion parse-frag)
         pruned-exp   (->> expanded   prune-terminals (tap pprint))
         pruned-unexp (->> unexpanded prune-terminals (tap pprint))]
