@@ -19,6 +19,8 @@ int main() {
   3*M3(5<4, 7&2);     // <outer-atom> <inner-atom>
   3*M3((5<4, 7&2));   // <outer-atom>
   3%(M3(5<4, 7&2));   // <inner-atom>
+  3%(M3((5<4, 7&2)));
+  3%(M3((5<4), 7&2)); // <inner-atom>
   3%(M3((5<4), (7&2)));
 
   #define M4 4+1

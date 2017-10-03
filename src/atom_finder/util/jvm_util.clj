@@ -53,6 +53,19 @@
     (. m (setAccessible true))
         (. m (get obj))))
 
+
+;; https://groups.google.com/forum/#!msg/clojure/YJNRnGXLr2I/wiXZVnd3gUIJ
+'(defmacro call-method "Call a method by name from a string" [inst m & args]
+   `(. ~inst ~(symbol (eval m)) ~@args))
+
+'(defn call-method "Call a method by name from a string" [obj m & args]
+    (eval `(. ~obj ~(symbol m) ~@args)))
+
+(defn call-method
+  "Call a method by name from a string"
+  [obj m & args]
+(clojure.lang.Reflector/invokeInstanceMethod ["afsd"] "toString" (to-array []))
+
 (defn write-tempfile
   [content]
   ; https://github.com/clojure-cookbook/clojure-cookbook/blob/master/04_local-io/4-10_using-temp-files.asciidoc
