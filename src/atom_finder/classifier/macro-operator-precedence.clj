@@ -8,10 +8,18 @@
    keys in map found in input replaced with the value of the key"
   [replacements :- {s/Str s/Str} target :- s/Str]
   (reduce (fn [target [pattern replacement]]
-            (str/replace target
-                         (re-pattern (java.util.regex.Pattern/quote pattern))
-                         (str/re-quote-replacement replacement)))
+            (str/replace target (re-pattern pattern) replacement))
           target replacements))
+
+(s/defn id-replace-map
+  "replace identifiers"
+  [replacements :- {s/Str s/Str} target :- s/Str]
+  (replace-map
+   (->> replacements
+        ;; don't match ids inside other ids
+        (map-keys #(str "(?<!\\w)" (java.util.regex.Pattern/quote %) "(?!\\w)"))
+        (map-values str/re-quote-replacement))
+   target))
 
 (extend-protocol atom-finder.util/ASTTree clojure.lang.ISeq
   (ast-node [lst] (first lst))
@@ -102,7 +110,8 @@
   (when-let* [operand     (call-method node (str 'get method))
               _           (instance? IASTIdExpression operand)
               replacement (-> operand .getName str replacements)
-              _           (instance? IASTExpression replacement)]
+              _           (instance? IASTExpression replacement)
+              ]
        (doto node
          (call-method (str 'set method) (.copy replacement)))))
 
@@ -112,8 +121,9 @@
   [node :- IASTNode replacements :- {s/Str IASTNode}]
   (condp instance? node
     IASTUnaryExpression      (-maybe-set-operand! "Operand"  node replacements)
-    IASTBinaryExpression (do (-maybe-set-operand! "Operand1" node replacements)
-                             (-maybe-set-operand! "Operand2" node replacements))
+    IASTBinaryExpression (let [op1 (-maybe-set-operand! "Operand1" node replacements)
+                               op2 (-maybe-set-operand! "Operand2" node replacements)]
+                           (or op1 op2))
       nil))
 
 (s/defn parse-macro
@@ -132,16 +142,16 @@
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-str mac))]
-    (-<>> mac :body-str (replace-map param-args) parse-frag)))
+    (-<>> mac :body-str (id-replace-map param-args) parse-frag)))
 
 (s/defn macro-replace-arg-tree
-  [macro-exp :- IASTPreprocessorMacroExpansion] ;IASTPreprocessorFunctionStyleMacroDefinition]
+  [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-tree mac))
         new-body   (-> mac :body-tree .copy)]
 
     (when (->> new-body (filter-tree expr-operator)
-               (map #(-replace-identifier! % param-args)) doall empty? not)
+               (map #(-replace-identifier! % param-args)) (remove nil?) doall empty? not)
       new-body)))
 
 (require '[atom-finder.tree-diff :refer :all])
@@ -152,7 +162,9 @@
               _  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
               replaced-str  (macro-replace-arg-str  exp)
               replaced-tree (macro-replace-arg-tree exp)
-              _  (not (atom-finder.tree-diff/tree=by (juxt class expr-operator) replaced-str replaced-tree))
+              _  (not (atom-finder.tree-diff/tree=by (juxt class expr-operator)
+                       replaced-str
+                       replaced-tree))
               ]
     (->> exp location-parent greatest-trivial-parent)))
 
@@ -176,8 +188,3 @@
      (map start-line)
      pprint
      )
-
-'(->> "#define M(t) f(t)
-      M(k(o))"
-     parse-frag root-ancestor .getMacroExpansions first
-     substituting-macro?)

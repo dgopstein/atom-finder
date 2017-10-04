@@ -46,4 +46,8 @@ int main() {
   // skip every macro with #'s
   #define M(t) f(#t)
   M(k(o));
+
+  // don't capture identifiers inside other identifiers "f[o]f"
+  #define M1(o) fof(o) && 1
+  M1(uv->v);"
 }
