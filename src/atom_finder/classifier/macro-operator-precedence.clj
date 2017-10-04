@@ -87,14 +87,15 @@
 (s/defn expansion-args-str
   "Extract the code in the arguments to a macro"
   [exp :- IASTPreprocessorMacroExpansion]
-  (->> exp expansion-args-tree (map write-ast)))
+  (->> exp expansion-args-tree (map safe-write-ast)))
 
 (s/defn -maybe-set-operand!
   "Take an identifier, and replace it with its full tree"
   [method node replacements]
   (when-let* [operand     (call-method node (str 'get method))
               _           (instance? IASTIdExpression operand)
-              replacement (-> operand .getName str replacements)]
+              replacement (-> operand .getName str replacements)
+              _           (instance? IASTIdExpression replacement)]
        (doto node
          (call-method (str 'set method) (.copy replacement)))))
 
