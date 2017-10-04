@@ -17,6 +17,10 @@
     (test-atom-lines "macro-operator-precedence.c" "<inner-atom>"
                      macro-inner-precedence-finder))
 
+  (testing "Are macro arguments expanded unsafely inside the macro"
+    (test-atom-lines "macro-operator-precedence.c" "-atom>"
+                     macro-operator-precedence-finder))
+
   (testing "expansion-args-tree"
     (let [cases [
                  [["5 < 4" "7 > 2"] "#define M2(x,y) x+y+1 \n 3%(M2(5<4,7>2))"]

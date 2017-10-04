@@ -117,13 +117,6 @@
      :body-str   body-str
      :body-tree  (parse-frag body-str)}))
 
-'((->> "#define M2(x,y) x+y+1 \n 3%(M2(5<4,7>2))"
-     ;"#define M2(x,y) x+y+1 \n 3%(M2(5,7))"
-     ;;(->> "#define M2(x) x+1 \n M2(2)"
-     parse-frag root-ancestor
-     .getMacroExpansions first
-     ((juxt macro-replace-arg-str macro-replace-arg-tree)) (map write-ast)))
-
 (s/defn macro-replace-arg-str
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
@@ -155,18 +148,10 @@
   [root :- IASTTranslationUnit]
   (->> root .getMacroExpansions (keep inner-macro-operator-atom?)))
 
-'((->> ;"#define M2(x,y) x+y+1 \n 3%(M2(5<4,7>2))"
-     "#define M2(x,y) -x+y+1 \n 3%(M2(5,7))"
-     ;;(->> "#define M2(x) x+1 \n M2(2)"
-     parse-frag root-ancestor
-     .getMacroExpansions first (def macro-exp))
-     .getParameters first ppublic-methods
-     inner-macro-operator-atom?)
+(s/def macro-operator-precedence-atom?
+  "Does this expansion lead to a confusion"
+  (some-fn inner-macro-operator-atom? outer-macro-operator-atom?))
 
-'((-<>> "macro-operator-precedence.c" resource-path parse-file))
-'((-<>> "macro-operator-precedence.c" resource-path parse-file (def ast-root)))
-'((-<> ast-root .getMacroExpansions (nth 10) (def exp <>)))
-'((-<> ast-root macro-outer-precedence-finder))
-'((->> exp location-parent parent parent write-ast parse-frag write-node))
-'((->> [{:name :m :finder macro-outer-precedence-finder}]
-     (print-atoms-in-dir (->> "~/opt/src/gcc" expand-home))))
+(s/defn macro-operator-precedence-finder
+  [root :- IASTTranslationUnit]
+  (->> root .getMacroExpansions (keep macro-operator-precedence-atom?)))
