@@ -56,11 +56,11 @@
             ["!11"       false]
             ["8 << 2"    true]
             ["2 << 8"    false]
-            ["#define X 1 << Y\nX" false]
-            ["#define X 9 << Y\nX" true]
+            ;["#define X 1 << Y\nX" false]
+            ;["#define X 9 << Y\nX" true]
                  ]]
 
       (doseq [[expr expected] cases]
         (testing (str "Is this a literal encoding atom: " expr " - " expected)
-          (is (= expected (literal-encoding-atom? (parse-expr expr)))))))
+          (is (= expected (literal-encoding-atom? (parse-frag expr)))))))
     ))

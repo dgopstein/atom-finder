@@ -182,9 +182,9 @@
 (defn parse-expr
   "Turn a single C expression into an AST"
   [code]
-  (->> (str code ";")
+  (->> (str "(\n" code "\n);")
       parse-stmt
-      (get-in-tree [0])))
+      (get-in-tree [0 0])))
 
 (def parse-file (comp translation-unit expand-home))
 

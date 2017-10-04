@@ -31,4 +31,15 @@ int main() {
   #define LSHIFT 1
   template <int> struct SW1 {int v = 0;};
   SW1<LSHIFT>::v;
+
+  // redis/src/quicklist.c:269
+  #define M(x) ((x)->y != 0)
+  M(1);
+
+  // redis/deps/lua/src/lgc.c:80
+  //#define M(t) t
+  //M(k(o));
+
+  #define M(t) f(t)
+  M(k(o));
 }

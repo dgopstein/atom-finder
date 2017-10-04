@@ -6,6 +6,19 @@
           IASTFunctionCallExpression IASTFieldReference IASTFunctionDefinition)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTQualifiedName CPPASTExpressionList CPPASTConditionalExpression CPPASTNewExpression CPPASTDeleteExpression))
 
+(defn greatest-trivial-parent
+  "find the highest parent that has the same offset/length as this node"
+  [node]
+  (->> node all-parents (take-while (partial =by loc node)) last))
+
+(defn least-trivial-child
+  "find the lowest only-child that has the same offset/length as this node"
+  [node]
+  (let [[kid kids] (children node)]
+    (if (and kid (not kids)
+                  (=by loc node kid))
+      (recur kid) node)))
+
 (defn function-node? [node] (instance? IASTFunctionDefinition node))
 
 (defn flatten-tree-context

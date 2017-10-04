@@ -3,7 +3,7 @@
             [atom-finder.util :refer :all]
             )
   (:import
-           [org.eclipse.cdt.core.dom.ast IASTLiteralExpression]))
+           [org.eclipse.cdt.core.dom.ast IASTExpression IASTLiteralExpression]))
 
 (deftest cdt-util-test
     (testing "count-nodes"
@@ -42,6 +42,9 @@
         (cmp-frag parse-expr "1 + 3")
         (cmp-frag parse-stmt "1 + 3;")
         (cmp-frag parse-stmt "{ 1 + 3; f(); } ")
+
+
+        (is (instance? IASTExpression (parse-frag "f(x)")))
       )))
 
   (testing "height"

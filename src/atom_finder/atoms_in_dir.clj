@@ -37,3 +37,4 @@
        ))
 
 ; (print-atoms-in-dir (expand-home "~/opt/src/redis") (map atom-lookup [:preprocessor-in-statement :reversed-subscript]))
+; (print-atoms-in-dir (expand-home "~/opt/src/redis") (map atom-lookup [:macro-operator-precedence]))

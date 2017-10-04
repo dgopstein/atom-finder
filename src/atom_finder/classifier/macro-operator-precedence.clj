@@ -7,9 +7,10 @@
   "given an input string and a hash-map, returns a new string with all
    keys in map found in input replaced with the value of the key"
   [replacements :- {s/Str s/Str} target :- s/Str]
-  (reduce #(apply str/replace
-                  (re-pattern (java.util.regex.Pattern/quote %1))
-                  (map str/re-quote-replacement %2))
+  (reduce (fn [target [pattern replacement]]
+            (str/replace target
+                         (re-pattern (java.util.regex.Pattern/quote pattern))
+                         (str/re-quote-replacement replacement)))
           target replacements))
 
 (extend-protocol atom-finder.util/ASTTree clojure.lang.ISeq
@@ -35,11 +36,6 @@
 (defn prune-terminals
   [tree]
   (prune-seq-tree (fn [node] (any-pred? #(instance? % node) [IASTIdExpression IASTLiteralExpression])) tree))
-
-(defn greatest-trivial-parent
-  "find the highest parent that has the same offset/length as this node"
-  [node]
-  (->> node all-parents (take-while (partial =by loc node)) last))
 
 (s/defn expansion-container
   "The AST node that fully encloses a macro expansion"
@@ -95,7 +91,7 @@
   (when-let* [operand     (call-method node (str 'get method))
               _           (instance? IASTIdExpression operand)
               replacement (-> operand .getName str replacements)
-              _           (instance? IASTIdExpression replacement)]
+              _           (instance? IASTExpression replacement)]
        (doto node
          (call-method (str 'set method) (.copy replacement)))))
 
@@ -107,7 +103,7 @@
     IASTUnaryExpression      (-maybe-set-operand! "Operand"  node replacements)
     IASTBinaryExpression (do (-maybe-set-operand! "Operand1" node replacements)
                              (-maybe-set-operand! "Operand2" node replacements))
-      node))
+      nil))
 
 (s/defn parse-macro
   [macro-exp :- IASTPreprocessorMacroExpansion] ;IASTPreprocessorFunctionStyleMacroDefinition]
@@ -125,7 +121,7 @@
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-str mac))]
-    (->> mac :body-str (replace-map param-args) parse-frag)))
+    (-<>> mac :body-str (replace-map param-args) parse-frag)))
 
 (s/defn macro-replace-arg-tree
   [macro-exp :- IASTPreprocessorMacroExpansion] ;IASTPreprocessorFunctionStyleMacroDefinition]
@@ -133,29 +129,43 @@
         param-args (zipmap (:params-str mac) (:args-tree mac))
         new-body   (-> mac :body-tree .copy)]
 
-    (->> new-body (filter-tree expr-operator) reverse (map #(-replace-identifier! % param-args)) dorun)
-
-    new-body
-    ))
+    (when (->> new-body (filter-tree expr-operator)
+               (map #(-replace-identifier! % param-args)) doall empty? not)
+      new-body)))
 
 (require '[atom-finder.tree-diff :refer :all])
 (s/defn inner-macro-operator-atom? :- (s/maybe IASTNode)
   "Does this expansion lead to a confusion AST tree outside of itself"
   [exp :- IASTPreprocessorMacroExpansion]
-  (when (and (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
-             (not (atom-finder.tree-diff/tree=by (juxt class expr-operator)
-                                                 (macro-replace-arg-str exp)
-                                                 (macro-replace-arg-tree exp))))
+  (when-let* [_  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
+              replaced-str  (macro-replace-arg-str  exp)
+              replaced-tree (macro-replace-arg-tree exp)
+              _  (not (atom-finder.tree-diff/tree=by (juxt class expr-operator) replaced-str replaced-tree))
+              ]
     (->> exp location-parent greatest-trivial-parent)))
 
 (s/defn macro-inner-precedence-finder
   [root :- IASTTranslationUnit]
   (->> root .getMacroExpansions (keep inner-macro-operator-atom?)))
 
-(s/def macro-operator-precedence-atom?
+(s/defn macro-operator-precedence-atom?
   "Does this expansion lead to a confusion"
-  (some-fn inner-macro-operator-atom? outer-macro-operator-atom?))
+  [node]
+  ((some-fn inner-macro-operator-atom? outer-macro-operator-atom?) node))
 
 (s/defn macro-operator-precedence-finder
   [root :- IASTTranslationUnit]
   (->> root .getMacroExpansions (keep macro-operator-precedence-atom?)))
+
+'(->> "/Users/dgopstein/opt/src/redis/deps/lua/src/lgc.c"
+     parse-file
+     macro-operator-precedence-finder
+     doall
+     (map start-line)
+     pprint
+     )
+
+'(->> "#define M(t) f(t)
+      M(k(o))"
+     parse-frag root-ancestor .getMacroExpansions first
+     inner-macro-operator-atom?)
