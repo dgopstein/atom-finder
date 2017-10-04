@@ -45,7 +45,7 @@
    (ValidatedAtom :comma-operator            comma-operator-atom?        (default-finder comma-operator-atom?))
    (ValidatedAtom :omitted-curly-braces      omitted-curly-braces-atom?  (default-finder omitted-curly-braces-atom?))
    (ValidatedAtom :assignment-as-value       assignment-as-value-atom?   (default-finder assignment-as-value-atom?))
-   (ValidatedAtom :macro-operator-precedence macro-def-precedence-atom?  macro-operator-precedence-atoms)
+   (ValidatedAtom :macro-operator-precedence macro-operator-precedence-atom?  macro-operator-precedence-finder)
    (ValidatedAtom :operator-precedence       operator-precedence-atom?   (default-finder operator-precedence-atom?))
    (ValidatedAtom :repurposed-variable       repurposed-variable-atom?   repurposed-variable-atoms)
    (ValidatedAtom :implicit-predicate        implicit-predicate-atom?    (default-finder implicit-predicate-atom?))
