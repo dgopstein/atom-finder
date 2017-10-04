@@ -30,7 +30,7 @@
   "apply a function to every node of multiple trees until a difference occurs"
   [f & nodes] ; :- [atom-finder.util/ASTTree]]
   (or (every? (comp nil? ast-node) nodes)
-      (and (apply = (map (comp f (partial pap (comp safe-write-ast ast-node)) ast-node) nodes))
+      (and (apply = (map (comp f ast-node) nodes))
            (let [kids (map children nodes)]
              (and (apply = (map count kids))
                   (every? identity (apply (partial map (partial tree=by f)) kids)))))))

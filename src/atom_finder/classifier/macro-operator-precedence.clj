@@ -56,9 +56,6 @@
   [expanded :- IASTNode unexpanded :- ExprOperator]
   (and (->> unexpanded :name (#{:lessThan :greaterThan}))
        (->> expanded (filter-tree (partial instance? ICPPASTTemplateId)) empty? not)))
-  ;[expanded :- IASTNode unexpanded :- IASTNode]
-  ;(and (->> expanded pap (filter-tree (partial instance? ICPPASTTemplateId)) pap empty? not pprn)
-  ;     (->> unexpanded write-ast (re-find #"< *\w+ *>") pprn)))
 
 (s/defn outer-macro-operator-atom? :- (s/maybe IASTNode)
   "Does this expansion lead to a confusion AST tree outside of itself"
@@ -131,7 +128,7 @@
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-str mac))]
-    (->> mac :body-str pprn (replace-map (pprn param-args)) pprn parse-frag)))
+    (->> mac :body-str (replace-map param-args) parse-frag)))
 
 (s/defn macro-replace-arg-tree
   [macro-exp :- IASTPreprocessorMacroExpansion] ;IASTPreprocessorFunctionStyleMacroDefinition]
@@ -139,20 +136,20 @@
         param-args (zipmap (:params-str mac) (:args-tree mac))
         new-body   (-> mac :body-tree .copy)]
 
-    (->> new-body (filter-tree expr-operator) reverse (map #(replace-identifier! % param-args)) dorun)
+    (->> new-body (filter-tree expr-operator) reverse (map #(-replace-identifier! % param-args)) dorun)
 
     new-body
     ))
 
+(require '[atom-finder.tree-diff :refer :all])
 (s/defn inner-macro-operator-atom? :- (s/maybe IASTNode)
   "Does this expansion lead to a confusion AST tree outside of itself"
   [exp :- IASTPreprocessorMacroExpansion]
-  (let [expanded   (->> exp location-parent greatest-trivial-parent)
-        unexpanded (->> exp .getMacroDefinition .getExpansion parse-frag)
-        pruned-exp   (->> expanded   prune-terminals (tap pprint))
-        pruned-unexp (->> unexpanded prune-terminals (tap pprint))]
-    (when (not (atom-finder.tree-diff/tree=by (juxt class (comp pap expr-operator)) pruned-exp pruned-unexp))
-      expanded)))
+  (when (and (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
+             (not (atom-finder.tree-diff/tree=by (juxt class expr-operator)
+                                                 (macro-replace-arg-str exp)
+                                                 (macro-replace-arg-tree exp))))
+    (->> exp location-parent greatest-trivial-parent)))
 
 (s/defn macro-inner-precedence-finder
   [root :- IASTTranslationUnit]

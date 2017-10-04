@@ -17,7 +17,7 @@
     (test-atom-lines "macro-operator-precedence.c" "<inner-atom>"
                      macro-inner-precedence-finder))
 
-  (testing "parse-expansion-args"
+  (testing "expansion-args-tree"
     (let [cases [
                  [["5 < 4" "7 > 2"] "#define M2(x,y) x+y+1 \n 3%(M2(5<4,7>2))"]
                  [["5 < 4"]         "#define M2(x,y) x+y+1 \n 3%(M2(5<4))"]
@@ -25,5 +25,5 @@
                  [[""]              "#define M2(x) x+y+1 \n 3%(M2())"]
                  ]]
       (for [[expected code] cases]
-        (is (= expected (->> code parse-frag root-ancestor .getMacroExpansions first parse-expansion-args (map write-ast))) code))))
+        (is (= expected (->> code parse-frag root-ancestor .getMacroExpansions first expansion-args-tree (map write-ast))) code))))
   )

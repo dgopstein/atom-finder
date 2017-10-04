@@ -57,8 +57,8 @@
 
   (testing "prune-terminals"
     (is (atom-finder.tree-diff/tree=by write-node
-                                       (->> "a + 1" parse-frag seq-tree prune-terminals pprint)
-                                       (->> "c + d" parse-frag seq-tree prune-terminals pprint))))
+                                       (->> "a + 1" parse-frag seq-tree prune-terminals)
+                                       (->> "c + d" parse-frag seq-tree prune-terminals))))
   )
 
 (deftest node=-test

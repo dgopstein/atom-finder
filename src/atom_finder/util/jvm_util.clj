@@ -59,12 +59,10 @@
    `(. ~inst ~(symbol (eval m)) ~@args))
 
 '(defn call-method "Call a method by name from a string" [obj m & args]
-    (eval `(. ~obj ~(symbol m) ~@args)))
+   (eval `(. ~obj ~(symbol m) ~@args)))
 
-(defn call-method
-  "Call a method by name from a string"
-  [obj m & args]
-(clojure.lang.Reflector/invokeInstanceMethod ["afsd"] "toString" (to-array []))
+(defn call-method "Call a method by name from a string" [obj m & args]
+  (clojure.lang.Reflector/invokeInstanceMethod obj m (to-array args)))
 
 (defn write-tempfile
   [content]
