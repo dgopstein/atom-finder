@@ -7,7 +7,10 @@
   "given an input string and a hash-map, returns a new string with all
    keys in map found in input replaced with the value of the key"
   [replacements :- {s/Str s/Str} target :- s/Str]
-    (reduce #(apply str/replace (re-pattern %1) %2) target replacements))
+  (reduce #(apply str/replace
+                  (re-pattern (java.util.regex.Pattern/quote %1))
+                  (map str/re-quote-replacement %2))
+          target replacements))
 
 (extend-protocol atom-finder.util/ASTTree clojure.lang.ISeq
   (ast-node [lst] (first lst))
