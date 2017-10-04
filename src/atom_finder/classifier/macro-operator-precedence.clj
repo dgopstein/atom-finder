@@ -56,13 +56,24 @@
   (and (->> unexpanded :name (#{:lessThan :greaterThan}))
        (->> expanded (filter-tree (partial instance? ICPPASTTemplateId)) empty? not)))
 
+(defmulti macro-body-str class)
+(defmethod macro-body-str IASTPreprocessorMacroExpansion [exp]
+  (->> exp .getMacroDefinition macro-body-str))
+(defmethod macro-body-str IASTPreprocessorMacroDefinition [macro-def]
+  (-> macro-def str (str/split #"=" 2) second))
+
+(s/defn substituting-macro?
+  [exp :- IASTPreprocessorMacroExpansion]
+  (->> exp macro-body-str (re-find #"#")))
+
 (s/defn outer-macro-operator-atom? :- (s/maybe IASTNode)
   "Does this expansion lead to a confusion AST tree outside of itself"
   [expansion :- IASTPreprocessorMacroExpansion]
   (let [exp-node (expansion-parent expansion)
         expanded   (some->> exp-node expr-operator)
         unexpanded (some->> exp-node safe-write-ast parse-frag expr-operator)]
-    (when (and expanded unexpanded
+    (when (and (not (substituting-macro? expansion))
+               expanded unexpanded
                (not= expanded unexpanded)
                (not (template-misparse? exp-node unexpanded)))
       exp-node)))
@@ -106,9 +117,9 @@
       nil))
 
 (s/defn parse-macro
-  [macro-exp :- IASTPreprocessorMacroExpansion] ;IASTPreprocessorFunctionStyleMacroDefinition]
+  [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [macro-def (->> macro-exp .getMacroDefinition)
-        body-str  (-> macro-def str (str/split #"=" 2) (nth 1))]
+        body-str  (macro-body-str macro-def)]
     {:def macro-def
      :exp macro-exp
      :params-str (->> macro-def .getParameters (map (memfn getParameter)))
@@ -137,7 +148,8 @@
 (s/defn inner-macro-operator-atom? :- (s/maybe IASTNode)
   "Does this expansion lead to a confusion AST tree outside of itself"
   [exp :- IASTPreprocessorMacroExpansion]
-  (when-let* [_  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
+  (when-let* [_  (not (substituting-macro? exp))
+              _  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
               replaced-str  (macro-replace-arg-str  exp)
               replaced-tree (macro-replace-arg-tree exp)
               _  (not (atom-finder.tree-diff/tree=by (juxt class expr-operator) replaced-str replaced-tree))
@@ -168,4 +180,4 @@
 '(->> "#define M(t) f(t)
       M(k(o))"
      parse-frag root-ancestor .getMacroExpansions first
-     inner-macro-operator-atom?)
+     substituting-macro?)

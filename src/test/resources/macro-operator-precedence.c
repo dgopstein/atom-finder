@@ -42,4 +42,8 @@ int main() {
 
   #define M(t) f(t)
   M(k(o));
+
+  // skip every macro with #'s
+  #define M(t) f(#t)
+  M(k(o));
 }
