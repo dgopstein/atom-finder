@@ -213,17 +213,19 @@
       (not (instance? CPPASTProblemStatement (next-sibling stmt-parse))))
   ))
 
+(defn valid-parse?
+  [node]
+  (and (not (instance? IASTProblemStatement node)) node))
+
 (defn parse-frag
   "Turn a single C fragment (statement or expression) into an AST"
   [code]
-  (let [parse-stmt-or-expr (fn [code] ((if (stmt-str? code) parse-stmt parse-expr) code))
-        node1 (parse-stmt-or-expr code)]
-    (cond
-      (nil? node1)
-        (parse-source code)
-      (instance? IASTProblemStatement node1)
-        (parse-stmt-or-expr (str code ";"))
-      :else node1)))
+  (->> [#(when (stmt-str? %1) (parse-stmt %1)) parse-expr
+        #(get-in-tree [0] (parse-stmt (str %1 ";")))
+        parse-source]
+       (map (fn [parser] (parser code)))
+       (filter valid-parse?)
+       first))
 
 (defmulti loc "Get location information about an AST node" class)
 (defmethod loc ASTFileLocation [l]

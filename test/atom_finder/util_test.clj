@@ -45,6 +45,7 @@
 
 
         (is (instance? IASTExpression (parse-frag "f(x)")))
+        (is (atom-finder.tree-diff/tree=by class (get-in-tree [0] (parse-stmt "int x = 1;")) (parse-frag "int x = 1")))
       )))
 
   (testing "height"
@@ -170,7 +171,7 @@
                  ["*" "*c"]
                  ["++" "d++"]
                  ["?:" "1 ? 2 : 3"]
-                 ["<ProblemStatement>" "~a+"]
+                 ["<Problem>" "~a+"]
                  ["=" "x = 1"]
                  ["=" "x = {}"] ; gcc/libstdc++-v3/testsuite/21_strings/basic_string_view/operations/find/wchar_t/2.cc:149
                  ]]
