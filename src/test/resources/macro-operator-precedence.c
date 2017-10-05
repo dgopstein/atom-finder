@@ -49,5 +49,18 @@ int main() {
 
   // don't capture identifiers inside other identifiers "f[o]f"
   #define M1(o) fof(o) && 1
-  M1(uv->v);"
+  M1(uv->v);
+
+  #define M(x) { int y = (x); f(x); }
+  M(1);
+
+  // repeated arg
+  #define M(x) x * x
+  M(1+2); // <inner-atom>
+
+  #define M(x) (x) * (x)
+  M(1+2);
+
+  #define M(x) x*2 + f(x)
+  M(1+2); // <TODOinner-atom>
 }

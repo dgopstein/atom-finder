@@ -150,8 +150,13 @@
         param-args (zipmap (:params-str mac) (:args-tree mac))
         new-body   (-> mac :body-tree .copy)]
 
-    (when (->> new-body (filter-tree expr-operator)
-               (map #(-replace-identifier! % param-args)) (remove nil?) doall empty? not)
+    (when (not (or
+           ;; replace all matching arguments
+           (->> new-body (filter-tree expr-operator)
+                    (map #(-replace-identifier! % param-args)) (remove nil?) doall empty?)
+           ;; if any un-matched args remain, bail out
+           ;; TODO these are the false-negatives
+           (->> new-body (filter-tree #(instance? IASTName %)) (exists? #(-> % str param-args)))))
       new-body)))
 
 (require '[atom-finder.tree-diff :refer :all])
@@ -162,6 +167,8 @@
               _  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
               replaced-str  (macro-replace-arg-str  exp)
               replaced-tree (macro-replace-arg-tree exp)
+              ;replaced-str  (pap write-ast (macro-replace-arg-str  exp))
+              ;replaced-tree (pap write-ast (macro-replace-arg-tree exp))
               _  (not (atom-finder.tree-diff/tree=by (juxt class expr-operator)
                        replaced-str
                        replaced-tree))
