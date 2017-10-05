@@ -62,5 +62,5 @@ int main() {
   M(1+2);
 
   #define M(x) x*2 + f(x)
-  M(1+2); // <TODOinner-atom>
+  M(1+2); // <inner-atomTODO>
 }
