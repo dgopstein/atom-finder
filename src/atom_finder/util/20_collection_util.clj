@@ -21,7 +21,7 @@
   (->> m (map (fn [[k v]] (f k v))) (into {})))
 
 (defn map-values-kv [f m]
-  (reduce merge (map (fn [[k v]] {k (f k v)}) m)))
+  (map-kv (fn [k v] {k (f k v)}) m))
 
 (defn map-values [f m] (map-values-kv #(f %2) m))
 

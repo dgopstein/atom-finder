@@ -115,6 +115,8 @@
   (testing "map-values"
     (is (= {1 1 2 4 3 9} (map-values #(* %1 %1) {1 1 2 2 3 3})))
     (is (= {1 "1a" 2 "2b" 3 "3c"} (map-values-kv #(str %1 %2) {1 \a 2 \b 3 \c})))
+    (is (= {} (map-values-kv identity {})))
+    (is (= {} (map-values identity {})))
     )
 
   (testing "map-keys"

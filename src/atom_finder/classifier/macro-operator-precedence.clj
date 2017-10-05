@@ -99,7 +99,7 @@
         (children arg-expr)
         [arg-expr]))))
 
-(s/defn expansion-args-str
+(s/defn expansion-args-str :- [s/Str]
   "Extract the code in the arguments to a macro"
   [exp :- IASTPreprocessorMacroExpansion]
   (->> exp expansion-args-tree (map safe-write-ast)))
@@ -181,7 +181,7 @@
   [root :- IASTTranslationUnit]
   (->> root .getMacroExpansions (keep macro-operator-precedence-atom?)))
 
-'(->> "/Users/dgopstein/opt/src/redis/deps/lua/src/lgc.c"
+'(->> "/Users/dgopstein/opt/src/redis/deps/hiredis/test.c"
      parse-file
      macro-operator-precedence-finder
      doall

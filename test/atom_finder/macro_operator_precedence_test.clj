@@ -30,4 +30,17 @@
                  ]]
       (for [[expected code] cases]
         (is (= expected (->> code parse-frag root-ancestor .getMacroExpansions first expansion-args-tree (map write-ast))) code))))
+
+  (testing "expansion-args-str"
+    ;; TODO We should be able to tokenize macro arguments better
+    '(is (= ["ret == REDIS_OK &&
+        ((redisReply*)reply)->type == REDIS_REPLY_ARRAY &&
+        ((redisReply*)reply)->elements == 0"]
+
+           (->> "#define test_cond(_c) if(_c) printf(\"033[0;32mPASSED033[0;0mn\"); else {printf(\"033[0;31mFAILED033[0;0mn\"); fails++;}
+      test_cond(ret == REDIS_OK &&
+        ((redisReply*)reply)->type == REDIS_REPLY_ARRAY &&
+        ((redisReply*)reply)->elements == 0);"
+                parse-frag root-ancestor .getMacroExpansions first
+                expansion-args-str))))
   )
