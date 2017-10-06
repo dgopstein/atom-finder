@@ -120,7 +120,7 @@
    try replacing parts of it to observe the ambiguity"
   [node :- IASTNode replacements :- {s/Str IASTNode}]
   (condp instance? node
-    IASTUnaryExpression      (-maybe-set-operand! "Operand"  node replacements)
+    IASTUnaryExpression            (-maybe-set-operand! "Operand"  node replacements)
     IASTBinaryExpression (let [op1 (-maybe-set-operand! "Operand1" node replacements)
                                op2 (-maybe-set-operand! "Operand2" node replacements)]
                            (or op1 op2))
@@ -138,11 +138,22 @@
      :body-str   body-str
      :body-tree  (parse-frag body-str)}))
 
+;; ExpressionWriter adds superfluous parens to cast statements.
+;; Every we time we parse, we get an additional level of nested
+;; parens. Remove one of them.
+(s/defn remove-cast-parens
+  [node]
+  (let [new-node (.copy node)]
+    (doseq [cast (filter-tree (partial instance? IASTCastExpression) new-node)]
+      (when (paren-node? (.getOperand cast))
+        (.setOperand cast (-> cast .getOperand child))))
+  new-node))
+
 (s/defn macro-replace-arg-str
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-str mac))]
-    (-<>> mac :body-str (id-replace-map param-args) parse-frag)))
+    (-<>> mac :body-str (id-replace-map param-args) parse-frag remove-cast-parens)))
 
 (s/defn macro-replace-arg-tree
   [macro-exp :- IASTPreprocessorMacroExpansion]

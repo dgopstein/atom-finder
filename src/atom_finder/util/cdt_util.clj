@@ -167,6 +167,13 @@
     (empty? indices) node
     :else (recur (rest indices) (nth (children node) (first indices) nil))))
 
+(defn child
+  "Return the only child of a unary node"
+  [node]
+  (let [[x1 x2] (children node)]
+    (assert (nil? x2) (str "node '" (safe-write-ast node) "' at " (tree-path node) " should only have one child '" (safe-write-ast x1) "', but instead also had a second '" (safe-write-ast x2) "'"))
+    x1))
+
 (defn parse-source
   "Turn a string of C source code into an AST"
   [code]

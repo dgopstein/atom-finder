@@ -63,4 +63,7 @@ int main() {
 
   #define M(x) x*2 + f(x)
   M(1+2); // <inner-atomTODO>
+
+  #define IS_ERR_VALUE(x) unlikely((x) >= (unsigned long)-MAX_ERRNO)
+	IS_ERR_VALUE((unsigned long)ptr);
 }
