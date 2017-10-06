@@ -172,7 +172,7 @@
   [node]
   (let [[x1 x2] (children node)]
     ;(assert (nil? x2) (str "node '" (safe-write-ast node) "' at " (tree-path node) " should only have one child '" (safe-write-ast x1) "', but instead also had a second '" (safe-write-ast x2) "'"))
-    (assert (nil? x2) (str "node " (tree-path node) " should only have one child, but instead also had a second"))
+    (assert (nil? x2) (str "node should only have one child, but instead also had a second"))
     x1))
 
 (defn parse-source
