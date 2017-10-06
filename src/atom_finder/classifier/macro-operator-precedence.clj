@@ -1,6 +1,25 @@
 (in-ns 'atom-finder.classifier)
 (import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression)
-        '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition))
+        '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition)
+        '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTUnaryExpression)
+        )
+
+;; ExpressionWriter adds superfluous parens to cast statements.
+;; Every we time we parse, we get an additional level of nested
+;; parens. Remove one of them.
+(s/defn remove-cast-parens
+  [node]
+  (let [new-node (.copy node)]
+    (doseq [cast (filter-tree (partial instance? IASTCastExpression) new-node)]
+      (when (paren-node? (.getOperand cast))
+        (.setOperand cast (-> cast .getOperand child))))
+  new-node))
+
+(defn parse-frag-clean
+  "Traditional parsing leaves some AST idiosyncrasies
+   that we can clean up here"
+  [node]
+  (->> node parse-frag remove-cast-parens))
 
 ;;https://stackoverflow.com/questions/9568050/in-clojure-how-to-write-a-function-that-applies-several-string-replacements
 (s/defn replace-map
@@ -79,7 +98,7 @@
   [expansion :- IASTPreprocessorMacroExpansion]
   (let [exp-node (expansion-parent expansion)
         expanded   (some->> exp-node expr-operator)
-        unexpanded (some->> exp-node safe-write-ast parse-frag expr-operator)]
+        unexpanded (some->> exp-node safe-write-ast parse-frag-clean expr-operator)]
     (when (and (not (substituting-macro? expansion))
                expanded unexpanded
                (not= expanded unexpanded)
@@ -93,7 +112,7 @@
 (s/defn expansion-args-tree
   "Take the arguments to a macro and parse them into ASTs"
   [exp :- IASTPreprocessorMacroExpansion]
-  (let [arg-expr (some->> exp str (re-find #"\w+\((.*)\)") second parse-frag)]
+  (let [arg-expr (some->> exp str (re-find #"\w+\((.*)\)") second parse-frag-clean)]
     (when arg-expr
       (if (instance? IASTExpressionList arg-expr)
         (children arg-expr)
@@ -120,6 +139,7 @@
    try replacing parts of it to observe the ambiguity"
   [node :- IASTNode replacements :- {s/Str IASTNode}]
   (condp instance? node
+    IASTCastExpression             (-maybe-set-operand! "Operand"  node replacements)
     IASTUnaryExpression            (-maybe-set-operand! "Operand"  node replacements)
     IASTBinaryExpression (let [op1 (-maybe-set-operand! "Operand1" node replacements)
                                op2 (-maybe-set-operand! "Operand2" node replacements)]
@@ -136,39 +156,35 @@
      :args-str   (->> macro-exp expansion-args-str)
      :args-tree  (->> macro-exp expansion-args-tree)
      :body-str   body-str
-     :body-tree  (parse-frag body-str)}))
-
-;; ExpressionWriter adds superfluous parens to cast statements.
-;; Every we time we parse, we get an additional level of nested
-;; parens. Remove one of them.
-(s/defn remove-cast-parens
-  [node]
-  (let [new-node (.copy node)]
-    (doseq [cast (filter-tree (partial instance? IASTCastExpression) new-node)]
-      (when (paren-node? (.getOperand cast))
-        (.setOperand cast (-> cast .getOperand child))))
-  new-node))
+     :body-tree  (parse-frag-clean body-str)}))
 
 (s/defn macro-replace-arg-str
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-str mac))]
-    (-<>> mac :body-str (id-replace-map param-args) parse-frag remove-cast-parens)))
+    (-<>> mac :body-str (id-replace-map param-args) parse-frag-clean remove-cast-parens)))
+
+(defn paren-wrap
+  [node]
+  (CPPASTUnaryExpression. IASTUnaryExpression/op_bracketedPrimary (.copy node)))
 
 (s/defn macro-replace-arg-tree
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-tree mac))
-        new-body   (-> mac :body-tree .copy)]
+        new-body   (-> mac :body-tree .copy)
+        ;; Add top-level parens so we can modify the root
+        [body-handle body-getter] (if (instance? IASTExpression new-body) [(paren-wrap new-body) child] [new-body identity])
+        ]
 
     (when (not (or
            ;; replace all matching arguments
-           (->> new-body (filter-tree expr-operator)
-                    (map #(-replace-identifier! % param-args)) (remove nil?) doall empty?)
+           (->> body-handle (filter-tree #(-replace-identifier! % param-args))
+                (remove nil?) doall empty?)
            ;; if any un-matched args remain, bail out
            ;; TODO these are the false-negatives
-           (->> new-body (filter-tree #(instance? IASTName %)) (exists? #(-> % str param-args)))))
-      new-body)))
+           (->> body-handle (filter-tree #(instance? IASTName %)) (exists? #(-> % str param-args)))))
+      (body-getter body-handle))))
 
 (require '[atom-finder.tree-diff :refer :all])
 (s/defn inner-macro-operator-atom? :- (s/maybe IASTNode)

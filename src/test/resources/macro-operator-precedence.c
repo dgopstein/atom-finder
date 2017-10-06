@@ -64,6 +64,20 @@ int main() {
   #define M(x) x*2 + f(x)
   M(1+2); // <inner-atomTODO>
 
+  // linux/tools/virtio/linux/err.h:17
   #define IS_ERR_VALUE(x) unlikely((x) >= (unsigned long)-MAX_ERRNO)
 	IS_ERR_VALUE((unsigned long)ptr);
+
+  // linux/lib/zstd/huf_compress.c:96
+  #define M(x) (int)(x)
+  M(2);
+
+  #define M(x) (int)x
+  M(2);
+
+  #define M(x) (x)
+  M((int)2);
+
+  #define M(x) x
+  M((int)2);
 }
