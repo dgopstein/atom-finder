@@ -117,4 +117,14 @@ int main() {
 
   #define M(x) int y = x;
   M(1);
+
+  // linux/arch/arm/common/sa1111.c:1271
+  #define MODIFY_BITS(port, mask, dir)		\
+	if (mask) {				\
+		val = sa1111_readl(port);	\
+		val &= ~(mask);			\
+		val |= (dir) & (mask);		\
+		sa1111_writel(val, port);	\
+	}
+	MODIFY_BITS(gpio + SA1111_GPIO_PADDR, bits & 15, dir);
 }

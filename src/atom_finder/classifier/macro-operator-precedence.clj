@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression IASTEqualsInitializer)
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression IASTEqualsInitializer IASTIfStatement IASTWhileStatement IASTForStatement IASTDoStatement IASTArraySubscriptExpression)
         '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTUnaryExpression)
         )
@@ -159,13 +159,21 @@
    try replacing parts of it to observe the ambiguity"
   [node :- IASTNode replacements :- {s/Str IASTNode}]
   (condp instance? node
+    IASTIfStatement                (-maybe-set-operand! "ConditionExpression"  node replacements)
+    IASTForStatement               (-maybe-set-operand! "ConditionExpression"  node replacements)
+    IASTWhileStatement             (-maybe-set-operand! "Condition"  node replacements)
+    IASTDoStatement                (-maybe-set-operand! "Condition"  node replacements)
     IASTEqualsInitializer          (-maybe-set-operand! "InitializerClause"  node replacements)
     IASTFunctionCallExpression     (-maybe-set-args!               node replacements)
     IASTCastExpression             (-maybe-set-operand! "Operand"  node replacements)
     IASTUnaryExpression            (-maybe-set-operand! "Operand"  node replacements)
-    IASTBinaryExpression (let [op1 (-maybe-set-operand! "Operand1" node replacements)
-                               op2 (-maybe-set-operand! "Operand2" node replacements)]
-                           (or op1 op2))
+
+    IASTBinaryExpression           (let [op1 (-maybe-set-operand! "Operand1" node replacements)
+                                         op2 (-maybe-set-operand! "Operand2" node replacements)]
+                                     (or op1 op2))
+    IASTArraySubscriptExpression   (let [op1 (-maybe-set-operand! "Argument" node replacements)
+                                         op2 (-maybe-set-operand! "ArrayExpression" node replacements)]
+                                     (or op1 op2))
       nil))
 
 (s/defn parse-macro
@@ -239,11 +247,3 @@
 (s/defn macro-operator-precedence-finder
   [root :- IASTTranslationUnit]
   (->> root .getMacroExpansions (keep macro-operator-precedence-atom?)))
-
-'(->> "/Users/dgopstein/opt/src/redis/deps/hiredis/test.c"
-     parse-file
-     macro-operator-precedence-finder
-     doall
-     (map start-line)
-     pprint
-     )

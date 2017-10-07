@@ -33,8 +33,35 @@
        (map prn)
        count
        println
-       time
+       time-mins
        ))
 
 ; (print-atoms-in-dir (expand-home "~/opt/src/redis") (map atom-lookup [:preprocessor-in-statement :reversed-subscript]))
-; (print-atoms-in-dir (expand-home "~/opt/src/redis") (map atom-lookup [:macro-operator-precedence]))
+; (print-atoms-in-dir (expand-home "~/opt/src/linux") (map atom-lookup [:macro-operator-precedence]))
+
+(require '[atom-finder.classifier :refer :all])
+(->> "#define M(S) S
+     M((size_t)1);"
+     parse-frag root-ancestor .getMacroExpansions first
+     macro-replace-arg-str)
+
+(->> "(int)(1)" parse-expr write-ast)
+(->> "(int)1" parse-expr write-ast)
+
+(->>"#define M(mask) if (mask) { f(2); }
+	   M(1);"
+     (tap (fn [x] (println " ")))
+     parse-frag
+     root-ancestor .getMacroExpansions first
+     inner-macro-operator-atom?)
+
+;; [^(])
+
+  (->> "~/opt/src/linux"
+       expand-home
+       (pmap-dir-files #(atoms-in-file (map atom-lookup [:macro-operator-precedence]) %))
+       (filter (fn [[file atms]] (->> atms vals (exists? (complement empty?)))))
+       (map prn)
+       count
+       println
+       time-mins)
