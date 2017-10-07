@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression)
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression)
         '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTUnaryExpression)
         )
@@ -18,8 +18,8 @@
 (defn parse-frag-clean
   "Traditional parsing leaves some AST idiosyncrasies
    that we can clean up here"
-  [node]
-  (->> node parse-frag remove-cast-parens))
+  [s]
+  (->> s parse-frag remove-cast-parens))
 
 ;;https://stackoverflow.com/questions/9568050/in-clojure-how-to-write-a-function-that-applies-several-string-replacements
 (s/defn replace-map
@@ -123,22 +123,43 @@
   [exp :- IASTPreprocessorMacroExpansion]
   (->> exp expansion-args-tree (map safe-write-ast)))
 
-(s/defn -maybe-set-operand!
-  "Take an identifier, and replace it with its full tree"
-  [method node replacements]
-  (when-let* [operand     (call-method node (str 'get method))
+(s/defn -maybe-set-value!
+  [getter setter node replacements]
+  (when-let* [operand     (getter node)
               _           (instance? IASTIdExpression operand)
               replacement (-> operand .getName str replacements)
               _           (instance? IASTExpression replacement)
               ]
        (doto node
-         (call-method (str 'set method) (.copy replacement)))))
+         (setter (.copy replacement)))))
+
+(s/defn -maybe-set-args!
+  [node :- IASTFunctionCallExpression replacements]
+  (let [args (.getArguments node)]
+    (->> args
+         count
+         range
+         (map (fn [idx] (-maybe-set-value!
+                         (fn [_] (nth args idx))
+                         (fn [_ new-child] (aset args idx new-child))
+                         node replacements)))
+         dorun)
+
+    (doto node (.setArguments args))))
+
+(s/defn -maybe-set-operand!
+  "Take an identifier, and replace it with its full tree"
+  [method node replacements]
+  (-maybe-set-value! #(call-method % (str 'get method))
+                     #(call-method %1 (str 'set method) %2)
+                     node replacements))
 
 (s/defn -replace-identifier!
   "If this node is capable of causing syntax ambiguities,
    try replacing parts of it to observe the ambiguity"
   [node :- IASTNode replacements :- {s/Str IASTNode}]
   (condp instance? node
+    IASTFunctionCallExpression     (-maybe-set-args!               node replacements)
     IASTCastExpression             (-maybe-set-operand! "Operand"  node replacements)
     IASTUnaryExpression            (-maybe-set-operand! "Operand"  node replacements)
     IASTBinaryExpression (let [op1 (-maybe-set-operand! "Operand1" node replacements)
@@ -162,7 +183,7 @@
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-str mac))]
-    (-<>> mac :body-str (id-replace-map param-args) parse-frag-clean remove-cast-parens)))
+    (->> mac :body-str (id-replace-map param-args) parse-frag-clean)))
 
 (defn paren-wrap
   [node]
@@ -172,7 +193,7 @@
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-tree mac))
-        new-body   (-> mac :body-tree .copy)
+        new-body   (->> mac :body-tree .copy)
         ;; Add top-level parens so we can modify the root
         [body-handle body-getter] (if (instance? IASTExpression new-body) [(paren-wrap new-body) child] [new-body identity])
         ]
@@ -183,7 +204,10 @@
                 (remove nil?) doall empty?)
            ;; if any un-matched args remain, bail out
            ;; TODO these are the false-negatives
-           (->> body-handle (filter-tree #(instance? IASTName %)) (exists? #(-> % str param-args)))))
+           (comment (and (->> body-handle body-getter (pap print-tree) (filter-tree #(instance? IASTName %)) (exists? #(-> % str param-args)))
+                (do (println (str "Couldn't expand: " (filename (:exp mac)) ":" (start-line (:exp mac)) "\n" (safe-write-ast (body-getter body-handle))))
+                    true)))
+           ))
       (body-getter body-handle))))
 
 (require '[atom-finder.tree-diff :refer :all])

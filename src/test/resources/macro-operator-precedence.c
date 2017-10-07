@@ -51,8 +51,12 @@ int main() {
   #define M1(o) fof(o) && 1
   M1(uv->v);
 
-  #define M(x) { int y = (x); f(x); }
+  #define M(x) { int y = (x); y = f(x); }
   M(1);
+
+  // Can't tell f(x) is a function, I guess?
+  //#define M(x) { int y = (x); f(x); }
+  //M(1);
 
   // repeated arg
   #define M(x) x * x
@@ -62,7 +66,7 @@ int main() {
   M(1+2);
 
   #define M(x) x*2 + f(x)
-  M(1+2); // <inner-atomTODO>
+  M(1+2); // <inner-atom>
 
   // linux/tools/virtio/linux/err.h:17
   #define IS_ERR_VALUE(x) unlikely((x) >= (unsigned long)-MAX_ERRNO)
@@ -80,4 +84,30 @@ int main() {
 
   #define M(x) x
   M((int)2);
+
+
+  // Occasionally CDT can't write and re-parse correctly
+  // e.g. (->> "(size_t)1" parse-frag write-ast (not= "(size_t)1"))
+  // Because CDT adds parens around the 1, doesn't realize size_t is a type,
+  // and thinks the whole thing is a function call
+  //
+  // gcc/libffi/src/dlmalloc.c:3464
+  //#define page_align(S) (((S) + (mparams.page_size)) & ~(mparams.page_size - SIZE_T_ONE))
+  //asize += (page_align((size_t)base) - (size_t)base);
+  //
+  //#define M(S) S
+  //M((size_t)1);"
+
+  // gcc/zlib/contrib/minizip/crypt.h:55
+  #define crc32(c, b) ((*(pcrc_32_tab+(((int)(c) ^ (b)) & 0xff))) ^ ((c) >> 8))
+  (*(pkeys+2)) = crc32((*(pkeys+2)), keyshift);
+
+  // TODO
+  // #define M(c) (int)c
+  // M((1));
+
+
+  // linux/arch/arc/mm/mmap.c:61
+  #define M(x) x
+  x = M(x);
 }
