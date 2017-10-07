@@ -1,5 +1,5 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression)
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression IASTEqualsInitializer)
         '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTUnaryExpression)
         )
@@ -159,6 +159,7 @@
    try replacing parts of it to observe the ambiguity"
   [node :- IASTNode replacements :- {s/Str IASTNode}]
   (condp instance? node
+    IASTEqualsInitializer          (-maybe-set-operand! "InitializerClause"  node replacements)
     IASTFunctionCallExpression     (-maybe-set-args!               node replacements)
     IASTCastExpression             (-maybe-set-operand! "Operand"  node replacements)
     IASTUnaryExpression            (-maybe-set-operand! "Operand"  node replacements)

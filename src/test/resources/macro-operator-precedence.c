@@ -110,4 +110,11 @@ int main() {
   // linux/arch/arc/mm/mmap.c:61
   #define M(x) x
   x = M(x);
+
+  // linux/arch/arc/kernel/unaligned.c:150
+  #define get32_unaligned_check(val, addr)  unsigned int err = 0, v, a = addr;	\
+  get32_unaligned_check(val, state->src1 + state->src2);
+
+  #define M(x) int y = x;
+  M(1);
 }
