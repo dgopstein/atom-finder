@@ -1,7 +1,7 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression IASTEqualsInitializer IASTIfStatement IASTWhileStatement IASTForStatement IASTDoStatement IASTArraySubscriptExpression)
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression IASTEqualsInitializer IASTIfStatement IASTWhileStatement IASTForStatement IASTDoStatement IASTArraySubscriptExpression IASTExpressionList IASTFieldReference)
         '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition)
-        '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTUnaryExpression)
+        '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTUnaryExpression CPPASTExpressionList)
         )
 
 ;; ExpressionWriter adds superfluous parens to cast statements.
@@ -126,12 +126,15 @@
 (s/defn -maybe-set-value!
   [getter setter node replacements]
   (when-let* [operand     (getter node)
-              _           (instance? IASTIdExpression operand)
-              replacement (-> operand .getName str replacements)
+              name        (cond (instance? IASTIdExpression operand) (.getName operand)
+                                (instance? IASTName operand) operand
+                                :else nil)
+              replacement (-> name str replacements)
               _           (instance? IASTExpression replacement)
               ]
        (doto node
-         (setter (.copy replacement)))))
+         (setter (.copy (cond (instance? IASTIdExpression operand) replacement
+                              (instance? IASTName operand) (.getName replacement)))))))
 
 (s/defn -maybe-set-args!
   [node :- IASTFunctionCallExpression replacements]
@@ -147,6 +150,15 @@
 
     (doto node (.setArguments args))))
 
+(s/defn -maybe-set-expr-list!
+  [node :- CPPASTExpressionList replacements]
+  (doseq [expr (.getExpressions node)]
+    (-maybe-set-value!
+     (fn [node] expr)
+     (fn [_ new-child] (.replace node expr new-child))
+     node replacements))
+  node)
+
 (s/defn -maybe-set-operand!
   "Take an identifier, and replace it with its full tree"
   [method node replacements]
@@ -154,26 +166,33 @@
                      #(call-method %1 (str 'set method) %2)
                      node replacements))
 
+(s/defn -maybe-set-operands!
+  [node replacements & methods]
+  (->> methods
+       (map #(-maybe-set-operand! %1 node replacements))
+       doall
+       (some identity)))
+
 (s/defn -replace-identifier!
   "If this node is capable of causing syntax ambiguities,
    try replacing parts of it to observe the ambiguity"
   [node :- IASTNode replacements :- {s/Str IASTNode}]
   (condp instance? node
-    IASTIfStatement                (-maybe-set-operand! "ConditionExpression"  node replacements)
-    IASTForStatement               (-maybe-set-operand! "ConditionExpression"  node replacements)
-    IASTWhileStatement             (-maybe-set-operand! "Condition"  node replacements)
-    IASTDoStatement                (-maybe-set-operand! "Condition"  node replacements)
-    IASTEqualsInitializer          (-maybe-set-operand! "InitializerClause"  node replacements)
-    IASTFunctionCallExpression     (-maybe-set-args!               node replacements)
-    IASTCastExpression             (-maybe-set-operand! "Operand"  node replacements)
-    IASTUnaryExpression            (-maybe-set-operand! "Operand"  node replacements)
+    IASTFunctionCallExpression   (-maybe-set-args!      node replacements)
+    IASTExpressionList           (-maybe-set-expr-list! node replacements)
+    IASTIfStatement              (-maybe-set-operands!  node replacements "ConditionExpression")
+    IASTForStatement             (-maybe-set-operands!  node replacements "ConditionExpression")
+    IASTWhileStatement           (-maybe-set-operands!  node replacements "Condition")
+    IASTDoStatement              (-maybe-set-operands!  node replacements "Condition")
+    IASTEqualsInitializer        (-maybe-set-operands!  node replacements "InitializerClause")
+    IASTCastExpression           (-maybe-set-operands!  node replacements "Operand")
+    IASTUnaryExpression          (-maybe-set-operands!  node replacements "Operand")
+    IASTBinaryExpression         (-maybe-set-operands!  node replacements "Operand1" "Operand2")
+    IASTArraySubscriptExpression (-maybe-set-operands!  node replacements "Argument" "ArrayExpression")
+    IASTFieldReference           (-maybe-set-operands!  node replacements "FieldOwner" "FieldName")
+    IASTConditionalExpression    (-maybe-set-operands!  node replacements "LogicalConditionExpression"
+                                                         "PositiveResultExpression" "NegativeResultExpression")
 
-    IASTBinaryExpression           (let [op1 (-maybe-set-operand! "Operand1" node replacements)
-                                         op2 (-maybe-set-operand! "Operand2" node replacements)]
-                                     (or op1 op2))
-    IASTArraySubscriptExpression   (let [op1 (-maybe-set-operand! "Argument" node replacements)
-                                         op2 (-maybe-set-operand! "ArrayExpression" node replacements)]
-                                     (or op1 op2))
       nil))
 
 (s/defn parse-macro
@@ -227,8 +246,8 @@
               _  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
               replaced-str  (macro-replace-arg-str  exp)
               replaced-tree (macro-replace-arg-tree exp)
-              ;replaced-str  (pap write-ast (macro-replace-arg-str  exp))
-              ;replaced-tree (pap write-ast (macro-replace-arg-tree exp))
+              ;replaced-str  (pap safe-write-ast (macro-replace-arg-str  exp))
+              ;replaced-tree (pap safe-write-ast (macro-replace-arg-tree exp))
               _  (not (atom-finder.tree-diff/tree=by (juxt class expr-operator)
                        replaced-str
                        replaced-tree))
