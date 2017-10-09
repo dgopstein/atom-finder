@@ -1,7 +1,11 @@
 (in-ns 'atom-finder.classifier)
-(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression IASTEqualsInitializer IASTIfStatement IASTWhileStatement IASTForStatement IASTDoStatement IASTArraySubscriptExpression IASTExpressionList IASTFieldReference)
+(import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression IASTEqualsInitializer IASTIfStatement IASTWhileStatement IASTForStatement IASTDoStatement IASTArraySubscriptExpression IASTExpressionList IASTFieldReference
+IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IASTConditionalExpression IASTDoStatement IASTEnumerationSpecifier IASTExpressionStatement IASTFieldDeclarator IASTFieldReference IASTForStatement IASTFunctionCallExpression IASTIfStatement IASTInitializerExpression IASTReturnStatement IASTSimpleDeclSpecifier IASTSwitchStatement IASTUnaryExpression IASTWhileStatement)
+        '(org.eclipse.cdt.core.dom.ast.cpp ICPPASTArrayDesignator ICPPASTConstructorChainInitializer ICPPASTConstructorInitializer ICPPASTDeleteExpression ICPPASTFunctionDeclarator ICPPASTNewExpression ICPPASTPackExpansionExpression ICPPASTSimpleTypeConstructorExpression ICPPASTTemplatedTypeTemplateParameter ICPPASTTypenameExpression)
+        '(org.eclipse.cdt.core.dom.ast.gnu cpp.IGPPASTSimpleDeclSpecifier c.IGCCASTArrayRangeDesignator c.IGCCASTSimpleDeclSpecifier IGNUASTGotoStatement )
+        '(org.eclipse.cdt.core.dom.ast.c ICASTArrayDesignator)
         '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition)
-        '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTUnaryExpression CPPASTExpressionList)
+        '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTUnaryExpression CPPASTExpressionList )
         )
 
 ;; ExpressionWriter adds superfluous parens to cast statements.
@@ -172,28 +176,58 @@
        (map #(-maybe-set-operand! %1 node replacements))
        doall
        (some identity)))
+(def expression-sites [
+[IASTArrayModifier "ConstantExpression"]
+[IASTArraySubscriptExpression "Argument" "ArrayExpression"]
+[IASTBinaryExpression "Operand1" "Operand2"]
+[IASTCaseStatement "Expression"]
+[IASTCastExpression "Operand"]
+[IASTConditionalExpression "LogicalConditionExpression" "PositiveResultExpression" "NegativeResultExpression"]
+[IASTDoStatement "Condition"]
+[IASTEnumerationSpecifier "Value"]
+[IASTEqualsInitializer "InitializerClause"]
+[IASTExpressionStatement "Expression"]
+[IASTFieldDeclarator "BitFieldSize"]
+[IASTFieldReference "FieldOwner" "FieldName"]
+[IASTForStatement "ConditionExpression" "IterationExpression"]
+[IASTFunctionCallExpression "FunctionNameExpression"]
+[IASTIfStatement "ConditionExpression"]
+[IASTInitializerExpression "Expression"]
+[IASTReturnStatement "ReturnValue"]
+[IASTSimpleDeclSpecifier "DeclTypeExpression"]
+[IASTSwitchStatement "ControllerExpression"]
+[IASTUnaryExpression "Operand"]
+[IASTWhileStatement "Condition"]
+[ICASTArrayDesignator "SubscriptExpression"]
+[ICPPASTArrayDesignator "SubscriptExpression"]
+[ICPPASTConstructorChainInitializer "InitializerValue"]
+[ICPPASTConstructorInitializer "Expression"]
+[ICPPASTDeleteExpression "Operand"]
+[ICPPASTFunctionDeclarator "NoexceptExpression"]
+[ICPPASTNewExpression "NewPlacement" "NewInitializer" "PlacementArguments"]
+[ICPPASTPackExpansionExpression  "Pattern"]
+[ICPPASTSimpleTypeConstructorExpression "InitialValue"]
+[ICPPASTTemplatedTypeTemplateParameter "DefaultValue"]
+[ICPPASTTypenameExpression "InitialValue"]
+[IGCCASTArrayRangeDesignator "RangeFloor" "RangeCeiling"]
+[IGCCASTSimpleDeclSpecifier "TypeofExpression"]
+[IGNUASTGotoStatement "LabelNameExpression"]
+[IGPPASTSimpleDeclSpecifier "TypeofExpression"]
+[IASTFunctionCallExpression -maybe-set-args!]
+[IASTExpressionList         -maybe-set-expr-list!]
+ ])
 
 (s/defn -replace-identifier!
   "If this node is capable of causing syntax ambiguities,
    try replacing parts of it to observe the ambiguity"
   [node :- IASTNode replacements :- {s/Str IASTNode}]
-  (condp instance? node
-    IASTFunctionCallExpression   (-maybe-set-args!      node replacements)
-    IASTExpressionList           (-maybe-set-expr-list! node replacements)
-    IASTIfStatement              (-maybe-set-operands!  node replacements "ConditionExpression")
-    IASTForStatement             (-maybe-set-operands!  node replacements "ConditionExpression")
-    IASTWhileStatement           (-maybe-set-operands!  node replacements "Condition")
-    IASTDoStatement              (-maybe-set-operands!  node replacements "Condition")
-    IASTEqualsInitializer        (-maybe-set-operands!  node replacements "InitializerClause")
-    IASTCastExpression           (-maybe-set-operands!  node replacements "Operand")
-    IASTUnaryExpression          (-maybe-set-operands!  node replacements "Operand")
-    IASTBinaryExpression         (-maybe-set-operands!  node replacements "Operand1" "Operand2")
-    IASTArraySubscriptExpression (-maybe-set-operands!  node replacements "Argument" "ArrayExpression")
-    IASTFieldReference           (-maybe-set-operands!  node replacements "FieldOwner" "FieldName")
-    IASTConditionalExpression    (-maybe-set-operands!  node replacements "LogicalConditionExpression"
-                                                         "PositiveResultExpression" "NegativeResultExpression")
-
-      nil))
+  (->> expression-sites
+       (some
+        (fn [[type & methods]]
+          (when (instance? type node)
+            (if (instance? String (first methods))
+              (apply -maybe-set-operands! node replacements methods)
+              ((first methods) node replacements)))))))
 
 (s/defn parse-macro
   [macro-exp :- IASTPreprocessorMacroExpansion]
