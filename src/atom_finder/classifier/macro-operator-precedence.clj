@@ -116,7 +116,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
 (s/defn expansion-args-tree
   "Take the arguments to a macro and parse them into ASTs"
   [exp :- IASTPreprocessorMacroExpansion]
-  (let [arg-expr (some->> exp str (re-find #"\w+\((.*)\)") second parse-frag-clean)]
+  (let [arg-expr (some->> exp str (re-find #"(?s)\w+\((.*)\)") second parse-frag-clean)]
     (when arg-expr
       (if (instance? IASTExpressionList arg-expr)
         (children arg-expr)
