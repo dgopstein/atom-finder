@@ -167,24 +167,28 @@ int main() {
 	M();
 
   // linux/arch/mips/loongson64/loongson-3/smp.c:243
-  #define loongson3_ipi_write32(action, addr)	\
-	do {					\
-		writel(action, addr);		\
-		__wbflush();			\
-	} while (0)
-  loongson3_ipi_write32((u32)action, ipi_set0_regs[cpu_logical_map(cpu)]);
+  //#define loongson3_ipi_write32(action, addr)	\
+	//do {                                        \
+	//	writel(action, addr);                     \
+	//	__wbflush();                              \
+	//} while (0)
+  //loongson3_ipi_write32((u32)action, ipi_set0_regs[cpu_logical_map(cpu)]);
+  //
+  // cast <-> function call bug
+  //#define M(x) f(x)
+  //M((u32)action);
 
   // linux/arch/powerpc/platforms/powermac/pfunc_core.c:155
-  #define PMF_PARSE_CALL(name, cmd, handlers, p...) \
-	do { \
-		if (cmd->error) \
-			return -ENXIO; \
-		if (handlers == NULL) \
-			return 0; \
-		if (handlers->name)				      \
+  //#define PMF_PARSE_CALL(name, cmd, handlers, p...) \
+	do {                                              \
+		if (cmd->error)                                 \
+			return -ENXIO;                                \
+		if (handlers == NULL)                           \
+			return 0;                                     \
+		if (handlers->name)                             \
 			return handlers->name(cmd->func, cmd->instdata, \
-					      cmd->args, p);	      \
-		return -1; \
-	} while(0) \
+					      cmd->args, p);                        \
+		return -1;                                        \
+	} while(0)                                          \
 	PMF_PARSE_CALL(read_gpio, cmd, h, mask, rshift, xor);
 }

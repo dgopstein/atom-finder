@@ -324,10 +324,10 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   [exp :- IASTPreprocessorMacroExpansion]
   (when-let* [_  (not (substituting-macro? exp))
               _  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
-              ;replaced-str  (macro-replace-arg-str  exp)
-              ;replaced-tree (macro-replace-arg-tree exp)
-              replaced-str  (pap safe-write-ast (macro-replace-arg-str  exp))
-              replaced-tree (pap safe-write-ast (macro-replace-arg-tree exp))
+              replaced-str  (macro-replace-arg-str  exp)
+              replaced-tree (macro-replace-arg-tree exp)
+              ;replaced-str  (pap print-tree (macro-replace-arg-str  exp))
+              ;replaced-tree (pap print-tree (macro-replace-arg-tree exp))
               _  (not (atom-finder.tree-diff/tree=by (juxt class expr-operator)
                        replaced-str
                        replaced-tree))

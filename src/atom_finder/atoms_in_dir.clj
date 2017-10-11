@@ -52,12 +52,11 @@
 
 (->> "
   #define M(x) f(x)
-	M();
+  M((u32)action);
 "
      (tap (fn [x] (println " ")))
-     parse-source
+     parse-frag
      root-ancestor .getMacroExpansions first
-     expansion-args-tree first)
      inner-macro-operator-atom?)
 
 
