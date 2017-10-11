@@ -135,6 +135,7 @@ int main() {
 	M(2);
 
   // linux/arch/mips/pci/pci-lantiq.c:186
+  // bail out, don't even try - nested macros
   #define ltq_w32(x, y) x + y
   #define ltq_pci_w32(x, y)	ltq_w32((x), ltq_pci_membase + (y))
   #define ltq_pci_r32(x)		ltq_r32(ltq_pci_membase + (x))
@@ -147,7 +148,8 @@ int main() {
      2);
 
   // linux/arch/mips/fw/sni/sniprom.c:80
-  //#define N	x
-  //#define M(x)  N(x)
-  //int y = M();
+  // bail out, don't even try - nested macros
+  #define N	x
+  #define M(x)  N(x)
+  int y = M();
 }

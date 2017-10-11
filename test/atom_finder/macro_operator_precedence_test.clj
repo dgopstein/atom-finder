@@ -43,16 +43,16 @@
         ((redisReply*)reply)->elements == 0);"
                 parse-frag root-ancestor .getMacroExpansions first
                 expansion-args-str))))
-  (testing "macro-body-str"
-    (->> "#define N	1^x*2
-      #define M(x)  N(x+3)
-      int y = M(4);"
-     parse-source
-     root-ancestor .getMacroExpansions first
-     macro-replace-arg-str write-ast
-     (= "1 ^ 4 * 2(4 + 3)")
-     is
-    ))
+  ;(testing "macro-body-str"
+  ;  (->> "#define N	1^x*2
+  ;    #define M(x)  N(x+3)
+  ;    int y = M(4);"
+  ;   parse-source
+  ;   root-ancestor .getMacroExpansions first
+  ;   macro-replace-arg-str write-ast
+  ;   (= "1 ^ 4 * 2(4 + 3)")
+  ;   is
+  ;  ))
 
   (testing "parse-macro-def"
     (let [cases [["#define x 1"      {:name "x" :args nil :body "1"}]

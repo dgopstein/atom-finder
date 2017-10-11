@@ -53,7 +53,7 @@
 (->> "
   #define ltq_w32(x) x
   #define ltq_pci_w32(x)	ltq_w32((x))
-  #define ltq_pci_r32(x)		x
+  #define ltq_pci_r32(x)		3
 	ltq_pci_w32(ltq_pci_r32(1) + 2);
 "
      (tap (fn [x] (println " ")))
