@@ -162,6 +162,10 @@ int main() {
   #define read_c0_errctl(x) read_c0_ecc(x)
 	res = read_c0_errctl();
 
+  // no args
+  #define M(x) f(x)
+	M();
+
   // linux/arch/mips/loongson64/loongson-3/smp.c:243
   #define loongson3_ipi_write32(action, addr)	\
 	do {					\

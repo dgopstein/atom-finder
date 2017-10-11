@@ -138,10 +138,12 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   "Take the arguments to a macro and parse them into ASTs"
   [exp :- IASTPreprocessorMacroExpansion]
   ;; todo, is there a function that does this regex already
-  (let [arg-str   (some->> exp str (re-find #"(?s)\w+\((.*)\)") second)
+  (let [arg-str  (some->> exp str (re-find #"(?s)\w+\((.*)\)") second)
         arg-expr (some->> arg-str parse-frag-clean)]
     (when arg-expr
       (cond
+        (= arg-str "")
+          []
         (instance? IASTExpressionList arg-expr)   ;; multiple args
           (children arg-expr)
         (instance? IASTProblem arg-expr) ;; statements as args?
@@ -322,10 +324,10 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   [exp :- IASTPreprocessorMacroExpansion]
   (when-let* [_  (not (substituting-macro? exp))
               _  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
-              replaced-str  (macro-replace-arg-str  exp)
-              replaced-tree (macro-replace-arg-tree exp)
-              ;replaced-str  (pap safe-write-ast (macro-replace-arg-str  exp))
-              ;replaced-tree (pap safe-write-ast (macro-replace-arg-tree exp))
+              ;replaced-str  (macro-replace-arg-str  exp)
+              ;replaced-tree (macro-replace-arg-tree exp)
+              replaced-str  (pap safe-write-ast (macro-replace-arg-str  exp))
+              replaced-tree (pap safe-write-ast (macro-replace-arg-tree exp))
               _  (not (atom-finder.tree-diff/tree=by (juxt class expr-operator)
                        replaced-str
                        replaced-tree))

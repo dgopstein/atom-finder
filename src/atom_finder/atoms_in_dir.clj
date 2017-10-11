@@ -51,16 +51,13 @@
      ppublic-methods)
 
 (->> "
-  #define atomic_cmpxchg(v, o, n) ((int)cmpxchg(&((v)->counter), (o), (n)))
-  static inline int atomic_cmpxchg(atomic_t *v, int old, int new)
-  {return 1;}
+  #define M(x) f(x)
+	M();
 "
-
      (tap (fn [x] (println " ")))
      parse-source
      root-ancestor .getMacroExpansions first
-str (re-find #"(?s)\w+\((.*)\)") second parse-frag-clean print-tree)
-     expansion-args-tree)
+     expansion-args-tree first)
      inner-macro-operator-atom?)
 
 
