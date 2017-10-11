@@ -1,12 +1,16 @@
 (in-ns 'atom-finder.classifier)
 (import '(org.eclipse.cdt.core.dom.ast IASTNode IASTName IASTIdExpression IASTBinaryExpression IASTUnaryExpression IASTExpressionStatement IASTPreprocessorFunctionStyleMacroDefinition IASTDoStatement IASTLiteralExpression IASTPreprocessorMacroExpansion cpp.ICPPASTTemplateId IASTCastExpression IASTFunctionCallExpression IASTEqualsInitializer IASTIfStatement IASTWhileStatement IASTForStatement IASTDoStatement IASTArraySubscriptExpression IASTExpressionList IASTFieldReference
-IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IASTConditionalExpression IASTDoStatement IASTEnumerationSpecifier IASTExpressionStatement IASTFieldDeclarator IASTFieldReference IASTForStatement IASTFunctionCallExpression IASTIfStatement IASTInitializerExpression IASTReturnStatement IASTSimpleDeclSpecifier IASTSwitchStatement IASTUnaryExpression IASTWhileStatement)
+IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IASTConditionalExpression IASTDoStatement IASTEnumerationSpecifier IASTExpressionStatement IASTFieldDeclarator IASTFieldReference IASTForStatement IASTFunctionCallExpression IASTIfStatement IASTInitializerExpression IASTReturnStatement IASTSimpleDeclSpecifier IASTSwitchStatement IASTUnaryExpression IASTWhileStatement IASTProblem)
         '(org.eclipse.cdt.core.dom.ast.cpp ICPPASTArrayDesignator ICPPASTConstructorChainInitializer ICPPASTConstructorInitializer ICPPASTDeleteExpression ICPPASTFunctionDeclarator ICPPASTNewExpression ICPPASTPackExpansionExpression ICPPASTSimpleTypeConstructorExpression ICPPASTTemplatedTypeTemplateParameter ICPPASTTypenameExpression)
         '(org.eclipse.cdt.core.dom.ast.gnu cpp.IGPPASTSimpleDeclSpecifier c.IGCCASTArrayRangeDesignator c.IGCCASTSimpleDeclSpecifier IGNUASTGotoStatement )
         '(org.eclipse.cdt.core.dom.ast.c ICASTArrayDesignator)
         '(org.eclipse.cdt.internal.core.parser.scanner ASTFunctionStyleMacroDefinition ASTMacroDefinition)
         '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTUnaryExpression CPPASTExpressionList )
         )
+
+(s/defn valid-node?
+  [node :- (s/maybe IASTNode)]
+  (and node (not (instance? IASTProblem node))))
 
 ;; ExpressionWriter adds superfluous parens to cast statements.
 ;; Every we time we parse, we get an additional level of nested
@@ -133,11 +137,19 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
 (s/defn expansion-args-tree
   "Take the arguments to a macro and parse them into ASTs"
   [exp :- IASTPreprocessorMacroExpansion]
-  (let [arg-expr (some->> exp str (re-find #"(?s)\w+\((.*)\)") second parse-frag-clean)]
+  ;; todo, is there a function that does this regex already
+  (let [arg-str   (some->> exp str (re-find #"(?s)\w+\((.*)\)") second)
+        arg-expr (some->> arg-str parse-frag-clean)]
     (when arg-expr
-      (if (instance? IASTExpressionList arg-expr)
-        (children arg-expr)
-        [arg-expr]))))
+      (cond
+        (instance? IASTExpressionList arg-expr)   ;; multiple args
+          (children arg-expr)
+        (instance? IASTProblem arg-expr) ;; statements as args?
+          (let [parsed-args (some-<>> arg-str (str/split <> #",") (map parse-frag))]
+            (when (every? valid-node? parsed-args)
+              parsed-args))
+        :else [arg-expr]                          ;; single arg
+        ))))
 
 (s/defn expansion-args-str :- [s/Str]
   "Extract the code in the arguments to a macro"
@@ -288,7 +300,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
            ;; to save some computation
            (and
             (->> macro-exp .getNestedMacroReferences empty? not)
-            (do (println (str "Won't expand nested macros in: " (filename (:exp mac)) ":" (start-line (:exp mac)) " - " (safe-write-ast (body-getter body-handle))))
+            (do (comment (println (str "Won't expand nested macros in: " (filename (:exp mac)) ":" (start-line (:exp mac)) " - " (safe-write-ast (body-getter body-handle)))))
                     true))
 
            ;; replace all matching arguments
