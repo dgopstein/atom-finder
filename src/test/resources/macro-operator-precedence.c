@@ -14,6 +14,8 @@ int main() {
   3*M2((5<4));   // <outer-atom>
   3%(M2(5<4));   // <inner-atom>
   3%(M2((5<4)));
+  (&a).M2(2);    // <outer-atomTODO>
+  a = M2(2);
 
   #define M3(x,y) x+y+1
   3*M3(5<4, 7&2);     // <outer-atom> <inner-atom>
@@ -127,4 +129,25 @@ int main() {
 		sa1111_writel(val, port);	\
 	}
 	MODIFY_BITS(gpio + SA1111_GPIO_PADDR, bits & 15, dir);
+
+  // linux/arch/arm/mach-mmp/ttc_dkb.c:143
+  #define M(x) x ? x : x
+	M(2);
+
+  // linux/arch/mips/pci/pci-lantiq.c:186
+  #define ltq_w32(x, y) x + y
+  #define ltq_pci_w32(x, y)	ltq_w32((x), ltq_pci_membase + (y))
+  #define ltq_pci_r32(x)		ltq_r32(ltq_pci_membase + (x))
+  #define PCI_CR_BAR12MASK		0x0048
+  static void *ltq_pci_membase;
+	ltq_pci_w32(ltq_pci_r32(PCI_CR_BAR12MASK) | 0x80000000, PCI_CR_BAR12MASK);
+
+  #define M(x) f(x)
+  M((1) ==
+     2);
+
+  // linux/arch/mips/fw/sni/sniprom.c:80
+  //#define N	x
+  //#define M(x)  N(x)
+  //int y = M();
 }

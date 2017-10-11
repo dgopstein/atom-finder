@@ -40,18 +40,24 @@
 ; (print-atoms-in-dir (expand-home "~/opt/src/linux") (map atom-lookup [:macro-operator-precedence]))
 
 (require '[atom-finder.classifier :refer :all])
-(->> "#define M(S) S
-     M((size_t)1);"
-     parse-frag root-ancestor .getMacroExpansions first
-     macro-replace-arg-str)
-
-(->> "(int)(1)" parse-expr write-ast)
-(->> "(int)1" parse-expr write-ast)
-
-(->>"#define M(mask) if (mask) { f(2); }
-	   M(1);"
-     (tap (fn [x] (println " ")))
+(->> "x->y" parse-frag print-tree)
+(->> "x.y" parse-frag print-tree)
+(->> "#define N	x
+      #define M(x)  N(x)
+      int y = M();"
      parse-frag
+     root-ancestor .getMacroExpansions first
+     .getNestedMacroReferences (into []))
+     ppublic-methods)
+
+(->> "
+  #define ltq_w32(x) x
+  #define ltq_pci_w32(x)	ltq_w32((x))
+  #define ltq_pci_r32(x)		x
+	ltq_pci_w32(ltq_pci_r32(1) + 2);
+"
+     (tap (fn [x] (println " ")))
+     parse-source
      root-ancestor .getMacroExpansions first
      inner-macro-operator-atom?)
 

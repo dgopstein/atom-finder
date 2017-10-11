@@ -87,11 +87,35 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   (and (->> unexpanded :name (#{:lessThan :greaterThan}))
        (->> expanded (filter-tree (partial instance? ICPPASTTemplateId)) empty? not)))
 
-(defmulti macro-body-str class)
-(defmethod macro-body-str IASTPreprocessorMacroExpansion [exp]
-  (->> exp .getMacroDefinition macro-body-str))
-(defmethod macro-body-str IASTPreprocessorMacroDefinition [macro-def]
-  (-> macro-def str (str/split #"=" 2) second))
+(defn parse-macro-def
+  [macro-def]
+  (let [[all name args body] (->> macro-def str (re-find #"^([^=(]*)(?:\(([^)]*)\))?=(.*)"))]
+    {:name name
+     :args (some-<>> args (str/split <> #",") (remove empty?))
+     :body body}))
+
+(s/defn macro-defs-by-name {s/Str IASTPreprocessorMacroDefinition}
+  [root :- IASTTranslationUnit]
+  (->> root .getMacroDefinitions (map (juxt #(-> % .getName str) identity)) (into {})))
+
+;; This doesn't catch cases where Macros are redefined throughout the file
+(s/defn macro-body-str
+  "Expand the body of the macro defnition by
+   replacing all nested macros with their expansions"
+  [macro-exp :- IASTPreprocessorMacroExpansion]
+  (let [macro-def    (.getMacroDefinition macro-exp)
+        def-map      (->> macro-exp root-ancestor macro-defs-by-name)
+        nested-defs  (->> macro-exp .getNestedMacroReferences (map str)
+                          (map (juxt identity def-map)) (into {}))
+        nested-bodies (->> nested-defs (map-values (comp :body parse-macro-def)))
+        {body :body} (parse-macro-def macro-def)]
+    (id-replace-map nested-bodies body)))
+
+'((->> "
+  #define N	x
+  #define M(x)  N(x)
+  int y = M();
+" parse-source .getMacroExpansions first macro-body-str))
 
 (s/defn substituting-macro?
   [exp :- IASTPreprocessorMacroExpansion]
@@ -127,12 +151,16 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   [exp :- IASTPreprocessorMacroExpansion]
   (->> exp expansion-args-tree (map safe-write-ast)))
 
+(s/defn id-name
+  [node :- IASTNode]
+  (cond (instance? IASTIdExpression node) (.getName node)
+        (instance? IASTName node) node
+        :else nil))
+
 (s/defn -maybe-set-value!
   [getter setter node replacements]
   (when-let* [operand     (getter node)
-              name        (cond (instance? IASTIdExpression operand) (.getName operand)
-                                (instance? IASTName operand) operand
-                                :else nil)
+              name        (id-name operand)
               replacement (-> name str replacements)
               _           (instance? IASTExpression replacement)
               ]
@@ -232,7 +260,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
 (s/defn parse-macro
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [macro-def (->> macro-exp .getMacroDefinition)
-        body-str  (macro-body-str macro-def)]
+        body-str  (macro-body-str macro-exp)]
     {:def macro-def
      :exp macro-exp
      :params-str (->> macro-def .getParameters (map (memfn getParameter)))
@@ -258,6 +286,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
         new-body   (->> mac :body-tree .copy)
         ;; Add top-level parens so we can modify the root
         [body-handle body-getter] (if (instance? IASTExpression new-body) [(paren-wrap new-body) child] [new-body identity])
+        name-sites (->> body-handle (filter-tree id-name) set)
         ]
 
     (when (not (or
@@ -266,9 +295,8 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
                 (remove nil?) doall empty?)
            ;; if any un-matched args remain, bail out
            ;; TODO these are the false-negatives
-           (comment (and (->> body-handle body-getter (pap print-tree) (filter-tree #(instance? IASTName %)) (exists? #(-> % str param-args)))
-                (do (println (str "Couldn't expand: " (filename (:exp mac)) ":" (start-line (:exp mac)) "\n" (safe-write-ast (body-getter body-handle))))
-                    true)))
+           (and (->> body-handle (filter-tree #((-> mac :params-str set) (id-name %))) (exists? name-sites)) (do (println (str "Couldn't expand: " (filename (:exp mac)) ":" (start-line (:exp mac)) " - " (safe-write-ast (body-getter body-handle))))
+                    true))
            ))
       (body-getter body-handle))))
 
@@ -278,10 +306,10 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   [exp :- IASTPreprocessorMacroExpansion]
   (when-let* [_  (not (substituting-macro? exp))
               _  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
-              replaced-str  (macro-replace-arg-str  exp)
-              replaced-tree (macro-replace-arg-tree exp)
-              ;replaced-str  (pap safe-write-ast (macro-replace-arg-str  exp))
-              ;replaced-tree (pap safe-write-ast (macro-replace-arg-tree exp))
+              ;replaced-str  (macro-replace-arg-str  exp)
+              ;replaced-tree (macro-replace-arg-tree exp)
+              replaced-str  (pap safe-write-ast (macro-replace-arg-str  exp))
+              replaced-tree (pap safe-write-ast (macro-replace-arg-tree exp))
               _  (not (atom-finder.tree-diff/tree=by (juxt class expr-operator)
                        replaced-str
                        replaced-tree))
