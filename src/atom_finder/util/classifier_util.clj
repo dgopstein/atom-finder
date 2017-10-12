@@ -155,6 +155,15 @@
         (parse-binary-literal s)
           nil)))
 
+;; https://stackoverflow.com/a/600306/
+(defn power-of-2? [x]
+  (zero? (bit-and x (dec x))))
+
+;; 2^n or 2^(n-1)
+(defn power-of-2-ish? [x]
+  (or (power-of-2? x)
+      (power-of-2? (inc x))))
+
 (defn log2 [n] (/ (Math/log n) (Math/log 2)))
 (def number-bits "How many bits are requited to store an integer value" log2)
 

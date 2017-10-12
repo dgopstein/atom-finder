@@ -47,20 +47,26 @@
             ["9 & 0x2"   true]
             ["~1"        false]
             ["-~1"       false]
-            ["~8"        true]
-            ["~-8"       true]
+            ["~6"        false] ; < 8
+            ["~7"        false] ; < 8
+            ["~8"        false] ; 2^n
             ["~9"        true]
+            ["~15"       false] ; 2^(n-1)
+            ["~16"       false] ; 2^n
+            ["~17"       true]
+            ["~-8"       true]
             ["~011"      false]
             ["~0x11"     false]
             ["!0x11"     false]
             ["!11"       false]
-            ["8 << 2"    true]
+            ["8 << 2"    false] ; 2^n
+            ["9 << 2"    true] ; 2^n
             ["2 << 8"    false]
             ;["#define X 1 << Y\nX" false]
             ;["#define X 9 << Y\nX" true]
                  ]]
 
       (doseq [[expr expected] cases]
-        (testing (str "Is this a literal encoding atom: " expr " - " expected)
-          (is (= expected (literal-encoding-atom? (parse-frag expr)))))))
+        (is (= expected (literal-encoding-atom? (parse-frag expr)))
+            (str expr " - " expected))))
     ))

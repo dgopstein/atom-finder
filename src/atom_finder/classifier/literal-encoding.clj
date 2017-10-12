@@ -6,7 +6,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; - Decimals used in bitwise operations
-; - Chars used in arithmetic operations? ('A' - 'a') is pretty legit though?
+;   - Assume numbers 2^n or 2^(n-1) are ok, even if expressed in decimal
+; - Chars used in arithmetic operations?
+;   - ('A' - 'a') is pretty legit though?
+;     - but it IS hard to calculate in your head if you don't have an ascii table)
 
 (defmulti bitwise-op? "Check if an ASTNode represents a bitwise operator" class)
 
@@ -37,13 +40,20 @@
   [node :- IASTNode]
   (and (bitwise-op? node)
        (any-pred?
-        #(and (= :dec (radix %1))
-                                        ; dec and oct are the same for numbers lower than 8
-                                        ; so bitwise comparisons for literals lower than 8
-                                        ; probably aren't confusing
-              (>= (Math/abs (or (parse-numeric-literal %1)
-                                (parse-numeric-literal (write-ast %1)) ; this is a sloppy shotgun that doesn't work inside macro-expansion
-                                )) 8))
+        (fn [kid]
+          (and (= :dec (radix kid))
+               (let [num (or (parse-numeric-literal kid)
+                             ;; this is a sloppy shotgun that doesn't work inside macro-expansion
+                             (parse-numeric-literal (write-ast kid)))]
+                 ;; Exceptions - decimal numbers that are ok in bitwise ops
+                 (not (or
+                  ;; dec and oct are the same for numbers lower than 8
+                  ;; so bitwise comparisons for literals lower than 8
+                  ;; probably aren't confusing
+                  (> 8 (Math/abs num))
+                  ;; 2^n and 2^(n-1) integers are widely memorized in decimal
+                  ;; so ignore literals like 15, 128, 65536
+                  (and (integer? num) (power-of-2-ish? num)))))))
         (if (shift-op? node)
           [(.getOperand1 node)]
           (children node))
