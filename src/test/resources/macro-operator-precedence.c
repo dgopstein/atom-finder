@@ -176,7 +176,7 @@ int main() {
   //
   // cast <-> function call bug
   //#define M(x) f(x)
-  //M((u32)action);
+  //M((u32)y);
 
   // linux/arch/powerpc/platforms/powermac/pfunc_core.c:155
   //#define PMF_PARSE_CALL(name, cmd, handlers, p...) \
@@ -192,3 +192,12 @@ int main() {
 	} while(0)                                          \
 	PMF_PARSE_CALL(read_gpio, cmd, h, mask, rshift, xor);
 }
+
+// linux/drivers/mtd/chips/cfi_cmdset_0002.c:1372
+// function call gets misparsed as declaration
+//#define M(x, y)  \
+//do {  \
+//	f(x);  \
+//	y->a;  \
+//} while (0)
+//M(4, 3);
