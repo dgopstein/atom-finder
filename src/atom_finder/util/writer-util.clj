@@ -3,7 +3,7 @@
 (import '(org.eclipse.cdt.internal.core.dom.rewrite
           ASTModificationStore astwriter.ASTWriter astwriter.ASTWriterVisitor
           commenthandler.NodeCommentMap changegenerator.ChangeGeneratorWriterVisitor)
-        '(org.eclipse.cdt.core.dom.ast IASTPreprocessorStatement))
+        '(org.eclipse.cdt.core.dom.ast IASTPreprocessorStatement IASTPreprocessorMacroExpansion IASTPreprocessorMacroDefinition))
 
 (import '(atom_finder SanitaryASTWriterVisitor))
 
@@ -47,11 +47,15 @@
     (let [writer-visitor (SanitaryASTWriterVisitor.)]
       (.accept node writer-visitor)
       (.toString writer-visitor))))
-(defn safe-write-ast [node]
+(defn write-tree [node]
   (if (nil? node)
     "<nil>"
-    (try (write-ast node)
-         (catch org.eclipse.cdt.internal.core.dom.rewrite.astwriter.ProblemRuntimeException e "<!!!>"))))
+    (try
+      (condp instance? node
+        IASTPreprocessorMacroExpansion  (->> node str)
+        IASTPreprocessorMacroDefinition (->> node str)
+      (write-ast node))
+      (catch org.eclipse.cdt.internal.core.dom.rewrite.astwriter.ProblemRuntimeException e "<!!!>"))))
 
 (defmacro should-visit! [writer val]
   "Tell the AST-visitor to visit no types of node"

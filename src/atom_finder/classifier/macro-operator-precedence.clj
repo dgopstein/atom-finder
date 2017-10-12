@@ -106,7 +106,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   [expansion :- IASTPreprocessorMacroExpansion]
   (let [exp-node (expansion-parent expansion)
         expanded   (some->> exp-node expr-operator)
-        unexpanded (some->> exp-node safe-write-ast parse-frag expr-operator)]
+        unexpanded (some->> exp-node write-tree parse-frag expr-operator)]
     (when (and (not (substituting-macro? expansion))
                expanded unexpanded
                (not= expanded unexpanded)
@@ -139,7 +139,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
 (s/defn expansion-args-str :- [s/Str]
   "Extract the code in the arguments to a macro"
   [exp :- IASTPreprocessorMacroExpansion]
-  (->> exp expansion-args-tree (map safe-write-ast)))
+  (->> exp expansion-args-tree (map write-tree)))
 
 (s/defn id-name
   [node :- IASTNode]
@@ -285,7 +285,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
            ;; to save some computation
            (and
             (->> macro-exp .getNestedMacroReferences empty? not)
-            (do (comment (println (str "Won't expand nested macros in: " (filename (:exp mac)) ":" (start-line (:exp mac)) " - " (safe-write-ast (body-getter body-handle)))))
+            (do (comment (println (str "Won't expand nested macros in: " (filename (:exp mac)) ":" (start-line (:exp mac)) " - " (write-tree (body-getter body-handle)))))
                     true))
 
            ;; replace all matching arguments
@@ -296,7 +296,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
            ;; TODO these are the false-negatives
            (and
             (->> body-handle (filter-tree #((-> mac :params-str set) (id-name %))) (exists? name-sites))
-            (do (println (str "Couldn't expand: " (filename (:exp mac)) ":" (start-line (:exp mac)) " - " (safe-write-ast (body-getter body-handle))))
+            (do (println (str "Couldn't expand: " (filename (:exp mac)) ":" (start-line (:exp mac)) " - " (write-tree (body-getter body-handle))))
                     true))
            ))
       (body-getter body-handle))))

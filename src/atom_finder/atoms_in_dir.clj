@@ -46,7 +46,7 @@
       #define M(x)  N(x)
       int y = M();"
      parse-frag
-     root-ancestor .getMacroExpansions first
+     root-ancestor .getMacroExpansions first write-tree)
      .getNestedMacroReferences (into []))
      ppublic-methods)
 

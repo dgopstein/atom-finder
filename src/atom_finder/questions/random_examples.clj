@@ -70,16 +70,7 @@
 
 (quote
  (->> grouped-examples
-     :macro-operator-precedence
-     first
-     :atom
-     class)
-     ;str)
-)
-
-(quote
- (->> grouped-examples
-     (map-values (partial map #(update-in % [:atom] safe-write-ast)))
+     (map-values (partial map #(update-in % [:atom] write-tree)))
      (map-values (partial map #(str (github-url %1) "\n\n" (:atom %1) "\n\n--------------\n")))
      (map (fn [[type atoms]] (spit (str "tmp/atom-examples/" (name type) ".txt") (str/join "\n" atoms))))
      )
