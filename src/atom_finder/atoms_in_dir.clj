@@ -2,6 +2,8 @@
   (:require [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
             [atom-finder.constants :refer :all]
+            [clojure.string :as str]
+            [clojure.pprint :refer [pprint]]
             ))
 
 (defn all-atoms-in-tree
@@ -47,8 +49,6 @@
       int y = M();"
      parse-frag
      root-ancestor .getMacroExpansions first write-tree)
-     .getNestedMacroReferences (into []))
-     ppublic-methods)
 
 (->> "
   #define M(x) f(x)
@@ -65,9 +65,31 @@
 
   (->> "~/opt/src/linux"
        expand-home
-       (pmap-dir-files #(atoms-in-file (map atom-lookup [:macro-operator-precedence]) %))
+       (pmap-dir-files #(atoms-in-file (map atom-lookup [:literal-encoding]) %))
        (filter (fn [[file atms]] (->> atms vals (exists? (complement empty?)))))
        (map prn)
        count
        println
        time-mins)
+
+(->> "~/opt/src/linux"
+       expand-home
+       (pmap-dir-trees (->> atom-lookup :literal-encoding :finder))
+       flatten
+       (take 1000)
+       (map write-tree)
+       (map println)
+       )
+
+(->> "~(3 | 2)" parse-frag print-tree)
+(->> "~ 3 | 2" parse-frag print-tree)
+
+(->> "~/opt/src/linux"
+     expand-home
+     (pmap-dir-files identity)
+     (take 5)
+     pprint)
+
+(->> "/Users/dgopstein/opt/src/linux/arch/alpha/boot/main.c"
+     parse-file
+     print-tree)
