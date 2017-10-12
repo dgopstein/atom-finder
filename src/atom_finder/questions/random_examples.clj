@@ -24,7 +24,8 @@
       (if (str/starts-with? (str (:file found-atom)) "gcc")
         "gcc-mirror/gcc/blob/2c3133a09ceedead50c2b585ef7f62738ad5c81e/"
         "torvalds/linux/blob/e19b205be43d11bff638cad4487008c48d21c103/")
-      (str/replace-first (:file found-atom) #"[^/]*/" "")
+      ;(str/replace-first (:file found-atom) #"[^/]*/" "")
+      (:file found-atom)
       "#L"
       (:line found-atom)))
 
@@ -32,9 +33,9 @@
  "~/opt/src/linux"
  expand-home
  c-files
- ;(take 100000)
+ (take 50000)
  shuffle
- (take 1000)
+ (take 10000)
  (def random-c-files)
  time-mins
  )
@@ -42,6 +43,7 @@
 (quote
 (->>
  random-c-files
+ (pap (constantly (now)))
  (map parse-file)
  (mapcat
   (fn [root]
