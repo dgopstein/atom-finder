@@ -263,8 +263,9 @@
 
 (defn filename [node] (.getFileName (.getFileLocation node)))
 
-(defn all-preprocessor [node] (.getAllPreprocessorStatements (root-ancestor node)))
-
+(defn all-preprocessor [node] (->> node root-ancestor .getAllPreprocessorStatements))
+(defn all-macro-defs [node] (->> node root-ancestor .getMacroDefinitions))
+(defn all-macro-exps [node] (->> node root-ancestor .getMacroExpansions))
 (defn all-comments [node] (->> node root-ancestor .getComments (into [])))
 
 (defn count-nodes

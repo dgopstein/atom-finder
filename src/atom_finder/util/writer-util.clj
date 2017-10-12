@@ -40,13 +40,17 @@
          (println (str (+ idx first-line) (if (= (+ idx first-line 1) line-num) " >> " "    ") line)))
        (println "===================================================")))))
 
-(def ast-writer (ASTWriter.))
+;; mostly for use programmatically, tries to provide an
+;; accurate representation of the AST
 (defn write-ast [node]
   (condp instance? node
     IASTPreprocessorStatement (str node)
     (let [writer-visitor (SanitaryASTWriterVisitor.)]
       (.accept node writer-visitor)
       (.toString writer-visitor))))
+
+;; mostly for human consumption, tries to provide an
+;; informative representation of the AST
 (defn write-tree [node]
   (if (nil? node)
     "<nil>"
