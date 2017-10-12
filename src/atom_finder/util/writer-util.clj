@@ -7,25 +7,6 @@
 
 (import '(atom_finder SanitaryASTWriterVisitor))
 
-(defn print-tree [node]
-  (pre-tree
-   (fn [node index tree-path]
-     (let [offset (format " (offset: %s, %s)"
-                          (some-> node .getFileLocation .getNodeOffset)
-                          (some-> node .getFileLocation .getNodeLength))]
-
-       (printf "%s -%s %s %s -> %s\n"
-               (apply str (repeat index "  "))
-               (-> node .getClass .getSimpleName)
-               (str tree-path)
-               offset
-               (-> node .getRawSignature
-                   (str "           ")
-                   (.subSequence 0 10)
-                   (.replaceAll "\n" " \\ ")))))
-   node 1 []))
-
-
 (defn print-node-context
   "Print the line that contains the node and the lines around it"
   ([node] (print-node-context 2 node))
@@ -120,3 +101,14 @@
     write-node-type
     write-node)
    node))
+
+(defn print-tree [node]
+  (pre-tree
+   (fn [node index tree-path]
+       (printf "%-45s %s\n"
+               (str tree-path "            " (write-node node))
+               (->> (select-keys (loc node) [:line :offset :length])
+                    (map-keys (fn [k] (if (-> k name count (> 4)) (keyword (subs (name k) 0 3)) k))))
+               ))
+   node 1 []))
+
