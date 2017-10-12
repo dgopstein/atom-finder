@@ -5,6 +5,8 @@
           commenthandler.NodeCommentMap changegenerator.ChangeGeneratorWriterVisitor)
         '(org.eclipse.cdt.core.dom.ast IASTPreprocessorStatement))
 
+(import '(atom_finder SanitaryASTWriterVisitor))
+
 (defn print-tree [node]
   (pre-tree
    (fn [node index tree-path]
@@ -38,12 +40,13 @@
          (println (str (+ idx first-line) (if (= (+ idx first-line 1) line-num) " >> " "    ") line)))
        (println "===================================================")))))
 
-
 (def ast-writer (ASTWriter.))
 (defn write-ast [node]
   (condp instance? node
-      IASTPreprocessorStatement (str node)
-      (.write ast-writer node)))
+    IASTPreprocessorStatement (str node)
+    (let [writer-visitor (SanitaryASTWriterVisitor.)]
+      (.accept node writer-visitor)
+      (.toString writer-visitor))))
 (defn safe-write-ast [node]
   (if (nil? node)
     "<nil>"

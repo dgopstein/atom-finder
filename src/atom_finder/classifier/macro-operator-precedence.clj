@@ -12,23 +12,6 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   [node :- (s/maybe IASTNode)]
   (and node (not (instance? IASTProblem node))))
 
-;; ExpressionWriter adds superfluous parens to cast statements.
-;; Every we time we parse, we get an additional level of nested
-;; parens. Remove one of them.
-(s/defn remove-cast-parens
-  [node]
-  (let [new-node (.copy node)]
-    (doseq [cast (filter-tree (partial instance? IASTCastExpression) new-node)]
-      (when (paren-node? (.getOperand cast))
-        (.setOperand cast (-> cast .getOperand child))))
-  new-node))
-
-(defn parse-frag-clean
-  "Traditional parsing leaves some AST idiosyncrasies
-   that we can clean up here"
-  [s]
-  (->> s parse-frag remove-cast-parens))
-
 ;;https://stackoverflow.com/questions/9568050/in-clojure-how-to-write-a-function-that-applies-several-string-replacements
 (s/defn replace-map
   "given an input string and a hash-map, returns a new string with all
@@ -123,7 +106,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   [expansion :- IASTPreprocessorMacroExpansion]
   (let [exp-node (expansion-parent expansion)
         expanded   (some->> exp-node expr-operator)
-        unexpanded (some->> exp-node safe-write-ast parse-frag-clean expr-operator)]
+        unexpanded (some->> exp-node safe-write-ast parse-frag expr-operator)]
     (when (and (not (substituting-macro? expansion))
                expanded unexpanded
                (not= expanded unexpanded)
@@ -139,7 +122,7 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   [exp :- IASTPreprocessorMacroExpansion]
   ;; todo, is there a function that does this regex already
   (let [arg-str  (some->> exp str (re-find #"(?s)\w+\((.*)\)") second)
-        arg-expr (some->> arg-str parse-frag-clean)]
+        arg-expr (some->> arg-str parse-frag)]
     (when arg-expr
       (cond
         (= arg-str "")
@@ -274,13 +257,13 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
      :args-str   (->> macro-exp expansion-args-str)
      :args-tree  (->> macro-exp expansion-args-tree)
      :body-str   body-str
-     :body-tree  (parse-frag-clean body-str)}))
+     :body-tree  (parse-frag body-str)}))
 
 (s/defn macro-replace-arg-str
   [macro-exp :- IASTPreprocessorMacroExpansion]
   (let [mac        (parse-macro macro-exp)
         param-args (zipmap (:params-str mac) (:args-str mac))]
-    (->> mac :body-str (id-replace-map param-args) parse-frag-clean)))
+    (->> mac :body-str (id-replace-map param-args) parse-frag)))
 
 (defn paren-wrap
   [node]

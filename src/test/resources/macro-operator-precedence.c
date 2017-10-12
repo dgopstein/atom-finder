@@ -175,8 +175,8 @@ int main() {
   //loongson3_ipi_write32((u32)action, ipi_set0_regs[cpu_logical_map(cpu)]);
   //
   // cast <-> function call bug
-  //#define M(x) f(x)
-  //M((u32)y);
+  #define M(x) f(x)
+  M((u32)y);
 
   // linux/arch/powerpc/platforms/powermac/pfunc_core.c:155
   //#define PMF_PARSE_CALL(name, cmd, handlers, p...) \
