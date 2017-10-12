@@ -30,14 +30,24 @@
   [n seq]
   (let [vec  (into [] seq)
         len  (count seq)
-        idxs (map #(Math/round (float (* (dec len) (/ % (dec n))))) (range n))]
+        idxs (if (= 1 n)
+               [(/ len 2)]
+               (map #(Math/round (float (* (dec len) (/ % (dec n))))) (range n)))]
     (filter-by-index seq idxs)))
 
-'(-<>>
+
+(defn sec->java-time
+  [sec]
+  (java.time.LocalDateTime/ofEpochSecond sec 0 (java.time.ZoneOffset/ofHours 0)))
+
+(-<>>
  gcc-repo
  gitq/rev-list
- (distributed-sample 5)
- (map #(java.util.Date. (* 1000 (long (.getCommitTime %)))))
- pprint
+ (take 10000)
+ (map #(-<> % .getCommitTime long sec->java-time))
+ (distinct-by (juxt (memfn getYear) (memfn getMonthValue)))
+ ;(distinct-by #(-<> % .getCommitTime long sec->java-time ((juxt (memfn getYear) (memfn getMonthValue)))))
+ (map prn)
+ dorun
  time-mins
  )

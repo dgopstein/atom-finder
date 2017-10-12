@@ -14,8 +14,18 @@
   ([lst] (any-pred? true? lst))
   ([pred lst] (any-pred? pred lst)))
 
-(defn distinct-by [f col]
-  (map first (vals (group-by f col))))
+;; https://crossclj.info/ns/prismatic/plumbing/0.5.4/plumbing.core.cljs.html#_distinct-by
+(defn distinct-by
+  "Returns elements of xs which return unique
+   values according to f. If multiple elements of xs return the same
+   value under f, the first is returned"
+  [f xs]
+  (let [s (atom #{})]
+    (for [x xs
+          :let [id (f x)]
+          :when (not (contains? @s id))]
+      (do (swap! s conj id)
+          x))))
 
 (defn map-kv [f m]
   (->> m (map (fn [[k v]] (f k v))) (into {})))
