@@ -15,6 +15,7 @@
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    [swiss.arrows :refer :all]
+   [schema.core :as s]
    )
   (:import
    [org.eclipse.jgit.api Git]
@@ -40,14 +41,35 @@
   [sec]
   (java.time.LocalDateTime/ofEpochSecond sec 0 (java.time.ZoneOffset/ofHours 0)))
 
+(def year-month (juxt (memfn getYear) (memfn getMonthValue)))
+
+(defn first-monthly-commits
+  [repo]
+  (->> repo gitq/rev-list
+       (partition-by #(-<> % .getCommitTime long sec->java-time year-month))
+       (map last)))
+
+;; https://stackoverflow.com/questions/19941597/use-jgit-treewalk-to-list-files-and-folders
+(s/defn list-repository-contents [git-repo :- Git commit]
+  (let [repository (.getRepository git-repo)
+        ;head (.getRef repository "HEAD") ;TODO NOT HEAD
+        walk (org.eclipse.jgit.revwalk.RevWalk. repository) ; probably can be the commit
+        ;commit (.parseCommit walk (.getObjectId head))
+        tree   (.getTree commit)
+        treeWalk (org.eclipse.jgit.treewalk.TreeWalk. repository)
+        ]
+
+    (.addTree treeWalk tree)
+    (.setRecursive treeWalk true)
+
+    (take-while identity (repeatedly #(and (.next treeWalk) (.getPathString treeWalk))))))
+
 (-<>>
  gcc-repo
- gitq/rev-list
- (take 10000)
- (map #(-<> % .getCommitTime long sec->java-time))
- (distinct-by (juxt (memfn getYear) (memfn getMonthValue)))
- ;(distinct-by #(-<> % .getCommitTime long sec->java-time ((juxt (memfn getYear) (memfn getMonthValue)))))
- (map prn)
- dorun
+ first-monthly-commits
+ first
+ (list-repository-contents gcc-repo)
+ (take 10)
+ pprint
  time-mins
  )
