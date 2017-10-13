@@ -64,7 +64,7 @@
 
     (take-while identity (repeatedly #(and (.next treeWalk) (.getPathString treeWalk))))))
 
-(-<>>
+'(-<>>
  gcc-repo
  first-monthly-commits
  first
