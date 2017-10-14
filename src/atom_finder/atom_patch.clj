@@ -108,9 +108,9 @@
   (let [ungrouped-atoms (set (apply concat (vals found-atoms)))]
     (remove ungrouped-atoms (flatten-tree root))))
 
-(s/defn find-all-atoms-non-atoms
+(s/defn find-all-atoms-non-atoms :- {s/Keyword [IASTNode]}
   "Find all atoms and non-atoms in AST"
-  [root]
+  [root :- IASTNode]
   (let [found-atoms (find-all-atoms root)]
     (assoc found-atoms :non-atoms (non-atoms root found-atoms))))
 

@@ -6,6 +6,8 @@
             [clojure.pprint :refer [pprint]]
             ))
 
+;; consider atom-finder.classifier/find-all-atoms instead,
+;; if you want logging and don't need to pass explicit atoms
 (defn all-atoms-in-tree
   "Find all instances of multiple atoms under this node"
   [atoms node]

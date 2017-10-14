@@ -99,18 +99,37 @@
                                           :date (->> commit commit-time ymd-str)}
                                          (treewalk->file repository tree-walk)))))))
 
+'(defn safe-mem-tu
+  [path content]
+    (log-err (str "Trying to parse " path) nil
+             (with-timeout 3
+               (mem-tu path content))))
+
+'((->> (range 1 15)
+     (map #(str gcc-path "/gcc/testsuite/g++.dg/lookup/koenig" % ".C"))
+     (pmap (fn [path]
+            (safe-mem-tu path (slurp path))))
+     (map prn)
+     dorun
+     time-mins))
+
 '((-<>>
  gcc-repo
+ (pap (constantly (now)))
  first-monthly-commits
  (mapcat (partial repo-files gcc-repo))
- ;(map prn)
  (filter (comp c-file? :path))
- (map (fn [rev-file]
-        (let [ast (mem-tu (:path rev-file) (:content rev-file))]
+ ;(drop 6100)
+ ;(map (partial pap #(select-keys % [:rev-str :path])))
+ (pmap (fn [rev-file]
+    (log-err (str "parsing/finding atoms in " (juxt->> rev-file :path :rev-str)) nil
+             (with-timeout 120
+        (if-let [ast (mem-tu (:path rev-file) (:content rev-file))]
           (assoc (dissoc rev-file :content)
-                 :atoms (->> ast (all-atoms-in-tree atoms) (map-values count))))))
- (take 30)
+                 :atoms (->> ast find-all-atoms-non-atoms (map-values count))))))))
+ ;(take 3)
  (map prn)
  dorun
+ (log-to "tmp/code-age_gcc_2017-10-14_02.edn")
  time-mins
  ))
