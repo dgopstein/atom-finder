@@ -99,25 +99,19 @@
                                           :date (->> commit commit-time ymd-str)}
                                          (treewalk->file repository tree-walk)))))))
 
-'(defn safe-mem-tu
-  [path content]
-    (log-err (str "Trying to parse " path) nil
-             (with-timeout 3
-               (mem-tu path content))))
-
-'((->> (range 1 15)
-     (map #(str gcc-path "/gcc/testsuite/g++.dg/lookup/koenig" % ".C"))
-     (pmap (fn [path]
-            (safe-mem-tu path (slurp path))))
-     (map prn)
-     dorun
-     time-mins))
+(defn monotize-by
+  "filter out non-monotonic values"
+  [cmp f coll]
+  (->> coll (partition 2 1) (filter (fn [[a b]] (cmp (f a) (f b)))) (map first)))
 
 '((-<>>
- gcc-repo
+   linux-repo
+ (rev-walk-from <> "be1f16ba35d97aff4d85c0daba0a02da51b7c83c")
  (pap (constantly (now)))
- first-monthly-commits
- (mapcat (partial repo-files gcc-repo))
+ (partition-by (fn [rc] (-> rc year-month (update-in [1] #(int (/ (dec %) 3))))))
+ (map last)
+ (monotize-by (comp (partial < 0) compare) year-month)
+ (mapcat (partial repo-files linux-repo))
  (filter (comp c-file? :path))
  ;(drop 6100)
  ;(map (partial pap #(select-keys % [:rev-str :path])))
@@ -130,6 +124,6 @@
  ;(take 3)
  (map prn)
  dorun
- (log-to "tmp/code-age_gcc_2017-10-14_02.edn")
+ (log-to "tmp/code-age_linux_2017-10-14_01.edn")
  time-mins
  ))
