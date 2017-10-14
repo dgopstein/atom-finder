@@ -83,6 +83,12 @@
     ))
 
 (deftest clj-util-test
+  (testing "juxt->>"
+    (is (= [2 0] (juxt->> 1 inc dec)))
+    (is (= [2 0] (juxt->> 1 (inc) dec)))
+    (is (= [3 0] (juxt->> 1 (* 3) dec)))
+    (is (= [2 0] (juxt->> 1 (- 3) dec)))
+    )
 
   (testing "flatcat"
     (is (= #{1 2} (set (flatcat [1] [2]))))

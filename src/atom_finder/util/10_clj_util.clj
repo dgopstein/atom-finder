@@ -14,6 +14,17 @@
   [f & args]
   (apply = (map f args)))
 
+;; https://github.com/clojure/clojure/blob/clojure-1.9.0-alpha14/src/clj/clojure/core.clj#L1683
+(defmacro juxt->>
+  "Applies the first argument as the last argument to each form in parrallel
+   returning the results in a vector"
+  [x & forms]
+  (cons vector
+        (for [form forms]
+          (if (seq? form)
+            (with-meta `(~(first form) ~@(next form) ~x) (meta form))
+            (list form x)))))
+
 ; print the name and value of an expression
 (defmacro pprn [x]
   `(let [y# ~x]

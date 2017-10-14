@@ -8,6 +8,8 @@
    [clj-jgit.querying  :as gitq]
    [atom-finder.patch :refer :all]
    [atom-finder.atom-patch :refer :all]
+   [atom-finder.atoms-in-dir :refer :all]
+   [atom-finder.classifier :refer :all]
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
    [atom-finder.questions.bug-densities :refer :all]
@@ -43,12 +45,28 @@
   [sec]
   (java.time.LocalDateTime/ofEpochSecond sec 0 (java.time.ZoneOffset/ofHours 0)))
 
-(def year-month (juxt (memfn getYear) (memfn getMonthValue)))
+(s/defn commit-time
+  [rc :- RevCommit]
+  (->> rc .getCommitTime long sec->java-time))
+
+(defn ymd-str [date]
+  (.format date (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd")))
+
+(defn year-month-day [date]
+  (juxt->> date .getYear .getMonthValue .getDayOfMonth))
+
+(defmulti year-month class)
+(defmethod year-month java.time.LocalDateTime
+  [date]
+  (juxt->> date .getYear .getMonthValue))
+(defmethod year-month RevCommit
+  [rc]
+  (->> rc commit-time year-month))
 
 (defn first-monthly-commits
   [repo]
   (->> repo gitq/rev-list
-       (partition-by #(-<> % .getCommitTime long sec->java-time year-month))
+       (partition-by year-month)
        (map last)))
 
 ;; https://stackoverflow.com/questions/1685228/how-to-cat-a-file-in-jgit
@@ -62,7 +80,7 @@
    :content (->> tree-walk (treewalk->filestr repo))})
 
 ;; https://stackoverflow.com/questions/19941597/use-jgit-treewalk-to-list-files-and-folders
-(def RevFile {:path s/Str :rev-str s/Str :content s/Str})
+(def RevFile {:path s/Str :rev-str s/Str :content s/Str s/Any s/Any})
 (s/defn repo-files :- [RevFile]
   "Return the content of every file in repository at given commit"
   [git-repo :- Git commit :- RevCommit]
@@ -77,15 +95,22 @@
 
     (take-while identity
                 (repeatedly #(and (.next tree-walk)
-                                  (assoc (treewalk->file repository tree-walk)
-                                         :rev-str (->> commit .getId ObjectId/toString)))))))
+                                  (merge {:rev-str (->> commit .getId ObjectId/toString)
+                                          :date (->> commit commit-time ymd-str)}
+                                         (treewalk->file repository tree-walk)))))))
 
 '((-<>>
  gcc-repo
  first-monthly-commits
- first
- (repo-files gcc-repo)
- (take 2)
- pprint
+ (mapcat (partial repo-files gcc-repo))
+ ;(map prn)
+ (filter (comp c-file? :path))
+ (map (fn [rev-file]
+        (let [ast (mem-tu (:path rev-file) (:content rev-file))]
+          (assoc (dissoc rev-file :content)
+                 :atoms (->> ast (all-atoms-in-tree atoms) (map-values count))))))
+ (take 30)
+ (map prn)
+ dorun
  time-mins
  ))
