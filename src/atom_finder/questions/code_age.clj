@@ -40,6 +40,9 @@
                (map #(Math/round (float (* (dec len) (/ % (dec n))))) (range n)))]
     (filter-by-index seq idxs)))
 
+(s/defn date->java-time
+  [date :- java.util.Date]
+  (.toLocalDateTime (.atZone (.toInstant date) (java.time.ZoneOffset/ofHours 0))))
 
 (defn sec->java-time
   [sec]
@@ -47,7 +50,8 @@
 
 (s/defn commit-time
   [rc :- RevCommit]
-  (->> rc .getCommitTime long sec->java-time))
+  ;(->> rc .getCommitTime long sec->java-time))
+  (->> rc .getAuthorIdent .getWhen date->java-time)) ; respects retroactive commits
 
 (defn ymd-str [date]
   (.format date (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd")))
@@ -104,14 +108,22 @@
   [cmp f coll]
   (->> coll (partition 2 1) (filter (fn [[a b]] (cmp (f a) (f b)))) (map first)))
 
+'((def linux-historical-repo (->> "~/opt/src/linux-historical" expand-home gitp/load-repo)))
+
 '((-<>>
-   linux-repo
- (rev-walk-from <> "be1f16ba35d97aff4d85c0daba0a02da51b7c83c")
+ ["981a2edd1922c00e747680f30734ea50c86af28d"
+  "747aead34de65c25765da79825ce2c08d8257b10"
+  "1737992523930995ae7ee67cc9da87952c01aebc"
+  "9b75471204ab8339eee7156e8f93959b9cfb0347"]
+ (map (partial rev-walk-from linux-historical-repo))
+ ;(distributed-sample 10) (map year-month) )
+ (apply concat)
  (pap (constantly (now)))
  (partition-by (fn [rc] (-> rc year-month (update-in [1] #(int (/ (dec %) 3))))))
  (map last)
  (monotize-by (comp (partial < 0) compare) year-month)
- (mapcat (partial repo-files linux-repo))
+ ;(map year-month) pprint)
+ (mapcat (partial repo-files linux-historical-repo))
  (filter (comp c-file? :path))
  ;(drop 6100)
  ;(map (partial pap #(select-keys % [:rev-str :path])))
@@ -124,6 +136,6 @@
  ;(take 3)
  (map prn)
  dorun
- (log-to "tmp/code-age_linux_2017-10-14_01.edn")
+ (log-to "tmp/code-age_linux-historical_2017-10-16_01_ungrafted.edn")
  time-mins
  ))
