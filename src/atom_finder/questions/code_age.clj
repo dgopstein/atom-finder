@@ -23,7 +23,7 @@
    [org.eclipse.jgit
     api.Git lib.Repository lib.ObjectId
     revwalk.RevCommit revwalk.RevWalk
-    treewalk.CanonicalTreeParser treewalk.TreeWalk]))
+    treewalk.CanonicalTreeParser treewalk.TreeWalk treewalk.filter.PathFilter]))
 
 ;; https://stackoverflow.com/questions/7744656/how-do-i-filter-elements-from-a-sequence-based-on-indexes
 (defn filter-by-index [coll idxs]
@@ -85,23 +85,44 @@
 
 ;; https://stackoverflow.com/questions/19941597/use-jgit-treewalk-to-list-files-and-folders
 (def RevFile {:path s/Str :rev-str s/Str :content s/Str s/Any s/Any})
-(s/defn repo-files :- [RevFile]
+(s/defn treewalk :- org.eclipse.jgit.treewalk.TreeWalk
   "Return the content of every file in repository at given commit"
   [git-repo :- Git commit :- RevCommit]
   (let [repository (.getRepository git-repo)
-        walk (org.eclipse.jgit.revwalk.RevWalk. repository)
-        tree   (.getTree commit)
-        tree-walk (org.eclipse.jgit.treewalk.TreeWalk. repository)
-        ]
+        tree-walk (org.eclipse.jgit.treewalk.TreeWalk. repository)]
 
-    (.addTree tree-walk tree)
-    (.setRecursive tree-walk true)
+    (doto tree-walk
+      (.addTree (.getTree commit))
+      (.setRecursive true))))
 
+;; see atom-patch:commit-file-source
+(s/defn repo-files :- [RevFile]
+  "Return the content of every file in repository at given commit"
+  [git-repo :- Git commit :- RevCommit]
+  (let [tree-walk (treewalk git-repo commit)]
     (take-while identity
                 (repeatedly #(and (.next tree-walk)
                                   (merge {:rev-str (->> commit .getId ObjectId/toString)
                                           :date (->> commit commit-time ymd-str)}
-                                         (treewalk->file repository tree-walk)))))))
+                                         (treewalk->file (.getRepository git-repo) tree-walk)))))))
+
+(s/defn rev-filestr :- s/Str
+  "Find the text of a file at a given revision"
+  [repo :- Git rev-str :- s/Str path :- s/Str]
+  (let [tree-walk (->> rev-str (find-rev-commit repo) (treewalk repo))]
+    (treewalk->filestr
+     (.getRepository repo)
+     (doto tree-walk
+       (.setFilter (PathFilter/create path))
+       .next))))
+
+(s/defn rev-filestr :- s/Str
+  "Find the text of a file at a given revision"
+  [repo :- Git rev-str :- s/Str path :- s/Str]
+  (let [repository (.getRepository repo)]
+    (->> rev-str (find-rev-commit repo) .getTree .getId
+         (TreeWalk/forPath repository path)
+         (treewalk->filestr repository))))
 
 (defn monotize-by
   "filter out non-monotonic values"

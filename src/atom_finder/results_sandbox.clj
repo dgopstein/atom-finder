@@ -38,26 +38,27 @@
      (def code-age)
      time-mins))
 
-'((->> code-age (filter (comp #{"fbda33410c6e44f9506739b3fe222bcd76c8db86" "ef9f1878ccac299b9190dc0d37a6f20951ac397f"} :rev-str)) (def big-change) time-mins))
+'((->> code-age (filter (comp #{"554ee0ec5263001ccc070413ec96f9edc2298bee"
+                                "fa89373fe15d5ba85c2a08d4d0d6915f260f045e"}
+                              :rev-str)) (def big-change) time-mins))
 
-'((->> big-change (group-by :path) (sort-by (fn [[k [v1 v2]]] (- (Math/abs (- (-> v1 :atoms :implicit-predicate (or 0)) (-> v2 :atoms :implicit-predicate (or 0))))))) (take 20) (map prn)))
+'((->> big-change (group-by :path) (sort-by (fn [[k [v1 v2]]] (- (Math/abs (- (-> v1 :atoms :omitted-curly-braces (or 0)) (-> v2 :atoms :omitted-curly-braces (or 0))))))) (take 20) (map prn)))
 
 '((->> "/gcc/testsuite/gcc.dg/c99-intconst-1.c" (str gcc-path) parse-file (def c99-intconst-1)))
-'((->> c99-intconst-1 ((-> atom-lookup :implicit-predicate :finder)) (take 20) (def intconst-atoms)))
+'((->> c99-intconst-1 ((-> atom-lookup :omitted-curly-braces :finder)) (take 20) (def intconst-atoms)))
 '((->> intconst-atoms first))
 '((->> intconst-atoms last print-tree))
 
-;; 30 secs | 14 mins all of gcc, lazily
+;; 30 secs | 14 mins all of gcc, lazily, 4 mins once loaded
 '((->>
    code-age
+   (filter :path)
+   (remove #(->> % :path (re-find #"test\/|\/test")))
    (group-by (juxt :date :rev-str))
    (map-values #(->> % (map :atoms) (apply merge-with +)))
    (def atoms-by-month)
    time-mins
    ))
-
-'((->> atoms-by-month keys count))
-'((->> atoms-by-month pprint))
 
 '((->>
    atoms-by-month
@@ -65,6 +66,7 @@
    vals
    (filter :date)
    (sort-by :date)
-   (maps-to-csv "gcc-atoms-by-month.csv")
+   reverse
+   (maps-to-csv "gcc-atoms-by-month-no-test.csv")
    time-mins
    ))

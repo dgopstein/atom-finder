@@ -51,6 +51,7 @@
     (.markStart rev-walk (gitq/find-rev-commit repo rev-walk commit-hash))
     rev-walk))
 
+;; see code_age:repo-files
 (s/defn commit-file-source :- String
   "Return full source for each file changed in a commit"
   [repo :- Git rev-commit :- RevCommit file-name :- String]
