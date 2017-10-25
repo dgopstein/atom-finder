@@ -113,7 +113,9 @@
   "Find all atoms and non-atoms in AST"
   [root :- IASTNode]
   (let [found-atoms (find-all-atoms root)]
-    (assoc found-atoms :non-atoms (non-atoms root found-atoms))))
+    (merge found-atoms
+           {:non-atoms (non-atoms root found-atoms)
+            :all-nodes (flatten-tree root)})))
 
 (s/defn build-srcs
   [source-before :- String source-after :- String]

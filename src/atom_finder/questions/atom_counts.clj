@@ -20,21 +20,21 @@
 
 (defn count-atoms-in-tree
   [root]
-  (map-values count find-all-atoms-non-atoms))
+  (map-values count (find-all-atoms-non-atoms root)))
 
 (defn count-atoms-in-linux
   []
-(->> "~/opt/src/gcc"
-      ;"~/opt/src/linux-4.12.4"
+(->> "~/opt/src/atom-finder"
+     (pap (constantly (now)))
       expand-home
       (pmap-dir-trees
        (fn [root]
-         {:file (str/replace-first (.getFilePath root) #".*(?=(linux|gcc)[^/]*)" "")
+         {:file (str/replace-first (.getFilePath root) #".*/atom-finder/" "")
           :atom-counts (count-atoms-in-tree root)}))
       (map prn)
-      ;(take 1000)
+      ;(take 10)
       dorun
-      (log-to "tmp/gcc-atom-counts_2017-09-23_2.edn")
+      (log-to "tmp/-atom-counts_2017-10-25_1.edn")
       time-mins
       )
   )
