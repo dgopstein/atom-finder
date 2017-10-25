@@ -53,12 +53,14 @@
 
 ; https://rosettacode.org/wiki/Detect_division_by_zero#Clojure
 (defn safe-div [x y]
-  (try (/ x y)
-       (catch ArithmeticException _
-         ;(println "Division by zero caught!")
-         (cond (> x 0)   Double/POSITIVE_INFINITY
-               (zero? x) Double/NaN
-               :else     Double/NEGATIVE_INFINITY))))
+  (if (and x y)
+    (try (/ x y)
+         (catch ArithmeticException _
+                                        ;(println "Division by zero caught!")
+           (cond (> x 0)   Double/POSITIVE_INFINITY
+                 (zero? x) Double/NaN
+                 :else     Double/NEGATIVE_INFINITY)))
+    Double/NaN))
 
 (defn arg-count [f]
   (let [m (first (.getDeclaredMethods (class f)))

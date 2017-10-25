@@ -7,6 +7,7 @@
    [atom-finder.atoms-in-dir :refer :all]
    [clojure.pprint :refer [pprint]]
    [schema.core :as s]
+   [swiss.arrows :refer :all]
    )
   )
 
@@ -38,11 +39,12 @@
      (def code-age)
      time-mins))
 
-'((->> code-age (filter (comp #{"554ee0ec5263001ccc070413ec96f9edc2298bee"
-                                "fa89373fe15d5ba85c2a08d4d0d6915f260f045e"}
+'((->> code-age (filter (comp
+                      ;; #{"554ee0ec5263001ccc070413ec96f9edc2298bee" "fa89373fe15d5ba85c2a08d4d0d6915f260f045e"} ;;2004-02-01 2004-01-01
+                         #{"a5877c89dcff8a2345d8f296cb6226dd3ddfe4a9" "1b1da1eead76fa1d94b5e6decefc3eea0ce5e260"}  ;; 2009-03-01 2009-02-01
                               :rev-str)) (def big-change) time-mins))
 
-'((->> big-change (group-by :path) (sort-by (fn [[k [v1 v2]]] (- (Math/abs (- (-> v1 :atoms :omitted-curly-braces (or 0)) (-> v2 :atoms :omitted-curly-braces (or 0))))))) (take 20) (map prn)))
+'((-<>> big-change (group-by :path) (map (fn [[k [v1 v2]]] [k (safe-div (- (-> v1 :atoms :omitted-curly-braces (or 1)) (-> v2 :atoms :omitted-curly-braces (or 1))) (- (-> v1 :atoms :non-atoms (or 1)) (-> v2 :atoms :non-atoms (or 1)))) v1 v2])) (sort-by (comp - #(Math/abs %) double second)) (take 21) (map prn)))
 
 '((->> "/gcc/testsuite/gcc.dg/c99-intconst-1.c" (str gcc-path) parse-file (def c99-intconst-1)))
 '((->> c99-intconst-1 ((-> atom-lookup :omitted-curly-braces :finder)) (take 20) (def intconst-atoms)))
