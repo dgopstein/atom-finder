@@ -52,7 +52,7 @@ chart.spot.project <- function (proj) {
   df$one <- 1.0
   df$count.neg <- 1.0 - df$count
   domain <- atom.rates[as.character(project)==proj]$domain
-  df$size <- log(1*atom.count.sums + 1)
+  df$size <- 1 # log(1*atom.count.sums + 1)
   ggplot(data=df, aes(atom, zero)) +
     geom_point(aes(size = size, colour=zero)) +
     geom_point(aes(size = size*1.05*count, colour=one)) +
@@ -76,7 +76,7 @@ p.labels <- ggplot(data=wide.to.long(atom.rates, 'linux'), aes(x=atom, y=0)) + c
 
 # t, r, b, l
 atom.count.sums <- tail(colSums(atom.count.nums), -2)
-count.hist.df <- log(0.02*atom.count.sums)
+count.hist.df <- atom.count.sums # log(0.02*atom.count.sums)
 count.hist <-
   ggplot(data=data.frame(atom = names(count.hist.df), count = count.hist.df), aes(x = atom, y = count, group = 1)) +
   geom_line(stat = "identity", colour="#222222") +
@@ -92,6 +92,6 @@ count.hist <-
   atom.count.order
 
 plots <- lapply(atom.rates$project, chart.spot.project)
-#pg <- do.call(plot_grid, c(plots, list(count.hist, p.labels, align = "v", nrow = 16, rel_heights = c(rep(1, 14), 1.5, 6.0))))
-pg <- do.call(plot_grid, c(plots, list(p.labels, align = "v", nrow = 15, rel_heights = c(rep(1, 14), 6.0))))
+pg <- do.call(plot_grid, c(plots, list(count.hist, p.labels, align = "v", nrow = 16, rel_heights = c(rep(1, 14), 1.5, 6.0))))
+#pg <- do.call(plot_grid, c(plots, list(p.labels, align = "v", nrow = 15, rel_heights = c(rep(1, 14), 6.0))))
 pg + theme(plot.margin = unit(c(.5,0,.5,0), "cm"))
