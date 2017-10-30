@@ -14,7 +14,7 @@
                  Delta$TYPE/DELETE :delete
                  Delta$TYPE/CHANGE :change})
 
-(->>
+'(->>
 (DiffUtils/diff ["a" "b"] ["c" "d"])
 .getDeltas
 first

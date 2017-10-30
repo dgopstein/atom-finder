@@ -27,7 +27,7 @@
       (pmap (fn [commit]
            (log-err (str "edit-lines " (:rev-str commit)) {} ;todo rev-str isn't working here?
              (merge (select-keys commit [:file :rev-str])
-                    (edit-lines commit)
+                    (edit-line-counts commit)
                     {:n-bugs (->> commit :rev-commit bugzilla-ids count)}))))
      (map prn)
      dorun

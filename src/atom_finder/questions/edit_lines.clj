@@ -35,9 +35,6 @@
   ))
 
 (defn edit-lines
-  "Is a line that contains at least one atom more likely to change
-   (removed/edited [not added, because it didn't exist before])
-   when edits are made?"
   [srcs]
   (let [old-change-ranges (->> srcs :patch patch-change-bounds flatten1
                                (map change-bound-to-ranges) (map :old))
@@ -50,15 +47,21 @@
         changed-non-atom-lines (.intersection non-atom-lines old-change-range-set)
         ]
 
-    (map-values count-range-set
-                {:n-atom-lines atom-lines
-                 :n-non-atom-lines non-atom-lines
-                 :n-changed-atom-lines changed-atom-lines
-                 :n-changed-non-atom-lines changed-non-atom-lines
-                 :n-changed-lines old-change-range-set})))
+    {:atom-lines atom-lines
+     :non-atom-lines non-atom-lines
+     :changed-atom-lines changed-atom-lines
+     :changed-non-atom-lines changed-non-atom-lines
+     :changed-lines old-change-range-set}))
+
+(defn edit-line-counts
+  [srcs]
+  "Is a line that contains at least one atom more likely to change
+   (removed/edited [not added, because it didn't exist before])
+   when edits are made?"
+  (->> srcs edit-lines (map-values count-range-set)))
 
 '(->> gcc-repo
-     (map-all-commit-files edit-lines)
+     (map-all-commit-files edit-line-counts)
      (map prn)
      (take 100)
      dorun
