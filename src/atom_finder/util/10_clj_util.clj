@@ -14,6 +14,10 @@
   [f & args]
   (apply = (map f args)))
 
+(defn partial-right [f & args1]
+  (fn [& args2]
+    (apply f (concat args2 args1))))
+
 ;; https://github.com/clojure/clojure/blob/clojure-1.9.0-alpha14/src/clj/clojure/core.clj#L1683
 (defmacro juxt->>
   "Applies the first argument as the last argument to each form in parrallel
