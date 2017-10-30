@@ -327,5 +327,5 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   ((some-fn inner-macro-operator-atom? outer-macro-operator-atom?) node))
 
 (s/defn macro-operator-precedence-finder
-  [root :- IASTTranslationUnit]
-  (->> root .getMacroExpansions (keep macro-operator-precedence-atom?)))
+  [node :- IASTNode] ; IASTTranslationUnit]
+  (->> node root-ancestor .getMacroExpansions (keep macro-operator-precedence-atom?)))
