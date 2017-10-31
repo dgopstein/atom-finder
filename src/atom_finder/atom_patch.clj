@@ -118,9 +118,9 @@
             :all-nodes (flatten-tree root)})))
 
 (s/defn build-srcs
-  [source-before :- String source-after :- String]
-  (let [ast-before (parse-source source-before)
-        ast-after  (parse-source source-after)
+  [file-name :- String source-before :- String source-after :- String]
+  (let [ast-before (mem-tu file-name source-before)
+        ast-after  (mem-tu file-name source-after)
         atoms-before (find-all-atoms ast-before)
         atoms-after (find-all-atoms ast-after)]
   {:ast-before       ast-before
@@ -155,7 +155,7 @@
       }
 
      ;(if (not (c-file? file-name)) empty-srcs
-     (build-srcs source-before source-after))))
+     (build-srcs file-name source-before source-after))))
 
 (defn atom-specific-srcs
   [srcs atom]

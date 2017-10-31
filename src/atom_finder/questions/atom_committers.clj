@@ -1,5 +1,6 @@
 ;; What is the distribution of people who commit atoms?
 
+
 (ns atom-finder.questions.atom-committers
   (:require
    [atom-finder.atoms-in-dir :refer :all]
@@ -53,12 +54,18 @@
        :author (->> srcs :rev-commit .getAuthorIdent .toExternalString)
        })))
 
-'((->> "12f7900694b31d218f837b477c35777d88d736f5"
-     (commits-from gcc-repo)
-     (take 20)
-     (mapcat :srcs)
-     (map added-atoms)
-     (remove empty?)
-     pprint
-     time-mins
-     ))
+'((->> ;"12f7900694b31d218f837b477c35777d88d736f5"
+       ;"e104cab8d4ab9422a0ca55bb24c00c9fea9a5d4d"
+       "b6a9b2f6a629e399fbd35000c656a02bef947866"
+       (pap (constantly (now)))
+       (commits-from gcc-repo)
+       ;;(take 10)
+       (mapcat :srcs)
+       (filter #(and (:atoms-before %1) (:atoms-after %1)))
+       (map added-atoms)
+       (remove empty?)
+       (map prn)
+       dorun
+       (log-to "tmp/atom-committers_2017-10-30_03.edn")
+       time-mins
+       ))
