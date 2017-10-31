@@ -34,38 +34,45 @@
   [node :- IASTNode]
   (->> node find-all-atoms atom-map-to-seq))
 
-(s/defn atom-diff
+(s/defn atom-map-diff
   [before :- {s/Keyword [IASTNode]} after :- {s/Keyword [IASTNode]}]
    (->>
     (diff-by (comp write-node-valueless :node) (atom-map-to-seq before) (atom-map-to-seq after))
     (map (partial-right select-keys [:original :revised]))
     (apply merge-with concat)))
 
+(s/defn atom-seq-diff
+  [before :- [IASTNode] after :- [IASTNode]]
+   (->>
+    (diff-by write-node-valueless before after)
+    (map (partial-right select-keys [:original :revised]))
+    (apply merge-with concat)))
+
 (s/defn added-atoms
   [srcs]
-  (let [{_ :original new-atoms :revised} (atom-diff (:atoms-before srcs) (:atoms-after srcs))]
-    (for [{type :type new-atom :node} new-atoms]
-      {
-       :rev-str (:rev-str srcs)
-       :file (:file srcs)
-       :type type
-       :node new-atom
-       :start-line (start-line new-atom)
-       :author (->> srcs :rev-commit .getAuthorIdent .toExternalString)
-       })))
+  (let [{_ :original new-atoms     :revised} (atom-map-diff (:atoms-before srcs) (:atoms-after srcs))
+        {_ :original new-non-atoms :revised} (atom-seq-diff (:non-atoms-before srcs) (:non-atoms-after srcs))]
+    {
+     :rev-str (:rev-str srcs)
+     :file (:file srcs)
+     :added-atoms (count new-atoms)
+     :added-non-atoms (count new-non-atoms)
+     :author-name  (->> srcs :rev-commit .getAuthorIdent .getName)
+     :author-email (->> srcs :rev-commit .getAuthorIdent .getEmailAddress)
+     }))
 
 '((->> ;"12f7900694b31d218f837b477c35777d88d736f5"
        ;"e104cab8d4ab9422a0ca55bb24c00c9fea9a5d4d"
        "b6a9b2f6a629e399fbd35000c656a02bef947866"
        (pap (constantly (now)))
        (commits-from gcc-repo)
-       ;;(take 10)
+       (take 2)
        (mapcat :srcs)
        (filter #(and (:atoms-before %1) (:atoms-after %1)))
        (map added-atoms)
        (remove empty?)
        (map prn)
        dorun
-       (log-to "tmp/atom-committers_2017-10-30_03.edn")
+       ;(log-to "tmp/atom-committers_2017-10-30_03.edn")
        time-mins
        ))
