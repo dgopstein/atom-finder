@@ -111,4 +111,4 @@
 (defn maps-to-csv [filename maps]
   (let [headers (keys (first maps))]
     (with-open [writer (clojure.java.io/writer filename)]
-      (clojure.data.csv/write-csv writer (cons headers (map #(values-at % headers) maps))))))
+      (clojure.data.csv/write-csv writer (cons (map name headers) (map #(values-at % headers) maps))))))

@@ -76,3 +76,19 @@
        ;(log-to "tmp/atom-committers_2017-10-30_03.edn")
        time-mins
        ))
+
+'((->> "atom-committers_gcc_2017-10-31_01.edn"
+     read-data
+     rest
+     (group-by :author-name)
+     (map-values (partial map #(dissoc % :author-name :author-email)))
+     (map-values (partial map (partial map-values vector))) ;; wrap every value in vector
+     (map-values (partial apply merge-with into)) ;; merge all the vectors
+     (map-values (partial map-values
+                          (fn [xs]
+                            (if (number? (first xs))
+                              (reduce + xs)          ;; sum numbers
+                              (-> xs set count)))))  ;; count unique strings
+     (map (fn [[k v]] (merge {:author-name k} v)))
+     (maps-to-csv "src/analysis/data/atom-committers_gcc_2017-10-31_01.csv")
+     ))
