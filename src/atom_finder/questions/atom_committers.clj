@@ -66,14 +66,14 @@
        "b6a9b2f6a629e399fbd35000c656a02bef947866"
        (pap (constantly (now)))
        (commits-from gcc-repo)
-       (take 2)
+       ;(take 2)
        (mapcat :srcs)
        (filter #(and (:atoms-before %1) (:atoms-after %1)))
-       (map added-atoms)
+       (pmap added-atoms)
        (remove empty?)
        (map prn)
        dorun
-       ;(log-to "tmp/atom-committers_2017-10-30_03.edn")
+       (log-to "tmp/atom-committers_gcc_2017-10-31_01.edn")
        time-mins
        ))
 
