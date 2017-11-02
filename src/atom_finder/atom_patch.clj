@@ -29,7 +29,7 @@
   `(try (thunk-timeout (fn [] ~@body) ~time :seconds)
         (catch java.util.concurrent.TimeoutException e#
           (do
-            (println (str "Killed operation when it exceded max duration of " ~time ", body: " '~@body))
+            (errln (str "Killed operation when it exceded max duration of " ~time ", body: " '~@body))
             nil))))
 
 (def AtomFinder (s/=> IASTTranslationUnit [IASTTranslationUnit]))
