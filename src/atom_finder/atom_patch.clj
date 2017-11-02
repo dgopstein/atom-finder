@@ -25,6 +25,13 @@
    )
   )
 
+(defmacro with-timeout [time & body]
+  `(try (thunk-timeout (fn [] ~@body) ~time :seconds)
+        (catch java.util.concurrent.TimeoutException e#
+          (do
+            (println (str "Killed operation when it exceded max duration of " ~time ", body: " '~@body))
+            nil))))
+
 (def AtomFinder (s/=> IASTTranslationUnit [IASTTranslationUnit]))
 (def AtomFinders [(s/one AtomFinder "atom-finder") AtomFinder])
 (def BeforeAfter [(s/one IASTTranslationUnit "before") (s/one IASTTranslationUnit "after")])
@@ -267,19 +274,6 @@
                    [(->> flat-res first keys
                         (map #(subs (str %) 1)))])
     (csv/write-csv out-file (->> flat-res (map vals)))))
-
-;(->> (atoms-changed-all-commits gcc-repo atoms)
-;     (take 1)
-;     pprint)
-
-(defmacro with-timeout [time & body]
-  `(try (thunk-timeout (fn [] ~@body) ~time :seconds)
-        (catch java.util.concurrent.TimeoutException e#
-          (do
-            (println (str "Killed operation when it exceded max duration of " ~time ", body: " '~@body))
-            nil))))
-
-;(with-timeout 0.1 (range 1 1000))
 
 (defn map-all-commits
   ([f repo]
