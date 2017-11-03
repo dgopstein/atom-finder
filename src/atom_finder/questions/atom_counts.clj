@@ -48,3 +48,13 @@
      (reduce (partial merge-with +))
      pprint)
   )
+
+;; Generate a full CSV of the data, useful for by-module or by-directory analysis
+;; See src/analysis/directory-counts.R
+'((->> "atom-counts_2017-10-25_1.edn"
+     read-data
+     rest
+     (remove nil?)
+     (map #(assoc (:atom-counts %1) :file (:file %1)))
+     (maps-to-csv "src/analysis/data/atom-counts_2017-10-25_1.csv")
+     ))
