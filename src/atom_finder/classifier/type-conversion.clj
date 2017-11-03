@@ -136,8 +136,12 @@
 (s/defn type-conversion-atom? :- s/Bool
   [node]
   (try
+    ;(println (write-tree node))
     (let [c-types (->> node context-types)
           a-types (->> node arg-types)
           types   (map vector c-types a-types)]
       (any-pred? #(apply coercing-node? %) types))
-    (catch ParseException pe false)))
+    (catch ParseException pe false)
+    ;; sometimes .getEvaluation/getExpressionType barfs, see e.g. linux/drivers/gpu/drm/msm/hdmi/hdmi_hdcp.c:1020
+    (catch ArrayIndexOutOfBoundsException e false)
+    ))

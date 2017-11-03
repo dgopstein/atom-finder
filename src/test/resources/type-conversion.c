@@ -62,3 +62,28 @@ int F2() {
 int F3() {
   return 1;  // <false>
 }
+
+// linux/drivers/gpu/drm/msm/hdmi/hdmi_hdcp.c
+struct hdmi_hdcp_reg_data {
+	u32 reg_id;
+	u32 off;
+	char *name;
+	u32 reg_val;
+};
+
+static int msm_hdmi_hdcp_transfer_v_h(struct hdmi_hdcp_ctrl *hdcp_ctrl)
+{
+	struct hdmi_hdcp_reg_data reg_data[]  = {
+		{REG_HDMI_HDCP_RCVPORT_DATA7,  0x20, "V' H0"},
+		{REG_HDMI_HDCP_RCVPORT_DATA8,  0x24, "V' H1"},
+		{REG_HDMI_HDCP_RCVPORT_DATA9,  0x28, "V' H2"},
+		{REG_HDMI_HDCP_RCVPORT_DATA10, 0x2C, "V' H3"},
+		{REG_HDMI_HDCP_RCVPORT_DATA11, 0x30, "V' H4"},
+	};
+	u32 data[ARRAY_SIZE(reg_data)];
+	int i;
+
+  rc = msm_hdmi_ddc_read((u8 *)&data[i]); // ArrayIndexOutOfBoundsException
+
+	return rc;
+}
