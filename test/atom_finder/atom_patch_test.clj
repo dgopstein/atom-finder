@@ -76,7 +76,7 @@
            logic-as-control-flow (->> atom-lookup :logic-as-control-flow)
            conditional (->> atom-lookup :conditional)
            ]
-       (is (= {:atom-count-before 28 :atom-count-after 28}
+       (is (= {:atom-count-before 0 :atom-count-after 0}
               (ba-counts (atom-specific-srcs srcs logic-as-control-flow) logic-as-control-flow)))
        (is (= {:atom-count-before 25 :atom-count-after 24}
               (ba-counts (atom-specific-srcs srcs conditional) conditional)))

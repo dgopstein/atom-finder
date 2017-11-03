@@ -12,6 +12,14 @@
     (instance? IASTBinaryExpression node) (assignment? node)
     (instance? IASTUnaryExpression node) (contains? u-ops (.getOperator node)))))
 
+(defn mutatable-expr?
+  "does this expression contain a node that can change program state?"
+  [node]
+  (cond
+    (leaf? node) false
+    (mutatable-op? node) true
+    :else (some? (some mutatable-expr? (children node)))))
+
 (defn maybe-mutatable-op?
   "can this AST node change program state?"
   [node]
@@ -39,7 +47,7 @@
   "can this AST node short-circuit?"
   [node]
   (and (short-circuitable-op? node)
-       (maybe-mutatable-expr? (get-in-tree [1] node))))
+       (mutatable-expr? (get-in-tree [1] node))))
 (def logic-as-control-flow-atom? short-circuitable-expr?)
 
 (defn logic-as-control-flow-atoms
