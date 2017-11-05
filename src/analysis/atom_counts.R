@@ -57,7 +57,7 @@ chart.spot.project <- function (proj) {
     geom_point(aes(size = size, colour=zero)) +
     geom_point(aes(size = size*1.05*count, colour=one)) +
     scale_size_continuous(range = c(-.4,6)) +
-    scale_colour_gradientn(colours=c("#444444", sap.qualitative.palette[domain])) +
+    scale_colour_gradientn(colours=c("#222222", sap.qualitative.palette[domain])) +
     theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
     theme(axis.title.y=element_text(angle=0), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
     theme(axis.line=element_blank()) +
@@ -92,6 +92,6 @@ count.hist <-
   atom.count.order
 
 plots <- lapply(atom.rates$project, chart.spot.project)
-pg <- do.call(plot_grid, c(plots, list(count.hist, p.labels, align = "v", nrow = 16, rel_heights = c(rep(1, 14), 1.5, 6.0))))
-#pg <- do.call(plot_grid, c(plots, list(p.labels, align = "v", nrow = 15, rel_heights = c(rep(1, 14), 6.0))))
+#pg <- do.call(plot_grid, c(plots, list(count.hist, p.labels, align = "v", nrow = 16, rel_heights = c(rep(1, 14), 1.5, 6.0))))
+pg <- do.call(plot_grid, c(plots, list(p.labels, align = "v", nrow = 15, rel_heights = c(rep(1, 14), 6.0))))
 pg + theme(plot.margin = unit(c(.5,0,.5,0), "cm"))
