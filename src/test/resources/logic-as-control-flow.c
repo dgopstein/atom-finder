@@ -76,6 +76,6 @@ void random() {
   int x = 1, y = 2, z = 3;
 
   x && f(); // <false>
-  x && x = 2; // true
-  x && f() && x = 2; // <true>
+  x && (x = 2); // <true>
+  x && f() && (x = 2); // <true>
 }
