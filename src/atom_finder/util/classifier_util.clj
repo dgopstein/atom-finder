@@ -38,10 +38,16 @@
   [pred node]
   (->> node flatten-tree-context (filter pred)))
 
-(defn default-finder [classifier] (partial filter-tree classifier))
-(defn default-finder-context [classifier] (partial filter-tree-context classifier))
 (defn with-context [finder] (fn [context node] (map #(assoc context :node %) (finder node))))
 
+(s/defn potential-atom-nodes
+  "places where atoms may be found"
+  [node]
+  (concat (if (root-node? node) (->> node all-macro-defs (map parse-macro-def-body)) '())
+          (->> node (filter-tree (complement intersects-macro-exp?)))))
+
+;(defn default-finder [classifier] (partial filter-tree classifier))
+(defn default-finder [classifier] #(->> % potential-atom-nodes (filter classifier)))
 
 (s/defn context-map :- {IASTNode {s/Any s/Any}}
   [root]

@@ -30,8 +30,7 @@
    (instance? IASTIfStatement node) (if-statement-omitted-curly-brace? node)
 
    (instance? IASTSwitchStatement node)
-    (and (not-any? (partial instance? IASTMacroExpansionLocation)
-                   (.getNodeLocations node))
+    (and (not (intersects-macro-exp? node))
          (not(->> node
                   (get-in-tree [1])
                   .getSyntax

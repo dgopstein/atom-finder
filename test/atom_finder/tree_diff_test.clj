@@ -32,7 +32,7 @@
   (testing "tree= - Which ASTs are equal"
     (let [cases [
                  [true "b = 1 + a++" "b = 1 + a++"]
-                 [true " b  =  1 /*z*/  +  a++ //asf" "b = 1 + a++"]
+                 [true " b  =  1 /*z*/  +  a++" "b = 1 + a++"]
                  [false "b = 1 + a++" "b = 2 + a++"]
                  [false "b = 1 + a++" "b = 1 * a++"]
                  [false  "b = 1 + a++" "b = 1 + (a++)"]
@@ -65,7 +65,7 @@
   (testing "Which individual nodes are equal"
     (let [cases [
                  [true "b = 1 + a++" "b = 1 + a++"]
-                 [true " b  =  1 /*z*/  +  a++ //asf" "b = 1 + a++"]
+                 [true " b  =  1 /*z*/  +  a++" "b = 1 + a++"]
                  [false "b = 1 + a++" "b = 1 * a++"]
                  [false  "b = 1 + a++" "b *= 1 + a++"]
                  [false  "b += 1 + a++" "b *= 1 + a++"]

@@ -7,6 +7,10 @@
 
 (use-fixtures :once schema.test/validate-schemas)
 
+(deftest test-macro-expansion-atoms?
+  (testing "Atoms should be found in macro definitions, but not in macro expansions"
+    (test-atom-lines "macro-def-atoms.c" "<true>" (default-finder operator-precedence-atom?))))
+
 (deftest test-conditional-atom?
   (testing "conditional-atom? finds all atoms in snippet study code"
     (is (= true

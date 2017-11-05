@@ -74,13 +74,6 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
   (and (->> unexpanded :name (#{:lessThan :greaterThan}))
        (->> expanded (filter-tree (partial instance? ICPPASTTemplateId)) empty? not)))
 
-(defn parse-macro-def
-  [macro-def]
-  (let [[all name args body] (->> macro-def str (re-find #"^([^=(]*)(?:\(([^)]*)\))?=(.*)"))]
-    {:name name
-     :args (some-<>> args (str/split <> #",") (remove empty?))
-     :body body}))
-
 (s/defn macro-defs-by-name {s/Str IASTPreprocessorMacroDefinition}
   [root :- IASTTranslationUnit]
   (->> root .getMacroDefinitions (map (juxt #(-> % .getName str) identity)) (into {})))

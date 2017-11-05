@@ -15,8 +15,9 @@
 (deftest atom-committers-test
   (testing "atom-map-diff"
     (= (->>
-        (atom-map-diff (find-all-atoms (parse-frag "int x = z = y++")) (find-all-atoms (parse-frag "int x = z = w ? y : y++")))
-        :revised (map #(->> % class .getSimpleName)))
+        (atom-map-diff (->> "int x = z = y++" parse-frag root-ancestor find-all-atoms)
+                       (->> "int x = z = w ? y : y++" parse-frag root-ancestor find-all-atoms))
+        :revised (map #(->> % :node class .getSimpleName)))
        ;; one atom is the ?: itself, and the other is the parent of the y++, which moved out of the assignment
        ["CPPASTConditionalExpression" "CPPASTConditionalExpression"])))
 
