@@ -77,4 +77,5 @@ void random() {
 
   x && f(); // <false>
   x && x = 2; // true
+  x && f() && x = 2; // <true>
 }
