@@ -229,8 +229,15 @@
 (defn parse-frag
   "Turn a single C fragment (statement or expression) into an AST"
   [code]
-  (->> [#(when (stmt-str? %1) (parse-stmt %1)) parse-expr
-        #(get-in-tree [0] (parse-stmt (str %1 "\n;")))
+  (->> [#(when (stmt-str? %1) (parse-stmt %1))
+        parse-expr
+        (fn [src] (let [node (-> src (str "\n;") parse-stmt)]
+                    ;; some nodes change dramatically without their semicolon
+                    ;; e.g. do { ... } while -> compound statement
+                    ;; this is common in macro definitions
+                    (if (instance? org.eclipse.cdt.core.dom.ast.IASTDoStatement node)
+                      node
+                      (get-in-tree [0] node))))
         parse-source]
        (map (fn [parser] (parser code)))
        (filter valid-parse?)
