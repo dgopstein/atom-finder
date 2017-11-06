@@ -3,7 +3,7 @@
             [atom-finder.util :refer :all]
             )
   (:import
-           [org.eclipse.cdt.core.dom.ast IASTExpression IASTLiteralExpression]))
+           [org.eclipse.cdt.core.dom.ast IASTExpression IASTLiteralExpression IASTDoStatement]))
 
 (deftest cdt-util-test
     (testing "count-nodes"
@@ -46,6 +46,11 @@
 
         (is (instance? IASTExpression (parse-frag "f(x)")))
         (is (atom-finder.tree-diff/tree=by class (get-in-tree [0] (parse-stmt "int x = 1;")) (parse-frag "int x = 1")))
+
+        ;; perhaps this example should parse as do-while, but alternatively,
+        ;; without the semicolon, it's NOT a statement, so it shouldn't be
+        ;; parsed as one
+        (->> "do {} while(1)" parse-frag (instance? IASTDoStatement) is)
       )))
 
   (testing "height"
