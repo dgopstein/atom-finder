@@ -44,7 +44,7 @@
   "places where atoms may be found"
   [node]
   (concat (if (root-node? node) (->> node all-macro-defs (map parse-macro-def-body)) '())
-          (->> node (filter-tree (complement intersects-macro-exp?)))))
+          (->> node flatten-tree (remove intersects-macro-exp?))))
 
 ;(defn default-finder [classifier] (partial filter-tree classifier))
 (defn default-finder [classifier] #(->> % potential-atom-nodes (filter classifier)))

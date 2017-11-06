@@ -114,7 +114,7 @@
   "Given an AST and a map of all atoms, return a list of all non-atom nodes"
   [root found-atoms :- {s/Keyword [IASTNode]}]
   (let [ungrouped-atoms (set (apply concat (vals found-atoms)))]
-    (remove ungrouped-atoms (flatten-tree root))))
+    (remove ungrouped-atoms (potential-atom-nodes root))))
 
 (s/defn find-all-atoms-non-atoms :- {s/Keyword [IASTNode]}
   "Find all atoms and non-atoms in AST"
@@ -122,7 +122,7 @@
   (let [found-atoms (find-all-atoms root)]
     (merge found-atoms
            {:non-atoms (non-atoms root found-atoms)
-            :all-nodes (flatten-tree root)})))
+            :all-nodes (potential-atom-nodes root)})))
 
 (s/defn build-srcs
   [file-name :- String source-before :- String source-after :- String]
