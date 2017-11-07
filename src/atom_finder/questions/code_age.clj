@@ -129,25 +129,25 @@
   [cmp f coll]
   (->> coll (partition 2 1) (filter (fn [[a b]] (cmp (f a) (f b)))) (map first)))
 
-'((def linux-historical-repo (->> "~/opt/src/linux-historical" expand-home gitp/load-repo)))
+'((def code-age-repo (->> "~/opt/src/linux-historical" expand-home gitp/load-repo)))
+'((def code-age-repo (->> "~/opt/src/atom-finder/gcc" expand-home gitp/load-repo)))
+;(def code-age-repo linux-historical-repo)
 
 '((-<>>
- ["981a2edd1922c00e747680f30734ea50c86af28d"
-  "747aead34de65c25765da79825ce2c08d8257b10"
-  "1737992523930995ae7ee67cc9da87952c01aebc"
-  "9b75471204ab8339eee7156e8f93959b9cfb0347"]
- (map (partial rev-walk-from linux-historical-repo))
- ;(distributed-sample 10) (map year-month) )
- (apply concat)
- (pap (constantly (now)))
+ ;["981a2edd1922c00e747680f30734ea50c86af28d"
+ ; "747aead34de65c25765da79825ce2c08d8257b10"
+ ; "1737992523930995ae7ee67cc9da87952c01aebc"
+ ; "9b75471204ab8339eee7156e8f93959b9cfb0347"]
+ ;(map (partial rev-walk-from linux-historical-repo))
+ ;(apply concat)
+ "476ea17a1752df3ca32ae996e3c88f42f00ecc3a"
+ (rev-walk-from code-age-repo)
  (partition-by (fn [rc] (-> rc year-month (update-in [1] #(int (/ (dec %) 3))))))
  (map last)
  (monotize-by (comp (partial < 0) compare) year-month)
  ;(map year-month) pprint)
- (mapcat (partial repo-files linux-historical-repo))
+ (mapcat (partial repo-files code-age-repo))
  (filter (comp c-file? :path))
- ;(drop 6100)
- ;(map (partial pap #(select-keys % [:rev-str :path])))
  (pmap (fn [rev-file]
     (log-err (str "parsing/finding atoms in " (juxt->> rev-file :path :rev-str)) nil
              (with-timeout 120
@@ -157,6 +157,22 @@
  ;(take 3)
  (map prn)
  dorun
- (log-to "tmp/code-age_linux-historical_2017-10-16_01_ungrafted.edn")
+ (log-to "tmp/code-age_gcc_2017-11-05_01_no-macro-exps.edn")
  time-mins
  ))
+
+'((->>
+   "tmp/code-age_gcc_2017-11-05_01_no-macro-exps.edn"
+   read-lines
+   (filter :path)
+   (remove #(->> % :path (re-find #"test\/|\/test")))
+   (group-by (juxt :date :rev-str))
+   (map-values #(->> % (map :atoms) (apply merge-with +)))
+   (map-values-kv (fn [[date rev-str] v] (merge v {:date date :rev-str rev-str})))
+   vals
+   (filter :date)
+   (sort-by :date)
+   reverse
+   (maps-to-csv "atoms-by-month_gcc_2017-11-05_01_no-macro-exps.csv")
+   time-mins
+   ))
