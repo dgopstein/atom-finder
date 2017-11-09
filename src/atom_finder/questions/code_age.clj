@@ -134,14 +134,14 @@
 ;(def code-age-repo linux-historical-repo)
 
 '((-<>>
- ;["981a2edd1922c00e747680f30734ea50c86af28d"
- ; "747aead34de65c25765da79825ce2c08d8257b10"
- ; "1737992523930995ae7ee67cc9da87952c01aebc"
- ; "9b75471204ab8339eee7156e8f93959b9cfb0347"]
- ;(map (partial rev-walk-from linux-historical-repo))
- ;(apply concat)
- "476ea17a1752df3ca32ae996e3c88f42f00ecc3a"
- (rev-walk-from code-age-repo)
+ ["981a2edd1922c00e747680f30734ea50c86af28d"
+  "747aead34de65c25765da79825ce2c08d8257b10"
+  "1737992523930995ae7ee67cc9da87952c01aebc"
+  "9b75471204ab8339eee7156e8f93959b9cfb0347"]
+ (map (partial rev-walk-from code-age-repo)) ;; linux-historical repo
+ (apply concat)
+ ;"476ea17a1752df3ca32ae996e3c88f42f00ecc3a"
+ ;(rev-walk-from code-age-repo) ; gcc-repo
  (partition-by (fn [rc] (-> rc year-month (update-in [1] #(int (/ (dec %) 3))))))
  (map last)
  (monotize-by (comp (partial < 0) compare) year-month)
@@ -157,7 +157,7 @@
  ;(take 3)
  (map prn)
  dorun
- (log-to "tmp/code-age_gcc_2017-11-05_01_no-macro-exps.edn")
+ (log-to "tmp/code-age_linux-historical_2017-11-07_01_no-macro-exps.edn")
  time-mins
  ))
 
