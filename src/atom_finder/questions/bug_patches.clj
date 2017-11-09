@@ -1,3 +1,5 @@
+;; How many atoms are in bug-fix commits vs non-bug-fix commits
+
 (ns atom-finder.questions.bug-patches
   (:require
    [clj-jgit.internal  :as giti]
@@ -17,19 +19,16 @@
    [org.eclipse.jgit.api Git]
    [org.eclipse.jgit.treewalk CanonicalTreeParser]))
 
-
-'(-<>> gcc-repo
-     ;(map-all-commit-files identity)
-     ;(commits-from <> "5c929e16b8a3a96eb1ef8691fa7b88cb74754005") (mapcat :srcs)
-     (commits-from <> "9ab8ac2684b1553dbd9bb656751515a3fb5c218c") (mapcat :srcs)
-;     (def commits))
-;(-<>> commits
-      (pmap (fn [commit]
-           (log-err (str "edit-lines " (:rev-str commit)) {} ;todo rev-str isn't working here?
-             (merge (select-keys commit [:file :rev-str])
-                    (edit-line-counts commit)
-                    {:n-bugs (->> commit :rev-commit bugzilla-ids count)}))))
+'((-<>>
+     "476ea17a1752df3ca32ae996e3c88f42f00ecc3a"
+     (commits-from gcc-repo)
+     (mapcat :srcs)
+     (pmap (fn [commit]
+             (log-err (str "edit-lines " (:rev-str commit)) {} ;todo rev-str isn't working here?
+                      (merge (select-keys commit [:file :rev-str])
+                             (edit-line-counts commit)
+                             {:n-bugs (->> commit :rev-commit bugzilla-ids count)}))))
      (map prn)
      dorun
-     (log-to "tmp/bug-lines-2017-09-26_2.txt")
-     time-mins)
+     (log-to "tmp/bug-lines_gcc_2017-11-09_1.txt")
+     time-mins))
