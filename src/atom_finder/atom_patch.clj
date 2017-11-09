@@ -243,3 +243,12 @@
                          {:rev-commit rev-commit
                           :rev-str    (.name rev-commit)
                           :srcs (commit-files-before-after repo rev-commit)}))))))
+
+(defn flat-commits-from
+  "Nest commit info into each file's info"
+  [& args]
+  (->> (apply commits-from args)
+       (mapcat
+        (fn [cmt-frm]
+          (->> cmt-frm :srcs
+               (map (partial merge (dissoc cmt-frm :srcs))))))))

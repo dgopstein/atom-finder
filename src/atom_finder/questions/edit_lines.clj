@@ -60,13 +60,16 @@
    when edits are made?"
   (->> srcs edit-lines (map-values count-range-set)))
 
-'(->> gcc-repo
-     (map-all-commit-files edit-line-counts)
-     (map prn)
-     (take 100)
-     dorun
-     (log-to "tmp/edit-lines-2017-07-18.txt")
-     time-mins)
+'((->>
+   gcc-repo
+   commits-from
+   (map :srcs)
+   (map edit-line-counts)
+   (map prn)
+   (take 3)
+   dorun
+     ;(log-to "tmp/edit-lines-2017-07-18.txt")
+   time-mins))
 
 '(->> "tmp/edit-lines-2017-07-18.txt"
      read-lines
