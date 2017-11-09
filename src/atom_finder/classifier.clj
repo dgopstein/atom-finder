@@ -25,7 +25,7 @@
   "Creates an Atom record, with each function wrapped in Schema validation code"
   [name classifier finder]
   `(Atom. (s/validate AtomName ~name)
-          (s/fn ~(symbol (str name "-classifier")) :- Boolean [node# :- IASTNode] (~classifier node#))
+          (s/fn ~(symbol (str name "-classifier")) [node# :- IASTNode] (~classifier node#))
           (s/fn ~(symbol (str name "-finder")) :- [IASTNode] [node# :- IASTNode] (~finder node#))
           ;(s/fn ~(symbol (str name "-classifier")) :- Boolean [node# :- IASTNode]
           ;  (log-err (str "atom " ~name "-classifier") false (~classifier node#)))
@@ -53,6 +53,8 @@
   ])
 
 (def atom-lookup (into {} (map #(vector (:name %1) %1) atoms)))
+
+(def any-atom? (apply some-fn (map :classifier atoms)))
 
 (defn find-all-atoms
   [root]
