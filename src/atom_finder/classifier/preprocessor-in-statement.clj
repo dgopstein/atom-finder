@@ -32,8 +32,10 @@
   (map #(offset-parent root (:offset %)) (all-non-toplevel-preprocessor-locs root)))
 
 (defn non-toplevel-defines [root]
-  (map #(->> % :offset (offset-parent root))
-       (define-in-contexts non-toplevel? root)))
+  (->> root
+       (define-in-contexts non-toplevel?)
+       (map #(->> % :offset (offset-parent root)))
+       (remove nil?)))
 
 (defn statement-expression-classifier
   [parent]
@@ -55,15 +57,6 @@
        (map offset)
        (exists? (partial offset-parent? node))))
 
-'(defn define-parent?
-  "Is this AST node the direct parent of a preprocessor directive"
-  [node]
-  (->> node
-       root-ancestor
-       (define-in-contexts non-toplevel?)
-       (map :offset)
-       (exists? (partial offset-parent? node))))
-
 (s/defn offset-range
   [node :- IASTNode]
   (when (loc node)
@@ -81,12 +74,12 @@
 (defn define-parent?
   "Is this AST node the direct parent of a preprocessor directive"
   [node]
-  (and (not (instance? IASTTranslationUnit node))
-       (->> node
-            root-ancestor
-            define-only
-            (map offset)
-            (exists? (partial offset-parent? node)))))
+  (->> node
+       root-ancestor
+       define-only
+       (map offset)
+       (exists? (partial offset-parent? node))
+       (and (not (instance? IASTTranslationUnit node)))))
 
 ; TODO binary search the defines?? big-root has 7000 - except there might be multiple, so it has be region binary search
 ; or use a stateful atomfinder

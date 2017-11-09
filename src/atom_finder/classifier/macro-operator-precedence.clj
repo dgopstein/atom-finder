@@ -96,15 +96,17 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
 
 (s/defn outer-macro-operator-atom? :- (s/maybe IASTNode)
   "Does this expansion lead to a confusion AST tree outside of itself"
-  [expansion :- IASTPreprocessorMacroExpansion]
-  (let [exp-node (expansion-parent expansion)
-        expanded   (some->> exp-node expr-operator)
-        unexpanded (some->> exp-node write-tree parse-frag expr-operator)]
-    (when (and (not (substituting-macro? expansion))
-               expanded unexpanded
-               (not= expanded unexpanded)
-               (not (template-misparse? exp-node unexpanded)))
-      exp-node)))
+  [expansion] ; :- IASTPreprocessorMacroExpansion]
+
+  (when (instance? IASTPreprocessorMacroExpansion expansion) ;; Allow this classifier to be used trivially with non-macro nodes
+    (let [exp-node (expansion-parent expansion)
+          expanded   (some->> exp-node expr-operator)
+          unexpanded (some->> exp-node write-tree parse-frag expr-operator)]
+      (when (and (not (substituting-macro? expansion))
+                 expanded unexpanded
+                 (not= expanded unexpanded)
+                 (not (template-misparse? exp-node unexpanded)))
+        exp-node))))
 
 (s/defn macro-outer-precedence-finder
   [root :- IASTTranslationUnit]
@@ -297,8 +299,9 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
 (require '[atom-finder.tree-diff :refer :all])
 (s/defn inner-macro-operator-atom? :- (s/maybe IASTNode)
   "Does this expansion lead to a confusion AST tree outside of itself"
-  [exp :- IASTPreprocessorMacroExpansion]
-  (when-let* [_  (not (substituting-macro? exp))
+  [exp] ; :- IASTPreprocessorMacroExpansion]
+  (when-let* [_  (instance? IASTPreprocessorMacroExpansion exp)
+              _  (not (substituting-macro? exp))
               _  (instance? IASTPreprocessorFunctionStyleMacroDefinition (.getMacroDefinition exp))
               replaced-str  (macro-replace-arg-str  exp)
               replaced-tree (macro-replace-arg-tree exp)
