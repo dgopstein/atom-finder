@@ -11,16 +11,7 @@
                IASTUnaryExpression/op_postFixIncr}
              (.getOperator node)))
 
-(defn post-*crement-atom? [node]
-  ; certain nodes can never "use" the value of an expression
-  (and (not (any-pred? #(% node) [(partial instance? IASTExpressionList)
-                                  (partial instance? IASTExpressionStatement)
-                                  paren-node?]))
-       (->> node
-            value-consuming-children
-            (map remove-wrappers)
-            (any-pred? post-*crement?)
-            )))
+(defn post-*crement-atom? [node] (used-as-rvalue? post-*crement? node))
 
 (defn post-*crement-not-atom?
   "Is this node a post-*crement that isn't an atom?"
