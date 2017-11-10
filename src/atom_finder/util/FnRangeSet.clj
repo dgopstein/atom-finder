@@ -59,4 +59,4 @@
 
 (defn union-all
   [range-sets]
-  (reduce (fn [rs1 rs2] ImmutableRangeSet/union)))
+  (reduce #(.union %1 %2) range-sets))
