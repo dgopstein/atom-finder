@@ -41,31 +41,32 @@
         ;_ (pprn old-change-ranges)
         old-change-range-set (range-set-co old-change-ranges)
         ;_ (pprn old-change-range-set)
-        atom-lines (->> srcs :atoms-before vals flatten start-lines-range-set)
-        non-atom-lines (.difference (->> srcs :ast-before flatten-tree start-lines-range-set) atom-lines)
-        changed-atom-lines (.intersection old-change-range-set atom-lines)
+        atom-lines (->> srcs :atoms-before (map-values (%->> flatten start-lines-range-set)))
+        all-atom-lines (->> atom-lines vals union-all)
+        non-atom-lines (.difference (->> srcs :ast-before flatten-tree start-lines-range-set) all-atom-lines)
+        changed-atom-lines (->> atom-lines (map-values #(.intersection old-change-range-set %)))
         changed-non-atom-lines (.intersection non-atom-lines old-change-range-set)
         ]
 
-    {:atom-lines atom-lines
-     :non-atom-lines non-atom-lines
-     :changed-atom-lines changed-atom-lines
-     :changed-non-atom-lines changed-non-atom-lines
-     :changed-lines old-change-range-set}))
+    {:original (merge atom-lines         {:non-atom non-atom-lines})
+     :changed  (merge changed-atom-lines {:non-atom changed-non-atom-lines})}
+    ;;:changed-lines old-change-range-set}
+    ;;(merge atom-lines (map-keys #(join-keywords [:changed- %]) changed-atom-lines)
+    ))
 
 (defn edit-line-counts
   [srcs]
   "Is a line that contains at least one atom more likely to change
    (removed/edited [not added, because it didn't exist before])
    when edits are made?"
-  (->> srcs edit-lines (map-values count-range-set)))
+  (->> srcs edit-lines (map-values (partial map-values count-range-set))))
 
 '((->>
    gcc-repo
-   commits-from
-   (map :srcs)
+   flat-commits-from
+   ;(drop 1) first (def srcs))
    (map edit-line-counts)
-   (map prn)
+   (map pprint)
    (take 3)
    dorun
      ;(log-to "tmp/edit-lines-2017-07-18.txt")

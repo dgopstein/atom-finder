@@ -14,7 +14,7 @@
                  [com.grammarly/omniconf "0.2.5"] ;https://github.com/grammarly/omniconf
                  [org.clojure/data.csv "0.1.3"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
-                 [com.google.guava/guava "22.0"]
+                 [com.google.guava/guava "23.0"]
                  [clojail "1.0.6"]
                  [swiss-arrows "1.0.0"]
                  ]

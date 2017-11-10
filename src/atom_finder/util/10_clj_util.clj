@@ -18,6 +18,13 @@
   (fn [& args2]
     (apply f (concat args2 args1))))
 
+(defmacro %->>
+  "Returns a unary function that threads its arguments
+   through the arguments passed to this macro.
+   Similar to #(->> % a b c)"
+  [& forms]
+  `(fn [x#] (->> x# ~@forms)))
+
 ;; https://github.com/clojure/clojure/blob/clojure-1.9.0-alpha14/src/clj/clojure/core.clj#L1683
 (defmacro juxt->>
   "Applies the first argument as the last argument to each form in parrallel
@@ -122,7 +129,6 @@
 
 (defn bin "Convert a value to 1 or 0 based on its truthiness"
   [bool] (if bool 1 0))
-
 
 (defn flatcat
   "Take two lists/items and merge them"
