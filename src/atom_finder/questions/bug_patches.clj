@@ -50,3 +50,12 @@
    ;(map prn)
    (maps-to-csv "src/analysis/data/bug-lines_gcc_2017-11-09_02.csv")
    ))
+
+
+
+
+(-> 2
+    (+ 1)
+    (* 3)
+    )
+(-<>> 2 (+ 1 <>) (* 3 <> 3))

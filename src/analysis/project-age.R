@@ -5,6 +5,7 @@ library(ggplot2)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+# https://docs.google.com/spreadsheets/d/1_5E8ICuxDP1hwJO354Fydmuik2SQkyNL_v6VEqdjG6A/edit#gid=1197815198
 project.age <- data.table(read.csv("data/project-age.csv"))
 project.age[, date := as.character(date)]
 project.age$newer <- apply(project.age, 1, function (x) x['date'] == project.age[type==x['type'], max(date)])
