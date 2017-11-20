@@ -35,3 +35,10 @@ ggplot(atom.rates.bug.change, aes(atom, rate, fill=rate > 1)) + geom_col() +
   #scale_y_sqrt() +
   theme(axis.text.x=element_text(angle=90, hjust=1))
 
+## The least frequent, most bug-predictive atoms
+## ** uses data from atom_counts.R
+# atom.counts.bugs <- merge(all.atom.rates, atom.rates.bug.change, by="atom", suffixes=c(".count", ".bug"))
+# 
+# ggplot(atom.counts.bugs, aes(rate.count, rate.bug)) +
+#   geom_point() + geom_text(aes(label=atom)) +
+#   scale_x_sqrt() + scale_y_sqrt()
