@@ -70,6 +70,9 @@
  )
 )
 
+'((->> grouped-examples :preprocessor-in-statement (map (fn [exmpl] ;(assoc (update-in exmpl [:atom] write-tree)
+                                                                :github (github-url exmpl))) pprint))
+
 (quote
  (->> grouped-examples
      (map-values (partial map #(update-in % [:atom] write-tree)))

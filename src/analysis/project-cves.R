@@ -12,7 +12,7 @@ projects.high.rate <- project.cves[project.cves, on="domain"][project != i.proje
 
 ggplot(projects.high.rate, aes(x=atoms, y=cve_rate, group=domain)) +
   geom_path(aes(color = domain), size=1.5) +
-  geom_point(size=3) +
+  geom_point(size=3) + # aes(size=log(cve_rate))) +
   geom_text(aes(label=project),hjust=0.5, vjust=-1) +
   scale_x_continuous(expand = c(0.001, 0.001)) +
   scale_y_log10(expand = c(0.1, 0.1)) +

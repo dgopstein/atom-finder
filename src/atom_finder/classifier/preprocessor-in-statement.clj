@@ -37,10 +37,16 @@
        (map #(->> % :offset (offset-parent root)))
        (remove nil?)))
 
-(defn statement-expression-classifier
+(defn stmt-or-expr?
   [parent]
   (or (instance? IASTExpression parent)
       (instance? IASTStatement parent)))
+
+(defn defines-in-stmt-or-expr [root]
+  (->> root
+       (define-in-contexts stmt-or-expr?)
+       (map #(->> % :offset (offset-parent root)))
+       (remove nil?)))
 
 (defn expression-classifier [parent]
   (instance? IASTExpression parent))
@@ -78,8 +84,13 @@
        root-ancestor
        define-only
        (map offset)
-       (exists? (partial offset-parent? node))
-       (and (not (instance? IASTTranslationUnit node)))))
+       (exists? (partial offset-parent? node))))
+
+(defn stmt-or-expr-define-parent?
+  [node]
+  "Is this node a statement or an expression and directly contains a define"
+  (and (define-parent? node)
+       (stmt-or-expr? node)))
 
 ; TODO binary search the defines?? big-root has 7000 - except there might be multiple, so it has be region binary search
 ; or use a stateful atomfinder
@@ -93,3 +104,15 @@
             (map offset)
             (any-pred? (child-offsets node))
             )))
+
+(defn defines-in-if [root]
+  (->> root
+       (define-in-contexts (partial instance? IASTIfStatement))
+       (map #(->> % :offset (offset-parent root)))
+       (remove nil?)))
+
+'((->> [{:name :preprocessor-in-statement, :finder defines-in-if}]
+     (atom-finder.atoms-in-dir/atoms-in-dir (expand-home "~/opt/src/atom-finder/"))
+     (remove (%->> last first last empty?))
+     pprint
+     ))
