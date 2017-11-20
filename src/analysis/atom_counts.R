@@ -121,7 +121,32 @@ atom.names <- c("assignment.as.value", "comma.operator", "conditional", "implici
 effect.size <- c(0.52, 0.30, 0.36, 0.24, 0.63, 0.48, 0.53, 0.22, 0.33, 0.45, 0.28, 0.54, 0.22, 0.40, 0.42)
 
 atom.effect <- merge(all.atom.rates, cbind.data.frame(atom = atom.names, effect.size))
-ggplot(atom.effect, aes(effect.size, rate)) + geom_point() +
+with(atom.effect, cor(rate, effect.size)) # correlation: -0.45
+ggplot(atom.effect, aes(effect.size, rate)) +
+  geom_point(size=2.5) +
+  geom_smooth(method="lm", se=FALSE) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
+#  scale_y_continuous(limits = c(0, 0.0015)) +
+  scale_y_log10() +
+  geom_text(aes(label=atom), hjust=-0.15, angle=-11, size=3) +
+  theme(axis.text.x=element_text(angle=90, hjust=1))
+
+################################################
+#  all projects by raw confusion of C question
+#     (not, the difference between C/NC)
+################################################
+
+## from snippet_study/results.R
+# dput(atom.contingencies[, .(atom.name, correct.rate.C = round((TT + TF) / (TT + TF + FT + FF), digits=2))][order(atom.name)][,correct.rate.C])
+
+correct.rate.C <- c(0.45, 0.48, 0.76, 0.78, 0.25, 0.3, 0.57, 0.62, 0.75, 0.54, 0.64, 0.3, 0.47, 0.52, 0.58)
+atom.correct.C <- merge(all.atom.rates, cbind.data.frame(atom = atom.names, correct.rate.C))
+with(atom.correct.C, cor(rate, 1-correct.rate.C))
+
+ggplot(atom.correct.C, aes(rate, correct.rate.C)) + geom_point() +
   geom_text(aes(label=atom), hjust=-0.1, angle=45, size=2) +
   #geom_smooth(method="lm", aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   theme(axis.text.x=element_text(angle=90, hjust=1))
+  
+
+
+
