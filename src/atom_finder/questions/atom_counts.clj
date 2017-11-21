@@ -25,7 +25,7 @@
 (defn count-atoms-in-linux
   []
 (->> "~/opt/src/atom-finder"
-     (pap (constantly (now)))
+     ;(pap (constantly (now)))
       expand-home
       (pmap-dir-trees
        (fn [root]
@@ -34,7 +34,7 @@
       (map prn)
       ;(take 10)
       dorun
-      (log-to "tmp/-atom-counts_2017-10-25_1.edn")
+      (log-to "tmp/atom-counts_2017-11-12_01.edn")
       time-mins
       )
   )
