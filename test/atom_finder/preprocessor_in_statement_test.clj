@@ -31,7 +31,7 @@
 
   (testing "Preprocessor from snippet study"
     (let [ast (parse-resource "define-in-if-loop.c")
-          atoms (preprocessors-in-contexts all-preprocessor statement-expression-classifier ast)]
+          atoms (preprocessors-in-contexts all-preprocessor stmt-or-expr? ast)]
 
       (is (= (map :line atoms) '(4 7 11)))
       ))
@@ -49,6 +49,5 @@
           (is (= (pisc (parse-frag code)) sc?))))))
 
   (testing "preprocessor-in-statement? finds all atoms in code"
-    (test-atom-lines "preprocessor-in-statement.c" "<true>" non-toplevel-defines)
-    (test-atom-lines "preprocessor-in-statement.c" "<true>" (default-finder define-parent?)))
+    (test-atom-lines "preprocessor-in-statement.c" "<true>" non-toplevel-defines))
 )

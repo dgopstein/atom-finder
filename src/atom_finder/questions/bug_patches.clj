@@ -38,3 +38,24 @@
      dorun
      (log-to "tmp/bug-lines_gcc_2017-11-09_07.txt")
      time-mins))
+
+'((-<>>
+   "tmp/bug-lines_gcc_2017-11-09_02.txt"
+   read-lines
+   (map (fn [commit]
+          (merge (dissoc commit :original :changed)
+                 (map-values (fn [x] (if (Double/isFinite x) (float x) 0)) ; NaN -> 0
+                             #_(merge
+                              (merge-with safe-div (:changed commit) (:original commit)) ; rate of change of atoms
+                              {:all-atoms (safe-div (reduce + (vals (:changed commit))) (reduce + (vals (:original commit))))} ; total atom change rate
+                              )
+
+                             (map-values #(safe-div % (->> commit :changed :non-atom)) (:changed commit))
+                             )
+                 {:all-changed (->> commit :changed vals (reduce +))}
+                 )))
+   ;(take 3)
+   ;(map prn)
+   (maps-to-csv "src/analysis/data/bug-lines_gcc_2017-11-09_02.csv")
+   ))
+

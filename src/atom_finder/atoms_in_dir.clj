@@ -30,10 +30,16 @@
        (map-values (partial map (comp :line loc)))
         )])
 
-(defn print-atoms-in-dir
+(defn atoms-in-dir
   [dirname atoms]
   (->> dirname
-       (pmap-dir-files #(atoms-in-file atoms %))
+       (pmap-dir-files #(atoms-in-file atoms %))))
+
+
+(defn print-atoms-in-dir
+  [dirname atoms]
+  (->> atoms
+       (atoms-in-dir dirname)
        (map prn)
        count
        println

@@ -1,4 +1,5 @@
 (in-ns 'atom-finder.classifier)
 
-(import '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTExpressionList))
-(def comma-operator-atom? (partial instance? CPPASTExpressionList))
+(import '(org.eclipse.cdt.core.dom.ast IASTExpressionList))
+
+(defn comma-operator-atom? [node] (instance? IASTExpressionList node))
