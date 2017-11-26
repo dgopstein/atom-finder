@@ -40,7 +40,7 @@
      time-mins))
 
 '((-<>>
-   "tmp/bug-lines_gcc_2017-11-09_02.txt"
+   "tmp/bug-lines_gcc_2017-11-09_combined.txt"
    read-lines
    (map (fn [commit]
           (merge (dissoc commit :original :changed)
@@ -56,6 +56,7 @@
                  )))
    ;(take 3)
    ;(map prn)
-   (maps-to-csv "src/analysis/data/bug-lines_gcc_2017-11-09_02.csv")
+   (maps-to-csv "src/analysis/data/bug-lines_gcc_2017-11-09_combined.csv")
+   time-mins
    ))
 

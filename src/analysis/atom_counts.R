@@ -110,7 +110,7 @@ ggplot(all.atom.rates, aes(x = reorder(atom, -rate), y = rate)) + geom_bar(stat=
   labs(x="Atom", y="Occurrence Rate")
 
 #################################
-#  all projects by effect size
+#  all atoms by effect size
 ##################################
 
 dput(all.atom.rates$atom)
@@ -124,11 +124,14 @@ atom.effect <- merge(all.atom.rates, cbind.data.frame(atom = atom.names, effect.
 with(atom.effect, cor(rate, effect.size)) # correlation: -0.45
 ggplot(atom.effect, aes(effect.size, rate)) +
   geom_point(size=2.5) +
-  geom_smooth(method="lm", se=FALSE) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
-#  scale_y_continuous(limits = c(0, 0.0015)) +
-  scale_y_log10() +
-  geom_text(aes(label=atom), hjust=-0.15, angle=-11, size=3) +
-  theme(axis.text.x=element_text(angle=90, hjust=1))
+  geom_smooth(method="lm", se=FALSE, fullrange=TRUE) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
+  scale_x_continuous(limits = c(0.2, 0.75)) +
+  scale_y_log10(expand = c(0.2, 0)) +
+  geom_text(aes(label=atom), hjust=-0.15, angle=-14, size=4) +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  labs(x="Effect Size\n(amount of confusion)", y="Occurrence Rate\n[log scaled]") +
+  ggtitle("Confusingness vs Prevalence", subtitle="Do less confusing patterns occur more often?")
+
 
 ################################################
 #  all projects by raw confusion of C question
@@ -146,7 +149,7 @@ ggplot(atom.correct.C, aes(rate, correct.rate.C)) + geom_point() +
   geom_text(aes(label=atom), hjust=-0.1, angle=45, size=2) +
   #geom_smooth(method="lm", aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   theme(axis.text.x=element_text(angle=90, hjust=1))
-  
+
 
 
 
