@@ -86,8 +86,6 @@
     {:author author
      :project project}))
 
-(def svn-repo (gitp/load-repo (expand-home "~/opt/src/atom-finder/subversion")))
-
 ;; find commented atoms for Baishakhi 2017-11-29
 '((-<>> "~/opt/src/atom-finder"
        expand-home
@@ -113,6 +111,6 @@
                                )))
                 (take 100))))
        (map #(array-map :atom (:atom %) :url (github-commit-url (:author %) (:project %) (:rev-str %) (:file %) (:line %) "L")))
-       (maps-to-csv "baishakhi-atom-commits_2017-11-30.csv")
+       (maps-to-csv "baishakhi-atom-commits_2017-11-30_2.csv")
        time-mins
    ))
