@@ -12,6 +12,14 @@
   (let [exts #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"}]
     (exts (nth (re-find #".*\.([^.]+)" filename) 1 nil))))
 
+(defn list-dirs
+  [path]
+  (->>
+   expand-home
+   clojure.java.io/file
+   .listFiles
+   (filter #(.isDirectory %))))
+
 (defn files-in-dir
   [dirname]
   (->> dirname clojure.java.io/file file-seq))
@@ -32,16 +40,17 @@
 (defn slurp-lines [file]
   (line-seq (clojure.java.io/reader file)))
 
+(def home-dir (System/getProperty "user.home"))
+
 (defn expand-home [s]
   (if (clojure.string/starts-with? s "~")
-    (str/replace-first s "~" (System/getProperty "user.home"))
-        s))
+    (str/replace-first s "~" home-dir)
+    s))
 
 (defn remove-home [s]
-  (let [home (System/getProperty "user.home")]
-    (if (clojure.string/starts-with? s home)
-      (str/replace-first s home "")
-      s)))
+  (if (clojure.string/starts-with? s home-dir)
+    (str/replace-first s home-dir "")
+    s))
 
 (s/defn pmap-dir-files
   "Apply a function to the filename of every c file in a directory"

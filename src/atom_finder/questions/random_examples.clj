@@ -10,6 +10,7 @@
    [clojure.pprint :refer [pprint]]
    [clojure.set :as set]
    [schema.core :as s]
+   [swiss.arrows :refer :all]
    [clojure.data.csv :as csv]
    [clojure.string :as str]
    )
@@ -18,16 +19,25 @@
    )
   )
 
+(def github-repos
+  {"gcc"          "gcc-mirror/gcc/blob/2c3133a09ceedead50c2b585ef7f62738ad5c81e/"
+   "linux"        "torvalds/linux/blob/e19b205be43d11bff638cad4487008c48d21c103/"
+   "clang"     "llvm-mirror/clang/blob/2bcd2d052e5508c12374390e4a2d572988622caf/"
+   "freebsd"     "freebsd/freebsd/blob/c2b6ea8fa56ce6aba773d820fbf64a4d3efac9f5/"
+   "gecko-dev" "mozilla/gecko-dev/blob/dd47bee6468de7e1221b4d006342ad6b9813d0e5/"
+   "vim"                 "vim/vim/blob/5df95ea9ef34b5a898141ddc7134e4a7de713ba5/"
+   "webkit"        "WebKit/webkit/blob/e8c73206a09f734bc64f77d6275a727aa2811754/"
+   })
+
 (defn github-url
   [found-atom]
+  (let [[proj file] (-<>> found-atom filename (str/replace <> #".*opt/src/" "") (re-find #"([^/]+)/(.*)") rest)
+        line (start-line found-atom)]
     (str "https://github.com/"
-      (if (str/starts-with? (str (:file found-atom)) "gcc")
-        "gcc-mirror/gcc/blob/2c3133a09ceedead50c2b585ef7f62738ad5c81e/"
-        "torvalds/linux/blob/e19b205be43d11bff638cad4487008c48d21c103/")
-      ;(str/replace-first (:file found-atom) #"[^/]*/" "")
-      (:file found-atom)
-      "#L"
-      (:line found-atom)))
+         (github-repos proj)
+         file
+         "#L"
+         line)))
 
 (->>
  "~/opt/src/linux"

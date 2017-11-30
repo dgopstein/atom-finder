@@ -92,8 +92,8 @@
   [root]
   (let [fn-cmnts (nodes-near-comments-by-function root)
         all-atoms (->> root find-all-atoms (mapcat (fn [[atm nodes]] (map #(vector atm %) nodes))))
-        atom-cmnts     (map (fn [[atom-name node]] (merge {:atom atom-name} (fn-cmnts node))) all-atoms)
-        non-atom-cmnts (map (fn [[node   fn-cmnt]] (merge {:atom nil} fn-cmnt)) (apply dissoc fn-cmnts (map second all-atoms)))
+        atom-cmnts     (map (fn [[atom-name node]] (merge {:node node :atom atom-name} (fn-cmnts node))) all-atoms)
+        non-atom-cmnts (map (fn [[node   fn-cmnt]] (merge {:node node :atom nil} fn-cmnt)) (apply dissoc fn-cmnts (map second all-atoms)))
         ]
 
     (concat atom-cmnts non-atom-cmnts)
@@ -130,5 +130,19 @@
      (map (partial apply array-map))
      (reduce (partial merge-with +))
      (sort-by prn-str)
-     (map prn)
+     (map prn))
 
+;; find commented atoms for Baishakhi 2017-11-29
+'((->> "~/opt/src/atom-finder"
+       expand-home
+       list-dirs
+       (map str)
+       (mapcat (%->>
+                (pmap-dir-trees (fn [node] (->> node atoms-by-comments&function (map #(merge {:file (filename node)} %)))))
+                flatten
+                (filter (every-pred :atom :in-function? :comment))
+                (map (fn [h] {:atom (->> h :atom name)
+                              :url  (->> h :node atom-finder.questions.random-examples/github-url)}))
+                (take 100)))
+       (maps-to-csv "baishakhi-atom-comments_2017-11-29.csv")
+   ))
