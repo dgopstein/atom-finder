@@ -46,6 +46,4 @@
   ([author proj rev-str file line L-or-R]
    (str "https://github.com/" author "/" proj "/commit/" rev-str "#diff-" (md5 file) L-or-R line)))
 
-(github-commit-url (github-author "clang") "clang" "890783b5e028a061bb51a4a978e8114b55073932" "test/clang-rename/TemplatedClassFunction.cpp" 9 "L")
-
 

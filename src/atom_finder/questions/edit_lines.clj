@@ -86,6 +86,7 @@
     {:author author
      :project project}))
 
+(def svn-repo (gitp/load-repo (expand-home "~/opt/src/atom-finder/subversion")))
 
 ;; find commented atoms for Baishakhi 2017-11-29
 '((-<>> "~/opt/src/atom-finder"
@@ -95,6 +96,7 @@
        (map gitp/load-repo)
        (mapcat (fn [repo] (->> repo
                 flat-commits-from
+                ;(map (partial pap (juxt :file :rev-str)))
                 (mapcat (fn [srcs]
                           (->> srcs
                                edit-lines
@@ -111,6 +113,6 @@
                                )))
                 (take 100))))
        (map #(array-map :atom (:atom %) :url (github-commit-url (:author %) (:project %) (:rev-str %) (:file %) (:line %) "L")))
-       (map prn)
        (maps-to-csv "baishakhi-atom-commits_2017-11-30.csv")
+       time-mins
    ))

@@ -144,7 +144,6 @@
 
 ;(pprint (atoms-changed-in-commit gcc-repo atoms (find-rev-commit gcc-repo "c565e664faf3102b80218481ea50e7028ecd646e")))
 
-
 (defn parse-commit-for-atom
   [repo atoms rev-commit]
   (let [commit-hash (.name rev-commit)]
