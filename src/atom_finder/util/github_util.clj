@@ -30,7 +30,7 @@
 
 (defn relativize-filename
   [filename]
-  (-> filename (str/replace #".*opt/src/" "")))
+  (-> filename (str/replace #".*opt/src/(atom-finder/)?" "")))
 
 (defn github-url
   ([author proj rev-str file line]
