@@ -19,7 +19,7 @@
    )
   )
 
-(->>
+'((->>
  "~/opt/src/linux"
  expand-home
  c-files
@@ -28,7 +28,7 @@
  (take 10000)
  (def random-c-files)
  time-mins
- )
+ ))
 
 (quote
 (->>
