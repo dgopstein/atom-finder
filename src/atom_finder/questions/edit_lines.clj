@@ -13,6 +13,7 @@
    [clj-jgit.querying :as gitq]
    [clj-jgit.internal :as giti]
    [schema.core :as s]
+   [swiss.arrows :refer :all]
    )
   (:import
    [atom_finder.classifier Atom]
@@ -65,7 +66,8 @@
    gcc-repo
    flat-commits-from
    ;(drop 1) first (def srcs))
-   (map edit-line-counts)
+   (map edit-lines)
+   ;(map (partial map-values keys))
    (map pprint)
    (take 3)
    dorun
@@ -76,3 +78,39 @@
      read-lines
      (reduce (partial merge-with +))
      pprint)
+
+(s/defn git-repo-info
+  [repo :- Git]
+  (let [origin-url (-> repo .getRepository .getConfig (.getString "remote" "origin" "url"))
+        [_ author project] (->> origin-url (re-find #".*/([^/]*)/([^/]*)\.git"))]
+    {:author author
+     :project project}))
+
+
+;; find commented atoms for Baishakhi 2017-11-29
+'((-<>> "~/opt/src/atom-finder"
+       expand-home
+       list-dirs
+       (map str)
+       (map gitp/load-repo)
+       (mapcat (fn [repo] (->> repo
+                flat-commits-from
+                (mapcat (fn [srcs]
+                          (->> srcs
+                               edit-lines
+                               :changed
+                               (into [])
+                               (remove (comp #{:non-atom} first))
+                               (mapcat (fn [[atom-name lines]]
+                                         (for [line-range (->> lines .asRanges .toArray)]
+                                           (merge (git-repo-info repo)
+                                                  {:rev-str (:rev-str srcs)
+                                                   :file (:file srcs)
+                                                   :atom atom-name
+                                                   :line (.lowerEndpoint line-range)}))))
+                               )))
+                (take 100))))
+       (map #(array-map :atom (:atom %) :url (github-commit-url (:author %) (:project %) (:rev-str %) (:file %) (:line %) "L")))
+       (map prn)
+       (maps-to-csv "baishakhi-atom-commits_2017-11-30.csv")
+   ))
