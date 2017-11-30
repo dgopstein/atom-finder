@@ -15,7 +15,7 @@
 (defn list-dirs
   [path]
   (->>
-   expand-home
+   path
    clojure.java.io/file
    .listFiles
    (filter #(.isDirectory %))))
