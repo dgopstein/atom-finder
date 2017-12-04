@@ -22,81 +22,33 @@ atom.counts <- atom.counts[match(proj.order, atom.counts$project),]
 atom.counts$domain <- proj.domain
 atom.count.nums <- atom.counts[, -c("project")][, order(-colSums(atom.counts[, -c("project", "domain")])), with=FALSE]
 atom.rates.nums <- sapply(atom.count.nums, function(col) stdize(col / atom.counts$all.nodes))
-atom.rates <- cbind(atom.counts[, .(project, domain)], atom.rates.nums)
-
-wide.to.long <- function(wide, proj) {
-  mat <- t(wide[as.character(project)==proj][, !c("project", "domain", "all.nodes", "non.atoms")])
-  data.table(atom = rownames(mat), count = mat[,1])
-}
-
-
-mrgn <- unit(c(-.7,.2,-.7,.2), "cm")
-chart.bar.project <- function (proj) {
-  df <- wide.to.long(atom.rates, proj)
-  df$zero <- 0
-  ggplot(data=df, aes(atom, count)) +
-    geom_bar(stat="identity") +
-    theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-    theme(axis.title.y=element_text(angle=0), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-    theme(plot.margin = mrgn) +
-    labs(y=proj)
-}
+atom.rates.wide <- data.table(cbind(atom.counts[, .(project, domain)], atom.rates.nums))[, -c("all.nodes")]
 
 # https://experience.sap.com/fiori-design-web/values-and-names/
 sap.qualitative.palette <- c('#5cbae6', '#b6d957', '#fac364', '#8cd3ff', '#d998cb', '#f2d249', '#93b9c6')
 
-atom.count.order <- scale_x_discrete(limits=tail(names(atom.rates), -4)) # for ggplot sort the columns by their position in the dataframe
+atom.key.order <- tail(names(atom.count.nums), -2)
+atom.display.order <- unlist(atom.name.conversion[atom.key.order])
 
-proj <- 'httpd'
-chart.spot.project <- function (proj) {
-  df <- wide.to.long(atom.rates, proj)
-  df$zero <- 0.0
-  df$one <- 1.0
-  df$count.neg <- 1.0 - df$count
-  domain <- atom.rates[as.character(project)==proj]$domain
-  df$size <- 1 # log(1*atom.count.sums + 1)
-  ggplot(data=df, aes(atom, zero)) +
-    geom_point(aes(size = size, colour=zero)) +
-    geom_point(aes(size = size*1.05*count, colour=one)) +
-    scale_size_continuous(range = c(-.4,6)) +
-    scale_colour_gradientn(colours=c("#222222", sap.qualitative.palette[domain])) +
-    theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-    theme(axis.title.y=element_text(angle=0), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-    theme(axis.line=element_blank()) +
-    theme(legend.position="none") +
-    labs(y=proj) +
-    theme(plot.margin = mrgn) +
-    atom.count.order
-}
+atom.rates <- data.table(melt(atom.rates.wide[,-c("non.atoms")], id.vars=c("project", "domain"), variable.name="atom", value.name = "rate"))
+atom.rates[, atom := unlist(atom.name.conversion[atom])]
 
-p.labels <- ggplot(data=wide.to.long(atom.rates, 'linux'), aes(x=atom, y=0)) + coord_fixed(ratio = 0) +
-  theme(axis.title.y=element_text(colour="white"), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-  theme(axis.ticks.x=element_blank(), axis.text.x = element_text(size=10, angle = 90, hjust = 1, vjust = 0.3)) + # vjust shifts atoms labels left/right
-  theme(plot.margin = unit(c(0.0, 0, 0, 0), "cm")) + # change first number to lower bottom labels
-  theme(axis.line=element_blank()) +
-  atom.count.order
-
-# t, r, b, l
-atom.count.sums <- tail(colSums(atom.count.nums), -2)
-count.hist.df <- atom.count.sums # log(0.02*atom.count.sums)
-count.hist <-
-  ggplot(data=data.frame(atom = names(count.hist.df), count = count.hist.df), aes(x = atom, y = count, group = 1)) +
-  geom_line(stat = "identity", colour="#222222") +
-  geom_area(fill="#98aafb") +
-  geom_point(size=1, fill="black") +
-  coord_cartesian(ylim = c(-.2*max(count.hist.df), 1.1*max(count.hist.df))) + # don't cut off top of point
-  theme(axis.title.y=element_text(angle=0), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+atom.rate.per.project <- ggplot(data=atom.rates, aes(project, atom)) +
+  geom_point(colour="black", aes(size=1)) +
+  geom_point(colour="white", aes(size=0.8)) +
+  geom_point(aes(size = 0.81*rate, colour=domain)) +
+  scale_size_continuous(range = c(-.4,6)) +
+  scale_colour_manual(values = sap.qualitative.palette) +
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.4), axis.ticks.x=element_blank()) +
+  theme(axis.title.y=element_text(angle=90), axis.ticks.y=element_blank()) +
   theme(axis.line=element_blank()) +
   theme(legend.position="none") +
-  theme(plot.margin = unit(c(-0.1,.2,0,.2), "cm")) +
-  labs(y="raw count") +
-  atom.count.order
+  scale_y_discrete(limits=rev(atom.display.order)) +
+  scale_x_discrete(limits=proj.order) +
+  labs(x="Project", y="Atom") +
+  ggtitle("Atom Rate Per Project")
 
-plots <- lapply(atom.rates$project, chart.spot.project)
-#pg <- do.call(plot_grid, c(plots, list(count.hist, p.labels, align = "v", nrow = 16, rel_heights = c(rep(1, 14), 1.5, 6.0))))
-pg <- do.call(plot_grid, c(plots, list(p.labels, align = "v", nrow = 15, rel_heights = c(rep(1, 14), 6.0))))
-pg + theme(plot.margin = unit(c(.5,0,.5,0), "cm"))
+ggsave("img/atom_rate_per_project.pdf", atom.occurrence.rate, width=(width<-130), height=width*0.88, units = "mm")
 
 
 ############################
@@ -105,14 +57,13 @@ pg + theme(plot.margin = unit(c(.5,0,.5,0), "cm"))
 library(dplyr)
 all.atom.counts <- atom.counts[, -c('project','domain')][, lapply(.SD, sum)]
 all.atom.rates.wide <- all.atom.counts[, -c('all.nodes', 'non.atoms')] / all.atom.counts$all.nodes
-all.atom.names <- left_join(data.table(t(all.atom.rates.wide), keep.rownames=T), atom.name.conversion, by=c("rn"="key"), copy=T)$display
-all.atom.rates <- data.frame(atom = all.atom.names, rate = t(all.atom.rates.wide))
+all.atom.rates <- data.frame(atom = unlist(atom.name.conversion[names(all.atom.rates.wide)]), rate = t(all.atom.rates.wide))
 
 atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, -rate), y = rate)) + geom_bar(stat="identity") +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.4)) +
   labs(x="Atom", y="Occurrence Rate")
 
-ggsave("img/atom_occurrence_rate.png", atom.occurrence.rate, width=(width<-130), height=width*0.88, units = "mm")
+ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-130), height=width*0.88, units = "mm")
 
 #################################
 #  all atoms by effect size

@@ -10,4 +10,6 @@ atom.names.display <- c("Assignment as Value", "Comma Operator", "Conditional Op
                         "Post-Increment", "Pre-Increment", "Preprocessor in Statement",
                         "Repurposed Variables", "Reversed Subscripts", "Type Conversion")
 
-atom.name.conversion <- cbind(key = atom.names.key, display = atom.names.display)
+atom.name.conversion <- as.list(atom.names.display)
+names(atom.name.conversion) <- atom.names.key
+
