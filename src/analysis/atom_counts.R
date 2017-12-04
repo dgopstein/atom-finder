@@ -6,6 +6,8 @@ library(cowplot)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+source("util.R")
+
 stdize <- function(x, ...) {(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
 
 atom.counts <- data.table(read.csv("data/atom_counts.csv"))
@@ -103,11 +105,14 @@ pg + theme(plot.margin = unit(c(.5,0,.5,0), "cm"))
 library(dplyr)
 all.atom.counts <- atom.counts[, -c('project','domain')][, lapply(.SD, sum)]
 all.atom.rates.wide <- all.atom.counts[, -c('all.nodes', 'non.atoms')] / all.atom.counts$all.nodes
-all.atom.rates <- data.frame(atom = colnames(all.atom.rates.wide), rate = t(all.atom.rates.wide))
+all.atom.names <- left_join(data.table(t(all.atom.rates.wide), keep.rownames=T), atom.name.conversion, by=c("rn"="key"), copy=T)$display
+all.atom.rates <- data.frame(atom = all.atom.names, rate = t(all.atom.rates.wide))
 
-ggplot(all.atom.rates, aes(x = reorder(atom, -rate), y = rate)) + geom_bar(stat="identity") +
-  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, -rate), y = rate)) + geom_bar(stat="identity") +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.4)) +
   labs(x="Atom", y="Occurrence Rate")
+
+ggsave("img/atom_occurrence_rate.png", atom.occurrence.rate, width=(width<-130), height=width*0.88, units = "mm")
 
 #################################
 #  all atoms by effect size
