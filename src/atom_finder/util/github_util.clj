@@ -30,7 +30,7 @@
 
 (defn relativize-filename
   [filename]
-  (-> filename (str/replace #".*opt/src/" "")))
+  (-> filename (str/replace #".*opt/src/(atom-finder/)?" "")))
 
 (defn github-url
   ([author proj rev-str file line]
@@ -45,7 +45,5 @@
 (defn github-commit-url
   ([author proj rev-str file line L-or-R]
    (str "https://github.com/" author "/" proj "/commit/" rev-str "#diff-" (md5 file) L-or-R line)))
-
-(github-commit-url (github-author "clang") "clang" "890783b5e028a061bb51a4a978e8114b55073932" "test/clang-rename/TemplatedClassFunction.cpp" 9 "L")
 
 

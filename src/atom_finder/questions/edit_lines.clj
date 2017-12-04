@@ -86,7 +86,6 @@
     {:author author
      :project project}))
 
-
 ;; find commented atoms for Baishakhi 2017-11-29
 '((-<>> "~/opt/src/atom-finder"
        expand-home
@@ -95,6 +94,7 @@
        (map gitp/load-repo)
        (mapcat (fn [repo] (->> repo
                 flat-commits-from
+                ;(map (partial pap (juxt :file :rev-str)))
                 (mapcat (fn [srcs]
                           (->> srcs
                                edit-lines
@@ -111,6 +111,6 @@
                                )))
                 (take 100))))
        (map #(array-map :atom (:atom %) :url (github-commit-url (:author %) (:project %) (:rev-str %) (:file %) (:line %) "L")))
-       (map prn)
-       (maps-to-csv "baishakhi-atom-commits_2017-11-30.csv")
+       (maps-to-csv "baishakhi-atom-commits_2017-11-30_2.csv")
+       time-mins
    ))
