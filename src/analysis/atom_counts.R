@@ -48,8 +48,7 @@ atom.rate.per.project <- ggplot(data=atom.rates, aes(project, atom)) +
   labs(x="Project", y="Atom") +
   ggtitle("Atom Rate Per Project")
 
-ggsave("img/atom_rate_per_project.pdf", atom.occurrence.rate, width=(width<-130), height=width*0.88, units = "mm")
-
+ggsave("img/atom_rate_per_project.pdf", atom.rate.per.project, width=(width<-138), height=width*0.89, units = "mm")
 
 ############################
 #  all projects combined

@@ -1,4 +1,4 @@
-project,type,date,all-nodes,non-atoms,atoms
+project,domain,date,all-nodes,non-atoms,atoms
 linux,os,1991-09-17,3.832479348,0.9832705964,0.01672940362
 freebsd,os,1993-06-12,3.736223447,0.9864870631,0.01351293692
 gecko-dev,browser,1998-03-28,2.105837135,0.992051052,0.007948948005

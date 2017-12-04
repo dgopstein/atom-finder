@@ -23,13 +23,23 @@ bugs.lines.csv[all.changed > 1][, .(type = factor(c(2, 1), labels=c("didnt chang
                                     count = c(sum(all.atoms > 0), sum(all.atoms == 0))), by=bug] %>%
   ggplot(aes(x=bug,y=count)) + geom_col(aes(fill=type), position="fill")
 
+density.bugs.lines <- bugs.lines.csv[all.changed > 100]
+density.mean.rate <- mean(bugs.lines.csv$all.atoms)
+
 # For commits that do change atoms, how many atoms do they change - bug vs non-bug
 # i.e. what is the composition of the commit, is the commit 50% atoms, or 1% atoms?
-ggplot(bugs.lines.csv[all.changed > 100], aes(all.atoms)) +
-  geom_density(aes(group=bug, fill=bug, alpha=0.5), adjust=1.5, n=8192) + coord_cartesian(xlim = c(0, .6)) +
-  #geom_histogram(aes(group=bug, fill=bug, alpha=0.5), bins=200) + coord_cartesian(xlim = c(0, 0.1))
+atom.rate.probability.by.bug <- ggplot(density.bugs.lines, aes(all.atoms)) +
+  geom_density(aes(group=bug, fill=bug), size=1, alpha=.6, adjust=1.5, n=8192) +
+  coord_cartesian(xlim = c(0, .38)) +
+  geom_segment(aes(x=density.mean.rate,xend=density.mean.rate,y=0,yend=4.5)) +
+  annotate("text", x=0.04, y=4.4, label="Mean atom rate", hjust=0) +
+  scale_fill_manual(values = sap.qualitative.palette[c(3,4)], labels=c("Non-bug", "Bug"), name="Commit type") +
   labs(title="Atom composition of commits",
-     subtitle="How many of the AST nodes in the commits are atoms")
+     subtitle="How many of the AST nodes in the commits are atoms",
+     x="Fraction of edited AST nodes that are atoms",
+     y="Probability Density accross all commits")
+
+ggsave(atom.rate.probability.by.bug)
 
 atom.rates.by.bug <- bugs.lines.csv[all.changed > 0, -c("non.atom", "file", "n.bugs", "rev.str", "all.atoms", "file.ext", "all.changed")
                ][, lapply(.SD, mean), by=bug]
