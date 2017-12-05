@@ -8,6 +8,8 @@ set.seed(42)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+source("util.R")
+
 # https://docs.google.com/spreadsheets/d/1_5E8ICuxDP1hwJO354Fydmuik2SQkyNL_v6VEqdjG6A/edit#gid=1197815198
 project.age <- data.table(read.csv("data/project-age.csv"))
 project.age[, date := as.Date(date)]
