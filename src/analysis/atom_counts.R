@@ -68,25 +68,26 @@ ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-130),
 #  all atoms by effect size
 ##################################
 
-dput(all.atom.rates$atom)
-atom.names <- c("assignment.as.value", "comma.operator", "conditional", "implicit.predicate", "literal.encoding", "logic.as.control.flow",
+atom.names <- unlist(atom.name.conversion[c("assignment.as.value", "comma.operator", "conditional", "implicit.predicate", "literal.encoding", "logic.as.control.flow",
   "macro.operator.precedence", "omitted.curly.braces", "operator.precedence", "post.increment", "pre.increment", "preprocessor.in.statement",
-  "repurposed.variable", "reversed.subscript", "type.conversion")
+  "repurposed.variable", "reversed.subscript", "type.conversion")])
 
 effect.size <- c(0.52, 0.30, 0.36, 0.24, 0.63, 0.48, 0.53, 0.22, 0.33, 0.45, 0.28, 0.54, 0.22, 0.40, 0.42)
 
 atom.effect <- merge(all.atom.rates, cbind.data.frame(atom = atom.names, effect.size))
 with(atom.effect, cor(rate, effect.size)) # correlation: -0.45
-ggplot(atom.effect, aes(effect.size, rate)) +
+
+confusingness.vs.prevalence <- ggplot(atom.effect, aes(effect.size, rate)) +
   geom_point(size=2.5) +
   geom_smooth(method="lm", se=FALSE, fullrange=TRUE) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   scale_x_continuous(limits = c(0.2, 0.75)) +
   scale_y_log10(expand = c(0.2, 0)) +
-  geom_text(aes(label=atom), hjust=-0.15, angle=-14, size=4) +
+  geom_text(aes(label=atom), hjust=-0.1, angle=-14, size=3) +
   theme(axis.text.x=element_text(angle=90, hjust=1)) +
   labs(x="Effect Size\n(amount of confusion)", y="Occurrence Rate\n[log scaled]") +
   ggtitle("Confusingness vs Prevalence", subtitle="Do less confusing patterns occur more often?")
 
+ggsave("img/confusingness_vs_prevalence.pdf", confusingness.vs.prevalence, width=(width<-150), height=width*0.99, units = "mm")
 
 ################################################
 #  all projects by raw confusion of C question

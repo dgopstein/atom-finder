@@ -72,7 +72,7 @@ atom.bug.rate <- ggplot(atom.rates.bug.change[!is.nan(rate)], aes(atom, rate)) +
   scale_colour_manual(values = colors2) +
   coord_flip()
 
-ggsave("img/atom_bug_rate.pdf", atom.bug.rate, width=(width<-100), height=width*1.2, units = "mm")
+ggsave("img/atom_bug_rate.pdf", atom.bug.rate, width=(width<-140), height=width*0.6, units = "mm")
 
 
 ## The least frequent, most bug-predictive atoms

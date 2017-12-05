@@ -5,7 +5,7 @@ atom.names.key     <- c("assignment.as.value", "comma.operator", "conditional",
                         "repurposed.variable", "reversed.subscript", "type.conversion")
 
 atom.names.display <- c("Assignment as Value", "Comma Operator", "Conditional Operator",
-                        "Implicit Predicate", "Change of Literal Encoding", "Logic as Control Flow",
+                        "Implicit Predicate", "Literal Encoding", "Logic as Control Flow",
                         "Macro Operator Precedence", "Omitted Curly Braces", "Operator Precedence",
                         "Post-Increment", "Pre-Increment", "Preprocessor in Statement",
                         "Repurposed Variables", "Reversed Subscripts", "Type Conversion")
