@@ -25,25 +25,33 @@ bugs.lines.csv[all.changed > 1][, .(type = factor(c(2, 1), labels=c("didnt chang
                                     count = c(sum(all.atoms > 0), sum(all.atoms == 0))), by=bug] %>%
   ggplot(aes(x=bug,y=count)) + geom_col(aes(fill=type), position="fill")
 
-density.bugs.lines <- bugs.lines.csv[all.changed > 100]
-density.mean.rate <- mean(bugs.lines.csv$all.atoms)
+density.bugs.lines <- bugs.lines.csv[all.changed > 100 & all.atoms < 1]
+density.mean.atoms.bug    <- density.bugs.lines[bug==TRUE, median(all.atoms)]
+density.mean.atoms.no.bug <- density.bugs.lines[bug==FALSE, median(all.atoms)]
+
+density.bugs.t <- t.test(density.bugs.lines[bug==FALSE,all.atoms],density.bugs.lines[bug==TRUE,all.atoms], alternative = "less")
+density.bugs.t$p.value1
+lsr::cohensD(density.bugs.lines[bug==FALSE,all.atoms],density.bugs.lines[bug==TRUE,all.atoms])
 
 colors2 <- sap.qualitative.palette[c(3,4)]
-
 # For commits that do change atoms, how many atoms do they change - bug vs non-bug
 # i.e. what is the composition of the commit, is the commit 50% atoms, or 1% atoms?
-atom.rate.probability.by.bug <- ggplot(density.bugs.lines, aes(all.atoms)) +
+atom.rate.probability.by.bug <-
+  ggplot(density.bugs.lines, aes(all.atoms)) +
+  #geom_segment(aes(x=density.mean.atoms.no.bug,xend=density.mean.atoms.no.bug,y=0,yend=3.15)) +
   geom_density(aes(group=bug, fill=bug), size=1, alpha=.6, adjust=1.5, n=8192) +
+  #geom_segment(aes(x=density.mean.atoms.bug,xend=density.mean.atoms.bug,y=0,yend=3.7)) +
   coord_cartesian(xlim = c(0, .38)) +
-  geom_segment(aes(x=density.mean.rate,xend=density.mean.rate,y=0,yend=4.5)) +
-  annotate("text", x=0.035, y=4.4, label="Mean atom rate", hjust=0) +
-  scale_fill_manual(values = colors2, labels=c("Non-bug", "Bug"), name="Commit type") +
-  labs(title="Atom composition of commits",
-     subtitle="How many of the AST nodes in the commits are atoms",
-     x="Fraction of edited AST nodes that are atoms",
-     y="Probability Density accross all commits")
+  #geom_segment(aes(x=density.mean.rate,xend=density.mean.rate,y=0,yend=4.5)) +
+  #annotate("text", x=0.035, y=4.4, label="Mean atom rate", hjust=0) +
+  scale_fill_manual(values = colors2, labels=c("Non-bug-fix", "Bug-fix"), name="Commit type") +
+  theme(legend.position = c(0.65, 0.7)) +
+  labs(#title="Atom composition of commits",
+     #subtitle="How many of the AST nodes in the commits are atoms",
+     x="Rate of atoms per AST node in commit edits",
+     y="Probability")
 
-ggsave("img/atom_rate_probability_by_bug.pdf", atom.rate.probability.by.bug, width=(width<-180), height=width*0.6, units = "mm")
+ggsave("img/atom_rate_probability_by_bug.pdf", atom.rate.probability.by.bug, width=(width<-130), height=width*0.8, units = "mm")
 
 
 atom.rates.by.bug <- bugs.lines.csv[all.changed > 0, -c("non.atom", "file", "n.bugs", "rev.str", "all.atoms", "file.ext", "all.changed")

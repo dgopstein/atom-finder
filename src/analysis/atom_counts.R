@@ -31,7 +31,7 @@ atom.key.order <- tail(names(atom.count.nums), -2)
 atom.display.order <- unlist(atom.name.conversion[atom.key.order])
 
 atom.rates <- data.table(melt(atom.rates.wide[,-c("non.atoms")], id.vars=c("project", "domain"), variable.name="atom", value.name = "rate"))
-atom.rates[, atom := unlist(atom.name.conversion[atom])]
+atom.rates[, atom := convert.atom.names(atom)]
 
 atom.rate.per.project <- ggplot(data=atom.rates, aes(project, atom)) +
   geom_point(colour="black", aes(size=1)) +
@@ -40,15 +40,44 @@ atom.rate.per.project <- ggplot(data=atom.rates, aes(project, atom)) +
   scale_size_continuous(range = c(-.4,6)) +
   scale_colour_manual(values = sap.qualitative.palette) +
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.4), axis.ticks.x=element_blank()) +
-  theme(axis.title.y=element_text(angle=90), axis.ticks.y=element_blank()) +
+  theme(axis.ticks.y=element_blank(), axis.title.y=element_blank()) +
   theme(axis.line=element_blank()) +
   theme(legend.position="none") +
   scale_y_discrete(limits=rev(atom.display.order)) +
   scale_x_discrete(limits=proj.order) +
-  labs(x="Project", y="Atom") +
+  labs(x="Project") +
   ggtitle("Atom Rate Per Project")
 
-ggsave("img/atom_rate_per_project.pdf", atom.rate.per.project, width=(width<-138), height=width*0.89, units = "mm")
+ggsave("img/atom_rate_per_project.pdf", atom.rate.per.project, width=(width<-132), height=width*0.92, units = "mm")
+
+##################################
+#     Clustered Spot Matrix
+##################################
+atom.rates.mat <- as.matrix(atom.rates.wide[,-c("project","domain", "non.atoms")])
+rownames(atom.rates.mat) <- atom.rates.wide$project
+
+h <- heatmap(atom.rates.mat)
+
+proj.to.domain <- as.list(as.character(proj.domain))
+names(proj.to.domain) <- proj.order
+
+atom.rates.clustered <- data.table(melt(atom.rates.mat[h$rowInd,h$colInd], varnames=c("project", "atom"), value.name = "rate"))
+atom.rates.clustered$domain <- unlist(proj.to.domain[as.character(atom.rates.clustered$project)])
+
+#atom.rate.per.project.clustered <-
+  ggplot(data=atom.rates.clustered, aes(project, atom)) +
+  geom_point(colour="black", aes(size=1)) +
+  geom_point(colour="white", aes(size=0.8)) +
+  geom_point(aes(size = 0.81*rate, colour=domain)) +
+  scale_size_continuous(range = c(-.4,6)) +
+  scale_colour_manual(values = sap.qualitative.palette) +
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.4), axis.ticks.x=element_blank()) +
+  theme(axis.ticks.y=element_blank(), axis.title.y=element_blank()) +
+  theme(axis.line=element_blank()) +
+  theme(legend.position="none") +
+  #scale_y_discrete(limits=rev(atom.display.order)) +
+  # scale_x_discrete(limits=proj.order) +
+  labs(x="Project")
 
 ############################
 #  all projects combined

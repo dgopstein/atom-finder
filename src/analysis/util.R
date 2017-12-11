@@ -13,3 +13,4 @@ atom.names.display <- c("Assignment as Value", "Comma Operator", "Conditional Op
 atom.name.conversion <- as.list(atom.names.display)
 names(atom.name.conversion) <- atom.names.key
 
+convert.atom.names <- function(names) unlist(atom.name.conversion[as.character(names)])
