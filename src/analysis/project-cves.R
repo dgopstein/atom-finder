@@ -17,10 +17,10 @@ project.cves <- ggplot(projects.high.rate, aes(x=atoms, y=cve_rate, group=domain
   scale_x_continuous(expand = c(0.001, 0.001)) +
   scale_y_log10(expand = c(0.1, 0.1)) +
   scale_colour_manual(values = sap.qualitative.palette[c(1,2,3,5)],
-                      labels=c("Database", "Editor", "OS", "Server"))
-  ggtitle("Atoms and CVEs", subtitle="Domains with >1 CVE/year") +
-  labs(x = "Atom rate", y="CVEs per year\n[log scale]") +
+                      labels=c("Database", "Editor", "OS", "Server")) +
+  #ggtitle("Atoms and CVEs", subtitle="Domains with >1 CVE/year") +
+  labs(x = "Atom rate", y="CVEs per year\n[log scale]", color="Domain") +
   theme(legend.position = c(0.75, 0.55))
 
-ggsave("img/project_cves.pdf", project.cves, width=(width<-138), height=width*0.65, units = "mm")
+ggsave("img/project_cves.pdf", project.cves, width=(width<-138), height=width*0.60, units = "mm")
 
