@@ -9,6 +9,8 @@ source("util.R")
 
 file.ext <- function(file.name) strsplit(file.name, ".*\\.")[[1]][2]
 
+colors2 <- sap.qualitative.palette[c(3,4)]
+
 #bugs.lines.csv <- data.table(read.csv("../../tmp/bug-lines-2017-09-26_merged_2_3_clean.csv", header=TRUE))
 bugs.lines.csv <- data.table(read.csv("data/bug-lines_gcc_2017-11-09_combined.csv", header=TRUE))
 bugs.lines.csv <- bugs.lines.csv[!is.na(n.bugs),]
@@ -19,11 +21,28 @@ bugs.lines.csv[, file.ext := sapply(as.character(file), file.ext)]
 #View(bugs.lines.csv[all.changed > 1 & all.atoms > 0 & bug])
 bugs.lines.csv[rev.str == "3b106d3b1cc260082ada69d12f65a5f7d547ac77"]
 
+atom.existence.by.bugs <- bugs.lines.csv[all.changed > 0][, .(type = factor(c(2, 1), labels=c("No", "Yes")),
+                                                              count = c(sum(all.atoms > 0), sum(all.atoms == 0))), by=bug]
+# effect size - phi
+X2 <- atom.existence.by.bugs[, chisq.test(count)]
+p.value <- X2$p.value
+es.phi <- atom.existence.by.bugs[, sqrt(X2$statistic/sum(count))]
+list(p.value = p.value, es.phi = es.phi)
 
 # Is any atom changed at all - bug vs non-bug commit
-bugs.lines.csv[all.changed > 1][, .(type = factor(c(2, 1), labels=c("didnt change atoms", "changed atoms")),
-                                    count = c(sum(all.atoms > 0), sum(all.atoms == 0))), by=bug] %>%
-  ggplot(aes(x=bug,y=count)) + geom_col(aes(fill=type), position="fill")
+p <- ggplot(atom.existence.by.bugs, aes(x=bug,y=count)) +
+  geom_col(aes(fill=type), position="fill") +
+  scale_fill_manual(values = rev(colors2)) +
+  labs(title="Commits that edited atoms", x="Bug-fix Commit", y="Rate") +
+  theme(legend.position = c(1.0, 0.7), plot.margin = unit(c(5,40,1,0), "mm")) +
+  annotate("text", x=2.6, y=0.35, label='bold("p-value      < 1e-10")', parse=TRUE, hjust=-0.05, size=4.0) +
+  annotate("text", x=2.6, y=0.23, label=paste0('bold("Effect Size φ: ', round(es.phi, 2), '")'), parse=TRUE, hjust=-0.05, size=4.0) +
+  guides(fill=guide_legend(title="Edited Atoms"))
+
+p
+gt <- ggplot_gtable(ggplot_build(p))
+gt$layout$clip[gt$layout$name=="panel"] <- "off"
+grid.draw(gt)
 
 density.bugs.lines <- bugs.lines.csv[all.changed > 100 & all.atoms < 1]
 density.mean.atoms.bug    <- density.bugs.lines[bug==TRUE, median(all.atoms)]
@@ -33,7 +52,6 @@ density.bugs.t <- t.test(density.bugs.lines[bug==FALSE,all.atoms],density.bugs.l
 density.bugs.t$p.value1
 lsr::cohensD(density.bugs.lines[bug==FALSE,all.atoms],density.bugs.lines[bug==TRUE,all.atoms])
 
-colors2 <- sap.qualitative.palette[c(3,4)]
 # For commits that do change atoms, how many atoms do they change - bug vs non-bug
 # i.e. what is the composition of the commit, is the commit 50% atoms, or 1% atoms?
 atom.rate.probability.by.bug <-
@@ -53,6 +71,32 @@ atom.rate.probability.by.bug <-
 
 ggsave("img/atom_rate_probability_by_bug.pdf", atom.rate.probability.by.bug, width=(width<-130), height=width*0.8, units = "mm")
 
+################################
+#   Bug Rates by Commit size
+################################
+library(zoo)
+lines.with.bugs    <- bugs.lines.csv[bug == TRUE, all.atoms > 0]
+lines.without.bugs <- bugs.lines.csv[bug == FALSE]
+#
+# smoothed.bugs <- rollmean(zoo(lines.with.bugs$all.changed, lines.with.bugs$all.atoms), 10)
+# smoothed.no.bugs <- rollmean(zoo(lines.without.bugs$all.changed, lines.without.bugs$all.atoms), 10)
+#
+# ggplot() +
+#   geom_smooth(data = fortify.zoo(smoothed.bugs), aes(Index, smoothed.bugs), color="green", se=FALSE) +
+#   geom_smooth(data = fortify.zoo(smoothed.no.bugs), aes(Index, smoothed.no.bugs), se=FALSE) +
+#   coord_cartesian(xlim = c(0, 12))
+
+ggplot() +
+  geom_line(data = lines.with.bugs[, .(all.atoms=median(all.atoms)), by=all.changed], aes(all.changed, all.atoms)) +
+  geom_line(data = lines.without.bugs[, .(all.atoms=mean(all.atoms)), by=all.changed], aes(all.changed, all.atoms), color = "green") +
+  coord_cartesian(xlim = c(0, 200))
+lines.without.bugs[, mean(all.atoms), by=all.changed]
+
+lines.with.bugs[, .(all.atoms=median(all.atoms)), by=all.changed][order(all.changed)]
+
+################################
+#     Bug Rates by Atom
+################################
 
 atom.rates.by.bug <- bugs.lines.csv[all.changed > 0, -c("non.atom", "file", "n.bugs", "rev.str", "all.atoms", "file.ext", "all.changed")
                ][, lapply(.SD, mean), by=bug]
