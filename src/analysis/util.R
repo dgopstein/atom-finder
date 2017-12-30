@@ -14,3 +14,6 @@ atom.name.conversion <- as.list(atom.names.display)
 names(atom.name.conversion) <- atom.names.key
 
 convert.atom.names <- function(names) unlist(atom.name.conversion[as.character(names)])
+
+# https://experience.sap.com/fiori-design-web/values-and-names/
+sap.qualitative.palette <- c('#5cbae6', '#b6d957', '#fac364', '#8cd3ff', '#d998cb', '#f2d249', '#93b9c6')

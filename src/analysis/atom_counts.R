@@ -24,9 +24,6 @@ atom.count.nums <- atom.counts[, -c("project")][, order(-colSums(atom.counts[, -
 atom.rates.nums <- sapply(atom.count.nums, function(col) stdize(col / atom.counts$all.nodes))
 atom.rates.wide <- data.table(cbind(atom.counts[, .(project, domain)], atom.rates.nums))[, -c("all.nodes")]
 
-# https://experience.sap.com/fiori-design-web/values-and-names/
-sap.qualitative.palette <- c('#5cbae6', '#b6d957', '#fac364', '#8cd3ff', '#d998cb', '#f2d249', '#93b9c6')
-
 atom.key.order <- tail(names(atom.count.nums), -2)
 atom.display.order <- unlist(atom.name.conversion[atom.key.order])
 

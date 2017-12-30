@@ -29,6 +29,14 @@ p.value <- X2$p.value
 es.phi <- atom.existence.by.bugs[, sqrt(X2$statistic/sum(count))]
 list(p.value = p.value, es.phi = es.phi)
 
+no.clip <- function(p) {
+  print(p)
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name=="panel"] <- "off"
+  grid::grid.draw(gt)
+  gt
+}
+
 # Is any atom changed at all - bug vs non-bug commit
 p <- ggplot(atom.existence.by.bugs, aes(x=bug,y=count)) +
   geom_col(aes(fill=type), position="fill") +
@@ -39,10 +47,39 @@ p <- ggplot(atom.existence.by.bugs, aes(x=bug,y=count)) +
   annotate("text", x=2.6, y=0.23, label=paste0('bold("Effect Size φ: ', round(es.phi, 2), '")'), parse=TRUE, hjust=-0.05, size=4.0) +
   guides(fill=guide_legend(title="Edited Atoms"))
 
-p
-gt <- ggplot_gtable(ggplot_build(p))
-gt$layout$clip[gt$layout$name=="panel"] <- "off"
-grid.draw(gt)
+no.clip(p)
+
+################################
+#   Atom existence mosaic
+################################
+library(Cairo)
+# library(ggmosaic)
+# atom.existence.by.bugs[, type := factor(type, levels = rev(levels(type)))]
+ # ggplot(atom.existence.by.bugs, aes(x=bug,y=count)) +
+ #   geom_mosaic(aes(weight = count, x = product(type, bug), fill=type))
+
+atom.existence.widths <- atom.existence.by.bugs[, .(width=sum(count)), by=bug][, .(bug, width = width/sum(width))]
+atom.existence.by.bugs <- merge(atom.existence.by.bugs, atom.existence.widths, by="bug")
+
+p <- ggplot(atom.existence.by.bugs, aes(x=bug,y=count, width=1.93*width)) +
+  geom_bar(aes(fill=type), position = "fill", stat = "identity", colour="white", lwd = 1.5) +
+  coord_cartesian(xlim = c(0.7, 1.7)) +
+  scale_fill_manual(values = rev(colors2)) +
+  #labs(title="Commits that edited atoms") +
+  labs(x="Bug-fix Commit") +
+  theme(axis.title.y=element_blank()) +
+  theme_classic() +
+  theme(legend.position = c(1.18, 0.7), plot.margin = unit(c(5,40,1,1), "mm")) +
+  annotate("text", x=2.3, y=0.35, label='bold("p-value      < 1e-10")', parse=TRUE, hjust=-0.05, size=4.0) +
+  annotate("text", x=2.3, y=0.25, label=paste0('bold("Effect Size φ: ', round(es.phi, 2), '")'), parse=TRUE, hjust=-0.05, size=4.0) +
+  guides(fill=guide_legend(title="Edited Atoms"))
+
+atom.existence.by.bugs.mosaic <- no.clip(p)
+ggsave("img/atom_existence_by_bugs_mosaic.pdf", atom.existence.by.bugs.mosaic, width=(width<-130), height=width*0.7, units = "mm", device=cairo_pdf)
+
+################################
+#   Atom density in commits
+################################
 
 density.bugs.lines <- bugs.lines.csv[all.changed > 100 & all.atoms < 1]
 density.mean.atoms.bug    <- density.bugs.lines[bug==TRUE, median(all.atoms)]
@@ -134,3 +171,4 @@ ggsave("img/atom_bug_rate.pdf", atom.bug.rate, width=(width<-140), height=width*
 # ggplot(atom.counts.bugs, aes(rate.count, rate.bug)) +
 #   geom_point() + geom_text(aes(label=atom)) +
 #   scale_x_sqrt() + scale_y_sqrt()
+
