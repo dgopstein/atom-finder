@@ -1,4 +1,4 @@
-;; Does the prevelance of atoms change over time with a project
+;; Does the prevalence of atoms change over time with a project
 ;; Projects started in the 80's vs projects started in the 2000's
 
 (ns atom-finder.questions.code-age

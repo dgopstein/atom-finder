@@ -57,7 +57,8 @@
   "find all AST nodes near comments and
    categorize them by whether their in a function"
   [root]
-  (let [comments (all-comments root)
+  (let [comment-proximity-lines 3 ; how far away from a comment is still "commented"
+        comments (all-comments root)
         function-offset-set (function-offset-range-set root)
         in-function-offset? #(and (not (function-node? %1))
                                   (offset %1)
@@ -70,7 +71,7 @@
                                                         (->> comments ; the lines this comment is likely talking about
                                                            (map (fn [cmnt]
                                                                   (if (inline-comment? cmnt)
-                                                                    [(start-line cmnt) (+ (end-line cmnt) 3)]
+                                                                    [(start-line cmnt) (+ (end-line cmnt) comment-proximity-lines)]
                                                                     [(start-line cmnt) (end-line cmnt)])))
                                                            fn-range-set-cc))
         ]
