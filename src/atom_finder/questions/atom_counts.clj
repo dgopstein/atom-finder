@@ -41,12 +41,12 @@
 
 (defn summarize-atom-counts
   []
-  ;(->> "gcc-atom-counts_2017-09-23_1.edn"
-  (->> "linux-4.12.4-atom-counts_2017-09-23_0.edn"
-     read-data
+  (->> "tmp/atom-counts_2017-11-12_01.edn"
+     read-lines
      (map :atom-counts)
      (reduce (partial merge-with +))
-     pprint)
+     pprint
+     time-mins)
   )
 
 ;; Generate a full CSV of the data, useful for by-module or by-directory analysis

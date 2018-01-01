@@ -6,6 +6,8 @@ library(cowplot)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+source("util.R")
+
 stdize <- function(x, ...) {(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
 
 atom.counts <- data.table(read.csv("data/atom_counts.csv"))
@@ -20,82 +22,64 @@ atom.counts <- atom.counts[match(proj.order, atom.counts$project),]
 atom.counts$domain <- proj.domain
 atom.count.nums <- atom.counts[, -c("project")][, order(-colSums(atom.counts[, -c("project", "domain")])), with=FALSE]
 atom.rates.nums <- sapply(atom.count.nums, function(col) stdize(col / atom.counts$all.nodes))
-atom.rates <- cbind(atom.counts[, .(project, domain)], atom.rates.nums)
+atom.rates.wide <- data.table(cbind(atom.counts[, .(project, domain)], atom.rates.nums))[, -c("all.nodes")]
 
-wide.to.long <- function(wide, proj) {
-  mat <- t(wide[as.character(project)==proj][, !c("project", "domain", "all.nodes", "non.atoms")])
-  data.table(atom = rownames(mat), count = mat[,1])
-}
+atom.key.order <- tail(names(atom.count.nums), -2)
+atom.display.order <- unlist(atom.name.conversion[atom.key.order])
 
+atom.rates <- data.table(melt(atom.rates.wide[,-c("non.atoms")], id.vars=c("project", "domain"), variable.name="atom", value.name = "rate"))
+atom.rates[, atom := convert.atom.names(atom)]
 
-mrgn <- unit(c(-.7,.2,-.7,.2), "cm")
-chart.bar.project <- function (proj) {
-  df <- wide.to.long(atom.rates, proj)
-  df$zero <- 0
-  ggplot(data=df, aes(atom, count)) +
-    geom_bar(stat="identity") +
-    theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-    theme(axis.title.y=element_text(angle=0), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-    theme(plot.margin = mrgn) +
-    labs(y=proj)
-}
+atom.rates[atom=='Reversed Subscripts']
 
-# https://experience.sap.com/fiori-design-web/values-and-names/
-sap.qualitative.palette <- c('#5cbae6', '#b6d957', '#fac364', '#8cd3ff', '#d998cb', '#f2d249', '#93b9c6')
-
-atom.count.order <- scale_x_discrete(limits=tail(names(atom.rates), -4)) # for ggplot sort the columns by their position in the dataframe
-
-proj <- 'httpd'
-chart.spot.project <- function (proj) {
-  df <- wide.to.long(atom.rates, proj)
-  df$zero <- 0.0
-  df$one <- 1.0
-  df$count.neg <- 1.0 - df$count
-  domain <- atom.rates[as.character(project)==proj]$domain
-  df$size <- 1 # log(1*atom.count.sums + 1)
-  ggplot(data=df, aes(atom, zero)) +
-    geom_point(aes(size = size, colour=zero)) +
-    geom_point(aes(size = size*1.05*count, colour=one)) +
-    scale_size_continuous(range = c(-.4,6)) +
-    scale_colour_gradientn(colours=c("#222222", sap.qualitative.palette[domain])) +
-    theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
-    theme(axis.title.y=element_text(angle=0), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-    theme(axis.line=element_blank()) +
-    theme(legend.position="none") +
-    labs(y=proj) +
-    theme(plot.margin = mrgn) +
-    atom.count.order
-}
-
-p.labels <- ggplot(data=wide.to.long(atom.rates, 'linux'), aes(x=atom, y=0)) + coord_fixed(ratio = 0) +
-  theme(axis.title.y=element_text(colour="white"), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-  theme(axis.ticks.x=element_blank(), axis.text.x = element_text(size=10, angle = 90, hjust = 1, vjust = 0.3)) + # vjust shifts atoms labels left/right
-  theme(plot.margin = unit(c(0.0, 0, 0, 0), "cm")) + # change first number to lower bottom labels
-  theme(axis.line=element_blank()) +
-  atom.count.order
-
-# t, r, b, l
-atom.count.sums <- tail(colSums(atom.count.nums), -2)
-count.hist.df <- atom.count.sums # log(0.02*atom.count.sums)
-count.hist <-
-  ggplot(data=data.frame(atom = names(count.hist.df), count = count.hist.df), aes(x = atom, y = count, group = 1)) +
-  geom_line(stat = "identity", colour="#222222") +
-  geom_area(fill="#98aafb") +
-  geom_point(size=1, fill="black") +
-  coord_cartesian(ylim = c(-.2*max(count.hist.df), 1.1*max(count.hist.df))) + # don't cut off top of point
-  theme(axis.title.y=element_text(angle=0), axis.text.y=element_blank(), axis.ticks.y=element_blank()) +
-  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank()) +
+atom.rate.per.project <- ggplot(data=atom.rates, aes(project, atom)) +
+  geom_point(colour="black", aes(size=1)) +
+  geom_point(colour="white", aes(size=0.8)) +
+  geom_point(aes(size = 0.81*rate, colour=domain)) +
+  scale_size_continuous(range = c(-.4,6)) +
+  scale_colour_manual(values = sap.qualitative.palette) +
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.4), axis.ticks.x=element_blank()) +
+  theme(axis.ticks.y=element_blank(), axis.title.y=element_blank()) +
   theme(axis.line=element_blank()) +
   theme(legend.position="none") +
-  theme(plot.margin = unit(c(-0.1,.2,0,.2), "cm")) +
-  labs(y="raw count") +
-  atom.count.order
+  scale_y_discrete(limits=rev(atom.display.order)) +
+  scale_x_discrete(limits=proj.order) +
+  labs(x="Project") +
+  ggtitle("Atom Rate Per Project")
 
-plots <- lapply(atom.rates$project, chart.spot.project)
-#pg <- do.call(plot_grid, c(plots, list(count.hist, p.labels, align = "v", nrow = 16, rel_heights = c(rep(1, 14), 1.5, 6.0))))
-pg <- do.call(plot_grid, c(plots, list(p.labels, align = "v", nrow = 15, rel_heights = c(rep(1, 14), 6.0))))
-pg + theme(plot.margin = unit(c(.5,0,.5,0), "cm"))
+ggsave("img/atom_rate_per_project.pdf", atom.rate.per.project, width=(width<-132), height=width*0.92, units = "mm")
 
+##################################
+#     Clustered Spot Matrix
+##################################
+atom.rates.mat <- as.matrix(atom.rates.wide[,-c("project","domain", "non.atoms")])
+rownames(atom.rates.mat) <- atom.rates.wide$project
+
+h <- heatmap(atom.rates.mat)
+
+proj.to.domain <- as.list(as.character(proj.domain))
+names(proj.to.domain) <- proj.order
+
+atom.rates.clustered <- data.table(melt(atom.rates.mat[h$rowInd,h$colInd], varnames=c("project", "atom"), value.name = "rate"))
+atom.rates.clustered$domain <- unlist(proj.to.domain[as.character(atom.rates.clustered$project)])
+atom.rates.clustered[, atom := convert.atom.names(atom)]
+
+set3.7 <- RColorBrewer::brewer.pal(7, "Set3")
+
+atom.rate.per.project.clustered <-
+  ggplot(data=atom.rates.clustered, aes(project, atom)) +
+  geom_point(colour="black", aes(size=1)) +
+  geom_point(colour="white", aes(size=0.8)) +
+  geom_point(aes(size = 0.81*rate, colour=domain)) +
+  scale_size_continuous(range = c(-.4,6)) +
+  scale_colour_manual(values = set3.7) +
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.4), axis.ticks.x=element_blank()) +
+  theme(axis.ticks.y=element_blank(), axis.title.y=element_blank()) +
+  theme(axis.line=element_blank()) +
+  theme(legend.position="none") +
+  #scale_y_discrete(limits=rev(atom.display.order)) +
+  # scale_x_discrete(limits=proj.order) +
+  labs(x="Project")
 
 ############################
 #  all projects combined
@@ -103,35 +87,40 @@ pg + theme(plot.margin = unit(c(.5,0,.5,0), "cm"))
 library(dplyr)
 all.atom.counts <- atom.counts[, -c('project','domain')][, lapply(.SD, sum)]
 all.atom.rates.wide <- all.atom.counts[, -c('all.nodes', 'non.atoms')] / all.atom.counts$all.nodes
-all.atom.rates <- data.frame(atom = colnames(all.atom.rates.wide), rate = t(all.atom.rates.wide))
+all.atom.rates <- data.frame(atom = unlist(atom.name.conversion[names(all.atom.rates.wide)]), rate = t(all.atom.rates.wide))
 
-ggplot(all.atom.rates, aes(x = reorder(atom, -rate), y = rate)) + geom_bar(stat="identity") +
-  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, -rate), y = rate)) + geom_bar(stat="identity") +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.4)) +
   labs(x="Atom", y="Occurrence Rate")
+
+ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-130), height=width*0.88, units = "mm")
 
 #################################
 #  all atoms by effect size
 ##################################
 
-dput(all.atom.rates$atom)
-atom.names <- c("assignment.as.value", "comma.operator", "conditional", "implicit.predicate", "literal.encoding", "logic.as.control.flow",
+atom.names <- unlist(atom.name.conversion[c("assignment.as.value", "comma.operator", "conditional", "implicit.predicate", "literal.encoding", "logic.as.control.flow",
   "macro.operator.precedence", "omitted.curly.braces", "operator.precedence", "post.increment", "pre.increment", "preprocessor.in.statement",
-  "repurposed.variable", "reversed.subscript", "type.conversion")
+  "repurposed.variable", "reversed.subscript", "type.conversion")])
 
 effect.size <- c(0.52, 0.30, 0.36, 0.24, 0.63, 0.48, 0.53, 0.22, 0.33, 0.45, 0.28, 0.54, 0.22, 0.40, 0.42)
 
 atom.effect <- merge(all.atom.rates, cbind.data.frame(atom = atom.names, effect.size))
-with(atom.effect, cor(rate, effect.size)) # correlation: -0.45
-ggplot(atom.effect, aes(effect.size, rate)) +
-  geom_point(size=2.5) +
-  geom_smooth(method="lm", se=FALSE, fullrange=TRUE) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
+confusingness.vs.prevalence.correlation <- with(atom.effect, cor(rate, effect.size)) # correlation: -0.45
+
+confusingness.vs.prevalence <-
+  ggplot(atom.effect, aes(effect.size, rate)) +
+  geom_point(size=2.5, color=sap.qualitative.palette[5]) +
+  geom_smooth(method="lm", se=FALSE, fullrange=TRUE, color=sap.qualitative.palette[1]) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   scale_x_continuous(limits = c(0.2, 0.75)) +
   scale_y_log10(expand = c(0.2, 0)) +
-  geom_text(aes(label=atom), hjust=-0.15, angle=-14, size=4) +
+  geom_text(aes(label=atom), hjust=-0.1, angle=-14, size=3) +
   theme(axis.text.x=element_text(angle=90, hjust=1)) +
-  labs(x="Effect Size\n(amount of confusion)", y="Occurrence Rate\n[log scaled]") +
-  ggtitle("Confusingness vs Prevalence", subtitle="Do less confusing patterns occur more often?")
+  annotate("text", x=0.55, y=0.01, label=paste0("r = ", round(confusingness.vs.prevalence.correlation, 2))) +
+  #ggtitle("Confusingness vs Prevalence", subtitle="Do less confusing patterns occur more often?") +
+  labs(x="Effect Size\n(amount of confusion)", y="Occurrence Rate\n[log scaled]")
 
+ggsave("img/confusingness_vs_prevalence.pdf", confusingness.vs.prevalence, width=(width<-150), height=width*0.89, units = "mm")
 
 ################################################
 #  all projects by raw confusion of C question
