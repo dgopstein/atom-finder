@@ -34,7 +34,7 @@
 
 (defn github-url
   ([author proj rev-str file line]
-   (str "https://github.com/" author "/" proj "/" rev-str "/" file "#L" line))
+   (str "https://github.com/" author "/" proj "/blob/" rev-str "/" file "#L" line))
   ([found-atom]
    (let [[proj file] (->> found-atom filename relativize-filename (re-find #"([^/]+)/(.*)") rest)
          line (start-line found-atom)
