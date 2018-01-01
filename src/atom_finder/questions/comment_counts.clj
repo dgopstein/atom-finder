@@ -133,17 +133,72 @@
      (sort-by prn-str)
      (map prn))
 
-;; find commented atoms for Baishakhi 2017-11-29
+;; 18 hours
 '((->> "~/opt/src/atom-finder"
        expand-home
        list-dirs
        (map str)
-       (mapcat (%->>
-                (pmap-dir-trees (fn [node] (->> node atoms-by-comments&function (map #(merge {:file (filename node)} %)))))
-                flatten
-                (filter (every-pred :atom :in-function? :comment))
-                (map (fn [h] {:atom (->> h :atom name)
-                              :url  (->> h :node atom-finder.questions.random-examples/github-url)}))
-                (take 100)))
-       (maps-to-csv "baishakhi-atom-comments_2017-11-29.csv")
+       (mapcat (partial pmap-dir-trees atoms-by-comments&function))
+       flatten
+       (map (juxt :comment :atom))
+       ;(take 2000)
+       frequencies
+       (map prn)
+       dorun
+       ;(maps-to-csv "comment-counts_2017-12-30_1.csv")
+       time-mins
    ))
+
+(->>
+ [
+[[true :omitted-curly-braces] 45892]
+[[nil :conditional] 273]
+[[nil nil] 6]
+[[true :operator-precedence] 23890]
+[[false :reversed-subscript] 23]
+[[true :literal-encoding] 733]
+[[nil :assignment-as-value] 104]
+[[nil :omitted-curly-braces] 568]
+[[true :conditional] 5082]
+[[false :type-conversion] 12099]
+[[nil :comma-operator] 5528]
+[[nil :operator-precedence] 537]
+[[false :literal-encoding] 3127]
+[[false :omitted-curly-braces] 1583210]
+[[false :comma-operator] 64706]
+[[true :macro-operator-precedence] 240]
+[[true :comma-operator] 2129]
+[[nil :pre-increment] 14]
+[[true :repurposed-variable] 3907]
+[[true :post-increment] 4942]
+[[true nil] 11497007]
+[[true :preprocessor-in-statement] 177]
+[[false :preprocessor-in-statement] 11568]
+[[true :pre-increment] 1099]
+[[true :reversed-subscript] 28]
+[[false :post-increment] 72713]
+[[false :implicit-predicate] 264357]
+[[false :conditional] 151645]
+[[false :assignment-as-value] 91731]
+[[true :logic-as-control-flow] 420]
+[[false :pre-increment] 22596]
+[[true :assignment-as-value] 3419]
+[[nil :implicit-predicate] 12841]
+[[false :operator-precedence] 992817]
+[[true :type-conversion] 1754]
+[[false :logic-as-control-flow] 9547]
+[[false nil] 277808231]
+[[false :macro-operator-precedence] 3768]
+[[nil :post-increment] 10]
+[[true :implicit-predicate] 7997]
+[[false :repurposed-variable] 79250]
+[[nil :type-conversion] 9]
+]
+
+ (map #(update-in % [0 0] boolean))
+ (map (partial apply array-map))
+ (apply merge-with +)
+ (map (fn [[[comment atom] count]] {:comment comment :atom (when atom (name atom)) :count count}))
+ (maps-to-csv "comment-summary_2017-12-31.csv")
+
+ )
