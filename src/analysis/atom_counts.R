@@ -30,6 +30,8 @@ atom.display.order <- unlist(atom.name.conversion[atom.key.order])
 atom.rates <- data.table(melt(atom.rates.wide[,-c("non.atoms")], id.vars=c("project", "domain"), variable.name="atom", value.name = "rate"))
 atom.rates[, atom := convert.atom.names(atom)]
 
+atom.rates[atom=='Reversed Subscripts']
+
 atom.rate.per.project <- ggplot(data=atom.rates, aes(project, atom)) +
   geom_point(colour="black", aes(size=1)) +
   geom_point(colour="white", aes(size=0.8)) +
@@ -60,14 +62,17 @@ names(proj.to.domain) <- proj.order
 
 atom.rates.clustered <- data.table(melt(atom.rates.mat[h$rowInd,h$colInd], varnames=c("project", "atom"), value.name = "rate"))
 atom.rates.clustered$domain <- unlist(proj.to.domain[as.character(atom.rates.clustered$project)])
+atom.rates.clustered[, atom := convert.atom.names(atom)]
 
-#atom.rate.per.project.clustered <-
+set3.7 <- RColorBrewer::brewer.pal(7, "Set3")
+
+atom.rate.per.project.clustered <-
   ggplot(data=atom.rates.clustered, aes(project, atom)) +
   geom_point(colour="black", aes(size=1)) +
   geom_point(colour="white", aes(size=0.8)) +
   geom_point(aes(size = 0.81*rate, colour=domain)) +
   scale_size_continuous(range = c(-.4,6)) +
-  scale_colour_manual(values = sap.qualitative.palette) +
+  scale_colour_manual(values = set3.7) +
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.4), axis.ticks.x=element_blank()) +
   theme(axis.ticks.y=element_blank(), axis.title.y=element_blank()) +
   theme(axis.line=element_blank()) +
