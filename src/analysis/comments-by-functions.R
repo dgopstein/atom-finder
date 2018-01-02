@@ -24,8 +24,8 @@ all.atom.comments.widths <- all.atom.comments[, .(width=sum(count)), by=comment]
 all.atom.comments <- merge(all.atom.comments, all.atom.comments.widths, by="comment")
 
 
-all.atom.comments[comment==TRUE & any.atom==TRUE, count] / all.atom.comments[any.atom==TRUE, sum(count)]
-all.atom.comments[comment==TRUE & any.atom==FALSE, count] / all.atom.comments[any.atom==FALSE, sum(count)]
+(all.atom.comments[comment==TRUE & any.atom==TRUE, count] / all.atom.comments[any.atom==TRUE, sum(count)]) /
+(all.atom.comments[comment==TRUE & any.atom==FALSE, count] / all.atom.comments[any.atom==FALSE, sum(count)])
 
 all.atom.comments[comment==TRUE, sum(count)]
 all.atom.comments[comment==FALSE, sum(count)]
@@ -51,3 +51,36 @@ p <- ggplot(all.atom.comments, aes(x=comment,y=count, width=1.93*width)) +
 
 no.clip(p)
 
+
+########################################
+#        Comments by Project
+########################################
+
+individual.atom.comments.proj <- data.table(read.csv("data/comment-summary-projects_2018-01-02.csv", header=TRUE))
+individual.atom.comments.proj[, any.atom := atom != '', ]
+individual.atom.comments.proj[, comment := as.logical(ifelse(as.character(comment) == 'true', TRUE, ifelse(as.character(comment)=='false', FALSE, comment))), ]
+
+# All atoms, by project
+all.atom.comments.proj <- individual.atom.comments.proj[, .(count = sum(count)), by=c("comment", "any.atom", "project")]
+
+all.atom.comments.proj.wide <- data.frame(t(tidyr::spread(all.atom.comments.proj, key = project, value = count)))
+all.atom.comments.proj.wide <- setDT(all.atom.comments.proj.wide, keep.rownames = TRUE)
+colnames(all.atom.comments.proj.wide) <- c('project', 'nc.na', 'nc.a', 'c.na', 'c.a')
+all.atom.comments.proj.wide <- all.atom.comments.proj.wide[!project %in% c('comment', 'any.atom'), ]
+
+all.atom.comments.proj.wide[, a := nc.a + c.a][, na := nc.na + c.na]
+all.atom.comments.proj.wide[, comment.rate.a := c.a / a][, comment.rate.na := c.na / na]
+all.atom.comments.proj.wide[, .(project, comment.rate.a - comment.rate.na )]
+
+# All projects, by atom
+all.proj.comments <- individual.atom.comments.proj[, .(count = sum(count)), by=c("comment", "atom")]
+
+comment.count     <- all.proj.comments[atom=='' & comment==TRUE, count]
+non.comment.count <- all.proj.comments[atom=='' & comment==FALSE, count]
+
+all.proj.comments <- all.proj.comments[atom != '']
+all.proj.comments[, rate := ifelse(comment, count/comment.count, count/non.comment.count)]
+
+ggplot(all.proj.comments, aes(atom, rate)) +   
+  geom_bar(aes(fill = comment), position = "dodge", stat="identity") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
