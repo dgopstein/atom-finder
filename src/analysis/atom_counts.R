@@ -31,6 +31,8 @@ atom.rates <- data.table(melt(atom.rates.wide[,-c("non.atoms")], id.vars=c("proj
 atom.rates[, atom := convert.atom.names(atom)]
 
 atom.rates[atom=='Reversed Subscripts']
+sum(atom.counts[, reversed.subscript])
+
 
 atom.rate.per.project <- ggplot(data=atom.rates, aes(project, atom)) +
   geom_point(colour="black", aes(size=1)) +
@@ -66,8 +68,7 @@ atom.rates.clustered[, atom := convert.atom.names(atom)]
 
 set2.7 <- RColorBrewer::brewer.pal(7, "Set2")
 
-convert.atom.names(colnames(atom.rates.mat[,h$colInd]))
-#atom.rate.per.project.clustered <-
+atom.rate.per.project.clustered <-
   ggplot(data=atom.rates.clustered, aes(project, atom)) +
   geom_point(colour="black", aes(size=1)) +
   geom_point(colour="white", aes(size=0.8)) +
@@ -97,6 +98,10 @@ atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, -rate), y =
   labs(x="Atom", y="Occurrence Rate")
 
 ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-130), height=width*0.88, units = "mm")
+
+# overall atom rate for paper
+all.atom.ast.rate <- all.atom.counts[, (all.nodes - non.atoms) / all.nodes]
+1/all.atom.ast.rate
 
 #################################
 #  all atoms by effect size
