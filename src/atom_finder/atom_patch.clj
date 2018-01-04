@@ -29,7 +29,14 @@
   `(try (thunk-timeout (fn [] ~@body) ~time :seconds)
         (catch java.util.concurrent.TimeoutException e#
           (do
-            (errln (str "Killed operation when it exceded max duration of " ~time ", body: " '~@body))
+            (errln (str "Killed operation when it exceded max duration of " ~time "s, body: " '~@body))
+            nil))))
+
+(defmacro with-timeout-ms [time & body]
+  `(try (thunk-timeout (fn [] ~@body) ~time :ms)
+        (catch java.util.concurrent.TimeoutException e#
+          (do
+            (errln (str "Killed operation when it exceded max duration of " ~time "ms, body: " '~@body))
             nil))))
 
 (def AtomFinder (s/=> IASTTranslationUnit [IASTTranslationUnit]))
@@ -231,6 +238,17 @@
     (map :srcs)
     flatten1
     )))
+
+;; Try to hold on to less memory
+(defn commits-with
+  ([repo f] (commits-with repo (repo-head repo) f)) ; start from head
+  ([repo commit-hash f]
+   (doseq [rev-commit (rev-walk-from repo commit-hash)]
+     (f
+      (log-err (str "parsing - " (.name rev-commit)) nil
+               {:rev-commit rev-commit
+                :rev-str    (.name rev-commit)
+                :srcs (commit-files-before-after repo rev-commit)})))))
 
 (defn commits-from
   ([repo] (commits-from repo (repo-head repo))) ; start from head
