@@ -8,6 +8,7 @@
    [clojure.pprint :refer [pprint]]
    [schema.core :as s]
    [swiss.arrows :refer :all]
+   [clojure.math.combinatorics :as combo]
    )
   )
 
@@ -79,10 +80,18 @@
      (map start-line)
      ))
 
+;; count how likely a (spot) matrix of 14 elements, with 7 domains is to have
+;; X number of adjacent domains
+(defn count-adjacent [a]
+  (- (count a) (count (dedupe a))))
 
-/* Create a power-of-two histogram of the table keys. */
-int counts[UPB_MAXARRSIZE + 1] = {0};
-ARRAY_SIZE(counts)
-
-#define ARRAY_SIZE(x) \
-  ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+'((->> (range 7)
+     (repeat 2)
+     flatten
+     combo/permutations
+     (map count-adjacent)
+     frequencies
+     sort
+     (map prn)
+     time-mins
+     ))
