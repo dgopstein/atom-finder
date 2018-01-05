@@ -70,14 +70,18 @@
 
 '((->>
    (commits-with
-    gcc-repo ;"b6a9b2f6a629e399fbd35000c656a02bef947866" 1
+    gcc-repo "41ac8cbf4e888a2d80aec9254ea56ea9823169fa"
     (fn [rev-commit]
-      (doseq [commit (:srcs rev-commit)
-              :when (and (:atoms-before commit) (:atoms-after commit))]
-         (log-err (str "edit-lines " (:rev-str commit)) {} ;todo rev-str isn't working here?
-                  (when-let [added (added-atoms commit)]
-                       (prn added))))))
-       (log-to "tmp/atom-committers_gcc_2018-01-04_01.edn")
+      (->> rev-commit
+           :srcs
+           (filter #(and (:atoms-before %) (:atoms-after %)))
+           (pmap #(with-timeout 200 (added-atoms %)))
+           (remove empty?)
+           (map prn)
+           dorun
+          (log-err (str "edit-lines " (->> rev-commit :srcs first :rev-str)) {})
+          )))
+       (log-to "tmp/atom-committers_gcc_2018-01-04_03-200-timeout.edn")
        time-mins
        ))
 
