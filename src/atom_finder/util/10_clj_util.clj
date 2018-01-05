@@ -50,6 +50,12 @@
       (print (str ~(str x ": ") (prn-str y#)))
       y#)))
 
+;; print the arguments to a function
+(defn prfn [f]
+  (fn [& args]
+    (print "prfn " (prn-str args))
+    (apply f args)))
+
 (defn trunc [s n]
     (subs s 0 (min (count s) n)))
 
