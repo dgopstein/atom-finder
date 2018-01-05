@@ -1,6 +1,5 @@
 ;; What is the distribution of people who commit atoms?
 
-
 (ns atom-finder.questions.atom-committers
   (:require
    [atom-finder.atoms-in-dir :refer :all]
@@ -16,7 +15,9 @@
    [swiss.arrows :refer :all]
    [schema.core :as s]
    )
-  (:import [org.eclipse.cdt.core.dom.ast IASTNode])
+  (:import [org.eclipse.cdt.core.dom.ast IASTNode]
+           [org.eclipse.jgit.revwalk RevCommit RevCommitList RevWalk]
+           )
   )
 
 (def repo-heads
@@ -34,7 +35,7 @@
   [node :- IASTNode]
   (->> node find-all-atoms atom-map-to-seq))
 
-(s/defn atom-map-diff
+(s/defn atom-map-diff :- (s/maybe {s/Keyword [{:type s/Keyword :node IASTNode}]})
   [before :- {s/Keyword [IASTNode]} after :- {s/Keyword [IASTNode]}]
    (->>
     (diff-by (comp write-node-valueless :node) (atom-map-to-seq before) (atom-map-to-seq after))
@@ -48,6 +49,12 @@
     (map (partial-right select-keys [:original :revised]))
     (apply merge-with concat)))
 
+(s/defn author-name [rev-commit :- RevCommit]
+  (-> rev-commit .getAuthorIdent .getName))
+
+(s/defn author-email [rev-commit :- RevCommit]
+  (-> rev-commit .getAuthorIdent .getEmailAddress))
+
 (s/defn added-atoms
   [srcs]
   (let [{_ :original new-atoms     :revised} (atom-map-diff (:atoms-before srcs) (:atoms-after srcs))
@@ -55,25 +62,22 @@
     {
      :rev-str (:rev-str srcs)
      :file (:file srcs)
-     :added-atoms (count new-atoms)
+     :added-atoms (frequencies-by :type new-atoms)
      :added-non-atoms (count new-non-atoms)
-     :author-name  (->> srcs :rev-commit .getAuthorIdent .getName)
-     :author-email (->> srcs :rev-commit .getAuthorIdent .getEmailAddress)
+     :author-name  (->> srcs :rev-commit author-name)
+     :author-email (->> srcs :rev-commit author-email)
      }))
 
-'((->> ;"12f7900694b31d218f837b477c35777d88d736f5"
-       ;"e104cab8d4ab9422a0ca55bb24c00c9fea9a5d4d"
-       "b6a9b2f6a629e399fbd35000c656a02bef947866"
-       (pap (constantly (now)))
-       (commits-from gcc-repo)
-       ;(take 2)
-       (mapcat :srcs)
-       (filter #(and (:atoms-before %1) (:atoms-after %1)))
-       (pmap added-atoms)
-       (remove empty?)
-       (map prn)
-       dorun
-       (log-to "tmp/atom-committers_gcc_2017-10-31_01.edn")
+'((->>
+   (commits-with
+    gcc-repo ;"b6a9b2f6a629e399fbd35000c656a02bef947866" 1
+    (fn [rev-commit]
+      (doseq [commit (:srcs rev-commit)
+              :when (and (:atoms-before commit) (:atoms-after commit))]
+         (log-err (str "edit-lines " (:rev-str commit)) {} ;todo rev-str isn't working here?
+                  (when-let [added (added-atoms commit)]
+                       (prn added))))))
+       (log-to "tmp/atom-committers_gcc_2018-01-04_01.edn")
        time-mins
        ))
 

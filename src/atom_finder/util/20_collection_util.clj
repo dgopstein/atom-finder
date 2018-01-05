@@ -14,6 +14,9 @@
   ([lst] (any-pred? true? lst))
   ([pred lst] (any-pred? pred lst)))
 
+(defn frequencies-by [f coll]
+  (->> coll (map f) frequencies))
+
 ;; https://crossclj.info/ns/prismatic/plumbing/0.5.4/plumbing.core.cljs.html#_distinct-by
 (defn distinct-by
   "Returns elements of xs which return unique

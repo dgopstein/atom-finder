@@ -242,6 +242,13 @@
 ;; Try to hold on to less memory
 (defn commits-with
   ([repo f] (commits-with repo (repo-head repo) f)) ; start from head
+  ([repo commit-hash n f]
+   (doseq [rev-commit (take n (rev-walk-from repo commit-hash))]
+     (f
+      (log-err (str "parsing - " (.name rev-commit)) nil
+               {:rev-commit rev-commit
+                :rev-str    (.name rev-commit)
+                :srcs (commit-files-before-after repo rev-commit)}))))
   ([repo commit-hash f]
    (doseq [rev-commit (rev-walk-from repo commit-hash)]
      (f
