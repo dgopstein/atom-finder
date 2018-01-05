@@ -6,6 +6,7 @@
   :dependencies [
                  [org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/data.csv "0.1.3"]
+                 [org.clojure/math.combinatorics "0.1.4"] ; just for funzies, can be removed
                  [org.eclipse.core/org.eclipse.core.resources "3.6.0.v20100526-0737"]
                  [com.ibm.icu/icu4j "58.1"]
                  [clj-jgit "0.8.9"]
