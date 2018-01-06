@@ -64,8 +64,8 @@
 (defn count-lines [str]
     (count (filter #{\newline} str)))
 
-(defn line-range [min max s]
-  "return the line of a string between [min max)"
+(defn lines-between [min max s]
+  "return the lines of a string between [min max)"
   (->> s str/split-lines
        (drop (dec min))
        (take (- max min))))

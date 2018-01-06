@@ -141,6 +141,13 @@
        set
        ))
 
+(defn patch-file
+  "select only the patch for this file"
+  [patch filename]
+  (->> patch
+       zutubi/parse-diff
+       (filter #(or (= filename (.getOldFile %1)) (= filename (.getNewFile %1))))
+       first))
 
 ;===============================================
 

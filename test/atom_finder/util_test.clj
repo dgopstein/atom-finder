@@ -107,7 +107,7 @@
     (is (= [1 2 3] (flatten1 [[1 2] [3]])))
     (is (= [1 [2] 3] (flatten1 [[1 [2]] [3]]))))
 
-  (testing "line-range"
+  (testing "lines-between"
     (let [cases [
                  [[]  [1 1] "a\nb\nc\n"]
                  [["a"] [1 2] "a\nb\nc\n"]
@@ -119,7 +119,7 @@
                  ]]
 
       (doseq [[expected [min max] s] cases]
-        (is (= expected (line-range min max s))
+        (is (= expected (lines-between min max s))
             [expected (str "'" [min max] "' '" s "'")])
       ))
     )

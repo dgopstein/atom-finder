@@ -20,9 +20,6 @@
            )
   )
 
-(def repo-heads
-  [{gcc-repo "12f7900694b31d218f837b477c35777d88d736f5"}])
-
 (s/defn add-change?
   [change-bounds :- {:old [s/Int s/Int] :new [s/Int s/Int]}]
   (apply = (:old change-bounds)))
@@ -68,9 +65,73 @@
      :author-email (->> srcs :rev-commit author-email)
      }))
 
+(s/defn intersects-line-range-set?
+  [range-set node :- IASTNode]
+  (.intersects range-set
+               (com.google.common.collect.Range/closed
+                (start-line node) (end-line node))))
+
+(s/defn added-atoms-local
+  "Ignore parts of the files not contained in the patch"
+  [srcs]
+  (let [patch-bounds (-<>> srcs :patch-str (patch-file <> (:file srcs))
+                           patch-change-bounds flatten1 (map change-bound-to-ranges))
+        [old-bounds new-bounds] (->> patch-bounds (map #(select-values % [:old :new]))
+                                     transpose (map range-set-co))
+        {_ :original new-atoms     :revised}
+          (atom-map-diff
+           (->> srcs :atoms-before (map-values (partial filter #(intersects-line-range-set? old-bounds %))))
+           (->> srcs :atoms-after  (map-values (partial filter #(intersects-line-range-set? new-bounds %)))))
+        {_ :original new-non-atoms :revised}
+        (atom-seq-diff
+         (->> srcs :non-atoms-before (filter #(intersects-line-range-set? old-bounds %)))
+         (->> srcs :non-atoms-after  (filter #(intersects-line-range-set? new-bounds %))))]
+
+    ;(->> srcs :non-atoms-before count prn)
+    ;(->> srcs :non-atoms-before (map (juxt start-line end-line)) prn)
+    ;(pprn old-bounds)
+    ;(->> srcs :non-atoms-before (filter #(intersects-line-range-set? old-bounds %)) (map (juxt start-line end-line)) prn)
+
+    {
+     :rev-str (:rev-str srcs)
+     :file (:file srcs)
+     :added-atoms (frequencies-by :type new-atoms)
+     :added-non-atoms (count new-non-atoms)
+     :author-name  (->> srcs :rev-commit author-name)
+     :author-email (->> srcs :rev-commit author-email)
+     }))
+
+(->>
+   snprintf_lite-src
+   added-atoms-local
+   pprint
+   time-mins
+)
+
+'((def cp_pt-src (build-srcs "cp_pt.c"
+                   (slurp-resource "gcc_cp_pt.c_92884c107e041201b33c5d4196fe756c716e8a0c")
+                   (slurp-resource "gcc_cp_pt.c_d430756d2dbcc396347bd60d205ed987716b5ae8"))))
+
+;'((def snprintf_lite-src
+;    (merge
+;     (build-srcs "snprintf_lite.cc"
+;                 (slurp-resource "gcc_snprintf_lite.cc_1_aad93da1a579b9ae23ede6b9cf8523360f0a08b4")
+;                 (slurp-resource "gcc_snprintf_lite.cc_2_3bb22d5fa5f279e90cff387b5db4644a620b5576"))
+;     {:patch (->> "patch/aad93da1a579b9ae23ede6b9cf8523360f0a08b4_snprintf_lite.cc.patch"
+;                  slurp-resource
+;                  parse-diff)
+;      :rev-commit (find-rev-commit gcc-repo "aad93da1a579b9ae23ede6b9cf8523360f0a08b4")})))
+
+'((def snprintf_lite-src
+    (let [rev-commit (find-rev-commit gcc-repo "3bb22d5fa5f279e90cff387b5db4644a620b5576")]
+      (merge
+       (before-after-data gcc-repo rev-commit "libstdc++-v3/src/c++11/snprintf_lite.cc")
+       {:rev-commit rev-commit}))))
+
+
 '((->>
    (commits-with
-    gcc-repo "41ac8cbf4e888a2d80aec9254ea56ea9823169fa"
+    gcc-repo
     (fn [rev-commit]
       (->> rev-commit
            :srcs
@@ -79,9 +140,9 @@
            (remove empty?)
            (map prn)
            dorun
-          (log-err (str "edit-lines " (->> rev-commit :srcs first :rev-str)) {})
+          (log-err (str "atom-committers " (->> rev-commit :srcs first :rev-str)) {})
           )))
-       (log-to "tmp/atom-committers_gcc_2018-01-04_03-200-timeout.edn")
+       (log-to "tmp/atom-committers_gcc_2018-01-04_XX-test-data.edn")
        time-mins
        ))
 
