@@ -30,30 +30,29 @@
              {:rev-commit rev-commit})]
 
         (->> snprintf_lite-src
-             added-atoms
-             :added-atoms
-             (= {:operator-precedence 1, :pre-increment 1, :repurposed-variable 1})
-             is)
-
-        (->> snprintf_lite-src
-             added-atoms-local
+             added-atoms-count
              :added-atoms
              (= {:operator-precedence 1, :pre-increment 1, :repurposed-variable 1})
              is)
         )
 
       (let [rev-commit (find-rev-commit gcc-repo "d430756d2dbcc396347bd60d205ed987716b5ae8")
-            cp_pt-src
-            (merge
-             (before-after-data gcc-repo rev-commit "gcc/cp/pt.c")
-             {:rev-commit rev-commit})]
+            cp_pt-src (merge (before-after-data gcc-repo rev-commit "gcc/cp/pt.c")
+                             {:rev-commit rev-commit})
 
-        (->> cp_pt-src
-             added-atoms-local
-             (with-timeout 20) ;; this function used to take ~6mins, so fail it if it regresses
-             :added-atoms
-             (= {:omitted-curly-braces 1})
-             is)
+            ;; this function used to take ~6mins, so fail it if it regresses over 20 seconds
+            added-atoms-res (->> cp_pt-src added-atoms (with-timeout 20))
+            ]
+
+
+              (->> added-atoms-res :added-atoms first :node write-tree
+                   (= "if (canonical_template_parms->length() <= (unsigned )idx)\n    vec_safe_grow_cleared(canonical_template_parms, idx + 1);\n")
+                   is)
+
+              (->> added-atoms-res :added-non-atoms (map write-node)
+                   (= ["vec_safe_grow_cleared" "+" "idx" "1" ";" "=" "()" "<IdExpression>"
+                       "TEMPLATE_PARM_PARAMETER_PACK" "<IdExpression>" "newidx" "()"
+                       "<IdExpression>" "TEMPLATE_PARM_PARAMETER_PACK" "<IdExpression>" "oldidx"])
+                   is)
       )))
   )
-

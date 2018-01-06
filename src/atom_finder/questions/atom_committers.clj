@@ -35,14 +35,14 @@
 (s/defn atom-map-diff :- (s/maybe {s/Keyword [{:type s/Keyword :node IASTNode}]})
   [before :- {s/Keyword [IASTNode]} after :- {s/Keyword [IASTNode]}]
    (->>
-    (diff-by (comp write-node-valueless :node) (atom-map-to-seq before) (atom-map-to-seq after))
+    (diff-by (comp write-node :node) (atom-map-to-seq before) (atom-map-to-seq after))
     (map (partial-right select-keys [:original :revised]))
     (apply merge-with concat)))
 
 (s/defn atom-seq-diff
   [before :- [IASTNode] after :- [IASTNode]]
    (->>
-    (diff-by write-node-valueless before after)
+    (diff-by write-node before after)
     (map (partial-right select-keys [:original :revised]))
     (apply merge-with concat)))
 
@@ -52,26 +52,21 @@
 (s/defn author-email [rev-commit :- RevCommit]
   (-> rev-commit .getAuthorIdent .getEmailAddress))
 
-(s/defn added-atoms
-  [srcs]
-  (let [{_ :original new-atoms     :revised} (atom-map-diff (:atoms-before srcs) (:atoms-after srcs))
-        {_ :original new-non-atoms :revised} (atom-seq-diff (:non-atoms-before srcs) (:non-atoms-after srcs))]
-    {
-     :rev-str (:rev-str srcs)
-     :file (:file srcs)
-     :added-atoms (frequencies-by :type new-atoms)
-     :added-non-atoms (count new-non-atoms)
-     :author-name  (->> srcs :rev-commit author-name)
-     :author-email (->> srcs :rev-commit author-email)
-     }))
-
 (s/defn intersects-lines?
   [range-set node :- IASTNode]
   (.intersects range-set
                (com.google.common.collect.Range/closed
                 (start-line node) (end-line node))))
 
-(s/defn added-atoms-local
+(s/defn contained-by-lines?
+  [range-set node :- IASTNode]
+  (or (.contains range-set (start-line node))
+      (.contains range-set (end-line node))))
+
+(s/defn has-lines? [node]
+  (and (start-line node) (end-line node)))
+
+(s/defn added-atoms
   "Ignore parts of the files not contained in the patch"
   [srcs]
   (let [patch-bounds (-<>> srcs :patch-str (patch-file <> (:file srcs))
@@ -80,63 +75,29 @@
                                      transpose (map range-set-co))
         {_ :original new-atoms     :revised}
           (atom-map-diff
-           (->> srcs :atoms-before (map-values (partial filter #(or (nil? (start-line %1)) (nil? (end-line %1)) (intersects-lines? old-bounds %)))))
-           (->> srcs :atoms-after  (map-values (partial filter #(or (nil? (start-line %1)) (nil? (end-line %1)) (intersects-lines? new-bounds %))))))
+           (->> srcs :atoms-before (map-values (partial filter #(or (not (has-lines? %)) (contained-by-lines? old-bounds %)))))
+           (->> srcs :atoms-after  (map-values (partial filter #(or (not (has-lines? %)) (contained-by-lines? new-bounds %))))))
         {_ :original new-non-atoms :revised}
           (atom-seq-diff
-           (->> srcs :non-atoms-before (filter #(or (nil? (start-line %1)) (nil? (end-line %1)) (intersects-lines? old-bounds %))))
-           (->> srcs :non-atoms-after  (filter #(or (nil? (start-line %1)) (nil? (end-line %1)) (intersects-lines? new-bounds %)))))]
+           (->> srcs :non-atoms-before (filter #(or (not (has-lines? %)) (contained-by-lines? old-bounds %))))
+           (->> srcs :non-atoms-after  (filter #(or (not (has-lines? %)) (contained-by-lines? new-bounds %)))))]
 
-    ;(->> srcs :non-atoms-before count prn)
-    ;(->> srcs :non-atoms-before (map (juxt start-line end-line)) prn)
-    ;(pprn old-bounds)
-    ;(->> srcs :non-atoms-before (filter #(intersects-line-range-set? old-bounds %)) (map (juxt start-line end-line)) prn)
+    (def new-atoms-local new-atoms)
 
     {
      :rev-str (:rev-str srcs)
      :file (:file srcs)
-     :added-atoms (frequencies-by :type new-atoms)
-     :added-non-atoms (count new-non-atoms)
+     :added-atoms new-atoms
+     :added-non-atoms new-non-atoms
      :author-name  (->> srcs :rev-commit author-name)
      :author-email (->> srcs :rev-commit author-email)
      }))
 
-;; ========= added-atoms-local =========
-;; {:rev-str "d430756d2dbcc396347bd60d205ed987716b5ae8",
-;;  :file "gcc/cp/pt.c",
-;;  :added-atoms {:omitted-curly-braces 1},
-;;  :added-non-atoms 17,
-;;  :author-name "jakub",
-;;  :author-email "jakub@138bc75d-0d04-0410-961f-82ee72b054a4"}
-;; "Elapse time: 0:07.80 mins"
-;;
-;; ========= added-atoms =========
-;; {:rev-str "d430756d2dbcc396347bd60d205ed987716b5ae8",
-;;  :file "gcc/cp/pt.c",
-;;  :added-atoms {:omitted-curly-braces 1},
-;;  :added-non-atoms 18, ;; XXX <---------------------------------- XXX
-;;  :author-name "jakub",
-;;  :author-email "jakub@138bc75d-0d04-0410-961f-82ee72b054a4"}
-;; "Elapse time: 6:17.41 mins"
-'((->>
-   cp_pt-src
-   added-atoms-local
-   pprint
-   time-mins
-))
-
-'((def cp_pt-src
-  (let [rev-commit (find-rev-commit gcc-repo "d430756d2dbcc396347bd60d205ed987716b5ae8")]
-    (merge
-     (before-after-data gcc-repo rev-commit "gcc/cp/pt.c")
-     {:rev-commit rev-commit}))))
-
-'((def snprintf_lite-src
-    (let [rev-commit (find-rev-commit gcc-repo "3bb22d5fa5f279e90cff387b5db4644a620b5576")]
-      (merge
-       (before-after-data gcc-repo rev-commit "libstdc++-v3/src/c++11/snprintf_lite.cc")
-       {:rev-commit rev-commit}))))
-
+(s/defn added-atoms-count
+  [srcs]
+  (-> srcs added-atoms
+      (update-in [:added-atoms] (partial frequencies-by :type))
+      (update-in [:added-non-atoms] count)))
 
 '((->>
    (commits-with
@@ -145,7 +106,7 @@
       (->> rev-commit
            :srcs
            (filter #(and (:atoms-before %) (:atoms-after %)))
-           (pmap #(with-timeout 200 (added-atoms-local %)))
+           (pmap #(with-timeout 200 (added-atoms-count %)))
            (remove empty?)
            (map prn)
            dorun
