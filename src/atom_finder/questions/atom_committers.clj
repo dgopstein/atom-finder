@@ -145,13 +145,13 @@
       (->> rev-commit
            :srcs
            (filter #(and (:atoms-before %) (:atoms-after %)))
-           (pmap #(with-timeout 200 (added-atoms %)))
+           (pmap #(with-timeout 200 (added-atoms-local %)))
            (remove empty?)
            (map prn)
            dorun
           (log-err (str "atom-committers " (->> rev-commit :srcs first :rev-str)) {})
           )))
-       (log-to "tmp/atom-committers_gcc_2018-01-04_XX-test-data.edn")
+       (log-to "tmp/atom-committers_gcc_2018-01-06_added-atoms-local.edn")
        time-mins
        ))
 
