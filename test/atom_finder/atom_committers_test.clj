@@ -21,24 +21,39 @@
        ;; one atom is the ?: itself, and the other is the parent of the y++, which moved out of the assignment
        ["CPPASTConditionalExpression" "CPPASTConditionalExpression"]))
 
-  (testing "gcc commit regression"
-    (let [rev-commit (find-rev-commit gcc-repo "3bb22d5fa5f279e90cff387b5db4644a620b5576")
-          snprintf_lite-src
-          (merge
-          (before-after-data gcc-repo rev-commit "libstdc++-v3/src/c++11/snprintf_lite.cc")
-           {:rev-commit rev-commit})]
+  (when gcc-repo
+    (testing "gcc commit regression"
+      (let [rev-commit (find-rev-commit gcc-repo "3bb22d5fa5f279e90cff387b5db4644a620b5576")
+            snprintf_lite-src
+            (merge
+             (before-after-data gcc-repo rev-commit "libstdc++-v3/src/c++11/snprintf_lite.cc")
+             {:rev-commit rev-commit})]
 
-      (->> snprintf_lite-src
-           added-atoms
-           :added-atoms
-           (= {:operator-precedence 1, :pre-increment 1, :repurposed-variable 1})
-           is)
+        (->> snprintf_lite-src
+             added-atoms
+             :added-atoms
+             (= {:operator-precedence 1, :pre-increment 1, :repurposed-variable 1})
+             is)
 
-      (->> snprintf_lite-src
-           added-atoms-local
-           :added-atoms
-           (= {:operator-precedence 1, :pre-increment 1, :repurposed-variable 1})
-           is)
-      ))
+        (->> snprintf_lite-src
+             added-atoms-local
+             :added-atoms
+             (= {:operator-precedence 1, :pre-increment 1, :repurposed-variable 1})
+             is)
+        )
+
+      (let [rev-commit (find-rev-commit gcc-repo "d430756d2dbcc396347bd60d205ed987716b5ae8")
+            cp_pt-src
+            (merge
+             (before-after-data gcc-repo rev-commit "gcc/cp/pt.c")
+             {:rev-commit rev-commit})]
+
+        (->> cp_pt-src
+             added-atoms-local
+             (with-timeout 20) ;; this function used to take ~6mins, so fail it if it regresses
+             :added-atoms
+             (= {:omitted-curly-braces 1})
+             is)
+      )))
   )
 

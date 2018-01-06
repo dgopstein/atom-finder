@@ -65,7 +65,7 @@
      :author-email (->> srcs :rev-commit author-email)
      }))
 
-(s/defn intersects-line-range-set?
+(s/defn intersects-lines?
   [range-set node :- IASTNode]
   (.intersects range-set
                (com.google.common.collect.Range/closed
@@ -80,12 +80,12 @@
                                      transpose (map range-set-co))
         {_ :original new-atoms     :revised}
           (atom-map-diff
-           (->> srcs :atoms-before (map-values (partial filter #(intersects-line-range-set? old-bounds %))))
-           (->> srcs :atoms-after  (map-values (partial filter #(intersects-line-range-set? new-bounds %)))))
+           (->> srcs :atoms-before (map-values (partial filter #(or (nil? (start-line %1)) (nil? (end-line %1)) (intersects-lines? old-bounds %)))))
+           (->> srcs :atoms-after  (map-values (partial filter #(or (nil? (start-line %1)) (nil? (end-line %1)) (intersects-lines? new-bounds %))))))
         {_ :original new-non-atoms :revised}
-        (atom-seq-diff
-         (->> srcs :non-atoms-before (filter #(intersects-line-range-set? old-bounds %)))
-         (->> srcs :non-atoms-after  (filter #(intersects-line-range-set? new-bounds %))))]
+          (atom-seq-diff
+           (->> srcs :non-atoms-before (filter #(or (nil? (start-line %1)) (nil? (end-line %1)) (intersects-lines? old-bounds %))))
+           (->> srcs :non-atoms-after  (filter #(or (nil? (start-line %1)) (nil? (end-line %1)) (intersects-lines? new-bounds %)))))]
 
     ;(->> srcs :non-atoms-before count prn)
     ;(->> srcs :non-atoms-before (map (juxt start-line end-line)) prn)
@@ -101,26 +101,35 @@
      :author-email (->> srcs :rev-commit author-email)
      }))
 
-(->>
-   snprintf_lite-src
+;; ========= added-atoms-local =========
+;; {:rev-str "d430756d2dbcc396347bd60d205ed987716b5ae8",
+;;  :file "gcc/cp/pt.c",
+;;  :added-atoms {:omitted-curly-braces 1},
+;;  :added-non-atoms 17,
+;;  :author-name "jakub",
+;;  :author-email "jakub@138bc75d-0d04-0410-961f-82ee72b054a4"}
+;; "Elapse time: 0:07.80 mins"
+;;
+;; ========= added-atoms =========
+;; {:rev-str "d430756d2dbcc396347bd60d205ed987716b5ae8",
+;;  :file "gcc/cp/pt.c",
+;;  :added-atoms {:omitted-curly-braces 1},
+;;  :added-non-atoms 18, ;; XXX <---------------------------------- XXX
+;;  :author-name "jakub",
+;;  :author-email "jakub@138bc75d-0d04-0410-961f-82ee72b054a4"}
+;; "Elapse time: 6:17.41 mins"
+'((->>
+   cp_pt-src
    added-atoms-local
    pprint
    time-mins
-)
+))
 
-'((def cp_pt-src (build-srcs "cp_pt.c"
-                   (slurp-resource "gcc_cp_pt.c_92884c107e041201b33c5d4196fe756c716e8a0c")
-                   (slurp-resource "gcc_cp_pt.c_d430756d2dbcc396347bd60d205ed987716b5ae8"))))
-
-;'((def snprintf_lite-src
-;    (merge
-;     (build-srcs "snprintf_lite.cc"
-;                 (slurp-resource "gcc_snprintf_lite.cc_1_aad93da1a579b9ae23ede6b9cf8523360f0a08b4")
-;                 (slurp-resource "gcc_snprintf_lite.cc_2_3bb22d5fa5f279e90cff387b5db4644a620b5576"))
-;     {:patch (->> "patch/aad93da1a579b9ae23ede6b9cf8523360f0a08b4_snprintf_lite.cc.patch"
-;                  slurp-resource
-;                  parse-diff)
-;      :rev-commit (find-rev-commit gcc-repo "aad93da1a579b9ae23ede6b9cf8523360f0a08b4")})))
+'((def cp_pt-src
+  (let [rev-commit (find-rev-commit gcc-repo "d430756d2dbcc396347bd60d205ed987716b5ae8")]
+    (merge
+     (before-after-data gcc-repo rev-commit "gcc/cp/pt.c")
+     {:rev-commit rev-commit}))))
 
 '((def snprintf_lite-src
     (let [rev-commit (find-rev-commit gcc-repo "3bb22d5fa5f279e90cff387b5db4644a620b5576")]
