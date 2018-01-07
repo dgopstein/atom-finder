@@ -25,12 +25,15 @@
    )
   )
 
-(defmacro with-timeout [time & body]
+(defmacro log-timeout [time msg & body]
   `(try (thunk-timeout (fn [] ~@body) ~time :seconds)
         (catch java.util.concurrent.TimeoutException e#
           (do
-            (errln (str "Killed operation when it exceded max duration of " ~time "s, body: " '~@body))
+            (errln (str "[Timeout " ~time "s] " ~msg))
             nil))))
+
+(defmacro with-timeout [time & body]
+  `(log-timeout ~time (str "body: " '~@body) ~@body))
 
 (defmacro with-timeout-ms [time & body]
   `(try (thunk-timeout (fn [] ~@body) ~time :ms)
