@@ -141,7 +141,7 @@
              (for [filename (edited-files repo rev-commit)]
                (log-err (str "c-f-b-a " {:commit-hash (.name rev-commit) :file filename}) nil
 
-                        (with-timeout 120
+                        (log-timeout 120 (str "parsing " {:commit-hash (.name rev-commit) :file filename})
                           (merge (before-after-data repo rev-commit filename)
                                  {:patch (file-patches filename)
                                   :rev-commit rev-commit})))))))

@@ -6,6 +6,7 @@
    [atom-finder.atom-patch :refer :all]
    [atom-finder.classifier :refer :all]
    [atom-finder.constants :refer :all]
+   [atom-finder.commits-added-removed :refer :all]
    [atom-finder.tree-diff.difflib :refer [diff-by diff-trees]]
    [atom-finder.patch :refer :all]
    [atom-finder.util :refer :all]
@@ -23,18 +24,18 @@
 '((->>
    (commits-with
     gcc-repo
-    "3bb22d5fa5f279e90cff387b5db4644a620b5576" 2
+    "9ab8ac2684b1553dbd9bb656751515a3fb5c218c"
     (fn [rev-commit]
       (->> rev-commit
            :srcs
            (filter #(and (:atoms-before %) (:atoms-after %)))
-           (pmap #(log-timeout 1 (str "added-atom-count " (select-keys % [:rev-str :file])) (added-atoms-count %)))
+           (pmap #(log-timeout 200 (str "added-atom-count " (select-keys % [:rev-str :file])) (added-atoms-count %)))
            (remove empty?)
            (map prn)
            dorun
           (log-err (str "atom-committers " (->> rev-commit :srcs first :rev-str)) {})
           )))
-       ;(log-to "tmp/atom-committers_gcc_2018-01-06_added-atoms-local.edn")
+       (log-to "tmp/atom-committers_gcc_2018-01-07_02_continuation.edn")
        time-mins
        ))
 
