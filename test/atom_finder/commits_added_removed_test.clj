@@ -27,11 +27,12 @@
             snprintf_lite-src
             (merge
              (before-after-data gcc-repo rev-commit "libstdc++-v3/src/c++11/snprintf_lite.cc")
-             {:rev-commit rev-commit})]
+             {:rev-commit rev-commit})
+            atoms-added (added-atoms snprintf_lite-src)]
 
-        (->> snprintf_lite-src
-             added-atoms-count
-             :added-atoms
+        (->> atoms-added
+             count-added-atosm
+             :atoms-added
              (= {:operator-precedence 1, :pre-increment 1, :repurposed-variable 1})
              is)
         )

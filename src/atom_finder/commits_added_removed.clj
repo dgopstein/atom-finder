@@ -89,10 +89,11 @@
      :author-email (->> srcs :rev-commit author-email)
      }))
 
-(s/defn added-atoms-count
-  [srcs]
-  (-> srcs added-atoms
-      (update-with {[:removed-atoms] (partial frequencies-by :type)
-                    [:added-atoms]   (partial frequencies-by :type)
-                    [:removed-non-atoms] count
-                    [:added-non-atoms]   count})))
+(s/defn count-added-atoms
+  [atoms-added :- {s/Keyword s/Any}]
+  (update-with atoms-added {[:removed-atoms]     (partial frequencies-by :type)
+                            [:added-atoms]       (partial frequencies-by :type)
+                            [:removed-non-atoms] count
+                            [:added-non-atoms]   count}))
+
+(s/defn added-atoms-count [srcs] (-> srcs added-atoms count-added-atoms))
