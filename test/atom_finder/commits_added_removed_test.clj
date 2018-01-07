@@ -1,10 +1,10 @@
-(ns atom-finder.atom-committers-test
+(ns atom-finder.commits-added-removed-test
   (:require [clojure.test :refer :all]
             [atom-finder.util :refer :all]
             [atom-finder.constants :refer :all]
             [atom-finder.patch :refer :all]
             [atom-finder.atom-patch :refer :all]
-            [atom-finder.questions.atom-committers :refer :all]
+            [atom-finder.commits-added-removed :refer :all]
             [atom-finder.classifier :refer :all]
             [clj-jgit.porcelain  :as gitp]
             [clj-jgit.querying :as gitq]

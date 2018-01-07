@@ -134,6 +134,14 @@
   (testing "map-keys"
     (is (= {1 1 4 2 9 3} (map-keys #(* %1 %1) {1 1 2 2 3 3}))))
 
+  (testing "update-with"
+    (-> {:a 1 :b "b" :c {:d [2]}}
+        (update-with {[:a] inc
+                      [:b] clojure.string/upper-case
+                      [:c :d] empty})
+        (= {:a 2 :b "B" :c {:d []}})
+        is))
+
   (testing "file-ext"
     (let [cases [
                  [nil "gcc/ChangeLog"]

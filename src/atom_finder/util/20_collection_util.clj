@@ -48,6 +48,11 @@
 (defn values-at [m keys]
   (map m keys))
 
+(s/defn update-with :- {s/Any s/Any}
+  "Update several values in a map based on functions"
+  [m-orig :- {s/Any s/Any} updaters :- {s/Any (s/=> s/Any s/Any)}]
+  (reduce (fn [m [keys f]] (update-in m keys f)) m-orig updaters))
+
 (def transpose (partial apply map vector))
 
 (defn strict-get

@@ -1,6 +1,24 @@
-(in-ns 'atom-finder.util)
-(import '(org.eclipse.cdt.core.dom.ast
-          IASTNode IASTExpression IASTExpressionList IASTUnaryExpression))
+;; For every commit, which atoms were added, and which were removed
+
+(ns atom-finder.commits-added-removed
+  (:require
+   [atom-finder.atoms-in-dir :refer :all]
+   [atom-finder.atom-patch :refer :all]
+   [atom-finder.classifier :refer :all]
+   [atom-finder.constants :refer :all]
+   [atom-finder.tree-diff.difflib :refer [diff-by diff-trees]]
+   [atom-finder.patch :refer :all]
+   [atom-finder.util :refer :all]
+   [atom-finder.questions.edit-lines :refer :all]
+   [clojure.pprint :refer :all]
+   [clojure.string :as string]
+   [swiss.arrows :refer :all]
+   [schema.core :as s]
+   )
+  (:import [org.eclipse.cdt.core.dom.ast IASTNode]
+           [org.eclipse.jgit.revwalk RevCommit RevCommitList RevWalk]
+           )
+  )
 
 (s/defn atom-map-to-seq
   [atoms :- {s/Keyword [IASTNode]}]
@@ -51,11 +69,11 @@
                            patch-change-bounds flatten1 (map change-bound-to-ranges))
         [old-bounds new-bounds] (->> patch-bounds (map #(select-values % [:old :new]))
                                      transpose (map range-set-co))
-        {_ :original new-atoms     :revised}
+        {atoms-removed :original atoms-added     :revised}
           (atom-map-diff
            (->> srcs :atoms-before (map-values (partial filter #(or (not (has-lines? %)) (contained-by-lines? old-bounds %)))))
            (->> srcs :atoms-after  (map-values (partial filter #(or (not (has-lines? %)) (contained-by-lines? new-bounds %))))))
-        {_ :original new-non-atoms :revised}
+        {non-atoms-removed :original non-atoms-added :revised}
           (atom-seq-diff
            (->> srcs :non-atoms-before (filter #(or (not (has-lines? %)) (contained-by-lines? old-bounds %))))
            (->> srcs :non-atoms-after  (filter #(or (not (has-lines? %)) (contained-by-lines? new-bounds %)))))]
@@ -63,8 +81,10 @@
     {
      :rev-str (:rev-str srcs)
      :file (:file srcs)
-     :added-atoms new-atoms
-     :added-non-atoms new-non-atoms
+     :removed-atoms atoms-removed
+     :added-atoms atoms-added
+     :removed-non-atoms non-atoms-removed
+     :added-non-atoms non-atoms-added
      :author-name  (->> srcs :rev-commit author-name)
      :author-email (->> srcs :rev-commit author-email)
      }))
@@ -72,5 +92,7 @@
 (s/defn added-atoms-count
   [srcs]
   (-> srcs added-atoms
-      (update-in [:added-atoms] (partial frequencies-by :type))
-      (update-in [:added-non-atoms] count)))
+      (update-with {[:removed-atoms] (partial frequencies-by :type)
+                    [:added-atoms]   (partial frequencies-by :type)
+                    [:removed-non-atoms] count
+                    [:added-non-atoms]   count})))
