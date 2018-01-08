@@ -144,15 +144,16 @@
                     (pmap-dir-trees atoms-by-comments&function)
                     flatten
                     (map #(assoc % :proj proj))))))
-       (map (juxt :proj :comment :atom))
+       (map (juxt :proj :in-function? :comment :atom))
+       (take 1000)
        frequencies
        (map prn)
        dorun
-       ;(maps-to-csv "comment-counts_2017-12-30_1.csv")
+       (maps-to-csv "comment-counts_2018-01-08_01_in-function.csv")
        time-mins
    ))
 
-(->>
+'((->>
  [
 [["mongo" true nil] 538153]
 [["gcc" nil :operator-precedence] 62]
@@ -643,4 +644,4 @@
  (map (fn [[[project comment atom] count]] {:project project :comment comment :atom (when atom (name atom)) :count count}))
  (maps-to-csv "comment-summary-projects_2018-01-02.csv")
 
- )
+ ))
