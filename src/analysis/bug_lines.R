@@ -9,10 +9,9 @@ source("util.R")
 
 file.ext <- function(file.name) strsplit(file.name, ".*\\.")[[1]][2]
 
-colors2 <- sap.qualitative.palette[c(3,4)]
-
-#bugs.lines.csv <- data.table(read.csv("../../tmp/bug-lines-2017-09-26_merged_2_3_clean.csv", header=TRUE))
-bugs.lines.csv <- data.table(read.csv("data/bug-lines_gcc_2017-11-09_combined.csv", header=TRUE))
+#bugs.lines.csv <- data.table(read.csv("data/bug-lines_gcc_2017-11-09_combined.csv", header=TRUE))
+bugs.lines.csv <- data.table(read.csv("data/bug-lines_gcc_2018-01-04_03.csv_partial", header=TRUE))
+nrow(bugs.lines.csv)
 bugs.lines.csv <- bugs.lines.csv[!is.na(n.bugs),]
 bugs.lines.csv$all.atoms <- bugs.lines.csv[, -c("non.atom", "file", "n.bugs", "rev.str", "all.changed")][, rowSums(.SD)]
 bugs.lines.csv[, bug := n.bugs > 0]
@@ -28,14 +27,6 @@ X2 <- atom.existence.by.bugs[, chisq.test(count)]
 p.value <- X2$p.value
 es.phi <- atom.existence.by.bugs[, sqrt(X2$statistic/sum(count))]
 list(p.value = p.value, es.phi = es.phi)
-
-no.clip <- function(p) {
-  print(p)
-  gt <- ggplot_gtable(ggplot_build(p))
-  gt$layout$clip[gt$layout$name=="panel"] <- "off"
-  grid::grid.draw(gt)
-  gt
-}
 
 # Is any atom changed at all - bug vs non-bug commit
 p <- ggplot(atom.existence.by.bugs, aes(x=bug,y=count)) +

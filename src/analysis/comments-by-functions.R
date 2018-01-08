@@ -37,10 +37,16 @@ chi.test(all.atom.comments[comment==TRUE  & any.atom == TRUE,  count],
          all.atom.comments[comment==TRUE  & any.atom == FALSE, count],
          all.atom.comments[comment==FALSE & any.atom == FALSE, count])
 
+fisher.test(matrix(c(all.atom.comments[comment==TRUE  & any.atom == TRUE,  count],
+         all.atom.comments[comment==FALSE & any.atom == TRUE,  count],
+         all.atom.comments[comment==TRUE  & any.atom == FALSE, count],
+         all.atom.comments[comment==FALSE & any.atom == FALSE, count]), nrow=2))
+
+# chi-square plot
 p <- ggplot(all.atom.comments, aes(x=comment,y=count, width=1.93*width)) +
   theme_classic() +
   geom_bar(aes(fill=any.atom), position = "fill", stat = "identity", colour="white", lwd = 1.5) +
-  coord_cartesian(xlim = c(0.7, 1.7)) +
+  coord_cartesian(xlim = c(0.5, 1.7)) +
   scale_fill_manual(values = rev(colors2)) +
   labs(x="Comment") +
   theme(axis.title.y=element_blank()) +
@@ -51,7 +57,17 @@ p <- ggplot(all.atom.comments, aes(x=comment,y=count, width=1.93*width)) +
 
 no.clip(p)
 
+# fisher plot
+comment.rates <- data.table(atom = c(TRUE, FALSE),
+   rate = c((all.atom.comments[comment==TRUE & any.atom==TRUE, count] / all.atom.comments[any.atom==TRUE, sum(count)]),
+            (all.atom.comments[comment==TRUE & any.atom==FALSE, count] / all.atom.comments[any.atom==FALSE, sum(count)])))
 
+ggplot(comment.rates, aes(atom, rate)) +
+  theme_classic() +
+  geom_col(aes(fill=(atom==atom))) +
+  scale_fill_manual(values = colors2) +
+  guides(fill=FALSE)
+  
 ########################################
 #        Comments by Project
 ########################################

@@ -17,3 +17,13 @@ convert.atom.names <- function(names) unlist(atom.name.conversion[as.character(n
 
 # https://experience.sap.com/fiori-design-web/values-and-names/
 sap.qualitative.palette <- c('#5cbae6', '#b6d957', '#fac364', '#8cd3ff', '#d998cb', '#f2d249', '#93b9c6')
+
+colors2 <- sap.qualitative.palette[c(3,4)]
+
+no.clip <- function(p) {
+  print(p)
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name=="panel"] <- "off"
+  grid::grid.draw(gt)
+  gt
+}
