@@ -253,12 +253,14 @@
                 :rev-str    (.name rev-commit)
                 :srcs (commit-files-before-after repo rev-commit)}))))
   ([repo commit-hash f]
-   (doseq [rev-commit (rev-walk-from repo commit-hash)]
-     (f
-      (log-err (str "parsing - " (.name rev-commit)) nil
-               {:rev-commit rev-commit
-                :rev-str    (.name rev-commit)
-                :srcs (commit-files-before-after repo rev-commit)})))))
+   (if (number? commit-hash) ;; commit-hash is actually a (take n) value
+     (commits-with repo (repo-head repo) commit-hash f)
+     (doseq [rev-commit (rev-walk-from repo commit-hash)]
+       (f
+        (log-err (str "parsing - " (.name rev-commit)) nil
+                 {:rev-commit rev-commit
+                  :rev-str    (.name rev-commit)
+                  :srcs (commit-files-before-after repo rev-commit)}))))))
 
 (defn commits-from
   ([repo] (commits-from repo (repo-head repo))) ; start from head
