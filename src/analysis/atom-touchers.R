@@ -31,3 +31,27 @@ atom.touchers.sum[non.atoms > 10000 & all.atoms == 0,]
 
 atom.touchers.csv[name=="David Zhang"]
 
+atoms <- c("post.increment", "preprocessor.in.statement", "operator.precedence", 
+           "literal.encoding", "omitted.curly.braces", "pre.increment", 
+           "logic.as.control.flow", "reversed.subscript", "comma.operator", 
+           "type.conversion", "repurposed.variable", "macro.operator.precedence", 
+           "implicit.predicate", "conditional", "assignment.as.value", "all.atoms")
+atoms <- c("post.increment", "preprocessor.in.statement")
+
+my.scatter <- function(atom) {
+  ggplot(atom.touchers.sum) +
+    geom_point(aes_string("non.atoms", atom)) +
+    labs(title=atom)
+}
+
+my.hist <- function(atom) {
+  pct <- quantile(atom.touchers.rate[[atom]], c(0.98))
+  pct <- ifelse(pct > 0, pct, max(atom.touchers.rate[[atom]]))
+  ggplot(atom.touchers.rate) +
+    scale_x_continuous(limits = c(0.01*pct, pct)) +
+    geom_histogram(aes_string(atom), bins = 50) +
+    labs(title=atom)
+}
+
+grid.arrange(grobs=lapply(atoms, my.hist), ncol=5)
+
