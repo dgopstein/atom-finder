@@ -2,6 +2,11 @@
 
 (def not-empty? (comp not empty?))
 
+(defmacro auto-map
+  "create a map with keys named after the arguments of this function"
+  [& args]
+  `(zipmap (list ~@(map keyword args)) (list ~@args)))
+
 (defn sym-diff
   "Set symmetric difference - the opposite of the intersection"
   [& args]
@@ -50,7 +55,7 @@
 
 (s/defn update-with :- {s/Any s/Any}
   "Update several values in a map based on functions"
-  [m-orig :- {s/Any s/Any} updaters :- {s/Any (s/=> s/Any s/Any)}]
+  [m-orig updaters :- {s/Any (s/=> s/Any s/Any)}]
   (reduce (fn [m [keys f]] (update-in m keys f)) m-orig updaters))
 
 (def transpose (partial apply map vector))
