@@ -31,8 +31,8 @@
             atoms-added (added-atoms snprintf_lite-src)]
 
         (->> atoms-added
-             count-added-atosm
-             :atoms-added
+             count-added-atoms
+             :added-atoms
              (= {:operator-precedence 1, :pre-increment 1, :repurposed-variable 1})
              is)
         )
