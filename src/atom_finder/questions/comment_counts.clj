@@ -121,8 +121,8 @@
 
 ((->> "tmp/comment-counts_2018-01-08_01_in-function.edn"
       read-lines
-      (map (fn [[[proj in-function comment] atom]]
+      (map (fn [[[proj in-function comment atom] count]]
              {:proj proj :in-function (boolean in-function)
-              :comment (boolean comment) :atom atom}))
+              :comment (boolean comment) :atom atom :count count}))
       (maps-to-csv "comment-counts_2018-01-08_01_in-function.csv")
  ))
