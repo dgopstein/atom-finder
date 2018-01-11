@@ -29,14 +29,15 @@ atom.touchers.sum[all.atoms > 0, max(non.atoms)]
 
 atom.touchers.sum[non.atoms > 10000 & all.atoms == 0,]
 
-atom.touchers.csv[name=="David Zhang"]
+atom.touchers.csv[name=="David Zhang"] ##### second biggest no-atom committer
 
+############# Per-atom graphs ###############
+atoms <- c("post.increment", "preprocessor.in.statement")
 atoms <- c("post.increment", "preprocessor.in.statement", "operator.precedence", 
            "literal.encoding", "omitted.curly.braces", "pre.increment", 
            "logic.as.control.flow", "reversed.subscript", "comma.operator", 
            "type.conversion", "repurposed.variable", "macro.operator.precedence", 
            "implicit.predicate", "conditional", "assignment.as.value", "all.atoms")
-atoms <- c("post.increment", "preprocessor.in.statement")
 
 my.scatter <- function(atom) {
   ggplot(atom.touchers.sum) +
