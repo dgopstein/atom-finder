@@ -62,7 +62,7 @@
 (s/defn has-lines? [node]
   (and (start-line node) (end-line node)))
 
-(s/defn added-atoms
+(s/defn added-removed-atoms
   "Ignore parts of the files not contained in the patch"
   [srcs]
   (let [patch-bounds (-<>> srcs :patch-str (patch-file <> (:file srcs))
@@ -89,11 +89,11 @@
      :author-email (->> srcs :rev-commit author-email)
      }))
 
-(s/defn count-added-atoms
+(s/defn count-added-removed-atoms
   [atoms-added :- {s/Keyword s/Any}]
   (update-with atoms-added {[:removed-atoms]     (partial frequencies-by :type)
                             [:added-atoms]       (partial frequencies-by :type)
                             [:removed-non-atoms] count
                             [:added-non-atoms]   count}))
 
-(s/defn added-atoms-count [srcs] (-> srcs added-atoms count-added-atoms))
+(s/defn added-removed-atoms-count [srcs] (-> srcs added-removed-atoms count-added-removed-atoms))

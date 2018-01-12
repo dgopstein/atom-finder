@@ -29,7 +29,7 @@
       (->> rev-commit
            :srcs
            (filter #(and (:atoms-before %) (:atoms-after %)))
-           (pmap #(log-timeout 200 (str "added-atom-count " (select-keys % [:rev-str :file])) (added-atoms-count %)))
+           (pmap #(log-timeout 200 (str "added-atom-count " (select-keys % [:rev-str :file])) (added-removed-atoms-count %)))
            (remove empty?)
            (map prn)
            dorun

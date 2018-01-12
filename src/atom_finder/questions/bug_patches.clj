@@ -7,6 +7,7 @@
    [clj-jgit.querying  :as gitq]
    [atom-finder.patch :refer :all]
    [atom-finder.atom-patch :refer :all]
+   [atom-finder.commits-added-removed :refer :all]
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
    [atom-finder.questions.bug-densities :refer :all]
@@ -61,3 +62,16 @@
    (maps-to-csv "src/analysis/data/bug-lines_gcc_2018-01-04_03.csv")
    time-mins
    ))
+
+'((->>
+   (commits-with
+    gcc-repo
+    (fn [rev-commit]
+      (doseq [commit (:srcs rev-commit)]
+        (prn
+         (log-err (str "atoms-added-removed-in-bugs" (:rev-str commit)) {} ;todo rev-str isn't working here?
+                  (merge (with-timeout 400 (added-removed-atoms-count commit))
+                         {:n-bugs (->> commit :rev-commit bugzilla-ids count)}))))))
+    (log-to "tmp/atoms-added-removed-in-bugs_gcc_2018-01-11_01.txt")
+    time-mins
+    ))
