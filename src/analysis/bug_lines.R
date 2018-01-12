@@ -10,7 +10,7 @@ source("util.R")
 file.ext <- function(file.name) strsplit(file.name, ".*\\.")[[1]][2]
 
 #bugs.lines.csv <- data.table(read.csv("data/bug-lines_gcc_2017-11-09_combined.csv", header=TRUE))
-bugs.lines.csv <- data.table(read.csv("data/bug-lines_gcc_2018-01-04_03.csv_partial", header=TRUE))
+bugs.lines.csv <- data.table(read.csv("data/bug-lines_gcc_2018-01-04_03.csv", header=TRUE))
 nrow(bugs.lines.csv)
 bugs.lines.csv <- bugs.lines.csv[!is.na(n.bugs),]
 bugs.lines.csv$all.atoms <- bugs.lines.csv[, -c("non.atom", "file", "n.bugs", "rev.str", "all.changed")][, rowSums(.SD)]
@@ -134,22 +134,23 @@ lines.without.bugs[, mean(all.atoms), by=all.changed]
 lines.with.bugs[, .(all.atoms=median(all.atoms)), by=all.changed][order(all.changed)]
 
 ################################
-#     Bug Rates by Atom
+#     Bug Rates by Atom (Relative)
 ################################
 
-atom.rates.by.bug <- bugs.lines.csv[all.changed > 0, -c("non.atom", "file", "n.bugs", "rev.str", "all.atoms", "file.ext", "all.changed")
+atom.rates.by.bug <- bugs.lines.csv[all.changed > 0, -c("file", "n.bugs", "rev.str", "all.atoms", "file.ext", "all.changed")
                ][, lapply(.SD, mean), by=bug]
 
 # How many samples do we have for each atom?
-bugs.lines.csv[all.changed > 0, -c("non.atom", "file", "n.bugs", "rev.str", "all.atoms", "file.ext", "all.changed")
+atom.counts.by.bug <- bugs.lines.csv[all.changed > 0, -c("file", "n.bugs", "rev.str", "all.atoms", "file.ext", "all.changed")
                ][, lapply(.SD, function(x) sum(x > 0)), by=bug]
 
 atom.rates.bug.change <- as.data.table(t(atom.rates.by.bug[bug==TRUE, -c("bug")] / atom.rates.by.bug[bug==FALSE, -c("bug")]), keep.rownames=TRUE)
-names(atom.rates.bug.change) <- c("atom", "rate")
-atom.rates.bug.change[, atom := unlist(atom.name.conversion[atom])]
+atom.rates.bug.change <- merge(atom.rates.bug.change, as.data.table(t(atom.counts.by.bug), keep.rownames=T), by="rn")
+names(atom.rates.bug.change) <- c("atom", "rate", "count.no.bug", "count.bug")
+atom.rates.bug.change[, atom := convert.atom.names(atom)]
 atom.rates.bug.change$atom <- with(atom.rates.bug.change, reorder(atom, rate))
 
-atom.bug.rate <- ggplot(atom.rates.bug.change[!is.nan(rate)], aes(atom, rate)) +
+atom.bug.rate.relative <- ggplot(atom.rates.bug.change[!is.nan(rate) & atom!="Non-Atom"], aes(atom, rate)) +
   #theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.4)) +
   theme(axis.text.x=element_blank()) +
   theme(axis.ticks=element_blank(), axis.line.x=element_blank()) +
@@ -163,7 +164,24 @@ atom.bug.rate <- ggplot(atom.rates.bug.change[!is.nan(rate)], aes(atom, rate)) +
   scale_colour_manual(values = colors2) +
   coord_flip()
 
-ggsave("img/atom_bug_rate.pdf", atom.bug.rate, width=(width<-140), height=width*0.6, units = "mm")
+ggsave("img/atom_bug_rate_relative.pdf", atom.bug.rate.relative, width=(width<-140), height=width*0.6, units = "mm")
+
+
+################################
+#   Bug Rates by Atom (Absolute)
+################################
+
+atom.rates.bug.change[, count := count.no.bug + count.bug]
+ggplot(atom.rates.bug.change[rate > 0], aes(atom, rate)) +
+  theme_gray() +
+  geom_bar(aes(fill = atom!="Non-Atom", width=0.09*log(count)), stat="identity") +
+  #geom_text(aes(label=ifelse(is.na(odds), '', sprintf('%0.2f', round(odds, 2)))), angle = 90, vjust=0.5, hjust=-0.3, size=3) +
+  #coord_cartesian(ylim = c(0, 0.13)) +
+  scale_fill_manual(values = colors2) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  #labs(title = "Comment Rates Inside Functions") +
+  guides(fill=FALSE) +
+  labs(x = "Atom", y="Bug-fix Commit Rate")
 
 
 ## The least frequent, most bug-predictive atoms
