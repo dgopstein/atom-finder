@@ -28,10 +28,10 @@
             (merge
              (before-after-data gcc-repo rev-commit "libstdc++-v3/src/c++11/snprintf_lite.cc")
              {:rev-commit rev-commit})
-            atoms-added (added-atoms snprintf_lite-src)]
+            atoms-added (added-removed-atoms snprintf_lite-src)]
 
         (->> atoms-added
-             count-added-atoms
+             count-added-removed-atoms
              :added-atoms
              (= {:operator-precedence 1, :pre-increment 1, :repurposed-variable 1})
              is)
@@ -42,7 +42,7 @@
                              {:rev-commit rev-commit})
 
             ;; this function used to take ~6mins, so fail it if it regresses over 20 seconds
-            added-atoms-res (->> cp_pt-src added-atoms (with-timeout 20))
+            added-atoms-res (->> cp_pt-src added-removed-atoms (with-timeout 20))
             ]
 
 
