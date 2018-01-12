@@ -5,42 +5,64 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 source("util.R")
 
+
+phi.es <- function(X2, n) sqrt(X2/n)
+odd.rat <- function(observed) (observed[1]/observed[2])/(observed[3]/observed[4])
+#phi.es <- function(X2) sqrt(X2$statistic/sum(X2$observed))
+#odd.rat <- function(X2) with(X2.out, (observed[1]/observed[2])/(observed[3]/observed[4]))
+
 chi.test <- function(a, b, c, d) {
   cnt.tbl.out <- matrix(c(a, b, c, d), nrow=2)
   n.out <- sum(cnt.tbl.out)
 
   X2.out <- chisq.test(cnt.tbl.out)
 
-  list(p.value = X2.out$p.value, es = sqrt(X2.out$statistic / n.out), ratio=(a/b)/(c/d))
+  list(X2 = X2.out$statistic, p.value = X2.out$p.value, es = phi.es(X2.out$statistic,n.out), ratio=(a/b)/(c/d))
 }
 
-individual.atom.comments <- data.table(read.csv("data/comment-summary_2017-12-31.csv", header=TRUE))
-individual.atom.comments[, any.atom := atom != '', ]
-individual.atom.comments[, comment := as.logical(ifelse(as.character(comment) == 'true', TRUE, ifelse(as.character(comment)=='false', FALSE, comment))), ]
+to.bool <- function(x) as.logical(ifelse(as.character(x) == 'true', TRUE, ifelse(as.character(x)=='false', FALSE, x)))
 
-all.atom.comments <- individual.atom.comments[, .(count = sum(count)), by=c("comment", "any.atom")]
+individual.atom.comments <- data.table(read.csv("data/comment-counts_2018-01-08_01_in-function.csv", header=TRUE))
+individual.atom.comments[, any.atom := atom != '', ]
+individual.atom.comments[, comment := to.bool(comment), ]
+individual.atom.comments[, in.function := to.bool(in.function), ]
+
+
+all.atom.comments <- individual.atom.comments[, .(count = sum(count)), by=c("comment", "in.function", "any.atom")]
 
 all.atom.comments.widths <- all.atom.comments[, .(width=sum(count)), by=comment][, .(comment, width = width/sum(width))]
 all.atom.comments <- merge(all.atom.comments, all.atom.comments.widths, by="comment")
 
 
-(all.atom.comments[comment==TRUE & any.atom==TRUE, count] / all.atom.comments[any.atom==TRUE, sum(count)]) /
-(all.atom.comments[comment==TRUE & any.atom==FALSE, count] / all.atom.comments[any.atom==FALSE, sum(count)])
+(all.atom.comments[in.function == TRUE & comment==TRUE & any.atom==TRUE, count] / all.atom.comments[in.function == TRUE & any.atom==TRUE, sum(count)]) /
+(all.atom.comments[in.function == TRUE & comment==TRUE & any.atom==FALSE, count] / all.atom.comments[in.function == TRUE & any.atom==FALSE, sum(count)])
+
+(all.atom.comments[in.function == FALSE & comment==TRUE & any.atom==TRUE, count] / all.atom.comments[in.function == FALSE & any.atom==TRUE, sum(count)]) /
+(all.atom.comments[in.function == FALSE & comment==TRUE & any.atom==FALSE, count] / all.atom.comments[in.function == FALSE & any.atom==FALSE, sum(count)])
+
 
 all.atom.comments[comment==TRUE, sum(count)]
 all.atom.comments[comment==FALSE, sum(count)]
 
 
 # inside/outside function together
-chi.test(all.atom.comments[comment==TRUE  & any.atom == TRUE,  count],
-         all.atom.comments[comment==FALSE & any.atom == TRUE,  count],
-         all.atom.comments[comment==TRUE  & any.atom == FALSE, count],
-         all.atom.comments[comment==FALSE & any.atom == FALSE, count])
+chi.test(all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == TRUE,  count],
+         all.atom.comments[in.function == TRUE & comment==FALSE & any.atom == TRUE,  count],
+         all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == FALSE, count],
+         all.atom.comments[in.function == TRUE & comment==FALSE & any.atom == FALSE, count])
 
-p <- ggplot(all.atom.comments, aes(x=comment,y=count, width=1.93*width)) +
+fisher.test(matrix(c(all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == TRUE,  count],
+         all.atom.comments[in.function == TRUE & comment==FALSE & any.atom == TRUE,  count],
+         all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == FALSE, count],
+         all.atom.comments[in.function == TRUE & comment==FALSE & any.atom == FALSE, count]), nrow=2))
+
+atom.comments.no.fun <- all.atom.comments[, .(count=sum(count)), by=c("comment", "any.atom", "width")]
+
+# chi-square plot
+p <- ggplot(atom.comments.no.fun, aes(x=comment,y=count, width=1.93*width)) +
   theme_classic() +
   geom_bar(aes(fill=any.atom), position = "fill", stat = "identity", colour="white", lwd = 1.5) +
-  coord_cartesian(xlim = c(0.7, 1.7)) +
+  coord_cartesian(xlim = c(0.5, 1.7)) +
   scale_fill_manual(values = rev(colors2)) +
   labs(x="Comment") +
   theme(axis.title.y=element_blank()) +
@@ -51,7 +73,17 @@ p <- ggplot(all.atom.comments, aes(x=comment,y=count, width=1.93*width)) +
 
 no.clip(p)
 
+# fisher plot
+comment.rates <- data.table(atom = c(TRUE, FALSE),
+   rate = c((atom.comments.no.fun[comment==TRUE & any.atom==TRUE, count] / atom.comments.no.fun[any.atom==TRUE, sum(count)]),
+            (atom.comments.no.fun[comment==TRUE & any.atom==FALSE, count] / atom.comments.no.fun[any.atom==FALSE, sum(count)])))
 
+ggplot(comment.rates, aes(atom, rate)) +
+  theme_classic() +
+  geom_col(aes(fill=(atom==atom))) +
+  scale_fill_manual(values = colors2) +
+  guides(fill=FALSE)
+  
 ########################################
 #        Comments by Project
 ########################################
@@ -84,3 +116,66 @@ all.proj.comments[, rate := ifelse(comment, count/comment.count, count/non.comme
 ggplot(all.proj.comments, aes(atom, rate)) +   
   geom_bar(aes(fill = comment), position = "dodge", stat="identity") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+########################################
+#        Comments by Atom
+########################################
+
+atoms <- c("post.increment", "preprocessor.in.statement")
+atoms <- c("post.increment", "preprocessor.in.statement", "operator.precedence", 
+           "literal.encoding", "omitted.curly.braces", "pre.increment", 
+           "logic.as.control.flow", "reversed.subscript", "comma.operator", 
+           "type.conversion", "repurposed.variable", "macro.operator.precedence", 
+           "implicit.predicate", "conditional", "assignment.as.value", "all.atoms")
+
+
+
+individual.comment.counts.all.proj <- individual.atom.comments[, .(count = sum(count)), by=c('in.function', 'comment', 'atom', 'any.atom')]
+
+individual.comment.rates.all.proj <-
+  merge(individual.comment.counts.all.proj[comment==TRUE], individual.comment.counts.all.proj[comment==FALSE],
+        by=c('in.function', 'atom', 'any.atom'), suffixes = c(".comment", ".non.comment"))[, -c("comment.comment", "comment.non.comment")]
+
+individual.comment.rates.all.proj[, any.atom := atom!='']
+individual.comment.rates.all.proj[, atom := convert.atom.names(atom)]
+individual.comment.rates.all.proj[, count := count.comment + count.non.comment]
+individual.comment.rates.all.proj[, comment.rate := count.comment / count]
+individual.comment.rates.all.proj[, lower.wilson := Hmisc::binconf(count.comment, count, alpha=10^-6)[,2]]
+
+individual.comment.rates.all.proj.in.fun <- individual.comment.rates.all.proj[in.function==TRUE]
+individual.comment.rates.all.proj.in.fun$atom <- with(individual.comment.rates.all.proj.in.fun, reorder(atom,comment.rate))
+non.atom.comment.counts <- unlist(individual.comment.rates.all.proj.in.fun[as.character(atom)=="Non-Atom", .(count.comment, count.non.comment)])
+individual.comment.rates.all.proj.in.fun[, c("X2", "p.value", "es", "odds") :=
+                                         with(chisq.test(matrix(c(count.comment, count.non.comment,non.atom.comment.counts), nrow=2)),
+                                              list(X2 = statistic, p.value, es = phi.es(statistic, sum(observed)), odds = odd.rat(observed))),
+                                         by=1:nrow(individual.comment.rates.all.proj.in.fun)]
+individual.comment.rates.all.proj.in.fun[atom=="Non-Atom", odds := NA]
+
+
+
+individual.comment.rates.all.proj.in.fun.plot <-
+  ggplot(individual.comment.rates.all.proj.in.fun, aes(atom, comment.rate)) +
+  theme_gray() +
+  #geom_bar(aes(fill = any.atom), stat="identity") +
+  geom_bar(aes(fill = any.atom, width=0.099*log(0.001*(ifelse(count < 10^8, count, 10^8) +1000))), stat="identity") +
+  geom_text(aes(label=ifelse(is.na(odds), '', sprintf('%0.2f', round(odds, 2)))), angle = 90, vjust=0.5, hjust=-0.3, size=3) +
+  coord_cartesian(ylim = c(0, 0.13)) +
+  scale_fill_manual(values = colors2) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  #labs(title = "Comment Rates Inside Functions") +
+  guides(fill=FALSE) +
+  labs(x = "Atom", y="Comment Rate")
+
+individual.comment.rates.all.proj.in.fun.plot
+
+ggsave("img/comment_rates_in_fun.pdf", individual.comment.rates.all.proj.in.fun.plot, width=(width<-138), height=width*0.75, units = "mm")
+
+
+individual.comment.rates.all.proj.out.fun <- individual.comment.rates.all.proj[in.function==FALSE]
+individual.comment.rates.all.proj.out.fun$atom <- with(individual.comment.rates.all.proj.out.fun,reorder(atom,comment.rate))
+
+ggplot(individual.comment.rates.all.proj.out.fun, aes(atom, comment.rate)) +
+  geom_bar(aes(fill = any.atom, width=0.08*log(0.5*count)), position = "dodge", stat="identity") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  labs(title = "Comment Rates Outside Functions")
+

@@ -85,7 +85,7 @@
        }
     )))
 
-(->>
+'((->>
  (atom-finder-repos)
  (mapcat (fn [repo] (pmap-dir-files (partial atom-touchers repo) (repo-root-dir repo))))
  (map (partial map-keys relativize-filename))
@@ -93,4 +93,13 @@
  dorun
  (log-to "tmp/atom-touchers_2018-01-05_01.edn")
  time-mins
- )
+ ))
+
+'((->> "tmp/atom-touchers_2018-01-05_01.edn_partial"
+       read-lines
+       (map #(into [] %))
+       (mapcat (fn [[[file committers]]]
+                 (for [[{name :name email :email} atoms] committers]
+                   (merge {:file file :name name :email email} atoms))))
+       (maps-to-csv "src/analysis/data/atom-touchers_2018-01-05_01.csv_partial" [:file :name :email :non-atoms :post-increment :preprocessor-in-statement :operator-precedence :literal-encoding :omitted-curly-braces :pre-increment :logic-as-control-flow :reversed-subscript :comma-operator :type-conversion :repurposed-variable :macro-operator-precedence :implicit-predicate :conditional :assignment-as-value])
+       ))

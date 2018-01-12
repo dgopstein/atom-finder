@@ -66,8 +66,6 @@ atom.rates.clustered <- data.table(melt(atom.rates.mat[h$rowInd,h$colInd], varna
 atom.rates.clustered$domain <- unlist(proj.to.domain[as.character(atom.rates.clustered$project)])
 atom.rates.clustered[, atom := convert.atom.names(atom)]
 
-set2.7 <- RColorBrewer::brewer.pal(7, "Set2")
-
 atom.rate.per.project.clustered <-
   ggplot(data=atom.rates.clustered, aes(project, atom)) +
   geom_point(colour="black", aes(size=1)) +

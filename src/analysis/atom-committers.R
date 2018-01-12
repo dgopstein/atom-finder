@@ -3,6 +3,8 @@ library(ggplot2)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+source("util.R")
+
 atom.committers.gcc <- data.table(read.csv("data/atom-committers_gcc_2017-10-31_1-3.csv")); atom.committers <- atom.committers.gcc
 atom.committers.linux <- data.table(read.csv("data/atom-committers_linux_2017-11-01_01.csv")); atom.committers <- atom.committers.linux
 

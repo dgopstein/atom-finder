@@ -40,10 +40,8 @@
        ))
 
 ;; edn -> csv
-'((->> ;"atom-committers_linux_2017-11-01_01.edn"
-   "atom-committers_gcc_2017-10-31_1-3_clean.edn"
-     read-data
-     ;rest
+'((->> ;"atom-committers_linux_2017-11-01_01.edn" read-data
+   "tmp/atom-committers_gcc_2018-01-06_02_added-atoms-count.edn_partial" read-lines
      (group-by :author-name)
      (map-values (partial map #(dissoc % :author-name :author-email)))
      (map-values (partial map (partial map-values vector))) ;; wrap every value in vector
@@ -54,6 +52,5 @@
                               (reduce + xs)          ;; sum numbers
                               (-> xs set count)))))  ;; count unique strings
      (map (fn [[k v]] (merge {:author-name k} v)))
-     (maps-to-csv "src/analysis/data/atom-committers_gcc_2017-10-31_1-3.csv")
-     ;(maps-to-csv "src/analysis/data/atom-committers_linux_2017-11-01_01.csv")
+     (maps-to-csv "src/analysis/data/atom-committers_gcc_2018-01-06_02_added-atoms-count.csv_partial")
      ))

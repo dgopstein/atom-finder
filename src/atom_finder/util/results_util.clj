@@ -108,7 +108,10 @@
           (into {}))))
   ([m] (merge-down nil m)))
 
-(defn maps-to-csv [filename maps]
-  (let [headers (keys (first maps))]
-    (with-open [writer (clojure.java.io/writer filename)]
-      (clojure.data.csv/write-csv writer (cons (map name headers) (map #(values-at % headers) maps))))))
+(defn maps-to-csv
+  ([filename headers maps]
+   (with-open [writer (clojure.java.io/writer filename)]
+     (clojure.data.csv/write-csv writer (cons (map name headers)
+                                              (map #(values-at % headers) maps)))))
+  ([filename maps]
+   (maps-to-csv filename (keys (first maps)) maps)))
