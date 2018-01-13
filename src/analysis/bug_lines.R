@@ -172,9 +172,10 @@ ggsave("img/atom_bug_rate_relative.pdf", atom.bug.rate.relative, width=(width<-1
 ################################
 
 atom.rates.bug.change[, count := count.no.bug + count.bug]
-ggplot(atom.rates.bug.change[rate > 0], aes(atom, rate)) +
+atom.bug.rate <-
+  ggplot(atom.rates.bug.change, aes(atom, rate)) +
   theme_gray() +
-  geom_bar(aes(fill = atom!="Non-Atom", width=0.09*log(count)), stat="identity") +
+  geom_bar(aes(fill = atom!="Non-Atom", width=0.11*log(0.18*count)), stat="identity") +
   #geom_text(aes(label=ifelse(is.na(odds), '', sprintf('%0.2f', round(odds, 2)))), angle = 90, vjust=0.5, hjust=-0.3, size=3) +
   #coord_cartesian(ylim = c(0, 0.13)) +
   scale_fill_manual(values = colors2) +
@@ -182,6 +183,8 @@ ggplot(atom.rates.bug.change[rate > 0], aes(atom, rate)) +
   #labs(title = "Comment Rates Inside Functions") +
   guides(fill=FALSE) +
   labs(x = "Atom", y="Bug-fix Commit Rate")
+
+ggsave("img/atom_bug_rate.pdf", atom.bug.rate, width=(width<-140), height=width*0.7, units = "mm")
 
 
 ## The least frequent, most bug-predictive atoms

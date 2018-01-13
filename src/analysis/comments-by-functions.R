@@ -152,6 +152,7 @@ individual.comment.rates.all.proj.in.fun[, c("X2", "p.value", "es", "odds") :=
 individual.comment.rates.all.proj.in.fun[atom=="Non-Atom", odds := NA]
 
 
+individual.comment.rates.all.proj.in.fun[, median(odds, na.rm=TRUE)]
 
 individual.comment.rates.all.proj.in.fun.plot <-
   ggplot(individual.comment.rates.all.proj.in.fun, aes(atom, comment.rate)) +
