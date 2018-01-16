@@ -145,6 +145,17 @@ ggplot(atom.correct.C, aes(rate, correct.rate.C)) + geom_point() +
   #geom_smooth(method="lm", aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   theme(axis.text.x=element_text(angle=90, hjust=1))
 
+################################################
+#    atom count vs LOC in project
+################################################
 
+# cat ~/atom-finder/file_sizes_sorted.txt | sed 's,/home/dgopstein/opt/src/atom-finder/\([^/]*\)/,\1 ,' | ruby -lane 'BEGIN{h=Hash.new{|x| 0}}; count, proj, _ = $_.split; h[proj] += count.to_i; END{ p h}'
+proj.loc <- data.table(proj=c("clang", "freebsd", "gcc", "gecko-dev", "linux", "mongo", "webkit", "emacs", "git", "subversion", "vim", "mysql-server", "nginx", "httpd"),
+  loc=c(1969346, 20252205, 5450514, 11380215, 22626962, 3864455, 4954408, 480268, 253422, 707786, 451820, 2979215, 186760, 317717))
 
+loc.rate <- merge(proj.loc, atom.counts, by.x="proj", by.y="X.project")
+ggplot(loc.rate, aes(loc, atom.rate)) +
+  geom_point() +
+  scale_x_log10()
+  
 
