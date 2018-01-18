@@ -145,6 +145,14 @@
         (= {:a 2 :b "B" :c {:d []}})
         is))
 
+  (testing "split-map-by-keys"
+    (is (= [{:b 2, :c 3, :d 4} {:a 1, :e 5}] (split-map-by-keys {:a 1 :b 2 :c 3 :d 4 :e 5} [:a :e])))
+    (is (= [{:b 2, :d 4} {:a 1, :e 5} {:c 3}] (split-map-by-keys {:a 1 :b 2 :c 3 :d 4 :e 5} [:a :e] [:c]))))
+
+
+     (split-map-by-keys {:a 1 :b 2 :c 3 :d 4 :e 5} [:a :e]); => [{:b 2, :c 3, :d 4} {:a 1, :e 5}]
+     (split-map-by-keys {:a 1 :b 2 :c 3 :d 4 :e 5} [:a :e] [:c]); => [{:b 2, :d 4} {:a 1, :e 5} {:c 3}]
+
   (testing "file-ext"
     (let [cases [
                  [nil "gcc/ChangeLog"]
