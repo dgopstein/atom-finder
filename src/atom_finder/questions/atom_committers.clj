@@ -33,7 +33,7 @@
            (remove empty?)
            (map prn)
            dorun
-          (log-err (str "atom-committers " (->> rev-commit :srcs first :rev-str)) {})
+          (log-err "atom-committers " {})
           )))
        (log-to "tmp/atom-committers_gcc_2018-01-07_02_continuation.edn")
        time-mins

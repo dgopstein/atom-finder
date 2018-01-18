@@ -1,4 +1,4 @@
-;; Does the prevalence of atoms change over time with a project
+;; Does the prevalence of atoms change over time within a project
 ;; Projects started in the 80's vs projects started in the 2000's
 
 (ns atom-finder.questions.code-age
@@ -60,6 +60,9 @@
   (juxt->> date .getYear .getMonthValue .getDayOfMonth))
 
 (defmulti year-month class)
+(defmethod year-month java.util.Date
+  [date]
+  (-> date .toInstant (.atZone (java.time.ZoneId/of "UTC")) .toLocalDateTime year-month))
 (defmethod year-month java.time.LocalDateTime
   [date]
   (juxt->> date .getYear .getMonthValue))
@@ -133,20 +136,23 @@
 '((def code-age-repo (->> "~/opt/src/atom-finder/gcc" expand-home gitp/load-repo)))
 ;(def code-age-repo linux-historical-repo)
 
+(->> "~/opt/src/atom-finder-histories"
+     expand-home
+     list-dirs
+     (map #(juxt->> % .getName gitp/load-repo))
+     (into {})
+     (def history-repos))
+
+'((print (now)))
 '((-<>>
- ["981a2edd1922c00e747680f30734ea50c86af28d"
-  "747aead34de65c25765da79825ce2c08d8257b10"
-  "1737992523930995ae7ee67cc9da87952c01aebc"
-  "9b75471204ab8339eee7156e8f93959b9cfb0347"]
- (map (partial rev-walk-from code-age-repo)) ;; linux-historical repo
- (apply concat)
- ;"476ea17a1752df3ca32ae996e3c88f42f00ecc3a"
- ;(rev-walk-from code-age-repo) ; gcc-repo
- (partition-by (fn [rc] (-> rc year-month (update-in [1] #(int (/ (dec %) 3))))))
- (map last)
- (monotize-by (comp (partial < 0) compare) year-month)
- ;(map year-month) pprint)
- (mapcat (partial repo-files code-age-repo))
+   "first-commits-per-month.txt"
+   read-data
+   (partition-by (fn [line] (-> line :date year-month (update-in [1] #(int (/ (dec %) 3))))))
+   (map first)
+   (map (fn [h]
+          (let [repo (-> h :project history-repos)]
+                {:project (:project h) :repo repo :rev-commit (find-rev-commit repo (-> h :rev-str))})))
+   (mapcat (fn [h] (map (partial-right assoc :project (:project h)) (repo-files (:repo h) (:rev-commit h)))))
  (filter (comp c-file? :path))
  (pmap (fn [rev-file]
     (log-err (str "parsing/finding atoms in " (juxt->> rev-file :path :rev-str)) nil
@@ -154,10 +160,9 @@
         (if-let [ast (mem-tu (:path rev-file) (:content rev-file))]
           (assoc (dissoc rev-file :content)
                  :atoms (->> ast find-all-atoms-non-atoms (map-values count))))))))
- ;(take 3)
  (map prn)
  dorun
- (log-to "tmp/code-age_linux-historical_2017-11-07_01_no-macro-exps.edn")
+ (log-to "tmp/code-age_all_2018-01-15_02_with-project.edn")
  time-mins
  ))
 
@@ -176,3 +181,5 @@
    (maps-to-csv "atoms-by-month_gcc_2017-11-05_01_no-macro-exps.csv")
    time-mins
    ))
+
+
