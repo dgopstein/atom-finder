@@ -63,13 +63,14 @@
    time-mins
    ))
 
+'((prn (now)))
 '((->>
    (commits-with
     gcc-repo
     (fn [rev-commit]
       (doseq [commit (:srcs rev-commit)]
         (prn
-         (log-err (str "atoms-added-removed-in-bugs" (:rev-str commit)) {} ;todo rev-str isn't working here?
+         (log-err (str "atoms-added-removed-in-bugs " (:rev-str commit)) {} ;todo rev-str isn't working here?
                   (merge (with-timeout 400 (added-removed-atoms-count commit))
                          {:n-bugs (->> commit :rev-commit bugzilla-ids count)}))))))
     (log-to "tmp/atoms-added-removed-in-bugs_gcc_2018-01-11_01.txt")
