@@ -47,6 +47,10 @@ atoms.added[type.conversion > 0, .(rev.str, file, bug, n.added, n.removed, all.a
 
 #################
 
+
+
+### (rem/add)[bug] / (rem/add)[non-bug]
+
 atoms.removed.rate <- atoms.removed.sums[, lapply(.SD, function(x) x / n.removed), by='bug']
 atoms.added.rate <- atoms.added.sums[, lapply(.SD, function(x) x / n.added), by='bug']
 
@@ -66,8 +70,25 @@ ggplot(removed.rate[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed"
   scale_y_log10(expand = c(0.1,0.2)) +
   annotate("text", x=16.5, y=0.12, label='bold("Non-bug")', parse=TRUE, hjust=-0.05, size=5.0) +
   annotate("text", x=16.5, y=2, label='bold("Bug")', parse=TRUE, hjust=-0.05, size=5.0) +
+  annotate("text", x=13.5, y=0.12, label="over((over(rem,add))[italic(bug)~~~~~~~~.],(over(rem,add))[italic(non-bug)])", parse=TRUE, hjust=-0.05, size=5.0) +
   labs(title="Atoms removed more in...", x="Relative Rate", y="Atom") +
-  coord_flip()
+  coord_flip(ylim = c(0.2, 5))
 
-?geom_segment
+
+### (rem[bug]/rem[non-bug]) & (add[bug]/add[non-bug])
+
+atoms.removed.bugs.over.non.bugs <- data.table(t(atoms.removed.rate[bug==TRUE] / atoms.removed.rate[bug==FALSE]), removed=TRUE, keep.rownames = TRUE)[rn %in% atom.names.key]
+atoms.added.bugs.over.non.bugs <- data.table(t(atoms.added.rate[bug==TRUE] / atoms.added.rate[bug==FALSE]), removed=FALSE, keep.rownames = TRUE)[rn %in% atom.names.key]
+
+atoms.bugs.over.non.bugs <- rbind(atoms.removed.bugs.over.non.bugs, atoms.added.bugs.over.non.bugs)
+colnames(atoms.bugs.over.non.bugs) <- c('atom', 'rate', 'removed')
+
+intercept <- 1
+ggplot(atoms.bugs.over.non.bugs) +
+  geom_bar(aes(x = atom, y = rate, fill=removed), position = "dodge", stat="identity") +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.4)) +
+  scale_fill_discrete(name="Added/Removed",
+                      breaks=c(FALSE, TRUE),
+                      labels=c(expression(over(added[bug],added[non-bug])), expression(over(removed[bug],removed[non-bug])))) +
+  theme(legend.key.size = unit(3, 'lines'))
 
