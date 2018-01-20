@@ -186,19 +186,18 @@
      ))
 
 '((->>
-   "tmp/code-age_gcc_2017-11-05_01_no-macro-exps.edn"
+   "tmp/code-age_all_2018-01-16_all_per-year_combined.edn"
    read-lines
    (filter :path)
    ;(remove #(->> % :path (re-find #"test\/|\/test")))
-   (group-by (juxt :date :rev-str))
+   (group-by (juxt :date :project :rev-str))
    (map-values #(->> % (map :atoms) (apply merge-with +)))
-   (map-values-kv (fn [[date rev-str] v] (merge v {:date date :rev-str rev-str})))
+   (map-values-kv (fn [[date project rev-str] v] (merge v (auto-map date project rev-str))))
    vals
    (filter :date)
-   (sort-by :date)
+   (sort-by (juxt :project :date))
    reverse
-   (maps-to-csv "atoms-by-month_gcc_2017-11-05_01_no-macro-exps.csv")
+   (maps-to-csv "tmp/code-age_all_2018-01-16_all_per-year_combined.csv")
    time-mins
    ))
-
 
