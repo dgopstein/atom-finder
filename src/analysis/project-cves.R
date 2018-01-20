@@ -18,7 +18,7 @@ cves.atoms <- merge(project.cves, atom.counts[, .(project=X.project, fair.rate, 
 
 #projects.high.rate <- project.cves[project.cves, on="domain"][project != i.project & cve_rate > 1 & i.cve_rate > 1]
 
-project.cves.plot <- ggplot(cves.atoms, aes(x=fair.rate, y=cves.per.year, group=domain)) +
+project.cves.plot <- ggplot(cves.atoms, aes(x=atom.rate, y=cves.per.year, group=domain)) +
   theme_classic() +
   geom_path(aes(color = domain), size=1.2) +
   geom_point(size=2.0) + # aes(size=log(cve_rate))) +
@@ -28,12 +28,14 @@ project.cves.plot <- ggplot(cves.atoms, aes(x=fair.rate, y=cves.per.year, group=
   scale_y_log10(expand = c(0.1, 0.1)) +
   # scale_colour_manual(values = sap.qualitative.palette[c(1,2,3,5)],
   #                     labels=c("Database", "Editor", "OS", "Server")) +
-  #ggtitle("Atoms and CVEs", subtitle="Domains with >1 CVE/year") +
+  ggtitle("CVEs") +
   labs(x = "Atom rate", y="CVEs per year\n[log scale]", color="Domain") +
   theme(legend.position = c(0.85, 0.70))
 project.cves.plot
 
 ggsave("img/project_cves.pdf", project.cves.plot, width=(width<-138), height=width*0.60, units = "mm")
+binom.test(8,14, alternative = "greater")
+binom.test(7,14, alternative = "greater")
 
 
 # Is there a correlation between atoms and cves within domain

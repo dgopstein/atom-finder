@@ -139,3 +139,9 @@
   (let [m1 (zipmap (map f s1) s1)]
     (vals (apply dissoc m1 (map f s2)))))
 '(set-difference-by #(* %1 %1) [1 2 3] [-1 2 -4])
+
+(defn split-map-by-keys [m & keyses]
+  (cons (apply dissoc m (apply concat keyses))
+        (map (partial select-keys m) keyses)))
+
+(def sum (partial reduce +))
