@@ -10,6 +10,8 @@ source("util.R")
 atoms.removed <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_removed.csv_partial", header=TRUE))
 atoms.added   <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_added.csv_partial", header=TRUE))
 
+length(unique(atoms.removed$rev.str))
+
 atoms.removed[, bug := n.bugs > 0]
 atoms.added[, bug := n.bugs > 0]
 
@@ -92,3 +94,88 @@ ggplot(atoms.bugs.over.non.bugs) +
                       labels=c(expression(over(added[bug],added[non-bug])), expression(over(removed[bug],removed[non-bug])))) +
   theme(legend.key.size = unit(3, 'lines'))
 
+#################################################################
+#  A commit where the line was edited, but the atom not removed
+#################################################################
+common.bugs.lines.atoms <- merge(bugs.lines.csv, atoms.removed, suffixes=c('.lines', '.atoms'), by=c('rev.str', 'file'))
+common.bugs.lines.atoms[repurposed.variable.lines > 0 & repurposed.variable.atoms <= 0]
+common.bugs.lines.atoms[operator.precedence.lines > 0 & operator.precedence.atoms <= 0]
+
+atoms.added[rev.str=='006e76552254b00892858364b87a22790fa5dfc3']
+
+
+tail(bugs.lines.csv[, rev.str])
+atoms.removed[1:3, rev.str]
+
+bugs.lines.csv[rev.str=="2201c33012d4c6dc522ddbfa97f5aa95a209e24d"]
+atoms.removed[ rev.str=="711789cc2a21e70e4ea0e2d9d5863924d85687d6"]
+
+#################################################################
+#  Are atoms removed at a higher rate in bug commits vs non-bug commits
+#################################################################
+
+atoms.removed.rate.by.bug.dt <- rbind(
+    data.table(t(atoms.removed.rate[bug==FALSE]), bug=FALSE, keep.rownames = TRUE),
+    data.table(t(atoms.removed.rate[bug==TRUE]), bug=TRUE, keep.rownames = TRUE))
+
+colnames(atoms.removed.rate.by.bug.dt) <- c('atom', 'rate', 'bug')
+
+atoms.removed.rate.dt <-
+  data.table(atom = colnames(atoms.removed.rate),
+             bug = t(atoms.removed.rate[bug==TRUE])[,1],
+             no.bug = t(atoms.removed.rate[bug==FALSE])[,1],
+             bug.count = t(atoms.removed.sums[bug==FALSE])[,1])
+
+atoms.removed.rate.dt[, rate := bug / no.bug]
+
+intercept <- 1
+ggplot(atoms.removed.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed",'added.non.atoms','n.added', 'removed.non.atoms', 'all.atoms.removed'))],
+       aes(x = reorder(atom, rate), y = rate)) +
+  geom_hline(yintercept=intercept) +
+  geom_segment(aes(y = intercept, yend = rate, xend = atom, size = bug.count,
+                   color=ifelse(atom %in% c("removed.non.atoms",'all.atoms.removed'), "3", rate>intercept)),
+               show.legend=F) +
+  scale_size(range = c(0.3, 11)) +
+  geom_text(color="black", size=3, aes(label=round(ifelse(rate >= intercept, rate, 1/rate), digits=2), hjust = ifelse(rate >= intercept, -.3, 1.5))) +
+  scale_color_manual(values=c("#E69F00", "#56B4E9")) +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.4)) +
+  scale_y_log10(expand = c(0.1,0.2)) +
+  annotate("text", x=14.5, y=0.12, label='bold("Non-bug")', parse=TRUE, hjust=-0.05, size=5.0) +
+  annotate("text", x=14.5, y=2, label='bold("Bug")', parse=TRUE, hjust=-0.05, size=5.0) +
+  annotate("text", x=11.5, y=0.12, label="over((over(atoms[removed],all-nodes[removed]))[italic(bug)~~~~~~~~.],(over(atoms[removed],all-nodes[removed]))[italic(non-bug)])", parse=TRUE, hjust=-0.05, size=5.0) +
+  labs(title="Atoms removed more in...", x="Relative Rate", y="Atom") +
+  coord_flip(ylim = c(0.2, 5))
+
+
+###### Atoms added
+
+atoms.added.rate.by.bug.dt <- rbind(
+  data.table(t(atoms.added.rate[bug==FALSE]), bug=FALSE, keep.rownames = TRUE),
+  data.table(t(atoms.added.rate[bug==TRUE]), bug=TRUE, keep.rownames = TRUE))
+
+colnames(atoms.added.rate.by.bug.dt) <- c('atom', 'rate', 'bug')
+
+atoms.added.rate.dt <-
+  data.table(atom = colnames(atoms.added.rate), bug = unlist(t(atoms.added.rate[bug==TRUE])[,1]),
+             no.bug = t(atoms.added.rate[bug==FALSE])[,1],
+             bug.count = t(atoms.added.sums[bug==FALSE])[,1])
+
+atoms.added.rate.dt[, rate := pmax(bug / no.bug, 0.00001)]
+
+intercept <- 1
+ggplot(atoms.added.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.added","n.added",'added.non.atoms','n.added', 'added.non.atoms', 'all.atoms.added', 'n.removed', 'removed.non.atoms'))],
+       aes(x = reorder(atom, rate), y = rate)) +
+  geom_segment(aes(y = intercept,yend = rate, xend = atom, size = bug.count,
+                   color=ifelse(atom %in% c("added.non.atoms",'all.atoms.added'), "3", rate>intercept)),
+               show.legend=F) +
+  scale_size(range = c(0.3, 11)) +
+  geom_text(color="black", size=3, aes(label=round(ifelse(rate >= intercept, rate, 1/rate), digits=2), hjust = ifelse(rate >= intercept, -.3, 1.5))) +
+  scale_color_manual(values=c("#E69F00", "#56B4E9")) +
+  geom_hline(yintercept=intercept) +
+  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.4)) +
+  scale_y_log10(expand = c(0.1,0.2)) +
+  annotate("text", x=15, y=0.12, label='bold("Non-bug")', parse=TRUE, hjust=-0.05, size=5.0) +
+  annotate("text", x=15, y=2, label='bold("Bug")', parse=TRUE, hjust=-0.05, size=5.0) +
+  annotate("text", x=11.5, y=0.12, label="over((over(atoms[added],all-nodes[added]))[italic(bug)~~~~~~~~.],(over(atoms[added],all-nodes[added]))[italic(non-bug)])", parse=TRUE, hjust=-0.05, size=5.0) +
+  labs(title="Atoms added more in...", x="Relative Rate", y="Atom") +
+  coord_flip(ylim = c(0.2, 5))
