@@ -134,6 +134,7 @@ intercept <- 1
 atom.removed.rate.plot <-
 ggplot(atoms.removed.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed",'added.non.atoms','n.added', 'removed.non.atoms', 'all.atoms.removed'))],
        aes(x = reorder(display.atom, rate), y = rate)) +
+#  theme_classic() +
   geom_hline(yintercept=intercept) +
   geom_segment(aes(y = intercept, yend = rate, xend = display.atom, size = bug.count,
                    color=ifelse(atom %in% c("removed.non.atoms",'all.atoms.removed'), "3", rate>intercept)),

@@ -10,6 +10,14 @@
    [swiss.arrows :refer :all]
    [clojure.math.combinatorics :as combo]
    )
+(:import
+   [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition
+    IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement IASTName
+    IASTTranslationUnit IASTBinaryExpression IASTProblem IASTProblemHolder]
+   [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
+   [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
+   [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
+   )
   )
 
 (defn file-level-key? [key] (not (re-find #"atom" (str key))))
@@ -95,3 +103,19 @@
      (map prn)
      time-mins
      ))
+
+
+(->> "tmp/emacs_md5_01_0dc2e11dfd2b264679024d9939775a1ccebb13d8.c"
+     parse-file
+     flatten-tree count)
+     find-all-atoms
+     (map-values (partial map start-line))
+     (map prn))
+
+(->> "tmp/emacs_md5_02_76417ef426d826482699766064e66c06af6a07f7.c"
+     parse-file
+     flatten-tree count)
+     flatten-tree (filter (partial instance? IASTProblem)) count)
+     find-all-atoms
+     (map-values (partial map start-line))
+     (map prn))

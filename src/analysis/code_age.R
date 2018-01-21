@@ -12,7 +12,7 @@ code.age.wide <- code.age.wide[date > '1984-01-01' & date < '2018-01-01' & all.n
 code.age.wide <- code.age.wide[order(date)]
 code.age.wide[project=='linux-historical']$project <- 'linux'
 
-code.age.wide[project=='freebsd']
+code.age.wide[project=='emacs', .(date, all.nodes)]
 
 code.age <- melt(code.age.wide, id.vars=c("project", "date","rev.str", 'all.nodes'), variable.name="atom", value.name="count")
 
@@ -31,3 +31,9 @@ ggplot(code.age.all.atoms) +
   geom_text(aes(date, rate, label=paste("  ", project)), data=first.data, hjust=0, angle=0) +
   scale_color_manual(values = colorRampPalette(brewer.pal(9, "Set1"))(14))
 
+# Rolling stddev - https://rviews.rstudio.com/2017/07/18/introduction-to-rolling-volatility/
+
+code.age.all.atoms[, .(date, sd = rollapply(rate, 5, sd)), by=project]
+
+ggplot(code.age.all.atoms[, .(date, sd = rollapply(rate, 3, sd)), by=project]) +
+  geom_line(aes(date, sd, group=project))
