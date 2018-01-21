@@ -37,7 +37,7 @@ colors2 <- sap.qualitative.palette[c(3,4)]
 #colors2 <- RColorBrewer::brewer.pal(3, "Set3")[c(2,3)]
 set3 <- RColorBrewer::brewer.pal(12, "Set3")
 
-set2 <- 
+set2 <- RColorBrewer::brewer.pal(14, "Set1")
 set2.7 <- RColorBrewer::brewer.pal(7, "Set2")
 
 

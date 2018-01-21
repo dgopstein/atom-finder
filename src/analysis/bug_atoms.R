@@ -127,25 +127,29 @@ atoms.removed.rate.dt <-
              bug.count = t(atoms.removed.sums[bug==FALSE])[,1])
 
 atoms.removed.rate.dt[, rate := bug / no.bug]
+atoms.removed.rate.dt[, display.atom := convert.atom.names(atom)]
 
 intercept <- 1
+
+atom.removed.rate.plot <-
 ggplot(atoms.removed.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed",'added.non.atoms','n.added', 'removed.non.atoms', 'all.atoms.removed'))],
-       aes(x = reorder(atom, rate), y = rate)) +
+       aes(x = reorder(display.atom, rate), y = rate)) +
   geom_hline(yintercept=intercept) +
-  geom_segment(aes(y = intercept, yend = rate, xend = atom, size = bug.count,
+  geom_segment(aes(y = intercept, yend = rate, xend = display.atom, size = bug.count,
                    color=ifelse(atom %in% c("removed.non.atoms",'all.atoms.removed'), "3", rate>intercept)),
                show.legend=F) +
-  scale_size(range = c(0.3, 11)) +
+  scale_size(range = c(0.3, 10)) +
   geom_text(color="black", size=3, aes(label=round(ifelse(rate >= intercept, rate, 1/rate), digits=2), hjust = ifelse(rate >= intercept, -.3, 1.5))) +
   scale_color_manual(values=c("#E69F00", "#56B4E9")) +
-  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.4)) +
   scale_y_log10(expand = c(0.1,0.2)) +
-  annotate("text", x=14.5, y=0.12, label='bold("Non-bug")', parse=TRUE, hjust=-0.05, size=5.0) +
+  annotate("text", x=14.5, y=0.25, label='bold("Non-bug")', parse=TRUE, hjust=-0.05, size=5.0) +
   annotate("text", x=14.5, y=2, label='bold("Bug")', parse=TRUE, hjust=-0.05, size=5.0) +
-  annotate("text", x=11.5, y=0.12, label="over((over(atoms[removed],all-nodes[removed]))[italic(bug)~~~~~~~~.],(over(atoms[removed],all-nodes[removed]))[italic(non-bug)])", parse=TRUE, hjust=-0.05, size=5.0) +
-  labs(title="Atoms removed more in...", x="Relative Rate", y="Atom") +
-  coord_flip(ylim = c(0.2, 5))
+  #annotate("text", x=11.5, y=0.12, label="over((over(atoms[removed],all-nodes[removed]))[italic(bug)~~~~~~~~.],(over(atoms[removed],all-nodes[removed]))[italic(non-bug)])", parse=TRUE, hjust=-0.05, size=5.0) +
+  labs(title="Atoms removed more in...", x="Atom", y="Relative Rate of Removal") +
+  theme(axis.ticks.y=element_blank(), axis.text.x=element_blank()) +
+  coord_flip(ylim = c(1/3, 3))
 
+ggsave("img/atom_removed_rate.pdf", atom.removed.rate.plot, width=(width<-140), height=width*0.7, units = "mm")
 
 ###### Atoms added
 

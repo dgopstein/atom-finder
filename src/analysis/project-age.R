@@ -26,7 +26,9 @@ ggplot(project.age, aes(x=date, y=atoms, group=domain)) +
   geom_text(aes(label=project),hjust=0.5, vjust=-1)
 
 # atoms by project age
-atoms.by.project.age <- ggplot(project.age, aes(x=date, y=atoms)) +
+atoms.by.project.age <-
+  ggplot(project.age, aes(x=date, y=atoms)) +
+  theme_classic() +
   geom_smooth(method="lm", colour="black", size=0.5, se=FALSE, fullrange=TRUE) +
   geom_point(size=3, aes(colour=domain)) +
   geom_text(aes(label=project), size = 3, angle=-20, hjust=0, vjust=0.4, nudge_x=200, nudge_y=-0.00015) +
@@ -35,7 +37,11 @@ atoms.by.project.age <- ggplot(project.age, aes(x=date, y=atoms)) +
   scale_y_continuous(limits = c(.005, .024)) +
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.4), axis.ticks.x=element_blank()) +
   scale_colour_manual(values = sap.qualitative.palette) +
+  annotate("text", x=as.Date('1998-01-01'), y=0.019, label="R^2=='0.10'", parse=TRUE, hjust=0.0, size=4.0) +
   labs(x = "Date", y = "Atom Rate")
 
 ggsave("img/atoms_by_project_age.pdf", atoms.by.project.age, width=(width<-138), height=width*0.65, units = "mm")
+
+summary(lm(atoms ~ date, data=project.age))
+summary(lm(atoms ~ date + domain, data=project.age))
 

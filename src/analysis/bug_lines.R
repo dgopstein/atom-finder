@@ -150,7 +150,7 @@ names(atom.rates.bug.change) <- c("atom", "rate", "count.no.bug", "count.bug")
 atom.rates.bug.change[, atom := convert.atom.names(atom)]
 atom.rates.bug.change$atom <- with(atom.rates.bug.change, reorder(atom, rate))
 
-atom.bug.rate.relative <- ggplot(atom.rates.bug.change[!is.nan(rate) & atom!="Non-Atom"], aes(atom, rate)) +
+atom.line.bug.rate.relative <- ggplot(atom.rates.bug.change[!is.nan(rate) & atom!="Non-Atom"], aes(atom, rate)) +
   #theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.4)) +
   theme(axis.text.x=element_blank()) +
   theme(axis.ticks=element_blank(), axis.line.x=element_blank()) +
@@ -164,7 +164,7 @@ atom.bug.rate.relative <- ggplot(atom.rates.bug.change[!is.nan(rate) & atom!="No
   scale_colour_manual(values = colors2) +
   coord_flip()
 
-ggsave("img/atom_bug_rate_relative.pdf", atom.bug.rate.relative, width=(width<-140), height=width*0.6, units = "mm")
+ggsave("img/atom_bug_rate_relative.pdf", atom.line.bug.rate.relative, width=(width<-140), height=width*0.6, units = "mm")
 
 
 ################################
@@ -172,7 +172,7 @@ ggsave("img/atom_bug_rate_relative.pdf", atom.bug.rate.relative, width=(width<-1
 ################################
 
 atom.rates.bug.change[, count := count.no.bug + count.bug]
-atom.bug.rate <-
+atom.line.bug.rate <-
   ggplot(atom.rates.bug.change, aes(atom, rate)) +
   theme_gray() +
   geom_bar(aes(fill = atom!="Non-Atom", width=0.18*log(0.01*(count+200))), stat="identity") +
@@ -183,9 +183,9 @@ atom.bug.rate <-
   #labs(title = "Comment Rates Inside Functions") +
   guides(fill=FALSE) +
   labs(x = "Atom", y="Bug-fix Commit Rate")
-atom.bug.rate
+atom.line.bug.rate
 
-ggsave("img/atom_bug_rate.pdf", atom.bug.rate, width=(width<-140), height=width*0.7, units = "mm")
+ggsave("img/atom_line_bug_rate.pdf", atom.line.bug.rate, width=(width<-140), height=width*0.7, units = "mm")
 
 
 ## The least frequent, most bug-predictive atoms
