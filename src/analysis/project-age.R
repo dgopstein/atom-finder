@@ -40,6 +40,7 @@ atoms.by.project.age <-
   scale_colour_manual(values = domain.colors) +
   annotate("text", x=as.Date('1998-01-01'), y=0.019, label="r==-0.32", parse=TRUE, hjust=0.0, size=4.0) +
   labs(x = "Date", y = "Atom Rate")
+atoms.by.project.age
 
 ggsave("img/atoms_by_project_age.pdf", atoms.by.project.age, width=(width<-138), height=width*0.65, units = "mm")
 

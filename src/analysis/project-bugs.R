@@ -21,17 +21,17 @@ project.bugs.plot <- ggplot(cve.atom.counts, aes(x=atom.rate, y=bug.rate, group=
   theme_classic() +
   geom_path(aes(color = domain), size=1.2) +
   geom_point(size=2.0) + # aes(size=log(cve_rate))) +
-  geom_text(aes(label=X.project)) +
+  geom_text(aes(label=paste(" ", X.project)), hjust=0) +
   #geom_text(aes(label=project, hjust=ifelse(atom.rate>0.02, 1.7, 0)), vjust=0.4, nudge_x = 0.0005) +
-  #scale_x_continuous(expand = c(0.001, 0.001)) +
+  scale_x_continuous(limits = c(0.005, 0.027)) +
   scale_y_log10(expand = c(0.1, 0.1)) +
   scale_colour_manual(values = domain.colors) +
   ggtitle("Bugs") +
-  labs(x = "Atom rate", y="Bugs per day", color="Domain") +
+  labs(x = "Atom rate", y="Bugs per day (log)", color="Domain") +
   theme(legend.position = c(0.85, 0.70))
 project.bugs.plot
 
-ggsave("img/project_bugs.pdf", project.bugs.plot, width=(width<-138), height=width*0.90, units = "mm")
+ggsave("img/project_bugs.pdf", project.bugs.plot, width=(width<-90), height=width*1.10, units = "mm")
 
 
 # Is there a correlation between atoms and cves within domain

@@ -31,6 +31,11 @@ convert.atom.names <- function(names) unlist(sapply(names, function(name) {
   }))
 
 domain.levels <- c("os", "browser", "compiler", "db", "vcs", "editor", "webserver")
+domain.abbrev <- c("os ", "br", "cm", "db", "vc", "ed", "ws")
+
+domain.lookup <- data.table(name = domain.levels, abbrev = domain.abbrev)
+
+convert.domain.abbrev <- function(domain) domain.lookup[name==domain]$abbrev
 
 # https://experience.sap.com/fiori-design-web/values-and-names/
 sap.qualitative.palette <- c('#5cbae6', '#b6d957', '#fac364', '#8cd3ff', '#d998cb', '#f2d249', '#93b9c6')
