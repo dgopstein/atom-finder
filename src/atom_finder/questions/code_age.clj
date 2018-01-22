@@ -201,3 +201,26 @@
    time-mins
    ))
 
+;; Find biggest changes from one snapshot to the next
+'((->>
+   "tmp/code-age_all_2018-01-15_02_with-project.edn"
+   read-lines
+   (filter (comp #{"emacs"} :project))
+   (filter #(-<>> % :date year-month first (<= 2010 <> 2015)))
+   (def emacs-2010-2015)))
+'((->>
+   emacs-2010-2015
+   (map #(let [all-atoms (- (-> % :atoms :all-nodes) (-> % :atoms :non-atoms))
+               all-nodes (-> % :atoms :all-nodes)]
+           {:date (-> % :date) :path (-> % :path)
+            :rev-str (-> % :rev-str)
+            :rate (safe-div all-atoms all-nodes)
+            :all-atoms all-atoms
+            :all-nodes all-nodes}))
+   (group-dissoc :path)
+   (max-n-by 10 (fn [[k v]] (->> v (map :rate) ((juxt max-of min-of)) (apply -))))
+   (map prn)
+   time-mins
+   )
+  )
+

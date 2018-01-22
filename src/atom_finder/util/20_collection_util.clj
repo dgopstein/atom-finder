@@ -89,15 +89,26 @@
 
 (defn avg [seq1] (/ (reduce + seq1) (count seq1)))
 
-(defn min-of [lst]
+(defn min-of
   "Min with a list argument"
+  [lst]
   (if (empty? lst) nil
     (apply min lst)))
 
-(defn max-of [lst]
+(defn max-of
   "Max with a list argument"
+  [lst]
   (if (empty? lst) nil
     (apply max lst)))
+
+(def max-by (partial apply max-key))
+(def min-by (partial apply min-key))
+
+(defn max-n-by
+  "Find the n largest elements by f"
+  [n f lst]
+  (let [not-smallest (fn [acc x] (->> [(f x) x] (conj acc) (sort-by first) rest))]
+    (reduce not-smallest (repeat n [0 nil]) lst)))
 
 (defn group-dissoc
   "Group a list of maps by a key, then dissoc that key"

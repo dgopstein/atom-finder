@@ -174,6 +174,9 @@
            {"good1" 1, "good2" 2}))
     )
 
+  (testing "max-n-by"
+    (is (= [-9 -10 12] (max-n-by 3 #(* % %) [-10 3 5 -5 12 -9 -8]))))
+
   (testing "if-let*"
     (is (= 2 (if-let* [a 1] 2 3)))
     (is (= 3 (if-let* [a nil] 2 3)))
