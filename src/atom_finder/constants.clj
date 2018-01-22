@@ -14,7 +14,11 @@
 (def   gcc-repo (some->>   gcc-path gitp/load-repo))
 (def linux-repo (some->> linux-path gitp/load-repo))
 
+(def atom-finder-path (some->> :atom-finder-path cfg/get expand-home))
+
 (def root (parse-resource "logic-as-control-flow.c"))
 
 (def big-root     (when gcc-path (->> "/gcc/config/i386/i386.c" (str gcc-path) parse-file)))
 (def github-top-c (some->> :github-top-c cfg/get expand-home))
+
+(def linux-path (some->> :linux-path cfg/get expand-home))
