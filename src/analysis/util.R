@@ -30,6 +30,8 @@ convert.atom.names <- function(names) unlist(sapply(names, function(name) {
   ifelse(is.null(new.name), "Non-Atom", new.name)
   }))
 
+domain.levels <- c("os", "browser", "compiler", "db", "vcs", "editor", "webserver")
+
 # https://experience.sap.com/fiori-design-web/values-and-names/
 sap.qualitative.palette <- c('#5cbae6', '#b6d957', '#fac364', '#8cd3ff', '#d998cb', '#f2d249', '#93b9c6')
 
@@ -39,7 +41,7 @@ set3 <- RColorBrewer::brewer.pal(12, "Set3")
 
 set2 <- RColorBrewer::brewer.pal(14, "Set1")
 set2.7 <- RColorBrewer::brewer.pal(7, "Set2")
-
+domain.colors <- RColorBrewer::brewer.pal(8, "Set2")[-7]
 
 no.clip <- function(p) {
   print(p)

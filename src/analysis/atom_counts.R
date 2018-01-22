@@ -16,7 +16,7 @@ proj.order <- c("linux", "freebsd", "gecko-dev", "webkit",
   "gcc", "clang", "mongo", "mysql-server", "subversion", "git",
   "emacs", "vim", "httpd", "nginx")
 proj.domain <- factor(c("os", "os", "browser", "browser", "compiler", "compiler", "db", "db", "vcs", "vcs", "editor", "editor", "webserver", "webserver"),
-                      levels=c("os", "browser", "compiler", "db", "vcs", "editor", "webserver"),
+                      levels=domain.levels,
                       ordered=TRUE)
 atom.counts <- atom.counts[match(proj.order, atom.counts$project),]
 atom.counts$domain <- proj.domain
@@ -63,25 +63,31 @@ proj.to.domain <- as.list(as.character(proj.domain))
 names(proj.to.domain) <- proj.order
 
 atom.rates.clustered <- data.table(melt(atom.rates.mat[h$rowInd,h$colInd], varnames=c("project", "atom"), value.name = "rate"))
-atom.rates.clustered$domain <- unlist(proj.to.domain[as.character(atom.rates.clustered$project)])
+atom.rates.clustered$domain <- factor(unlist(proj.to.domain[as.character(atom.rates.clustered$project)]), domain.levels)
 atom.rates.clustered[, atom := convert.atom.names(atom)]
+
+clustered.project.order <- rev(rownames(atom.rates.mat[h$rowInd,]))
+clustered.atom.order <- rev(convert.atom.names(colnames(atom.rates.mat[,h$colInd])))
 
 atom.rate.per.project.clustered <-
   ggplot(data=atom.rates.clustered, aes(project, atom)) +
+  theme_classic() +
   geom_point(colour="black", aes(size=1)) +
   geom_point(colour="white", aes(size=0.8)) +
   geom_point(aes(size = 0.81*rate, colour=domain)) +
-  scale_size_continuous(range = c(-.4,6)) +
-  scale_colour_manual(values = set2.7) +
+  scale_size_continuous(range = c(-.4,7)) +
+  scale_colour_manual(values = domain.colors) +
   theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.4), axis.ticks.x=element_blank()) +
   theme(axis.ticks.y=element_blank(), axis.title.y=element_blank()) +
   theme(axis.line=element_blank()) +
   theme(legend.position="none") +
-  scale_y_discrete(limits=rev(convert.atom.names(colnames(atom.rates.mat[,h$colInd])))) +
-  scale_x_discrete(limits=rev(rownames(atom.rates.mat[h$rowInd,]))) +
+  scale_y_discrete(limits=clustered.atom.order) +
+  scale_x_discrete(limits=clustered.project.order) +
+                   #, labels=paste(clustered.project.order, substring(proj.to.domain[clustered.project.order],1,3), sep=' - ')) +
   labs(x="Project")
+atom.rate.per.project.clustered
 
-ggsave("img/atom_rate_per_project_clustered.pdf", atom.rate.per.project.clustered, width=(width<-130), height=width*0.88, units = "mm")
+ggsave("img/atom_rate_per_project_clustered.pdf", atom.rate.per.project.clustered, width=(width<-128), height=width*0.91, units = "mm")
 
 ############################
 #  all projects combined
