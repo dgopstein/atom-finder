@@ -48,3 +48,11 @@ no.clip <- function(p) {
   grid::grid.draw(gt)
   gt
 }
+
+effect.size <- c(0.52, 0.30, 0.36, 0.24, 0.63, 0.48, 0.53, 0.22, 0.33, 0.45, 0.28, 0.54, 0.22, 0.40, 0.42)
+
+atom.effect.sizes <- as.data.table(cbind.data.frame(atom = c("assignment.as.value", "comma.operator", "conditional", "implicit.predicate", "literal.encoding", "logic.as.control.flow",
+                                               "macro.operator.precedence", "omitted.curly.braces", "operator.precedence", "post.increment", "pre.increment", "preprocessor.in.statement",
+                                               "repurposed.variable", "reversed.subscript", "type.conversion"),
+                                      effect.size))
+

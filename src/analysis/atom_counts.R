@@ -105,13 +105,8 @@ all.atom.ast.rate <- all.atom.counts[, (all.nodes - non.atoms) / all.nodes]
 #  all atoms by effect size
 ##################################
 
-atom.names <- unlist(atom.name.conversion[c("assignment.as.value", "comma.operator", "conditional", "implicit.predicate", "literal.encoding", "logic.as.control.flow",
-  "macro.operator.precedence", "omitted.curly.braces", "operator.precedence", "post.increment", "pre.increment", "preprocessor.in.statement",
-  "repurposed.variable", "reversed.subscript", "type.conversion")])
+atom.effect <- merge(all.atom.rates, atom.effect.sizes[, .(atom = convert.atom.names(atom), effect.size)])
 
-effect.size <- c(0.52, 0.30, 0.36, 0.24, 0.63, 0.48, 0.53, 0.22, 0.33, 0.45, 0.28, 0.54, 0.22, 0.40, 0.42)
-
-atom.effect <- merge(all.atom.rates, cbind.data.frame(atom = atom.names, effect.size))
 confusingness.vs.prevalence.correlation <- with(atom.effect, cor(rate, effect.size)) # correlation: -0.45
 
 confusingness.vs.prevalence <-

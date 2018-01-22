@@ -76,7 +76,6 @@ ggplot(removed.rate[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed"
   labs(title="Atoms removed more in...", x="Relative Rate", y="Atom") +
   coord_flip(ylim = c(0.2, 5))
 
-
 ### (rem[bug]/rem[non-bug]) & (add[bug]/add[non-bug])
 
 atoms.removed.bugs.over.non.bugs <- data.table(t(atoms.removed.rate[bug==TRUE] / atoms.removed.rate[bug==FALSE]), removed=TRUE, keep.rownames = TRUE)[rn %in% atom.names.key]
@@ -131,15 +130,17 @@ atoms.removed.rate.dt[, display.atom := convert.atom.names(atom)]
 
 intercept <- 1
 
+only.atoms.removed.rate.dt <- atoms.removed.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed",'added.non.atoms','n.added', 'removed.non.atoms', 'all.atoms.removed'))]
+
 atom.removed.rate.plot <-
-ggplot(atoms.removed.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed",'added.non.atoms','n.added', 'removed.non.atoms', 'all.atoms.removed'))],
+ggplot(only.atoms.removed.rate.dt,
        aes(x = reorder(display.atom, rate), y = rate)) +
 #  theme_classic() +
   geom_hline(yintercept=intercept) +
   geom_segment(aes(y = intercept, yend = rate, xend = display.atom, size = bug.count,
                    color=ifelse(atom %in% c("removed.non.atoms",'all.atoms.removed'), "3", rate>intercept)),
                show.legend=F) +
-  scale_size(range = c(0.3, 10)) +
+  scale_size(range = c(0.3, 8)) +
   geom_text(color="black", size=3, aes(label=round(ifelse(rate >= intercept, rate, 1/rate), digits=2), hjust = ifelse(rate >= intercept, -.3, 1.5))) +
   scale_color_manual(values=c("#E69F00", "#56B4E9")) +
   scale_y_log10(expand = c(0.1,0.2)) +
@@ -151,6 +152,12 @@ ggplot(atoms.removed.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.removed","n
   coord_flip(ylim = c(1/3, 3))
 
 ggsave("img/atom_removed_rate.pdf", atom.removed.rate.plot, width=(width<-140), height=width*0.7, units = "mm")
+
+bug.effect <- merge(only.atoms.removed.rate.dt, atom.effect.sizes, by='atom')
+
+ggplot(bug.effect) +
+  geom_point(aes(effect.size, rate))# +
+  geom_text(aes(effect.size, rate, label=atom), hjust=0)
 
 ###### Atoms added
 
