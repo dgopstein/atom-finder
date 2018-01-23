@@ -24,18 +24,18 @@
 '((->>
    (commits-with
     gcc-repo
-    "9ab8ac2684b1553dbd9bb656751515a3fb5c218c"
+    "7deea7116aa99887d0a6524777c53e38015e1b50"
     (fn [rev-commit]
       (->> rev-commit
            :srcs
            (filter #(and (:atoms-before %) (:atoms-after %)))
-           (pmap #(log-timeout 200 (str "added-atom-count " (select-keys % [:rev-str :file])) (added-removed-atoms-count %)))
+           (pmap #(log-timeout 400 (str "added-atom-count " (select-keys % [:rev-str :file])) (added-removed-atoms-count %)))
            (remove empty?)
            (map prn)
            dorun
-          (log-err "atom-committers " {})
+           (log-err "atom-committers " {})
           )))
-       (log-to "tmp/atom-committers_gcc_2018-01-07_02_continuation.edn")
+       (log-to "tmp/atom-committers_gcc_2018-01-07_01-added-removed_3_continued.edn")
        time-mins
        ))
 
