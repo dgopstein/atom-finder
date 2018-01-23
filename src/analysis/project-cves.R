@@ -17,23 +17,26 @@ cves.atoms <- merge(project.cves, atom.counts[, .(project=X.project, fair.rate, 
 
 
 #projects.high.rate <- project.cves[project.cves, on="domain"][project != i.project & cve_rate > 1 & i.cve_rate > 1]
+cves.atoms[, domain := factor(as.character(domain), c("os", "browser", "compiler", "db", "vcs", "editor", "webserver"))]
 
 project.cves.plot <- ggplot(cves.atoms, aes(x=atom.rate, y=cves.per.year, group=domain)) +
   theme_classic() +
   geom_path(aes(color = domain), size=1.2) +
   geom_point(size=2.0) + # aes(size=log(cve_rate))) +
-  geom_text(aes(label=project)) +
+  geom_text(aes(label=paste(" ", project)), hjust=0, angle=25) +
   #geom_text(aes(label=project, hjust=ifelse(atom.rate>0.02, 1.7, 0)), vjust=0.4, nudge_x = 0.0005) +
-  #scale_x_continuous(expand = c(0.001, 0.001)) +
-  scale_y_log10(expand = c(0.1, 0.1)) +
-  # scale_colour_manual(values = sap.qualitative.palette[c(1,2,3,5)],
-  #                     labels=c("Database", "Editor", "OS", "Server")) +
+  scale_x_continuous(limits = c(0.005, 0.025), breaks=c(.01,.02)) +
+  scale_y_log10(limits = c(0.15, 200)) +
+  scale_colour_manual(values = domain.colors) +
   ggtitle("CVEs") +
-  labs(x = "Atom rate", y="CVEs per year\n[log scale]", color="Domain") +
+  labs(x = "Atom rate", y="CVEs per year (log)", color="Domain") +
+  guides(colour=FALSE) +
   theme(legend.position = c(0.85, 0.70))
 project.cves.plot
 
-ggsave("img/project_cves.pdf", project.cves.plot, width=(width<-138), height=width*0.60, units = "mm")
+ggsave("img/project_cves.pdf", project.cves.plot, width=(width<-90), height=width*1.10, units = "mm")
+
+
 binom.test(8,14, alternative = "greater")
 binom.test(7,14, alternative = "greater")
 

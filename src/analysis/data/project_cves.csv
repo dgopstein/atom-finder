@@ -10,6 +10,6 @@ mysql-server,db,247,1998
 subversion,vcs,39,2010
 emacs,editor,22,2000
 git,vcs,10,2006
-httpd,server,220,1996
-nginx,server,14,2009
+httpd,webserver,220,1996
+nginx,webserver,14,2009
 vim,editor,17,2008
