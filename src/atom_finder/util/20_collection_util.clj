@@ -107,8 +107,10 @@
 (defn max-n-by
   "Find the n largest elements by f"
   [n f lst]
-  (let [not-smallest (fn [acc x] (->> [(f x) x] (conj acc) (sort-by first) rest))]
-    (reduce not-smallest (repeat n [0 nil]) lst)))
+  (let [not-smallest (fn [acc x] (->> [(f x) x] (conj acc) (sort-by (juxt first (comp #(if (nil? %) 0 1) second))) rest))]
+    (->> lst
+         (reduce not-smallest (repeat n [0 nil]))
+         (map last))))
 
 (defn group-dissoc
   "Group a list of maps by a key, then dissoc that key"
