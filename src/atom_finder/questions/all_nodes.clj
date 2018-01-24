@@ -35,12 +35,12 @@
        ))
 
 '((->>
-   "tmp/all-node-counts.edn"
+   "tmp/all-node-counts_2018-01-22_opname.edn"
    read-lines
    (map (partial-right dissoc :file))
    (apply merge-with +)
    (sort-by (comp - last))
    (map (partial zipmap [:node-type :count]))
-   (maps-to-csv "tmp/all-node-counts.csv")
+   (maps-to-csv "tmp/all-node-counts_2018-01-22_opname.csv")
    time-mins
    ))
