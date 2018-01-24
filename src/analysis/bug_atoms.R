@@ -138,21 +138,24 @@ ggplot(only.atoms.removed.rate.dt,
        aes(x = display.atom, y = rate)) +
   theme_minimal() +
 #  theme_classic() +
-  geom_hline(yintercept=intercept) +
   geom_segment(aes(y = intercept, yend = rate, xend = display.atom, size = bug.count,
-                   color=ifelse(atom %in% c("removed.non.atoms",'all.atoms.removed'), "3", rate>intercept)),
+                   color=rate>intercept),
                show.legend=F) +
-  scale_size(range = c(0.3, 9)) +
-  geom_text(color="black", size=3, aes(label=round(ifelse(rate >= intercept, rate, 1/rate), digits=2), hjust = ifelse(rate >= intercept, -.3, 1.5))) +
-  scale_color_manual(values=colors2) +
+  geom_hline(yintercept=intercept) +
+  scale_size(range = c(0.3, 7.2)) +
+  geom_segment(aes(xend=display.atom, y=rate*ifelse(rate >= intercept, 1.05, 1/1.05), yend=rate*ifelse(rate >= intercept, 1.45, 1/1.45)),
+               size=2, color="white") +
+  geom_text(aes(label=ifelse(rate >= intercept, sprintf("          %0.2f", rate), sprintf("%0.2f          ", 1/rate))),
+            color="black", size=3, vjust=0.4) +
+  scale_color_manual(values=c(colors2, 'red')) +
   scale_y_log10(position="top", labels=c("Non-bugs", "Bugs"), breaks=c(.47, 1.7)) +
   labs(x="Atom", y="Atoms removed more often in...") +
   theme(axis.ticks.y=element_blank(), axis.text.y=element_text(vjust=0.4),
         panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
-  coord_flip(ylim = c(0.27, 2.5))
+  coord_flip(ylim = c(0.23, 2.8))
 atom.removed.rate.plot
 
-ggsave("img/atom_removed_rate.pdf", atom.removed.rate.plot, width=(width<-140), height=width*0.8, units = "mm")
+ggsave("img/atom_removed_rate.pdf", atom.removed.rate.plot, width=(width<-110), height=width*0.8, units = "mm")
 
 bug.effect <- merge(only.atoms.removed.rate.dt, atom.effect.sizes, by='atom')
 
