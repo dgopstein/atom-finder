@@ -131,10 +131,11 @@ atoms.removed.rate.dt[, display.atom := convert.atom.names(atom)]
 intercept <- 1
 
 only.atoms.removed.rate.dt <- atoms.removed.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed",'added.non.atoms','n.added', 'removed.non.atoms', 'all.atoms.removed'))]
+only.atoms.removed.rate.dt[, display.atom := reorder(display.atom, rate)]
 
 atom.removed.rate.plot <-
 ggplot(only.atoms.removed.rate.dt,
-       aes(x = reorder(display.atom, rate), y = rate)) +
+       aes(x = display.atom, y = rate)) +
   theme_minimal() +
 #  theme_classic() +
   geom_hline(yintercept=intercept) +
@@ -144,13 +145,11 @@ ggplot(only.atoms.removed.rate.dt,
   scale_size(range = c(0.3, 9)) +
   geom_text(color="black", size=3, aes(label=round(ifelse(rate >= intercept, rate, 1/rate), digits=2), hjust = ifelse(rate >= intercept, -.3, 1.5))) +
   scale_color_manual(values=colors2) +
-  scale_y_log10(expand = c(0.1,0.2)) + #, breaks=2^seq(-4, 4)) +
-  annotate("text", x=14.4, y=0.45, label='bold("Non-bug")', parse=TRUE, hjust=-0.05, size=5.0) +
-  annotate("text", x=14.4, y=1.75, label='bold("Bug")', parse=TRUE, hjust=-0.05, size=5.0) +
-  #annotate("text", x=11.5, y=0.12, label="over((over(atoms[removed],all-nodes[removed]))[italic(bug)~~~~~~~~.],(over(atoms[removed],all-nodes[removed]))[italic(non-bug)])", parse=TRUE, hjust=-0.05, size=5.0) +
-  labs(title="Atoms removed more in...", x="Atom", y="Relative Rate of Removal") +
-  theme(axis.ticks.y=element_blank(), axis.text.y=element_text(vjust=0.4), axis.text.x=element_blank()) +
-  coord_flip(ylim = c(2/3, 2.1))
+  scale_y_log10(position="top", labels=c("Non-bugs", "Bugs"), breaks=c(.47, 1.7)) +
+  labs(x="Atom", y="Atoms removed more often in...") +
+  theme(axis.ticks.y=element_blank(), axis.text.y=element_text(vjust=0.4),
+        panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
+  coord_flip(ylim = c(0.27, 2.5))
 atom.removed.rate.plot
 
 ggsave("img/atom_removed_rate.pdf", atom.removed.rate.plot, width=(width<-140), height=width*0.8, units = "mm")
@@ -193,3 +192,4 @@ ggplot(atoms.added.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.added","n.add
   annotate("text", x=11.5, y=0.12, label="over((over(atoms[added],all-nodes[added]))[italic(bug)~~~~~~~~.],(over(atoms[added],all-nodes[added]))[italic(non-bug)])", parse=TRUE, hjust=-0.05, size=5.0) +
   labs(title="Atoms added more in...", x="Relative Rate", y="Atom") +
   coord_flip(ylim = c(0.2, 5))
+
