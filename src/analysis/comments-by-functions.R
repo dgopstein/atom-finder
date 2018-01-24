@@ -156,13 +156,14 @@ individual.comment.rates.all.proj.in.fun[, median(odds, na.rm=TRUE)]
 
 individual.comment.rates.all.proj.in.fun.plot <-
   ggplot(individual.comment.rates.all.proj.in.fun, aes(atom, comment.rate)) +
-  theme_gray() +
+  theme_minimal() +
   #geom_bar(aes(fill = any.atom), stat="identity") +
   geom_bar(aes(fill = any.atom, width=0.099*log(0.001*(ifelse(count < 10^8, count, 10^8) +1000))), stat="identity") +
   geom_text(aes(label=ifelse(is.na(odds), '', sprintf('%0.2f', round(odds, 2)))), angle = 90, vjust=0.5, hjust=-0.3, size=3) +
   coord_cartesian(ylim = c(0, 0.13)) +
-  scale_fill_manual(values = colors2) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  scale_fill_manual(values = rev(colors2)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        panel.grid.major.x = element_blank()) +
   #labs(title = "Comment Rates Inside Functions") +
   guides(fill=FALSE) +
   labs(x = "Atom", y="Comment Rate")

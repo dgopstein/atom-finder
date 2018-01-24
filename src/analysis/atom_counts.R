@@ -100,6 +100,7 @@ all.atom.rates <- data.frame(atom = unlist(atom.name.conversion[names(all.atom.r
 atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, -rate), y = rate)) + geom_bar(stat="identity") +
   theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.4)) +
   labs(x="Atom", y="Occurrence Rate")
+atom.occurrence.rate
 
 ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-130), height=width*0.88, units = "mm")
 
@@ -117,17 +118,18 @@ confusingness.vs.prevalence.correlation <- with(atom.effect, cor(rate, effect.si
 
 confusingness.vs.prevalence <-
   ggplot(atom.effect, aes(effect.size, rate)) +
-  geom_point(size=2.5, color=sap.qualitative.palette[5]) +
-  geom_smooth(method="lm", se=FALSE, fullrange=TRUE, color=sap.qualitative.palette[1]) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
+  geom_point(size=2.5, color=colors2dark[2]) +
+  geom_smooth(method="lm", se=FALSE, fullrange=TRUE, color=colors2dark[1]) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   scale_x_continuous(limits = c(0.2, 0.75)) +
-  scale_y_log10(expand = c(0.2, 0)) +
+  scale_y_log10(limits = c(5*10^-8, 9*10^-3)) +
   geom_text(aes(label=atom), hjust=-0.1, angle=-14, size=3) +
   theme(axis.text.x=element_text(angle=90, hjust=1)) +
-  annotate("text", x=0.55, y=0.01, label=paste0("r = ", round(confusingness.vs.prevalence.correlation, 2))) +
+  annotate("text", x=0.35, y=3*10^-6, label=paste0("r = ", round(confusingness.vs.prevalence.correlation, 2))) +
   #ggtitle("Confusingness vs Prevalence", subtitle="Do less confusing patterns occur more often?") +
-  labs(x="Effect Size\n(amount of confusion)", y="Occurrence Rate\n[log scaled]")
+  labs(x="Effect Size", y="Occurrence Rate (log)")
+confusingness.vs.prevalence
 
-ggsave("img/confusingness_vs_prevalence.pdf", confusingness.vs.prevalence, width=(width<-150), height=width*0.89, units = "mm")
+ggsave("img/confusingness_vs_prevalence.pdf", confusingness.vs.prevalence, width=(width<-150), height=width*0.8, units = "mm")
 
 ################################################
 #  all projects by raw confusion of C question

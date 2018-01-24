@@ -40,13 +40,16 @@ convert.domain.abbrev <- function(domain) domain.lookup[name==domain]$abbrev
 # https://experience.sap.com/fiori-design-web/values-and-names/
 sap.qualitative.palette <- c('#5cbae6', '#b6d957', '#fac364', '#8cd3ff', '#d998cb', '#f2d249', '#93b9c6')
 
-colors2 <- sap.qualitative.palette[c(3,4)]
 #colors2 <- RColorBrewer::brewer.pal(3, "Set3")[c(2,3)]
 set3 <- RColorBrewer::brewer.pal(12, "Set3")
 
-set2 <- RColorBrewer::brewer.pal(14, "Set1")
+set2 <- RColorBrewer::brewer.pal(8, "Set2")
 set2.7 <- RColorBrewer::brewer.pal(7, "Set2")
 domain.colors <- RColorBrewer::brewer.pal(8, "Set2")[-7]
+colors2 <- set2[c(3,6)]
+colors2dark <- set2[c(3,4)]
+
+
 
 no.clip <- function(p) {
   print(p)
