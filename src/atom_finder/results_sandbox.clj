@@ -93,16 +93,19 @@
 (defn count-adjacent [a]
   (- (count a) (count (dedupe a))))
 
-'((->> (range 7)
-     (repeat 2)
-     flatten
-     combo/permutations
-     (map count-adjacent)
-     frequencies
-     sort
-     (map prn)
-     time-mins
-     ))
+'((->> (range 8)
+       (map
+        #(->> (range (pap %))
+              (repeat 2)
+              flatten
+              combo/permutations
+              (map count-adjacent)
+              frequencies
+              (sort-by first)
+              pprint
+              time-mins
+              ))))
+
 
 (->> "tmp/emacs_md5_01_0dc2e11dfd2b264679024d9939775a1ccebb13d8.c"
      parse-file
