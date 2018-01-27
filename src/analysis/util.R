@@ -30,16 +30,32 @@ convert.atom.names <- function(names) unlist(sapply(names, function(name) {
   ifelse(is.null(new.name), "Non-Atom", new.name)
   }))
 
+domain.levels <- c("os", "browser", "compiler", "db", "vcs", "editor", "webserver")
+domain.abbrev <- c("os ", "br", "cm", "db", "vc", "ed", "ws")
+
+domain.lookup <- data.table(name = domain.levels, abbrev = domain.abbrev)
+
+convert.domain.abbrev <- function(domain) domain.lookup[name==domain]$abbrev
+
 # https://experience.sap.com/fiori-design-web/values-and-names/
 sap.qualitative.palette <- c('#5cbae6', '#b6d957', '#fac364', '#8cd3ff', '#d998cb', '#f2d249', '#93b9c6')
 
-colors2 <- sap.qualitative.palette[c(3,4)]
 #colors2 <- RColorBrewer::brewer.pal(3, "Set3")[c(2,3)]
 set3 <- RColorBrewer::brewer.pal(12, "Set3")
 
-set2 <- 
+set2 <- RColorBrewer::brewer.pal(8, "Set2")
 set2.7 <- RColorBrewer::brewer.pal(7, "Set2")
+domain.colors <- RColorBrewer::brewer.pal(8, "Set2")[-7]
+colors2 <- set2[c(3,6)]
+colors2dark <- set2[c(3,4)]
 
+# https://gist.github.com/Jfortin1/72ef064469d1703c6b30
+lighten <- function(color, factor=1.4){
+  col <- col2rgb(color)
+  col <- pmin(col*factor, 255)
+  col <- rgb(t(col), maxColorValue=255)
+  col
+}
 
 no.clip <- function(p) {
   print(p)
@@ -48,3 +64,11 @@ no.clip <- function(p) {
   grid::grid.draw(gt)
   gt
 }
+
+effect.size <- c(0.52, 0.30, 0.36, 0.24, 0.63, 0.48, 0.53, 0.22, 0.33, 0.45, 0.28, 0.54, 0.22, 0.40, 0.42)
+
+atom.effect.sizes <- as.data.table(cbind.data.frame(atom = c("assignment.as.value", "comma.operator", "conditional", "implicit.predicate", "literal.encoding", "logic.as.control.flow",
+                                               "macro.operator.precedence", "omitted.curly.braces", "operator.precedence", "post.increment", "pre.increment", "preprocessor.in.statement",
+                                               "repurposed.variable", "reversed.subscript", "type.conversion"),
+                                      effect.size))
+

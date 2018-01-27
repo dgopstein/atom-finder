@@ -7,6 +7,7 @@
    [clj-jgit.querying  :as gitq]
    [atom-finder.patch :refer :all]
    [atom-finder.atom-patch :refer :all]
+   [atom-finder.classifier :refer :all]
    [atom-finder.commits-added-removed :refer :all]
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
@@ -63,15 +64,29 @@
    time-mins
    ))
 
+'((prn (now)))
 '((->>
    (commits-with
     gcc-repo
     (fn [rev-commit]
       (doseq [commit (:srcs rev-commit)]
         (prn
-         (log-err (str "atoms-added-removed-in-bugs" (:rev-str commit)) {} ;todo rev-str isn't working here?
+         (log-err (str "atoms-added-removed-in-bugs " (:rev-str commit)) {} ;todo rev-str isn't working here?
                   (merge (with-timeout 400 (added-removed-atoms-count commit))
                          {:n-bugs (->> commit :rev-commit bugzilla-ids count)}))))))
-    (log-to "tmp/atoms-added-removed-in-bugs_gcc_2018-01-11_01.txt")
-    time-mins
+    (log-to "tmp/atoms-added-removed-in-bugs_gcc_2018-01-11_01.txt") time-mins
     ))
+
+'((->> "tmp/atoms-added-removed-in-bugs_gcc_2018-01-11_01.txt"
+       read-lines
+       (filter :added-non-atoms)
+       (map #(merge % {:n-added   (+ (:added-non-atoms %)   (sum (vals (:added-atoms %))))
+                       :n-removed (+ (:removed-non-atoms %) (sum (vals (:removed-atoms %))))}))
+       (map (partial-right split-map-by-keys [:added-atoms] [:removed-atoms]))
+       (map (fn [[common added removed]] [(merge common (:added-atoms added)) (merge common (:removed-atoms removed))]))
+       transpose
+       ((fn [[addeds removeds]]
+          (maps-to-csv "src/analysis/data/atoms-in-bugs_gcc_2018-01-11_added.csv_partial" (-> addeds first keys (concat (map :name atoms))) addeds)
+          (maps-to-csv "src/analysis/data/atoms-in-bugs_gcc_2018-01-11_removed.csv_partial" (-> removeds first keys (concat (map :name atoms))) removeds)
+               ))
+       ))

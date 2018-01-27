@@ -10,6 +10,14 @@
    [swiss.arrows :refer :all]
    [clojure.math.combinatorics :as combo]
    )
+(:import
+   [org.eclipse.cdt.core.dom.ast gnu.cpp.GPPLanguage cpp.ICPPASTNamespaceDefinition
+    IASTCompositeTypeSpecifier ASTVisitor IASTNode IASTProblemStatement IASTName
+    IASTTranslationUnit IASTBinaryExpression IASTProblem IASTProblemHolder]
+   [org.eclipse.cdt.core.parser DefaultLogService FileContent IncludeFileContentProvider ScannerInfo]
+   [org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTProblemStatement]
+   [org.eclipse.cdt.internal.core.parser.scanner ASTFileLocation]
+   )
   )
 
 (defn file-level-key? [key] (not (re-find #"atom" (str key))))
@@ -85,13 +93,72 @@
 (defn count-adjacent [a]
   (- (count a) (count (dedupe a))))
 
-'((->> (range 7)
-     (repeat 2)
-     flatten
-     combo/permutations
-     (map count-adjacent)
-     frequencies
-     sort
-     (map prn)
-     time-mins
-     ))
+'((->> (range 8)
+       (map
+        #(->> (range (pap %))
+              (repeat 2)
+              flatten
+              combo/permutations
+              (map count-adjacent)
+              frequencies
+              (sort-by first)
+              pprint
+              time-mins
+              ))))
+
+;; 0
+;; ([0 1])
+;; "Elapse time: 0:00.03 mins"
+;; 1
+;; ([1 1])
+;; "Elapse time: 0:00.01 mins"
+;; 2
+;; ([0 2] [1 2] [2 2])
+;; "Elapse time: 0:00.01 mins"
+;; 3
+;; ([0 30] [1 36] [2 18] [3 6])
+;; "Elapse time: 0:00.01 mins"
+;; 4
+;; ([0 864] [1 984] [2 504] [3 144] [4 24])
+;; "Elapse time: 0:00.04 mins"
+;; 5
+;; ([0 39480] [1 43800] [2 22200] [3 6600] [4 1200] [5 120])
+;; "Elapse time: 0:00.39 mins"
+;; 6
+;; ([0 2631600] [1 2868480] [2 1447200] [3 439200] [4 86400] [5 10800] [6 720])
+;; "Elapse time: 0:20.89 mins"
+;; 7
+;; ([0 241133760] [1 259554960] [2 130606560] [3 40219200] [4 8290800] [5 1164240] [6 105840] [7 5040])
+;; "Elapse time: 35:14.06 mins"
+
+(def adjacency-7-domains '([0 241133760] [1 259554960] [2 130606560] [3 40219200] [4 8290800] [5 1164240] [6 105840] [7 5040]))
+
+(float (/
+ (->> adjacency-7-domains (filter (comp (partial < 4) first)) (map last) sum)
+ (->> adjacency-7-domains (map last) sum)))
+
+
+(->> "tmp/emacs_md5_01_0dc2e11dfd2b264679024d9939775a1ccebb13d8.c"
+     parse-file
+     flatten-tree count)
+     find-all-atoms
+     (map-values (partial map start-line))
+     (map prn))
+
+(->> "tmp/emacs_md5_02_76417ef426d826482699766064e66c06af6a07f7.c"
+     parse-file
+     flatten-tree count)
+     flatten-tree (filter (partial instance? IASTProblem)) count)
+     find-all-atoms
+     (map-values (partial map start-line))
+     (map prn))
+
+
+'([binary-expression =]
+   ([id-expression] [name x])
+   ([unary-expression ++]
+      ([id-expression] [name x])))
+
+'(= (id x) (++ (id y))
+
+'((->> "x = y++" parse-frag print-tree))

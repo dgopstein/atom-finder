@@ -3130,7 +3130,7 @@
 {:project "webkit" :date #inst "2014-10-01T00:11:39+00:00" :rev-str "96b21fd90246b305b4008d98b94eeb53e5d37665"}
 {:project "webkit" :date #inst "2014-11-01T00:12:51+00:00" :rev-str "d532a967aeea67f13f5478daeaebc2fbd56a9e83"}
 {:project "webkit" :date #inst "2014-12-01T00:20:34+00:00" :rev-str "53c551ddf529d113e139a154d52f48b3c401648d"}
-{:project "webkit" :date #inst "2015-01-01T01:03:25+00:00" :rev-str "52dd86c3d53447b18b2645ff54b9e948efacab40"}
+{:project "webkit" :date #inst "2015-01-01T01:25:50+00:00" :rev-str "dac25a43fc37f1b4592f76dfe7c18df13224af7b"}
 {:project "webkit" :date #inst "2015-02-01T00:38:19+00:00" :rev-str "df2e4954d674a0c40618d722388a23b8f27814ba"}
 {:project "webkit" :date #inst "2015-03-01T01:04:05+00:00" :rev-str "85b0e9085955389ceaa18f9eefc50c2701be65d1"}
 {:project "webkit" :date #inst "2015-04-01T01:15:58+00:00" :rev-str "b35db29dadb05d1cb6dc472efebe23e09dab3b8e"}

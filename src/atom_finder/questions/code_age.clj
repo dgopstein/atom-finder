@@ -60,6 +60,9 @@
   (juxt->> date .getYear .getMonthValue .getDayOfMonth))
 
 (defmulti year-month class)
+(defmethod year-month String
+  [date]
+  (-<>> date (string/split <> #"-") (map #(Integer/parseInt %)) ((juxt first second))))
 (defmethod year-month java.util.Date
   [date]
   (-> date .toInstant (.atZone (java.time.ZoneId/of "UTC")) .toLocalDateTime year-month))
@@ -79,7 +82,8 @@
 ;; https://stackoverflow.com/questions/1685228/how-to-cat-a-file-in-jgit
 (s/defn treewalk->filestr
   [repo :- Repository tree-walk :- TreeWalk]
-  (-<>> tree-walk (.getObjectId <> 0) (.open repo) .getBytes String.))
+  (log-err (str "treewalk->filestr (file too big?) " tree-walk) ""
+           (-<>> tree-walk (.getObjectId <> 0) (.open repo) .getBytes String.)))
 
 (s/defn treewalk->file :- {:path s/Str :content s/Str}
   [repo :- Repository tree-walk :- TreeWalk]
@@ -147,8 +151,11 @@
 '((-<>>
    "first-commits-per-month.txt"
    read-data
-   (partition-by (fn [line] (-> line :date year-month (update-in [1] #(int (/ (dec %) 3))))))
+   (partition-by (fn [line] (-> line :date year-month first)))
    (map first)
+   (drop-while #(not= "ba68e9715ac5e695f105cbb6a3a1cf4e9b5422d1" (:rev-str %))) rest
+   ;(map pap)
+   ;(take 2) (map prn))
    (map (fn [h]
           (let [repo (-> h :project history-repos)]
                 {:project (:project h) :repo repo :rev-commit (find-rev-commit repo (-> h :rev-str))})))
@@ -162,24 +169,58 @@
                  :atoms (->> ast find-all-atoms-non-atoms (map-values count))))))))
  (map prn)
  dorun
- (log-to "tmp/code-age_all_2018-01-15_02_with-project.edn")
+ (log-to "tmp/code-age_all_2018-01-16_03_per-year_skipped-clang-emacs_continued.edn")
  time-mins
  ))
 
+;; merge in emacs/clang monthly data with other project annual data
+'((->> "tmp/code-age_all_2018-01-15_02_with-project.edn"
+     read-lines
+     (filter :date)
+     (partition-by (fn [line] (-> line :date year-month first)))
+     (map (partial partition-by (fn [line] (-> line :date year-month second))))
+     (mapcat first)
+     (map prn)
+     dorun
+     (log-to "tmp/code-age_all_2018-01-16_00_clang-emacs.edn")
+     ))
+
 '((->>
-   "tmp/code-age_gcc_2017-11-05_01_no-macro-exps.edn"
+   "tmp/code-age_all_2018-01-16_all_per-year_combined.edn"
    read-lines
    (filter :path)
-   (remove #(->> % :path (re-find #"test\/|\/test")))
-   (group-by (juxt :date :rev-str))
+   ;(remove #(->> % :path (re-find #"test\/|\/test")))
+   (group-by (juxt :date :project :rev-str))
    (map-values #(->> % (map :atoms) (apply merge-with +)))
-   (map-values-kv (fn [[date rev-str] v] (merge v {:date date :rev-str rev-str})))
+   (map-values-kv (fn [[date project rev-str] v] (merge v (auto-map date project rev-str))))
    vals
    (filter :date)
-   (sort-by :date)
+   (sort-by (juxt :project :date))
    reverse
-   (maps-to-csv "atoms-by-month_gcc_2017-11-05_01_no-macro-exps.csv")
+   (maps-to-csv "tmp/code-age_all_2018-01-16_all_per-year_combined.csv")
    time-mins
    ))
 
+;; Find biggest changes from one snapshot to the next
+'((->>
+   "tmp/code-age_all_2018-01-15_02_with-project.edn"
+   read-lines
+   (filter (comp #{"emacs"} :project))
+   (filter #(-<>> % :date year-month first (<= 2010 <> 2015)))
+   (def emacs-2010-2015)))
+'((->>
+   emacs-2010-2015
+   (map #(let [all-atoms (- (-> % :atoms :all-nodes) (-> % :atoms :non-atoms))
+               all-nodes (-> % :atoms :all-nodes)]
+           {:date (-> % :date) :path (-> % :path)
+            :rev-str (-> % :rev-str)
+            :rate (safe-div all-atoms all-nodes)
+            :all-atoms all-atoms
+            :all-nodes all-nodes}))
+   (group-dissoc :path)
+   (max-n-by 10 (fn [[k v]] (->> v (map :rate) ((juxt max-of min-of)) (apply -))))
+   (map prn)
+   time-mins
+   )
+  )
 
