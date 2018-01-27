@@ -19,7 +19,7 @@ cve.atom.counts$domain <- factor(c("os", "os", "browser", "compiler", "browser",
 
 project.bugs.plot <- ggplot(cve.atom.counts, aes(x=atom.rate, y=bug.rate, group=domain)) +
   theme_classic() +
-  geom_path(aes(color = domain), size=1.2) +
+  geom_path(aes(color = domain, linetype = domain %in% c('vcs')), size=1.2) +
   geom_point(size=2.0) + # aes(size=log(cve_rate))) +
   geom_text(aes(label=paste(" ", X.project)), hjust=0) +
   #geom_text(aes(label=project, hjust=ifelse(atom.rate>0.02, 1.7, 0)), vjust=0.4, nudge_x = 0.0005) +
@@ -27,6 +27,7 @@ project.bugs.plot <- ggplot(cve.atom.counts, aes(x=atom.rate, y=bug.rate, group=
   scale_y_log10(expand = c(0.1, 0.1)) +
   scale_colour_manual(values = domain.colors) +
   ggtitle("Bugs") +
+  guides(linetype=FALSE) +
   labs(x = "Atom rate", y="Bugs per day (log)", color="Domain") +
   theme(legend.position = c(0.85, 0.70))
 project.bugs.plot

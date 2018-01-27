@@ -49,7 +49,13 @@ domain.colors <- RColorBrewer::brewer.pal(8, "Set2")[-7]
 colors2 <- set2[c(3,6)]
 colors2dark <- set2[c(3,4)]
 
-
+# https://gist.github.com/Jfortin1/72ef064469d1703c6b30
+lighten <- function(color, factor=1.4){
+  col <- col2rgb(color)
+  col <- pmin(col*factor, 255)
+  col <- rgb(t(col), maxColorValue=255)
+  col
+}
 
 no.clip <- function(p) {
   print(p)

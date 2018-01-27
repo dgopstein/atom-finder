@@ -128,18 +128,21 @@ atoms.removed.rate.dt <-
 atoms.removed.rate.dt[, rate := bug / no.bug]
 atoms.removed.rate.dt[, display.atom := convert.atom.names(atom)]
 
-intercept <- 1
-
 only.atoms.removed.rate.dt <- atoms.removed.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed",'added.non.atoms','n.added', 'removed.non.atoms', 'all.atoms.removed'))]
 only.atoms.removed.rate.dt[, display.atom := reorder(display.atom, rate)]
 
+atoms.removed.rate[bug==TRUE, all.atoms.removed] / atoms.removed.rate[bug==FALSE, all.atoms.removed]
+chisq.test(c(atoms.removed.sums[bug==TRUE, all.atoms.removed], atoms.removed.sums[bug==FALSE, all.atoms.removed],
+           atoms.removed.sums[bug==TRUE, n.removed], atoms.removed.sums[bug==FALSE, n.removed]))
+
+intercept <- 1
 atom.removed.rate.plot <-
 ggplot(only.atoms.removed.rate.dt,
        aes(x = display.atom, y = rate)) +
   theme_minimal() +
 #  theme_classic() +
   geom_segment(aes(y = intercept, yend = rate, xend = display.atom, size = bug.count,
-                   color=rate>intercept),
+                   color=rate<intercept),
                show.legend=F) +
   geom_hline(yintercept=intercept) +
   scale_size(range = c(0.3, 7.2)) +

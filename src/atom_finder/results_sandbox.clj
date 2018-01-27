@@ -104,7 +104,6 @@
      time-mins
      ))
 
-
 (->> "tmp/emacs_md5_01_0dc2e11dfd2b264679024d9939775a1ccebb13d8.c"
      parse-file
      flatten-tree count)
@@ -119,3 +118,13 @@
      find-all-atoms
      (map-values (partial map start-line))
      (map prn))
+
+
+'([binary-expression =]
+   ([id-expression] [name x])
+   ([unary-expression ++]
+      ([id-expression] [name x])))
+
+'(= (id x) (++ (id y))
+
+'((->> "x = y++" parse-frag print-tree))

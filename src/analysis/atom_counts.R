@@ -97,12 +97,21 @@ all.atom.counts <- atom.counts[, -c('project','domain')][, lapply(.SD, sum)]
 all.atom.rates.wide <- all.atom.counts[, -c('all.nodes', 'non.atoms')] / all.atom.counts$all.nodes
 all.atom.rates <- data.frame(atom = unlist(atom.name.conversion[names(all.atom.rates.wide)]), rate = t(all.atom.rates.wide))
 
-atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, -rate), y = rate)) + geom_bar(stat="identity") +
-  theme(axis.text.x=element_text(angle=90, hjust=1, vjust=.4)) +
+atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, rate), y = rate)) +
+  geom_bar(stat="identity", fill=colors2[1]) +
+  geom_text(aes(y=0.0019, label=signif(rate, digits=2),
+                color=atom %in% c('Omitted Curly Brace','Operator Precedence')), angle=0, hjust=0) +
+  theme(#axis.text.x=element_text(angle=90, hjust=1, vjust=.4), axis.text.y = element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks = element_blank(), axis.line = element_blank()) +
+  scale_y_continuous(limits = c(0.0,0.006)) +
+  guides(color=FALSE) +
+  coord_flip() +
+  scale_color_manual(values=c('black', 'white')) +
   labs(x="Atom", y="Occurrence Rate")
 atom.occurrence.rate
 
-ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-130), height=width*0.88, units = "mm")
+ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-140), height=width*0.7, units = "mm")
 
 # overall atom rate for paper
 all.atom.ast.rate <- all.atom.counts[, (all.nodes - non.atoms) / all.nodes]
@@ -161,4 +170,22 @@ ggplot(loc.rate, aes(loc, atom.rate)) +
   geom_point() +
   scale_x_log10()
   
+################################################
+#     combined atom counts per project
+################################################
+all.atom.proj.rates <- atom.counts[, -c('non.atoms')][, .(rate = (base::sum(.SD) - all.nodes) / all.nodes), by=c('project', 'domain')]
+
+all.atom.proj.rates.plot <- ggplot(all.atom.proj.rates, aes(x = reorder(project, rate), y = rate)) +
+  geom_bar(stat="identity", aes(fill=domain)) +
+  scale_fill_manual(values=domain.colors) +
+  geom_text(aes(y=0.0005, label=sprintf("%0.3f", round(rate, digits=3))),
+                color='black', angle=0, hjust=0) +
+  theme(axis.text.x=element_blank(), axis.ticks = element_blank(), axis.line = element_blank()) +
+  theme(legend.position = c(0.65, 0.245)) +
+  guides(color=FALSE) +
+  coord_flip() +
+  labs(x="Project", y="Occurrence Rate", fill="Domain")
+all.atom.proj.rates.plot
+
+ggsave("img/all_atom_proj_rates.pdf", all.atom.proj.rates.plot, width=(width<-140), height=width*.7, units = "mm")
 

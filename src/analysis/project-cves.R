@@ -19,9 +19,10 @@ cves.atoms <- merge(project.cves, atom.counts[, .(project=X.project, fair.rate, 
 #projects.high.rate <- project.cves[project.cves, on="domain"][project != i.project & cve_rate > 1 & i.cve_rate > 1]
 cves.atoms[, domain := factor(as.character(domain), c("os", "browser", "compiler", "db", "vcs", "editor", "webserver"))]
 
+
 project.cves.plot <- ggplot(cves.atoms, aes(x=atom.rate, y=cves.per.year, group=domain)) +
   theme_classic() +
-  geom_path(aes(color = domain), size=1.2) +
+  geom_path(aes(color = domain, linetype=domain%in%c('vcs','browser','compiler')), size=1.2) +
   geom_point(size=2.0) + # aes(size=log(cve_rate))) +
   geom_text(aes(label=paste(" ", project)), hjust=0, angle=25) +
   #geom_text(aes(label=project, hjust=ifelse(atom.rate>0.02, 1.7, 0)), vjust=0.4, nudge_x = 0.0005) +
@@ -30,7 +31,7 @@ project.cves.plot <- ggplot(cves.atoms, aes(x=atom.rate, y=cves.per.year, group=
   scale_colour_manual(values = domain.colors) +
   ggtitle("CVEs") +
   labs(x = "Atom rate", y="CVEs per year (log)", color="Domain") +
-  guides(colour=FALSE) +
+  guides(colour=FALSE, linetype=FALSE) +
   theme(legend.position = c(0.85, 0.70))
 project.cves.plot
 
