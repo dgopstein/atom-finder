@@ -8,7 +8,13 @@
    [swiss.arrows :refer :all]
    [schema.core :as s]
    )
-  (:import [ch.hsr.ifs.cdt.metriculator.checkers LSLOCScopedASTVisitor McCabeMetric McCabeMetricChecker McCabeScopedASTVisitor])
+  (:import [ch.hsr.ifs.cdt.metriculator.checkers
+            LSLOCMetric LSLOCMetricChecker LSLOCScopedASTVisitor
+            McCabeMetric McCabeMetricChecker McCabeScopedASTVisitor]
+           [ch.hsr.ifs.cdt.metriculator.model AbstractTreeBuilder]
+           [org.eclipse.core.runtime Path]
+           [org.eclipse.cdt.core.dom.ast IASTTranslationUnit IASTNode]
+           )
   )
 
 ;; LSLOCMetricChecker - Requires Plugin stuff
@@ -19,7 +25,11 @@
 (def metric-root (->> "int main() {
 int x = 3;
 if (x) {
+ if (x == 3) {
 return 2;
+} else {
+return 4;
+}
 } else {
 return 3;
 }
@@ -33,29 +43,21 @@ int f() {
 (def atom-comments-c
   (parse-file (expand-home "~/nyu/confusion/atom-finder/src/test/resources/atom-comments.c")))
 
-(def fileSystemLeaf
-  (ch.hsr.ifs.cdt.metriculator.model.AbstractTreeBuilder/createTreeFromPath
-   (org.eclipse.core.runtime.Path. "random/file.c")
-   metric-root))
+(s/defn scope-node
+  [node]
+  (let [fileSystemLeaf (AbstractTreeBuilder/createTreeFromPath (Path. "random/file.c") (root-ancestor node))]
+    (.addChild builder (.root builder) (.getRoot fileSystemLeaf))
+    (.getChildBy builder (.getHybridId fileSystemLeaf))))
 
-(def fileSystemTop (.getRoot fileSystemLeaf))
+(s/defn mccabe [node :- IASTNode]
+  (.aggregate (McCabeMetric. (atom_finder.McCabeMetricCheckerPluginless.) "McCabe" "CC")
+              (scope-node node)))
 
-(def currentScopeNode (.addChild builder (.root builder) fileSystemTop))
-(def currentScopeNode (.getChildBy builder (.getHybridId fileSystemLeaf)))
+(s/defn lsloc [node :- IASTNode]
+  (.aggregate (LSLOCMetric. (atom_finder.LSLOCMetricCheckerPluginless.) "LSLOC" "lines of code")
+              (scope-node node)))
 
-
-;(def lsloc-m (LSLOCScopedASTVisitor. currentScopeNode builder))
-(def cc-m (McCabeScopedASTVisitor. currentScopeNode builder))
-
-'((-> metric-root (.accept cc-m)))
-
-(def mmcp (atom_finder.McCabeMetricCheckerPluginless.))
-
-(def mccabe-key (ch.hsr.ifs.cdt.metriculator.model.AbstractMetric/getKeyFor McCabeMetric))
-
-(.processAst mmcp metric-root)
-
-(.getNodeValue currentScopeNode mccabe-key)
-
-;; Gives an ANSWER!
-(.aggregate (McCabeMetric. mmcp "a" "b") currentScopeNode)
+'((->> metric-root
+     flatten-tree
+     (map lsloc)
+     prn))
