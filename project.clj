@@ -23,10 +23,6 @@
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"
                    "resources/APTED_2017-04-05.jar"
                    "resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
-                   ;; #####  Metriculator
-                   ;"resources/ch.hsr.ifs.cdt.metriculator_0.0.1.201310061341.jar"
-                   ;"resources/org.eclipse.cdt.codan.core.cxx_3.4.0.201712051550.jar"
-                   ;"resources/org.eclipse.cdt.codan.core_4.0.0.201712051550.jar"
                    "src/test/resources"
                    "src/conf"]
   :java-source-paths ["src/java"]
