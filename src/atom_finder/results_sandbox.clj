@@ -134,8 +134,8 @@
 (def adjacency-7-domains '([0 241133760] [1 259554960] [2 130606560] [3 40219200] [4 8290800] [5 1164240] [6 105840] [7 5040]))
 
 (float (/
- (->> adjacency-7-domains (filter (comp (partial < 4) first)) (map last) sum)
- (->> adjacency-7-domains (map last) sum)))
+ (->> adjacency-7-domains (filter (comp (partial <= 4) first)) (map last) sum)
+ (->> adjacency-7-domains (map last) sum))) ;; => 0.0140
 
 
 (->> "tmp/emacs_md5_01_0dc2e11dfd2b264679024d9939775a1ccebb13d8.c"
