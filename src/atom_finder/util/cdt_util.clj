@@ -16,6 +16,24 @@
     (.getASTTranslationUnit (GPPLanguage/getDefault) file-content
                             info emptyIncludes org.eclipse.cdt.internal.core.index.EmptyCIndex/INSTANCE opts log)))
 
+(defn c-tu
+  "parse a C (not c++) file NOTE: This emits CAST classes which most of the codebase doesn't handle"
+  [source]
+  (let [definedSymbols {}
+        includePaths (make-array String 0)
+        info (new ScannerInfo definedSymbols includePaths)
+        log (new DefaultLogService)
+        emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
+        opts 8]
+
+    ;; TODO GCCLanguage would probably parse some files (like K&R declarations) better
+    (.getASTTranslationUnit (GCCLanguage/getDefault)
+                            (FileContent/create "Anonymous CCCC file"
+                                                (.toCharArray source)) info emptyIncludes
+                            org.eclipse.cdt.internal.core.index.EmptyCIndex/INSTANCE
+                            opts log)) )
+
+
 (defn mem-tu
   "Create an AST from in-memory source (name is for documentation only)"
   [filename source]
