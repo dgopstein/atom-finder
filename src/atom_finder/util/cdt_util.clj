@@ -3,6 +3,8 @@
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))
 (defmethod translation-unit String [filename]
+  (translation-unit (FileContent/createForExternalFileLocation filename)))
+(defmethod translation-unit FileContent [file-content]
   (let [definedSymbols {}
         includePaths (make-array String 0)
         info (new ScannerInfo definedSymbols includePaths)
@@ -10,23 +12,14 @@
         emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
         opts 8]
 
-    (.getASTTranslationUnit (GPPLanguage/getDefault)
-                            (FileContent/createForExternalFileLocation filename)
-                            info emptyIncludes nil opts log)))
+    ;; TODO GCCLanguage would probably parse some files (like K&R declarations) better
+    (.getASTTranslationUnit (GPPLanguage/getDefault) file-content
+                            info emptyIncludes org.eclipse.cdt.internal.core.index.EmptyCIndex/INSTANCE opts log)))
 
 (defn mem-tu
   "Create an AST from in-memory source (name is for documentation only)"
   [filename source]
-  (let [definedSymbols {}
-        includePaths (make-array String 0)
-        info (new ScannerInfo definedSymbols includePaths)
-        log (new DefaultLogService)
-        emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
-        opts 8]
-
-    (.getASTTranslationUnit (GPPLanguage/getDefault)
-                            (FileContent/create filename (.toCharArray source))
-                            info emptyIncludes nil opts log)))
+  (translation-unit (FileContent/create filename (.toCharArray source))))
 
 (defprotocol ASTTree
   (ast-node [node])

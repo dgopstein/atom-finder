@@ -8,7 +8,7 @@
    [swiss.arrows :refer :all]
    [schema.core :as s]
    )
-  (:import [ch.hsr.ifs.cdt.metriculator.checkers LSLOCScopedASTVisitor])
+  (:import [ch.hsr.ifs.cdt.metriculator.checkers LSLOCScopedASTVisitor McCabeMetric McCabeMetricChecker McCabeScopedASTVisitor])
   )
 
 ;; LSLOCMetricChecker - Requires Plugin stuff
@@ -30,6 +30,9 @@ int f() {
 }
 " (mem-tu "file.c")))
 
+(def atom-comments-c
+  (parse-file (expand-home "~/nyu/confusion/atom-finder/src/test/resources/atom-comments.c")))
+
 (def fileSystemLeaf
   (ch.hsr.ifs.cdt.metriculator.model.AbstractTreeBuilder/createTreeFromPath
    (org.eclipse.core.runtime.Path. "random/file.c")
@@ -40,7 +43,19 @@ int f() {
 (def currentScopeNode (.addChild builder (.root builder) fileSystemTop))
 (def currentScopeNode (.getChildBy builder (.getHybridId fileSystemLeaf)))
 
-(def lsloc-m (LSLOCScopedASTVisitor. currentScopeNode builder))
-(def cc-m (ch.hsr.ifs.cdt.metriculator.checkers.McCabeScopedASTVisitor. currentScopeNode builder))
+
+;(def lsloc-m (LSLOCScopedASTVisitor. currentScopeNode builder))
+(def cc-m (McCabeScopedASTVisitor. currentScopeNode builder))
 
 '((-> metric-root (.accept cc-m)))
+
+(def mmcp (atom_finder.McCabeMetricCheckerPluginless.))
+
+(def mccabe-key (ch.hsr.ifs.cdt.metriculator.model.AbstractMetric/getKeyFor McCabeMetric))
+
+(.processAst mmcp metric-root)
+
+(.getNodeValue currentScopeNode mccabe-key)
+
+;; Gives an ANSWER!
+(.aggregate (McCabeMetric. mmcp "a" "b") currentScopeNode)
