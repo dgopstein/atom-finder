@@ -176,16 +176,17 @@ ggplot(loc.rate, aes(loc, atom.rate)) +
 all.atom.proj.rates <- atom.counts[, -c('non.atoms')][, .(rate = (base::sum(.SD) - all.nodes) / all.nodes), by=c('project', 'domain')]
 
 all.atom.proj.rates.plot <- ggplot(all.atom.proj.rates, aes(x = reorder(project, rate), y = rate)) +
+  theme_classic() +
   geom_bar(stat="identity", aes(fill=domain)) +
   scale_fill_manual(values=domain.colors) +
   geom_text(aes(y=0.0005, label=sprintf("%0.3f", round(rate, digits=3))),
-                color='black', angle=0, hjust=0) +
-  theme(axis.text.x=element_blank(), axis.ticks = element_blank(), axis.line = element_blank()) +
-  theme(legend.position = c(0.65, 0.245)) +
+                color='black', angle=0, hjust=0, size=2.5) +
+  theme(axis.text.x=element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), axis.title.x = element_blank()) +
+  theme(legend.position = c(0.85, 0.225), legend.key.size = unit(0.3,"line")) +
   guides(color=FALSE) +
   coord_flip() +
-  labs(x="Project", y="Occurrence Rate", fill="Domain")
+  labs(x="Project", y="Atom Occurrence Rate", fill="Domain")
 all.atom.proj.rates.plot
 
-ggsave("img/all_atom_proj_rates.pdf", all.atom.proj.rates.plot, width=(width<-140), height=width*.7, units = "mm")
+ggsave("img/all_atom_proj_rates.pdf", all.atom.proj.rates.plot, width=(width<-120), height=width*.3, units = "mm")
 
