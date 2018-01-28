@@ -7,8 +7,8 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 source("util.R")
 
-atoms.removed <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_removed.csv", header=TRUE))
-atoms.added   <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_added.csv", header=TRUE))
+atoms.removed <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_removed.csv.bz2", header=TRUE))
+atoms.added   <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_added.csv.bz2", header=TRUE))
 
 nrow(atoms.removed)
 length(unique(atoms.removed$rev.str))
