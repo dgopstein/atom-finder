@@ -7,9 +7,10 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 source("util.R")
 
-atoms.removed <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_removed.csv_partial", header=TRUE))
-atoms.added   <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_added.csv_partial", header=TRUE))
+atoms.removed <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_removed.csv", header=TRUE))
+atoms.added   <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_added.csv", header=TRUE))
 
+nrow(atoms.removed)
 length(unique(atoms.removed$rev.str))
 
 atoms.removed[, bug := n.bugs > 0]
@@ -135,6 +136,22 @@ atoms.removed.rate[bug==TRUE, all.atoms.removed] / atoms.removed.rate[bug==FALSE
 chisq.test(c(atoms.removed.sums[bug==TRUE, all.atoms.removed], atoms.removed.sums[bug==FALSE, all.atoms.removed],
            atoms.removed.sums[bug==TRUE, n.removed], atoms.removed.sums[bug==FALSE, n.removed]))
 
+atoms.removed.chis <-
+  data.table(t(atoms.removed.sums[, lapply(.SD, function(x)
+    with(chisq.test(matrix(c(x[bug==FALSE], x[bug==TRUE], n.removed[bug==FALSE], n.removed[bug==TRUE]), nrow=2)), .(p.value, statistic, n = sum(observed)))), ]),
+    keep.rownames = TRUE)
+
+colnames(atoms.removed.chis) <- c('atom', 'p.value', 'X2', 'n')
+
+only.atoms.removed.rate.dt <- merge(only.atoms.removed.rate.dt, atoms.removed.chis, on='atom')
+
+signif.stars <- function(p.value) {
+  ifelse(p.value < 0.0001, "****",
+  ifelse(p.value < 0.001, "*** ",
+  ifelse(p.value < 0.01, "**  ",
+  ifelse(p.value < 0.05, "*   ", "    "))))
+}
+
 intercept <- 1
 atom.removed.rate.plot <-
 ggplot(only.atoms.removed.rate.dt,
@@ -148,8 +165,12 @@ ggplot(only.atoms.removed.rate.dt,
   scale_size(range = c(0.3, 7.2)) +
   geom_segment(aes(xend=display.atom, y=rate*ifelse(rate >= intercept, 1.05, 1/1.05), yend=rate*ifelse(rate >= intercept, 1.45, 1/1.45)),
                size=2, color="white") +
-  geom_text(aes(label=ifelse(rate >= intercept, sprintf("          %0.2f", rate), sprintf("%0.2f          ", 1/rate))),
+  geom_text(aes(label=ifelse(rate >= intercept, paste0(sprintf("              %0.2f ", rate), signif.stars(p.value)),
+                                                paste0(signif.stars(p.value), sprintf(" %0.2f              ", 1/rate)))),
+                #,y=ifelse(rate > 0.001, rate, 0.35)),
             color="black", size=3, vjust=0.4) +
+  annotate('rect', xmin = .9, xmax = 1.1, ymin = 0.25, ymax = 0.36, fill="white") +
+  annotate('text', x=1, y=0.3, label="** Inf", size=3) +
   scale_color_manual(values=c(colors2, 'red')) +
   scale_y_log10(position="top", labels=c("Non-bugs", "Bugs"), breaks=c(.47, 1.7)) +
   labs(x="Atom", y="Atoms removed more often in...") +
