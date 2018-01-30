@@ -189,7 +189,7 @@ ggplot(only.atoms.removed.rate.dt,
   coord_flip(ylim = c(0.23, 2.8))
 atom.removed.rate.plot
 
-ggsave("img/atom_removed_rate.pdf", atom.removed.rate.plot, width=(width<-110), height=width*0.8, units = "mm", device=cairo_pdf)
+ggsave("img/atom_removed_rate.pdf", atom.removed.rate.plot, width=(width<-110), height=width*0.7, units = "mm", device=cairo_pdf)
 
 bug.effect <- merge(only.atoms.removed.rate.dt, atom.effect.sizes, by='atom')
 

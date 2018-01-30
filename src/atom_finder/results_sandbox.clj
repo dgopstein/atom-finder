@@ -162,3 +162,5 @@
 '(= (id x) (++ (id y))
 
 '((->> "x = y++" parse-frag print-tree))
+
+'((->> '(["a" 1] ["a" 2] ["b" 5]) (group-by first) (map-values (partial map last)) (map-values (partial merge-with +))))

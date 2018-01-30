@@ -127,18 +127,19 @@ confusingness.vs.prevalence.correlation <- with(atom.effect, cor(rate, effect.si
 
 confusingness.vs.prevalence <-
   ggplot(atom.effect, aes(effect.size, rate)) +
+  theme_classic() +
   geom_point(size=2.5, color=colors2dark[2]) +
   geom_smooth(method="lm", se=FALSE, fullrange=TRUE, color=colors2dark[1]) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   scale_x_continuous(limits = c(0.2, 0.75)) +
   scale_y_log10(limits = c(5*10^-8, 9*10^-3)) +
-  geom_text(aes(label=atom), hjust=-0.1, angle=-14, size=3) +
+  geom_text(aes(label=atom), hjust=-0.1, angle=-10, size=3) +
   theme(axis.text.x=element_text(angle=90, hjust=1)) +
   annotate("text", x=0.35, y=3*10^-6, label=paste0("r = ", round(confusingness.vs.prevalence.correlation, 2))) +
   #ggtitle("Confusingness vs Prevalence", subtitle="Do less confusing patterns occur more often?") +
   labs(x="Effect Size", y="Occurrence Rate (log)")
 confusingness.vs.prevalence
 
-ggsave("img/confusingness_vs_prevalence.pdf", confusingness.vs.prevalence, width=(width<-150), height=width*0.8, units = "mm")
+ggsave("img/confusingness_vs_prevalence.pdf", confusingness.vs.prevalence, width=(width<-150), height=width*0.6, units = "mm")
 
 ################################################
 #  all projects by raw confusion of C question
@@ -182,11 +183,11 @@ all.atom.proj.rates.plot <- ggplot(all.atom.proj.rates, aes(x = reorder(project,
   geom_text(aes(y=0.0005, label=sprintf("%0.3f", round(rate, digits=3))),
                 color='black', angle=0, hjust=0, size=2.5) +
   theme(axis.text.x=element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), axis.title.x = element_blank()) +
-  theme(legend.position = c(0.85, 0.225), legend.key.size = unit(0.3,"line")) +
+  theme(legend.position = c(0.87, 0.300), legend.key.size = unit(0.3,"line")) +
   guides(color=FALSE) +
   coord_flip() +
   labs(x="Project", y="Atom Occurrence Rate", fill="Domain")
 all.atom.proj.rates.plot
 
-ggsave("img/all_atom_proj_rates.pdf", all.atom.proj.rates.plot, width=(width<-120), height=width*.3, units = "mm")
+ggsave("img/all_atom_proj_rates.pdf", all.atom.proj.rates.plot, width=(width<-130), height=width*.3, units = "mm")
 
