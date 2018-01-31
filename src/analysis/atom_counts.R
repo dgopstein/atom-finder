@@ -170,7 +170,7 @@ loc.rate <- merge(proj.loc, atom.counts, by.x="proj", by.y="X.project")
 ggplot(loc.rate, aes(loc, atom.rate)) +
   geom_point() +
   scale_x_log10()
-  
+
 ################################################
 #     combined atom counts per project
 ################################################

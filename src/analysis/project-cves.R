@@ -26,22 +26,23 @@ project.cves.plot <- ggplot(cves.atoms, aes(x=atom.rate, y=cves.per.year/all.nod
   geom_point(size=2.0) + # aes(size=log(cve_rate))) +
   geom_text(aes(label=paste(" ", project)), hjust=0, angle=25) +
   #geom_text(aes(label=project, hjust=ifelse(atom.rate>0.02, 1.7, 0)), vjust=0.4, nudge_x = 0.0005) +
-  scale_x_continuous(limits = c(0.005, 0.025), breaks=c(.01,.02)) +
+  scale_x_continuous(limits = c(0.006, 0.025), breaks=c(.01,.02)) +
   scale_y_log10(limits = c(3*10^-9, 2*10^-5)) +
   scale_colour_manual(values = domain.colors) +
   #ggtitle("CVEs") +
   labs(x = "Atom rate", y="CVEs per year per AST node (log)", color="Domain") +
   guides(colour=FALSE, linetype=FALSE) +
   theme(axis.text.y=element_text(angle=90, hjust=0.5)) +
-  theme(legend.position = c(0.85, 0.70))
+  theme(legend.position = c(0.85, 0.70), plot.margin = margin(0, r=2, b=0.1, l=0.1, "mm"))
 project.cves.plot
 
 ggsave("img/project_cves.pdf", project.cves.plot, width=(width<-90), height=width*1.10, units = "mm")
 
+summary(lm(cves.per.year/all.nodes ~ atom.rate, cves.atoms))
 
 binom.test(6,7, alternative = "greater")
-binom.test(8,14, alternative = "greater")
-binom.test(7,14, alternative = "greater")
+binom.test(5,7, alternative = "greater")
+binom.test(11,14, alternative = "greater")
 
 
 # Is there a correlation between atoms and cves within domain

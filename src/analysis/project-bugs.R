@@ -23,18 +23,21 @@ project.bugs.plot <- ggplot(project.bug.atom.counts, aes(x=atom.rate, y=365*bug.
   geom_point(size=2.0) + # aes(size=log(cve_rate))) +
   geom_text(aes(label=paste(" ", X.project)), hjust=0, angle=0) +
   #geom_text(aes(label=project, hjust=ifelse(atom.rate>0.02, 1.7, 0)), vjust=0.4, nudge_x = 0.0005) +
-  scale_x_continuous(limits = c(0.006, 0.028)) +
-  scale_y_log10(limits = c(1.7*10^-5, 10^-3)) +
+  scale_x_continuous(limits = c(0.006, 0.025), breaks=c(0.01, 0.02)) +
+  scale_y_log10(limits = c(1.7*10^-5, 1.1*10^-3)) +
   scale_colour_manual(values = domain.colors) +
   #ggtitle("Bugs") +
   guides(linetype=FALSE) +
   labs(x = "Atom rate", y="Bugs per year per AST node (log)", color="Domain") +
   theme(axis.text.y=element_text(angle=90, hjust=0.5)) +
-  theme(legend.position = c(0.85, 0.30))
+  theme(legend.position = c(0.88, 0.30), plot.margin = margin(0, r=2, b=0.1, l=0.1, "mm"))
 project.bugs.plot
 
 ggsave("img/project_bugs.pdf", project.bugs.plot, width=(width<-90), height=width*1.10, units = "mm")
 
+mod <- summary(lm(365*bug.rate/X.all.nodes ~ atom.rate+domain, project.bug.atom.counts))
+mod
+sqrt(summary(mod)$r.squared)
 
 # Is there a correlation between atoms and cves within domain
 cves.atoms
