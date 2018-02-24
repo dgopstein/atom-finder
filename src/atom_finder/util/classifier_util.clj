@@ -4,7 +4,10 @@
           IASTBinaryExpression IASTLiteralExpression IASTForStatement
           IASTFunctionDefinition IASTArraySubscriptExpression IASTCastExpression
           IASTFunctionCallExpression IASTFieldReference IASTFunctionDefinition)
-        '(org.eclipse.cdt.internal.core.dom.parser.cpp CPPASTQualifiedName CPPASTExpressionList CPPASTConditionalExpression CPPASTNewExpression CPPASTDeleteExpression))
+        '(org.eclipse.cdt.internal.core.dom.parser.cpp
+          CPPASTQualifiedName CPPASTExpressionList CPPASTConditionalExpression
+          CPPASTNewExpression CPPASTDeleteExpression CPPASTCastExpression
+          CPPASTArraySubscriptExpression CPPASTFieldReference CPPASTFunctionCallExpression))
 
 (defn greatest-trivial-parent
   "find the highest parent that has the same offset/length as this node"
@@ -261,10 +264,10 @@
 (s/defmethod expr-operator :default :- ExprOperator [node]
   (-> node type
       {CPPASTQualifiedName            {:enum nil :arity 2   :name :qualified-name  :precedence 1  :syntax "::"       }
-       IASTArraySubscriptExpression   {:enum nil :arity 2   :name :array-subscript :precedence 2  :syntax "[]"       }
-       IASTFieldReference             {:enum nil :arity 2   :name :field-reference :precedence 2  :syntax ". or ->"  }
-       IASTCastExpression             {:enum nil :arity 2   :name :cast            :precedence 2  :syntax "(<TYPE>)" }
-       IASTFunctionCallExpression     {:enum nil :arity 2   :name :function-call   :precedence 2  :syntax "F()"      }
+       CPPASTArraySubscriptExpression   {:enum nil :arity 2   :name :array-subscript :precedence 2  :syntax "[]"       }
+       CPPASTFieldReference             {:enum nil :arity 2   :name :field-reference :precedence 2  :syntax ". or ->"  }
+       CPPASTCastExpression             {:enum nil :arity 2   :name :cast            :precedence 2  :syntax "(<TYPE>)" }
+       CPPASTFunctionCallExpression     {:enum nil :arity 2   :name :function-call   :precedence 2  :syntax "F()"      }
        CPPASTNewExpression            {:enum nil :arity 1   :name :new             :precedence 3  :syntax "new"      }
        CPPASTDeleteExpression         {:enum nil :arity 1   :name :delete          :precedence 3  :syntax "delete"   }
        CPPASTConditionalExpression    {:enum nil :arity 3   :name :conditional     :precedence 15 :syntax "?:"       }

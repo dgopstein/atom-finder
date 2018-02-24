@@ -7,7 +7,9 @@
                  [org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/data.csv "0.1.3"]
                  [org.clojure/math.combinatorics "0.1.4"] ; just for funzies, can be removed
-                 [org.eclipse.core/org.eclipse.core.resources "3.6.0.v20100526-0737"]
+                 ;[org.eclipse.core/org.eclipse.core.resources "3.6.0.v20100526-0737"]
+                 ;[org.eclipse.platform/org.eclipse.equinox.common "3.9.0"]
+                 [org.eclipse.platform/org.eclipse.core.resources "3.12.0"]
                  [com.ibm.icu/icu4j "58.1"]
                  [clj-jgit "0.8.9"]
                  [org.slf4j/slf4j-nop "1.7.13"] ; suppress version-mismatch warning from jgit https://github.com/sbt/sbt-git/pull/105/files
@@ -19,10 +21,9 @@
                  [clojail "1.0.6"]
                  [swiss-arrows "1.0.0"]
                  ]
-  :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
+  :resource-paths ["resources/org.eclipse.cdt.core_6.4.0.201802122019.jar"
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"
-                   "resources/APTED_2017-04-05.jar"
-                   "resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
+                   ;"resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
                    "src/test/resources"
                    "src/conf"]
   :java-source-paths ["src/java"]

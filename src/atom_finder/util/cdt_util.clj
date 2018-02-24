@@ -1,5 +1,7 @@
 (in-ns 'atom-finder.util)
 
+(import '(org.eclipse.cdt.core.parser ParserUtil))
+
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))
 (defmethod translation-unit String [filename]
@@ -9,12 +11,14 @@
         includePaths (make-array String 0)
         info (new ScannerInfo definedSymbols includePaths)
         log (new DefaultLogService)
-        emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
+        ;emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
+        savedIncludes (org.eclipse.cdt.internal.core.parser.SavedFilesProvider.)
+        ;(IncludeFileContentProvider/getSavedFilesProvider)
         opts 8]
 
     ;; TODO GCCLanguage would probably parse some files (like K&R declarations) better
     (.getASTTranslationUnit (GPPLanguage/getDefault) file-content
-                            info emptyIncludes org.eclipse.cdt.internal.core.index.EmptyCIndex/INSTANCE opts log)))
+                            info savedIncludes org.eclipse.cdt.internal.core.index.EmptyCIndex/INSTANCE opts log)))
 
 (defn c-tu
   "parse a C (not c++) file NOTE: This emits CAST classes which most of the codebase doesn't handle"
