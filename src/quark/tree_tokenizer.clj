@@ -40,10 +40,12 @@
     (cons poco (map to-edn (children node)))))
 
 
-(->> "x" parse-frag expr-typename)
-(->> "f(x)" parse-frag expr-typename)
-(->> "1" parse-frag expr-typename)
-(->> "{int x; x}" parse-frag (get-in-tree [1 0]) expr-typename)
+(->> "x" pap parse-frag expr-typename pprint)
+(->> "f(x)" pap parse-frag expr-typename pprint)
+(->> "1" pap parse-frag to-edn pprint)
+(->> "{int x; x;}" parse-frag to-edn pprint)
+(->> "\"abc\" + 2" parse-frag to-edn pprint)
+(->> "if(1) 'b';" parse-frag to-edn pprint)
 
 (-<>>
  "gcc_cp_pt.c_92884c107e041201b33c5d4196fe756c716e8a0c" parse-resource
@@ -51,8 +53,8 @@
  flatten-tree
  (drop 20035)
  (take 1)
- first
- (map write-tree)
+ ;(map write-tree)
+ (map expr-typename)
  (map println)
  dorun)
 
