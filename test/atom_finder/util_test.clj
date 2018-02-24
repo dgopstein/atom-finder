@@ -20,6 +20,11 @@
               node-name)
              )))
 
+  (deftest parse-includes
+    (testing "translation-unit"
+      (->> "include_parser.c" parse-resource (get-in-tree [1 2 0 0 2]) .getExpressionType str (= "int") is)
+      ))
+
   (deftest parse-expr-stmt-test
     (testing "parse-expr/parse-stmt"
       (let [sanitize #(clojure.string/replace % #"\s+" " ")]

@@ -1,6 +1,9 @@
 (in-ns 'atom-finder.util)
 
-(import '(org.eclipse.cdt.core.parser ParserUtil))
+;(import '(org.eclipse.cdt.core.parser.tests.scanner FileCodeReaderFactor))
+
+
+;(FileCodeReaderFactory/getInstance)
 
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))
@@ -11,9 +14,8 @@
         includePaths (make-array String 0)
         info (new ScannerInfo definedSymbols includePaths)
         log (new DefaultLogService)
+        savedIncludes (atom_finder.FileCodeReaderFactory/getInstance)
         ;emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
-        savedIncludes (org.eclipse.cdt.internal.core.parser.SavedFilesProvider.)
-        ;(IncludeFileContentProvider/getSavedFilesProvider)
         opts 8]
 
     ;; TODO GCCLanguage would probably parse some files (like K&R declarations) better
