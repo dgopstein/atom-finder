@@ -56,4 +56,4 @@
     (clojure.java.io/make-parents out-filename)
     (->> src-filename parse-file to-edn (spit out-filename))))
 
-'(src-dir-to-edn "~/opt/src/gcc/libgcc/soft-fp" "gcc-libgcc-softfp")
+'((src-dir-to-edn linux-path "tmp/src-to-edn/linux"))
