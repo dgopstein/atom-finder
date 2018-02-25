@@ -7,7 +7,7 @@
                  [org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/data.csv "0.1.3"]
                  [org.clojure/math.combinatorics "0.1.4"] ; just for funzies, can be removed
-                 [org.eclipse.platform/org.eclipse.core.resources "3.12.0"] ; Depends on multiple versions of eclipse libraries and generates warnings... this is not an interaction with another atom-finder dependendency, the problem is upstream
+                 ;[org.eclipse.platform/org.eclipse.core.resources "3.12.0"] ; Required for include-file resolution - Depends on multiple versions of eclipse libraries and generates warnings... this is not an interaction with another atom-finder dependendency, the problem is upstream
                  [com.ibm.icu/icu4j "58.1"]
                  [clj-jgit "0.8.10"]
                  [org.slf4j/slf4j-nop "1.7.13"] ; suppress version-mismatch warning from jgit https://github.com/sbt/sbt-git/pull/105/files

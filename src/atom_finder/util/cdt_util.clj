@@ -14,13 +14,13 @@
         includePaths (make-array String 0)
         info (new ScannerInfo definedSymbols includePaths)
         log (new DefaultLogService)
-        savedIncludes (atom_finder.FileCodeReaderFactory/getInstance)
-        ;emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
+        ;savedIncludes (atom_finder.FileCodeReaderFactory/getInstance)
+        emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
         opts 8]
 
     ;; TODO GCCLanguage would probably parse some files (like K&R declarations) better
     (.getASTTranslationUnit (GPPLanguage/getDefault) file-content
-                            info savedIncludes org.eclipse.cdt.internal.core.index.EmptyCIndex/INSTANCE opts log)))
+                            info emptyIncludes org.eclipse.cdt.internal.core.index.EmptyCIndex/INSTANCE opts log)))
 
 (defn c-tu
   "parse a C (not c++) file NOTE: This emits CAST classes which most of the codebase doesn't handle"
