@@ -39,28 +39,21 @@
   (let [poco (to-poco node)]
     (cons poco (map to-edn (children node)))))
 
+'((->> "x" pap parse-frag expr-typename pprint))
+'((->> "f(x)" pap parse-frag expr-typename pprint))
+'((->> "1" pap parse-frag to-edn pprint))
+'((->> "{int x; x;}" parse-frag to-edn pprint))
+'((->> "\"abc\" + 2" parse-frag to-edn pprint))
+'((->> "if(1) 'b';" parse-frag to-edn pprint))
 
-(->> "x" pap parse-frag expr-typename pprint)
-(->> "f(x)" pap parse-frag expr-typename pprint)
-(->> "1" pap parse-frag to-edn pprint)
-(->> "{int x; x;}" parse-frag to-edn pprint)
-(->> "\"abc\" + 2" parse-frag to-edn pprint)
-(->> "if(1) 'b';" parse-frag to-edn pprint)
+(defn src-dir-to-edn
+  [unexpanded-src-path unexpanded-out-path]
+  (doseq [:let [src-path (expand-home unexpanded-src-path)
+                out-path (expand-home unexpanded-out-path)]
+          src-file (c-files src-path)
+          :let [src-filename (.getAbsolutePath src-file)
+                out-filename (str (str/replace src-filename src-path out-path) ".edn")]]
+    (clojure.java.io/make-parents out-filename)
+    (->> src-filename parse-file to-edn (spit out-filename))))
 
-(-<>>
- "gcc_cp_pt.c_92884c107e041201b33c5d4196fe756c716e8a0c" parse-resource
- ;"~/opt/src/gcc/gcc/c/c-array-notation.c" expand-home parse-file
- flatten-tree
- (drop 20035)
- (take 1)
- ;(map write-tree)
- (map expr-typename)
- (map println)
- dorun)
-
-
- (get-in-tree [1 0])
- ((fn [node]
-    (->> node write-ast println)
-    (->> node to-edn prn)))
- time-mins)
+'(src-dir-to-edn "~/opt/src/gcc/libgcc/soft-fp" "gcc-libgcc-softfp")
