@@ -1,10 +1,5 @@
 (in-ns 'atom-finder.util)
 
-;(import '(org.eclipse.cdt.core.parser.tests.scanner FileCodeReaderFactor))
-
-
-;(FileCodeReaderFactory/getInstance)
-
 (defmulti translation-unit class)
 (defmethod translation-unit java.io.File [file] (translation-unit (.getPath file)))
 (defmethod translation-unit String [filename]
