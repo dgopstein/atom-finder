@@ -10,7 +10,7 @@
                  [org.eclipse.core/org.eclipse.core.resources "3.6.0.v20100526-0737"]
                  ;[org.eclipse.platform/org.eclipse.core.resources "3.12.0"] ; Required for include-file resolution - Depends on multiple versions of eclipse libraries and generates warnings... this is not an interaction with another atom-finder dependendency, the problem is upstream
                  [com.ibm.icu/icu4j "58.1"]
-                 [clj-jgit "0.8.9"]
+                 [clj-jgit "0.8.10"]
                  [org.slf4j/slf4j-nop "1.7.13"] ; suppress version-mismatch warning from jgit https://github.com/sbt/sbt-git/pull/105/files
                  [prismatic/schema "1.1.3"]
                  [com.grammarly/omniconf "0.2.5"] ;https://github.com/grammarly/omniconf
