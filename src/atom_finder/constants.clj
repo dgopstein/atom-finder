@@ -20,5 +20,3 @@
 
 ;(def big-root     (when gcc-path (->> "/gcc/config/i386/i386.c" (str gcc-path) parse-file)))
 (def github-top-c (some->> :github-top-c cfg/get expand-home))
-
-(def linux-path (some->> :linux-path cfg/get expand-home))

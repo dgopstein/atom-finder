@@ -1,0 +1,6 @@
+{
+  :gcc-path "~/opt/src/atom-finder/gcc",
+  :ag-path "~/opt/src/the_silver_searcher",
+  :github-top-c "~/opt/src/github-top-c"
+  :linux-path "~/opt/src/linux"
+}

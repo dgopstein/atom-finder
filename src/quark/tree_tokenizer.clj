@@ -1,5 +1,6 @@
 (ns quark.tree-tokenizer
   (:require [atom-finder.util :refer :all]
+            [atom-finder.constants :refer :all]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
@@ -56,4 +57,4 @@
     (clojure.java.io/make-parents out-filename)
     (->> src-filename parse-file to-edn (spit out-filename))))
 
-'((src-dir-to-edn linux-path "tmp/src-to-edn/linux"))
+'((time-mins (src-dir-to-edn linux-path "tmp/src-to-edn/linux")))
