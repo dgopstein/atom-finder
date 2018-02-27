@@ -9,11 +9,10 @@
         includePaths (make-array String 0)
         info (new ScannerInfo definedSymbols includePaths)
         log (new DefaultLogService)
-        ;savedIncludes (atom_finder.FileCodeReaderFactory/getInstance)
+        ;savedIncludes (atom_finder.FileCodeReaderFactory/getInstance) ; Compiling include files bloats the AST of each parsed file, and paradoxically reduces the proportion of correctly typed nodes, because of the AST size inflation.
         emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
         opts 8]
 
-    ;; TODO GCCLanguage would probably parse some files (like K&R declarations) better
     (.getASTTranslationUnit (GPPLanguage/getDefault) file-content
                             info emptyIncludes org.eclipse.cdt.internal.core.index.EmptyCIndex/INSTANCE opts log)))
 
@@ -27,7 +26,7 @@
         emptyIncludes (IncludeFileContentProvider/getEmptyFilesProvider)
         opts 8]
 
-    ;; TODO GCCLanguage would probably parse some files (like K&R declarations) better
+    ;; GCCLanguage parses some files (like K&R declarations) better
     (.getASTTranslationUnit (GCCLanguage/getDefault)
                             (FileContent/create "Anonymous CCCC file"
                                                 (.toCharArray source)) info emptyIncludes
