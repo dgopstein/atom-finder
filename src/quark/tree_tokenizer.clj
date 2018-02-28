@@ -1,3 +1,6 @@
+;; Convert a C/C++/Header file into an edn representation containing the
+;; structure and (partial) type information of the AST
+
 (ns quark.tree-tokenizer
   (:require [atom-finder.util :refer :all]
             [atom-finder.constants :refer :all]
@@ -19,7 +22,9 @@
 
 (defn expr-typename
   [node]
-  (let [expr-type (.getExpressionType node)]
+  (let [expr-type (log-err (str "Exception getting expression type for [file node] "
+                                [(filename node) (tree-path node)]) nil
+                           (-> node .getExpressionType))]
     (condp instance? expr-type
         IProblemBinding "problem-binding"
         IProblemType "problem-type"
@@ -54,7 +59,10 @@
           src-file (c-files src-path)
           :let [src-filename (.getAbsolutePath src-file)
                 out-filename (str (str/replace src-filename src-path out-path) ".edn")]]
+    ;(pprn src-filename)
     (clojure.java.io/make-parents out-filename)
     (->> src-filename parse-file to-edn (spit out-filename))))
 
-'((time-mins (src-dir-to-edn linux-path "tmp/src-to-edn/linux")))
+'((time-mins (src-dir-to-edn linux-path "tmp/src-to-edn/linux3")))
+
+
