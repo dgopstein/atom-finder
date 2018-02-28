@@ -7,6 +7,8 @@
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
+            [clojure.data.csv :as csv]
+            [clojure.java.io :as io]
             [swiss.arrows :refer :all]
             )
   (:import
@@ -62,8 +64,17 @@
     (clojure.java.io/make-parents out-filename)
     (->> src-filename parse-file to-edn (spit out-filename))))
 
-'((time-mins (src-dir-to-edn linux-path "tmp/src-to-edn/linux3")))
-
 '((time-mins (src-dir-to-edn linux-path "tmp/src-to-edn/linux4")))
 
+(defn src-csv-to-edn
+  [csv-path column-name]
+  (with-open [reader (io/reader csv-path)
+              writer (io/writer (str csv-path ".edn"))]
+    (let [[header & csv-data] (csv/read-csv reader)
+          code-idx (.indexOf header column-name)
+          edn-data (map #(update-in % [code-idx] (comp to-edn parse-source)) csv-data)]
+     (csv/write-csv writer (cons header edn-data))
+      )))
 
+
+'((time-mins (src-csv-to-edn "tmp/context_study_code.csv" "Code")))
