@@ -22,13 +22,13 @@
 
 (defn expr-typename
   [node]
-  (let [expr-type (log-err (str "Exception getting expression type for [file node] "
-                                [(filename node) (tree-path node)]) nil
-                           (-> node .getExpressionType))]
-    (condp instance? expr-type
-        IProblemBinding "problem-binding"
-        IProblemType "problem-type"
-        (str expr-type))))
+  (log-err (str "Exception getting expression type for [file node] "
+                [(filename node) (tree-path node)]) "---exception---"
+           (let [expr-type (-> node .getExpressionType)]
+             (condp instance? expr-type
+               IProblemBinding "problem-binding"
+               IProblemType "problem-type"
+               (str expr-type)))))
 
 (defmulti to-poco "Convert IASTNode node to plain-old-clojure-object's" class)
 
@@ -59,10 +59,11 @@
           src-file (c-files src-path)
           :let [src-filename (.getAbsolutePath src-file)
                 out-filename (str (str/replace src-filename src-path out-path) ".edn")]]
-    ;(pprn src-filename)
     (clojure.java.io/make-parents out-filename)
     (->> src-filename parse-file to-edn (spit out-filename))))
 
 '((time-mins (src-dir-to-edn linux-path "tmp/src-to-edn/linux3")))
+
+'((time-mins (src-dir-to-edn linux-path "tmp/src-to-edn/linux4")))
 
 
