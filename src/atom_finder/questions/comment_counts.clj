@@ -57,13 +57,13 @@
   "find all AST nodes near comments and
    categorize them by whether their in a function"
   [root]
-  (let [comment-proximity-lines 3 ; how far away from a comment is still "commented"
+  (let [comment-proximity-lines 1 ; how far away from a comment is still "commented"
         comments (all-comments root)
         function-offset-set (function-offset-range-set root)
         in-function-offset? #(and (not (function-node? %1))
                                   (offset %1)
                                   (function-offset-set (offset %1)))
-        all-nodes  (flatten-tree root)
+        all-nodes  (potential-atom-nodes root)
         all-node-lines (set (mapcat (juxt start-line end-line) all-nodes))
         inline-comment? #(all-node-lines (start-line %)) ; does a comment appear on the same line as an AST node
         [fn-comments global-comments] (separate in-function-offset? comments)
@@ -91,38 +91,64 @@
   "Classify every node by whether its an atom,
    inside a function, and described by a comment"
   [root]
-  (let [fn-cmnts (nodes-near-comments-by-function root)
+  (let [file (filename root)
+        fn-cmnts (nodes-near-comments-by-function root)
         all-atoms (->> root find-all-atoms (mapcat (fn [[atm nodes]] (map #(vector atm %) nodes))))
-        atom-cmnts     (map (fn [[atom-name node]] (merge {:node node :atom atom-name} (fn-cmnts node))) all-atoms)
-        non-atom-cmnts (map (fn [[node   fn-cmnt]] (merge {:node node :atom nil} fn-cmnt)) (apply dissoc fn-cmnts (map second all-atoms)))
+        atom-cmnts     (map (fn [[atom-name node]] (merge {:file file :node node :atom atom-name} (fn-cmnts node))) all-atoms)
+        non-atom-cmnts (map (fn [[node   fn-cmnt]] (merge {:file file :node node :atom nil} fn-cmnt)) (apply dissoc fn-cmnts (map second all-atoms)))
         ]
 
     (concat atom-cmnts non-atom-cmnts)
     ))
 
-;; 18 hours
+;; 33 hours
 '((->> "~/opt/src/atom-finder"
        expand-home
        list-dirs
        (map str)
        (mapcat (fn [dir]
-                 (let [proj (str/replace dir #".*\/" "")]
-                   (->> dir
+                 (->> dir
                     (pmap-dir-trees atoms-by-comments&function)
-                    flatten
-                    (map #(assoc % :proj proj))))))
-       (map (juxt :proj :in-function? :comment :atom))
-       frequencies
+                    (mapcat (fn [file-nodes]
+                           (->> file-nodes
+                                (map #(assoc %
+                                             ;:atom (or (:atom %) (->> % :node typename))
+                                             ;:proj (str/replace dir #".*\/" "")
+                                             :file (->> % :file atom-finder.questions.all-nodes/atom-finder-relative-path)
+                                             ;:line (->> % :node start-line)
+                                             ))
+                                     (map (partial-right dissoc :node))
+                                     frequencies
+                                     )))
+                    )))
+       ;(take 2)
+       ;frequencies
        (map prn)
        dorun
-       (log-to "tmp/comment-counts_2018-01-08_01_in-function.edn")
+       (log-to "tmp/comment-counts_2018-01-30_01_potential-atom-nodes_memory.edn")
        time-mins
    ))
 
-((->> "tmp/comment-counts_2018-01-08_01_in-function.edn"
+'((->> "tmp/comment-counts_2018-01-27_01_proximity-1-line.edn"
       read-lines
       (map (fn [[[proj in-function comment atom] count]]
              {:proj proj :in-function (boolean in-function)
               :comment (boolean comment) :atom (some-> atom name) :count count}))
-      (maps-to-csv "comment-counts_2018-01-08_01_in-function.csv")
+      (maps-to-csv "tmp/comment-counts_2018-01-27_01_proximity-1-line.csv")
  ))
+
+;; Find only literal-encoding in mongo
+'((->>"~/opt/src/atom-finder/"
+       expand-home
+       (pmap-dir-trees atoms-by-comments&function)
+       flatten
+       (filter #(and (:atom %) (true? (:comment %))))
+       (map (fn [h]
+              (let [[no-node {node :node}] (split-map-by-keys h [:node])]
+                (merge no-node {:line (start-line node) :file (filename node) :node (write-tree node)}))))
+       (map prn)
+       ;(take 20)
+       dorun
+       (log-to "tmp/comment-counts_2018-01-26_01_proximity-1-line.edn")
+       time-mins
+   ))
