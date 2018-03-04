@@ -113,15 +113,15 @@
                                           :date (->> commit commit-time ymd-str)}
                                          (treewalk->file (.getRepository git-repo) tree-walk)))))))
 
-(s/defn rev-filestr :- s/Str
-  "Find the text of a file at a given revision"
-  [repo :- Git rev-str :- s/Str path :- s/Str]
-  (let [tree-walk (->> rev-str (find-rev-commit repo) (treewalk repo))]
-    (treewalk->filestr
-     (.getRepository repo)
-     (doto tree-walk
-       (.setFilter (PathFilter/create path))
-       .next))))
+;; (s/defn rev-filestr :- s/Str
+;;   "Find the text of a file at a given revision"
+;;   [repo :- Git rev-str :- s/Str path :- s/Str]
+;;   (let [tree-walk (->> rev-str (find-rev-commit repo) (treewalk repo))]
+;;     (treewalk->filestr
+;;      (.getRepository repo)
+;;      (doto tree-walk
+;;        (.setFilter (PathFilter/create path))
+;;        .next))))
 
 (s/defn rev-filestr :- s/Str
   "Find the text of a file at a given revision"
@@ -224,3 +224,16 @@
    )
   )
 
+'((def emacs-repo (->> "~/opt/src/emacs" expand-home gitp/load-repo)))
+'((->> "src/atimer.c"
+       (rev-filestr emacs-repo "1c027a2427524def8a03ee4ad3e48fefa352a9b0")
+       ;parse-source
+       c-tu
+       flatten-tree
+       (map type)
+       (pap count)
+       frequencies
+       (sort-by last)
+       (map prn)
+       )
+  )

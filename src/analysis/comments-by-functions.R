@@ -23,6 +23,7 @@ chi.test <- function(a, b, c, d) {
 to.bool <- function(x) as.logical(ifelse(as.character(x) == 'true', TRUE, ifelse(as.character(x)=='false', FALSE, x)))
 
 individual.atom.comments <- data.table(read.csv("data/comment-counts_2018-01-08_01_in-function.csv", header=TRUE))
+#individual.atom.comments <- data.table(read.csv("data/comment-counts_2018-01-27_01_proximity-1-line.csv", header=TRUE))
 individual.atom.comments[, any.atom := atom != '', ]
 individual.atom.comments[, comment := to.bool(comment), ]
 individual.atom.comments[, in.function := to.bool(in.function), ]
@@ -51,10 +52,10 @@ chi.test(all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == TR
          all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == FALSE, count],
          all.atom.comments[in.function == TRUE & comment==FALSE & any.atom == FALSE, count])
 
-fisher.test(matrix(c(all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == TRUE,  count],
-         all.atom.comments[in.function == TRUE & comment==FALSE & any.atom == TRUE,  count],
-         all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == FALSE, count],
-         all.atom.comments[in.function == TRUE & comment==FALSE & any.atom == FALSE, count]), nrow=2))
+# fisher.test(matrix(c(all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == TRUE,  count],
+#          all.atom.comments[in.function == TRUE & comment==FALSE & any.atom == TRUE,  count],
+#          all.atom.comments[in.function == TRUE & comment==TRUE  & any.atom == FALSE, count],
+#          all.atom.comments[in.function == TRUE & comment==FALSE & any.atom == FALSE, count]), nrow=2))
 
 atom.comments.no.fun <- all.atom.comments[, .(count=sum(count)), by=c("comment", "any.atom", "width")]
 
@@ -160,17 +161,17 @@ individual.comment.rates.all.proj.in.fun.plot <-
   #geom_bar(aes(fill = any.atom), stat="identity") +
   geom_bar(aes(fill = any.atom, width=0.099*log(0.001*(ifelse(count < 10^8, count, 10^8) +1000))), stat="identity") +
   geom_text(aes(label=ifelse(is.na(odds), '', sprintf('%0.2f', round(odds, 2)))), angle = 90, vjust=0.5, hjust=-0.3, size=3) +
-  coord_cartesian(ylim = c(0, 0.13)) +
+  coord_cartesian(ylim = c(0, 0.18)) +
   scale_fill_manual(values = rev(colors2)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        panel.grid.major.x = element_blank()) +
+        panel.grid.major.x = element_blank(), panel.grid.minor.y = element_blank()) +
   #labs(title = "Comment Rates Inside Functions") +
   guides(fill=FALSE) +
   labs(x = "Atom", y="Comment Rate")
 
 individual.comment.rates.all.proj.in.fun.plot
 
-ggsave("img/comment_rates_in_fun.pdf", individual.comment.rates.all.proj.in.fun.plot, width=(width<-138), height=width*0.75, units = "mm")
+ggsave("img/comment_rates_in_fun.pdf", individual.comment.rates.all.proj.in.fun.plot, width=(width<-115), height=width*0.65, units = "mm")
 
 
 individual.comment.rates.all.proj.out.fun <- individual.comment.rates.all.proj[in.function==FALSE]

@@ -86,7 +86,7 @@
        (map (fn [[common added removed]] [(merge common (:added-atoms added)) (merge common (:removed-atoms removed))]))
        transpose
        ((fn [[addeds removeds]]
-          (maps-to-csv "src/analysis/data/atoms-in-bugs_gcc_2018-01-11_added.csv_partial" (-> addeds first keys (concat (map :name atoms))) addeds)
-          (maps-to-csv "src/analysis/data/atoms-in-bugs_gcc_2018-01-11_removed.csv_partial" (-> removeds first keys (concat (map :name atoms))) removeds)
+          (maps-to-csv "src/analysis/data/atoms-in-bugs_gcc_2018-01-11_added.csv" (-> addeds first keys (concat (map :name atoms))) addeds)
+          (maps-to-csv "src/analysis/data/atoms-in-bugs_gcc_2018-01-11_removed.csv" (-> removeds first keys (concat (map :name atoms))) removeds)
                ))
        ))
