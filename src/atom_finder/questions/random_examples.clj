@@ -32,17 +32,21 @@
 (quote
 (->>
  random-c-files
- (take 300000)
+ (take 40000)
  (pap (constantly (now)))
  (pmapcat
   (fn [filename]
     (with-timeout 120
       (for [[name atms] (->> filename parse-file find-all-atoms)
             atm atms]
-        {:file (.getFilePath root)
-         :line (start-line atm)
-         :type name
-         :atom atm}))))
+        (log-err "serializing random example" nil
+                 {:file (.getFilePath root)
+                  :line (start-line atm)
+                  :type name
+                  ;;:atom atm
+                  :github-url (github-url atm)
+                  :code-str (write-tree atm)})))))
+ (remove nil?)
  shuffle
  (def random-atoms)
  time-mins
@@ -54,23 +58,15 @@
 (->>
  random-atoms
  (group-by :type)
- (map-values (partial take 20))
+ (map-values (partial take 40))
  (def grouped-examples)
  time-mins
  )
 )
 
-(->> random-atoms count)
-     (map-values count))
-
-'((->> grouped-examples :preprocessor-in-statement
-    (map (fn [exmpl] ;(assoc (update-in exmpl [:atom] write-tree)
-            :github (github-url exmpl))) pprint))
-
 (quote
  (->> grouped-examples
-     (map-values (partial map #(update-in % [:atom] write-tree)))
-     (map-values (partial map #(str (github-url %1) "\n\n" (:atom %1) "\n\n--------------\n")))
+     (map-values (partial map #(str (:github-url %1) "\n\n" (:code-str %1) "\n\n--------------\n")))
      (map (fn [[type atoms]] (spit (str "tmp/atom-examples/" (name type) ".txt") (str/join "\n" atoms))))
      )
  )

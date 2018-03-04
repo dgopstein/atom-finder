@@ -25,14 +25,23 @@
 
 (defn github-repos [proj] (str (github-author proj) "/" proj))
 
+;; for i in `ls`; do cd $i; echo -n "$i   "; echo `git rev-parse HEAD`; cd ..; done
 (def repo-rev-strs
-  {"gcc"       "2c3133a09ceedead50c2b585ef7f62738ad5c81e"
-   "linux"     "e19b205be43d11bff638cad4487008c48d21c103"
-   "clang"     "2bcd2d052e5508c12374390e4a2d572988622caf"
-   "freebsd"   "c2b6ea8fa56ce6aba773d820fbf64a4d3efac9f5"
-   "gecko-dev" "dd47bee6468de7e1221b4d006342ad6b9813d0e5"
-   "vim"       "5df95ea9ef34b5a898141ddc7134e4a7de713ba5"
-   "webkit"    "e8c73206a09f734bc64f77d6275a727aa2811754"
+  {
+   "clang"         "2bcd2d052e5508c12374390e4a2d572988622caf"
+   "emacs"         "cb73c70180f57f3fb99fae3aaefbacf0a61cea3f"
+   "freebsd"       "c2b6ea8fa56ce6aba773d820fbf64a4d3efac9f5"
+   "gcc"           "2201c33012d4c6dc522ddbfa97f5aa95a209e24d"
+   "gecko-dev"     "dd47bee6468de7e1221b4d006342ad6b9813d0e5"
+   "git"           "ba78f398be65e941b93276680f68a81075716472"
+   "httpd"         "6fe234860d15c797f34bc9c0e290fd23a73233c7"
+   "linux"         "f34157878d3b17641ad2366988600c23c89d98b2"
+   "mongo"         "67f735e6705091659e2a8cf46a9285f09bcf749a"
+   "mysql-server"  "0138556a55168da12eaf0bc3038947148d6b0863"
+   "nginx"         "9cb9ce78b1d81ccdbcd123ccc3dab295b836a174"
+   "subversion"    "0a73cab17bd4114d1ce96dc5b89b0e44ec0fd5d1"
+   "vim"           "6ce650480844bfaa5410874416b4a2e15f40b870"
+   "webkit"        "e8c73206a09f734bc64f77d6275a727aa2811754"
    })
 
 (defn relativize-filename
