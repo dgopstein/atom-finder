@@ -7,13 +7,20 @@
     (format "%032x" (java.math.BigInteger. 1 raw))))
 
 (def github-author
-  {"gcc"       "gcc-mirror"
-   "linux"     "torvalds"
-   "clang"     "llvm-mirror"
-   "freebsd"   "freebsd"
-   "gecko-dev" "mozilla"
-   "vim"       "vim"
-   "webkit"    "WebKit"
+  {"linux"        "torvalds"
+   "freebsd"      "freebsd"
+   "gecko-dev"    "mozilla"
+   "webkit"       "WebKit"
+   "gcc"          "gcc-mirror"
+   "clang"        "llvm-mirror"
+   "mongo"        "mongodb"
+   "mysql-server" "mysql"
+   "subversion"   "apache"
+   "git"          "git"
+   "emacs"        "emacs-mirror"
+   "vim"          "vim"
+   "httpd"        "apache"
+   "nginx"        "nginx"
    })
 
 (defn github-repos [proj] (str (github-author proj) "/" proj))

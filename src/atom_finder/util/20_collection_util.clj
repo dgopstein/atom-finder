@@ -50,6 +50,12 @@
   "like mapcat, but expects function of 2 arguments, where first argument is index of sequence element"
   (comp (partial apply concat) map-indexed))
 
+;; clojure.contrib.djui.coll
+(defn pmapcat
+  "Like mapcat but with parallelized map."
+  [f & colls]
+  (apply concat (apply pmap f colls)))
+
 (defn values-at [m keys]
   (map m keys))
 

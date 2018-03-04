@@ -20,29 +20,29 @@
   )
 
 '((->>
- "~/opt/src/linux"
+ "~/opt/src/atom-finder"
  expand-home
  c-files
- (take 50000)
  shuffle
- (take 10000)
  (def random-c-files)
  time-mins
  ))
 
+; 2:20 for 100k
 (quote
 (->>
  random-c-files
+ (take 300000)
  (pap (constantly (now)))
- (map parse-file)
- (mapcat
-  (fn [root]
-    (for [[name atms] (find-all-atoms root)
-          atm atms]
-      {:file (str/replace-first (.getFilePath root) #".*linux/" "")
-       :line (start-line atm)
-       :type name
-       :atom atm})))
+ (pmapcat
+  (fn [filename]
+    (with-timeout 120
+      (for [[name atms] (->> filename parse-file find-all-atoms)
+            atm atms]
+        {:file (.getFilePath root)
+         :line (start-line atm)
+         :type name
+         :atom atm}))))
  shuffle
  (def random-atoms)
  time-mins
@@ -54,14 +54,18 @@
 (->>
  random-atoms
  (group-by :type)
- (map-values (partial take 100))
+ (map-values (partial take 20))
  (def grouped-examples)
  time-mins
  )
 )
 
-'((->> grouped-examples :preprocessor-in-statement (map (fn [exmpl] ;(assoc (update-in exmpl [:atom] write-tree)
-                                                                :github (github-url exmpl))) pprint))
+(->> random-atoms count)
+     (map-values count))
+
+'((->> grouped-examples :preprocessor-in-statement
+    (map (fn [exmpl] ;(assoc (update-in exmpl [:atom] write-tree)
+            :github (github-url exmpl))) pprint))
 
 (quote
  (->> grouped-examples
