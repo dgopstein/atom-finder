@@ -14,7 +14,7 @@
 (def   gcc-repo (some->>   gcc-path gitp/load-repo))
 (def linux-repo (some->> linux-path gitp/load-repo))
 
-(def atom-finder-path (some->> :atom-finder-path cfg/get expand-home))
+(def atom-finder-corpus-path (some->> :atom-finder-corpus-path cfg/get expand-home))
 
 (def root (parse-resource "logic-as-control-flow.c"))
 

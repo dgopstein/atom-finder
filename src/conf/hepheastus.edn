@@ -3,4 +3,6 @@
   :ag-path "~/opt/src/the_silver_searcher",
   :github-top-c "~/opt/src/github-top-c"
   :linux-path "~/opt/src/linux"
+
+  :atom-finder-corpus-path "~/opt/src/atom-finder"
 }

@@ -4,4 +4,6 @@
   :linux-path "~/opt/src/atom-finder/linux",
 
   :github-top-c "~/opt/src/github-top-c"
+
+  :atom-finder-corpus-path "~/opt/src/atom-finder"
 }
