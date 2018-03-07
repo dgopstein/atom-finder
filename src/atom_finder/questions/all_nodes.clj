@@ -14,7 +14,7 @@
 (defn atom-finder-relative-path
   "Remove the ~/opt/src/atom-finder/ from the pathname"
   [path]
-  (string/replace-first path (re-pattern (str atom-finder-path "/?")) ""))
+  (string/replace-first path (re-pattern (str atom-finder-corpus-path "/?")) ""))
 
 (defn opname-or-typename
   "If the node is an expression, print out which kind, otherwise print out its type"
@@ -22,7 +22,7 @@
   (-> node expr-operator :name (or (write-node-type node))))
 
 '((prn (now)))
-'((->> atom-finder-path
+'((->> atom-finder-corpus-path
        (pmap-dir-files
         (fn [file]
           (assoc
