@@ -32,20 +32,21 @@
 (quote
 (->>
  random-c-files
- (take 40000)
+ (take 20000)
  (pap (constantly (now)))
  (pmapcat
   (fn [filename]
     (with-timeout 120
-      (for [[name atms] (->> filename parse-file find-all-atoms)
-            atm atms]
-        (log-err "serializing random example" nil
-                 {:file (.getFilePath root)
-                  :line (start-line atm)
-                  :type name
-                  ;;:atom atm
-                  :github-url (github-url atm)
-                  :code-str (write-tree atm)})))))
+      (log-err "parsing random example" nil
+               (for [[name atms] (->> filename parse-file find-all-atoms)
+                     atm atms]
+                 (log-err "serializing random example" nil
+                          {:file (.getFilePath atm)
+                           :line (start-line atm)
+                           :type name
+                           ;;:atom atm
+                           :github-url (github-url atm)
+                           :code-str (write-tree atm)}))))))
  (remove nil?)
  shuffle
  (def random-atoms)
@@ -58,6 +59,8 @@
 (->>
  random-atoms
  (group-by :type)
+ ;;first last first :github-url)
+ (map-values (partial distinct-by (%->> :github-url (re-find #"[^#]*"))))
  (map-values (partial take 40))
  (def grouped-examples)
  time-mins
