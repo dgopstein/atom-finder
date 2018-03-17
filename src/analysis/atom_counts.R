@@ -129,7 +129,7 @@ confusingness.vs.prevalence <-
   ggplot(atom.effect, aes(effect.size, rate)) +
   theme_classic() +
   geom_point(size=2.5, color=colors2dark[2]) +
-  geom_smooth(method="lm", se=FALSE, fullrange=TRUE, color=colors2dark[1]) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
+  geom_smooth(method="lm", se=FALSE, fullrange=TRUE, color=colors2dark[1], size=1) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   scale_x_continuous(limits = c(0.2, 0.75)) +
   scale_y_log10(limits = c(5*10^-8, 9*10^-3)) +
   geom_text(aes(label=atom), hjust=-0.1, angle=-10, size=3) +
@@ -178,15 +178,17 @@ all.atom.proj.rates <- atom.counts[, -c('non.atoms')][, .(rate = (base::sum(.SD)
 
 all.atom.proj.rates.plot <- ggplot(all.atom.proj.rates, aes(x = reorder(project, rate), y = rate)) +
   theme_classic() +
+  theme(plot.margin = margin(l=18, unit="mm")) +
   geom_bar(stat="identity", aes(fill=domain)) +
   scale_fill_manual(values=domain.colors) +
   geom_text(aes(y=0.0005, label=sprintf("%0.3f", round(rate, digits=3))),
                 color='black', angle=0, hjust=0, size=2.5) +
   theme(axis.text.x=element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), axis.title.x = element_blank()) +
-  theme(legend.position = c(0.87, 0.300), legend.key.size = unit(0.3,"line")) +
+  theme(axis.text.y=element_text(margin=margin(r=-7,"pt"))) +
+  theme(legend.position = c(0.87, 0.300), legend.key.size = unit(0.58,"line")) +
   guides(color=FALSE) +
   coord_flip() +
-  labs(x="Project", y="Atom Occurrence Rate", fill="Domain")
+  labs(x="Project", fill="Domain")
 all.atom.proj.rates.plot
 
 ggsave("img/all_atom_proj_rates.pdf", all.atom.proj.rates.plot, width=(width<-130), height=width*.3, units = "mm")

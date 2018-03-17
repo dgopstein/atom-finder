@@ -65,10 +65,10 @@ mean.atoms.by.project.age <-
   ggplot(project.age.mean.atoms, aes(x=date, y=rate)) +
   theme_classic() +
   #geom_smooth(method="rlm", colour="black", size=0.5, se=FALSE, fullrange=TRUE) +
-  stat_smooth(colour=colors2dark[1], size=0.5, se=FALSE, fullrange=TRUE,
+  stat_smooth(colour=colors2dark[1], size=1, se=FALSE, fullrange=TRUE,
     method=function(f,data=data,weights=weight) MASS::rlm(f,data,weights=weight,method="MM")) +
   geom_point(size=3, color=colors2dark[2]) +
-  geom_text(aes(label=paste(" ", project)), size = 3, angle=-18, hjust=0, vjust=0.4) +
+  geom_text(aes(label=paste(" ", project)), size = 3, angle=-17, hjust=0, vjust=0.4) +
   #geom_text_repel(aes(label=project), size = 4, angle=-20, force=0.1, direction="x") +
   scale_x_date(limits = as.Date(c("1985-01-01", "2017-01-01"))) +
   #scale_y_continuous(limits = c(.005, .024)) +
@@ -141,7 +141,7 @@ project.age.linear <- ggplot(code.age.all.atoms[project!='emacs']) +
   stat_smooth(aes(date, rate, group=project), color=colors2dark[1], method="lm", size=0.5, se=FALSE) +
   annotate("text", x=as.Date('1991-02-01'), y=0.017, angle=-4.2, label="     All Projects", hjust=0.0, size=4) +
   annotate("point", x=as.Date('1991-02-01'), y=0.01605, colour='#888888', size=4.0) +
-  geom_point(aes(date, linear.rate), color=colors2dark[2], data=first.points[project!='emacs'], size=2) +
+  geom_point(aes(date, linear.rate), color=colors2dark[2], data=first.points[project!='emacs'], size=3) +
   geom_text(aes(date, linear.rate, label=paste0("  ", project), angle=(1.3*(10^7)*angle)),
             data=first.points[project!='emacs'], hjust=0, vjust=-0.4, size=3.0) +
   labs(x = "Date", y = "Linearized Atom Rate") +
