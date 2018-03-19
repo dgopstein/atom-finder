@@ -44,6 +44,12 @@
    "webkit"        "e8c73206a09f734bc64f77d6275a727aa2811754"
    })
 
+(def github-tree-urls
+  (map-kv (fn [proj auth]
+            {proj
+             (str "https://github.com/" auth "/" proj "/tree/" (repo-rev-strs proj))})
+          github-author))
+
 (defn relativize-filename
   [filename]
   (-> filename (str/replace #".*opt/src/(atom-finder/)?" "")))
