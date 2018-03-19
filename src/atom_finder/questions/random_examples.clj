@@ -31,8 +31,9 @@
 ; 2:20 for 100k
 (quote
 (->>
+ ;rare-atom-files (map (partial str "~/opt/src/atom-finder/"))
  random-c-files
- (take 20000)
+ (take 4)
  (pap (constantly (now)))
  (pmapcat
   (fn [filename]
@@ -70,6 +71,17 @@
 (quote
  (->> grouped-examples
      (map-values (partial map #(str (:github-url %1) "\n\n" (:code-str %1) "\n\n--------------\n")))
-     (map (fn [[type atoms]] (spit (str "tmp/atom-examples/" (name type) ".txt") (str/join "\n" atoms))))
+     (map (fn [[type atoms]] (spit (str "tmp/atom-examples_reversed_macro-op_literal-enc/" (name type) ".txt") (str/join "\n" atoms))))
      )
  )
+
+;; find examples of only a few types of atoms
+'((->> "tmp/atom-counts_2017-11-12_01.edn"
+       read-lines
+       (remove (%->> :atom-counts ((flip select-values) [:reversed-subscript :macro-operator-precedence :literal-encoding]) (remove zero?) empty?))
+       (map :file)
+       (def rare-atom-files)
+   ))
+
+;; validate that each type of atom has good coverage accross files:
+;; for i in `ls`; do echo "$i         "`grep -o 'https[^#]*' $i | sort | uniq -c | wc -l`; done

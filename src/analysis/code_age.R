@@ -12,11 +12,18 @@ code.age.wide <- code.age.wide[date > '1984-01-01' & date < '2018-01-01' & all.n
 code.age.wide <- code.age.wide[order(date)]
 code.age.wide[project=='linux-historical']$project <- 'linux'
 
-code.age.wide[project=='linux', .(date, all.nodes - non.atoms)]
+# Remove all emacs commits because of the K&R style code that breaks all pre-2010 analyses
+# https://github.com/emacs-mirror/emacs/commit/971de7fb158335fbda39525feb2d7776a26bc030
+# code.age.wide[project=='emacs' & date >= '2011-01-01', .(project, date, (all.nodes - non.atoms)/all.nodes)]
+# code.age.wide <- code.age.wide[!(project=='emacs' & date < '2011-01-01'),]
+# code.age.all.atoms[project=='emacs' & date < '2011-01-01', count := as.integer(2.18*count)]
+# code.age.wide <- code.age.wide[project!='emacs']
+
 
 code.age <- melt(code.age.wide, id.vars=c("project", "date","rev.str", 'all.nodes'), variable.name="atom", value.name="count")
 
 code.age.all.atoms <- code.age[!atom%in%c('non.atoms')][, .(count = sum(count), all.nodes = mean(all.nodes)), by=c('project', 'date', 'rev.str')]
+
 code.age.all.atoms[, rate := count / all.nodes]
 
 code.age.all.atoms[, smooth.rate := zoo::rollmedian(rate, 5), by=project]
@@ -58,10 +65,10 @@ mean.atoms.by.project.age <-
   ggplot(project.age.mean.atoms, aes(x=date, y=rate)) +
   theme_classic() +
   #geom_smooth(method="rlm", colour="black", size=0.5, se=FALSE, fullrange=TRUE) +
-  stat_smooth(colour="black", size=0.5, se=FALSE, fullrange=TRUE, 
+  stat_smooth(colour=colors2dark[1], size=1, se=FALSE, fullrange=TRUE,
     method=function(f,data=data,weights=weight) MASS::rlm(f,data,weights=weight,method="MM")) +
-  geom_point(size=3, aes(colour=domain)) +
-  geom_text(aes(label=paste(" ", project)), size = 3, angle=-18, hjust=0, vjust=0.4) +
+  geom_point(size=3, color=colors2dark[2]) +
+  geom_text(aes(label=paste(" ", project)), size = 3, angle=-17, hjust=0, vjust=0.4) +
   #geom_text_repel(aes(label=project), size = 4, angle=-20, force=0.1, direction="x") +
   scale_x_date(limits = as.Date(c("1985-01-01", "2017-01-01"))) +
   #scale_y_continuous(limits = c(.005, .024)) +
@@ -102,18 +109,44 @@ first.points$angle <-
          function(proj)
            lm(rate ~ date, code.age.all.atoms[project==proj])$coefficients)["date",]
 
-project.age.linear <- ggplot(code.age.all.atoms) +
+code.age.for.regression <- merge(code.age.all.atoms, first.points[,.(project, linear.rate)], by.x = 'project', by.y='project')
+
+summary(lm(rate ~ date, data=code.age.all.atoms[project=='emacs' & date >= '2011-01-01']))
+
+summary(lm(rate ~ date, data=code.age.all.atoms[project=='emacs' & date >= '2011-01-01']))
+
+ggplot(aes(date, rate), data=code.age.all.atoms[project=='emacs' & date >= '2011-01-01']) +
+  geom_point() + stat_smooth(aes(date, rate, group=project, color=project), method="lm", size=0.5, se=FALSE)
+
+
+first.points$angle.no.intercept <-
+  sapply(first.points$project,
+         function(proj)
+           lm((I(rate - linear.rate) ~ 0+date), code.age.for.regression[project==proj])$coefficients)
+
+project.age.linear.no.intercept <- ggplot(first.points) +
   theme_classic() +
-  stat_smooth(aes(date, rate), method="lm", colour="gray", size=2, se=FALSE, fullrange=TRUE) +
-  stat_smooth(aes(date, rate, group=project, color=project), method="lm", size=0.5, se=FALSE) +
-  annotate("text", x=as.Date('1988-01-01'), y=0.0145, label="  All Projects", hjust=0.0, size=4.0) +
-  annotate("point", x=as.Date('1988-01-01'), y=0.0134, colour='gray', size=4.0) +
+  geom_segment(aes(x = date, y=linear.rate, xend=as.Date("2017-01-01"), yend=(3000*angle.no.intercept)+linear.rate, color=project), size=0.5) +
   geom_point(aes(date, linear.rate, color=project), data=first.points, size=2) +
   geom_text(aes(date, linear.rate, label=paste0("  ", project), angle=(1.3*(10^7)*angle)),
             data=first.points, hjust=0, vjust=-0.4) +
   labs(x = "Date", y = "Linearized Atom Rate") +
   guides(colour=FALSE)
-  
+project.age.linear.no.intercept
+
+
+project.age.linear <- ggplot(code.age.all.atoms[project!='emacs']) +
+  theme_classic() +
+  stat_smooth(aes(date, rate), method="lm", colour="gray", size=2, se=FALSE, fullrange=TRUE) +
+  stat_smooth(aes(date, rate, group=project), color=colors2dark[1], method="lm", size=0.5, se=FALSE) +
+  annotate("text", x=as.Date('1991-02-01'), y=0.017, angle=-4.2, label="     All Projects", hjust=0.0, size=4) +
+  annotate("point", x=as.Date('1991-02-01'), y=0.01605, colour='#888888', size=4.0) +
+  geom_point(aes(date, linear.rate), color=colors2dark[2], data=first.points[project!='emacs'], size=3) +
+  geom_text(aes(date, linear.rate, label=paste0("  ", project), angle=(1.3*(10^7)*angle)),
+            data=first.points[project!='emacs'], hjust=0, vjust=-0.4, size=3.0) +
+  labs(x = "Date", y = "Linearized Atom Rate") +
+  guides(colour=FALSE)
+
 project.age.linear
 
 ggsave("img/project_age_linear.pdf", project.age.linear, width=(width<-145), height=width*0.5, units = "mm")
@@ -125,4 +158,6 @@ ggplot(code.age.all.atoms) +
   stat_smooth(aes(date, rate, group=project, color=project), size=0.5, se=FALSE) +
   stat_smooth(aes(date, rate), method="lm", colour="red", size=2, se=FALSE, fullrange=TRUE)
 
-  
+Hmisc::binconf(20, 20)
+Hmisc::binconf(19, 20)
+Hmisc::binconf(12, 20)
