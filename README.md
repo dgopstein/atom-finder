@@ -20,42 +20,52 @@ In order to run this project you should install:
  The way one writes Clojure (and lisp in general) is a bit more interactive than traditional development.
  It's important to be able to evaluate code as you write it.
  
- After you've installed these tools, first run `lein test` to make sure everything is up and running.
- Then you should be able to develop in your editor, executing snippets of code as you go.
+After you've installed these tools, first run `lein test` to make sure everything is up and running.
+Then you should be able to develop in your editor, executing snippets of code as you go.
  
- ## Using the framework
+## Using the framework
  
- The first thing you might want to do, is parse some C code. There are two main functions for doing this, `parse-source` and `parse-frag`. Both functions take a `String` as an argument, and return an [`IASTNode`](https://dgopstein.github.io/content/cdt/org/eclipse/cdt/core/dom/ast/IASTNode.html). The difference is that `parse-source` requires a whole program, and `parse-frag` can take any partial program. For example:
- 
- ```clojure
+The first thing you might want to do, is parse some C code. There are three
+main functions for doing this, `parse-file`, `parse-source` and
+`parse-frag`. Both functions take a `String` as an argument, and return
+an
+[`IASTNode`](https://dgopstein.github.io/content/cdt/org/eclipse/cdt/core/dom/ast/IASTNode.html).
+`parse-file` and `parse-source` both require whole programs, the former
+accepting a filename as its argument and the latter a string containing the
+full code. `parse-frag` on the other hand can take any (read "many") partial
+program. For example:
+
+```clj
+(parse-file "gcc/testsuite/c-c++-common/wdate-time.c") => CPPASTTranslationUnit
 (parse-source "int main() { 1 + 1; }") => CPPASTTranslationUnit
 (parse-frag "1 + 1") => CPPASTBinaryExpression
 ```
  
- If you want to read the program out of a file, try putting the file in `src/test/resources/` and then doing this:
+After you've parsed some code, you might reasonable want to see what it looks like:
  
- ```clojure
- (->> "wdate-time.c"
-       parse-resource
-       (get-in-tree [2])
-       print-tree)
+```clj
+(->> "gcc/testsuite/c-c++-common/wdate-time.c"
+      parse-file
+      (get-in-tree [2])
+      print-tree)
 ```
                                
 Which should output:
            
 ```
- -CPPASTSimpleDeclaration  (offset: 238, 39) -> const char
-   -CPPASTSimpleDeclSpecifier  (offset: 238, 10) -> const char
-   -CPPASTArrayDeclarator  (offset: 249, 27) -> timestamp[
-     -CPPASTName  (offset: 249, 9) -> timestamp
-     -CPPASTArrayModifier  (offset: 258, 2) -> []
-     -CPPASTEqualsInitializer  (offset: 261, 15) -> = __TIMEST
-       -CPPASTName  (offset: 263, 13) -> __TIMESTAM
+[]  <SimpleDeclaration>                                      {:line 6, :off 238, :len 39}
+[0]  <SimpleDeclSpecifier>                                   {:line 6, :off 238, :len 10}
+[1]  <ArrayDeclarator>                                       {:line 6, :off 249, :len 27}
+[1 0]  <Name>                                                {:line 6, :off 249, :len 9}
+[1 1]  <ArrayModifier>                                       {:line 6, :off 258, :len 2}
+[1 2]  <EqualsInitializer>                                   {:line 6, :off 261, :len 15}
+[1 2 0]  <IdExpression>                                      {:line 6, :off 263, :len 13}
+[1 2 0 0]  <Name>                                            {:line 6, :off 263, :len 13}
 ```
                                                        
 Some other useful functions are:
 
-    write-ast -> Takes an AST and prints out the code (basically the opposite of parsing)
-    print-tree -> Prints the whole tree structure of an AST
-    get-in-tree -> Digs down into an AST to get at nested children
+    print-tree     -> Prints a debug view of the tree structure of an AST plus metadata
+    write-tree     -> Takes an AST and returns the code that generated it (inverse parsing)
+    get-in-tree    -> Digs down into an AST to get at nested children
     default-finder -> Take a function that returns true/false for a single AST node, and run it over an entire AST
