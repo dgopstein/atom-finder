@@ -1,6 +1,6 @@
-(defproject atom-finder "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+(defproject atom-finder "1.0.0"
+  :description "Find atoms of confusion in source code"
+  :url "atomsofconfusion.com"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [
@@ -37,4 +37,7 @@
   :jvm-opts ["-Xss8m" "-Xmx32g" "-XX:+HeapDumpOnOutOfMemoryError"]
   :main atom-finder.core
   ;:aot [atom-finder.core]
+  :plugins [[lein-codox "0.10.3"]]
+  ;:codox {:namespaces [#"^atom-finder\.(?!instrumentation|results-sandbox)"
+  ;                     #"^atom-finder\.tree-diff\.(?!apted|change-distiller)"]}
 )

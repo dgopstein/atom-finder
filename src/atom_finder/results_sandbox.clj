@@ -1,4 +1,4 @@
-(ns atom-finder.atom-stats
+(ns atom-finder.results-sandbox
   (:require
    [atom-finder.util :refer :all]
    [atom-finder.constants :refer :all]
