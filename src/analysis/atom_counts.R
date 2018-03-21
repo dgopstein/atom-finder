@@ -121,9 +121,17 @@ all.atom.ast.rate <- all.atom.counts[, (all.nodes - non.atoms) / all.nodes]
 #  all atoms by effect size
 ##################################
 
-atom.effect <- merge(all.atom.rates, atom.effect.sizes[, .(atom = convert.atom.names(atom), effect.size)])
+atom.effect <- data.table(merge(all.atom.rates, atom.effect.sizes[, .(atom = convert.atom.names(atom), effect.size)]))
 
 confusingness.vs.prevalence.correlation <- with(atom.effect, cor(rate, effect.size)) # correlation: -0.45
+
+atom.effect$offset.x <- atom.effect$offset.y <- 0
+atom.effect[atom=="Preprocessor in Statement", c("offset.x", "offset.y") := .(0, 1)]
+atom.effect[atom=="Logic as Control Flow", c("offset.x", "offset.y") := .(0, -1)]
+atom.effect[atom=="Assignment as Value", c("offset.x", "offset.y") := .(0, -0)]
+atom.effect[atom=="Operator Precedence", c("offset.x", "offset.y") := .(0, 2)]
+atom.effect[atom=="Omitted Curly Brace", c("offset.x", "offset.y") := .(0, -4)]
+
 
 confusingness.vs.prevalence <-
   ggplot(atom.effect, aes(effect.size, rate)) +
@@ -132,7 +140,7 @@ confusingness.vs.prevalence <-
   geom_smooth(method="lm", se=FALSE, fullrange=TRUE, color=colors2dark[1], size=1) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   scale_x_continuous(limits = c(0.2, 0.75)) +
   scale_y_log10(limits = c(5*10^-8, 9*10^-3)) +
-  geom_text(aes(label=atom), hjust=-0.1, angle=-10, size=3) +
+  geom_text(aes(label=atom, x=.009+effect.size+.003*offset.x, y=rate+0.0001*offset.y), hjust=0, vjust=.6, angle=-10, size=3) +
   theme(axis.text.x=element_text(angle=90, hjust=1)) +
   annotate("text", x=0.35, y=3*10^-6, label=paste0("r = ", round(confusingness.vs.prevalence.correlation, 2))) +
   #ggtitle("Confusingness vs Prevalence", subtitle="Do less confusing patterns occur more often?") +
@@ -184,8 +192,8 @@ all.atom.proj.rates.plot <- ggplot(all.atom.proj.rates, aes(x = reorder(project,
   geom_text(aes(y=0.0005, label=sprintf("%0.3f", round(rate, digits=3))),
                 color='black', angle=0, hjust=0, size=2.5) +
   theme(axis.text.x=element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), axis.title.x = element_blank()) +
-  theme(axis.text.y=element_text(margin=margin(r=-7,"pt"))) +
-  theme(legend.position = c(0.87, 0.300), legend.key.size = unit(0.58,"line")) +
+  theme(axis.text.y=element_text(margin=margin(r=-7,"pt"), vjust=0.4)) +
+  theme(legend.position = c(0.87, 0.33), legend.key.size = unit(0.58,"line")) +
   guides(color=FALSE) +
   coord_flip() +
   labs(x="Project", fill="Domain")

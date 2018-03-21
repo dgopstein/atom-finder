@@ -61,14 +61,22 @@ pearson.corr <- -sqrt(rlm.lm.model$adj.r.squared)
 slope <- coef(rlm.lm.model)
 slope['date','Estimate'] * 365
 
+
+offset.projects <- c("clang", "emacs", "freebsd", "gcc", "gecko-dev", "git", "httpd", "linux", "mongo", "mysql-server", "nginx", "subversion", "vim", "webkit")
+offset.x        <- c(0, 3, 0, 0,  0, 0, 0, 0, 0,  0, 0, 2, 0, 2)
+offset.y        <- c(0, 5, 0, 0, -3, 0, 0, 0, 0, -3, 0, 2, 0, 3)
+#offset.x <- offset.y <- c(0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0)
+
+project.age.mean.atoms.offsets <- merge(project.age.mean.atoms, data.frame(offset.projects, offset.x, offset.y), by.x="project", by.y="offset.projects")
+  
 mean.atoms.by.project.age <-
-  ggplot(project.age.mean.atoms, aes(x=date, y=rate)) +
+  ggplot(project.age.mean.atoms.offsets, aes(x=date, y=rate)) +
   theme_classic() +
   #geom_smooth(method="rlm", colour="black", size=0.5, se=FALSE, fullrange=TRUE) +
   stat_smooth(colour=colors2dark[1], size=1, se=FALSE, fullrange=TRUE,
     method=function(f,data=data,weights=weight) MASS::rlm(f,data,weights=weight,method="MM")) +
   geom_point(size=3, color=colors2dark[2]) +
-  geom_text(aes(label=paste(" ", project)), size = 3, angle=-17, hjust=0, vjust=0.4) +
+  geom_text(aes(label=paste(" ", project), x=date+20*offset.x, y=rate+.0001*offset.y), size = 3, angle=-17, hjust=0, vjust=0.4) +
   #geom_text_repel(aes(label=project), size = 4, angle=-20, force=0.1, direction="x") +
   scale_x_date(limits = as.Date(c("1985-01-01", "2017-01-01"))) +
   #scale_y_continuous(limits = c(.005, .024)) +
