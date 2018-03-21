@@ -9,6 +9,16 @@ Facilities for:
  * Traversing version histories through git
  * Parsing commit logs for bug/patch IDs
 
+## Project Structure Overview
+
+The majority of interesting files in this project are located in the top-level
+`src` directory. Secondarily, test files are in located `test` and jars in
+`resources`. Under `src` there are several important directories:
+
+* `atom_finder` - Clojure files for parsing C/C++ files and searching for atoms
+* `analysis` - R files for statistically analyzing the results of clojure
+* `conf` - Configuration variables to customize each runtime environment
+
 ## Working with Clojure
 
 This project is primariy written in Clojure(JVM), and uses many Java libraries.
