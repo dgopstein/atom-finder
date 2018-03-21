@@ -1,13 +1,18 @@
 # atom-finder [![Build Status](https://travis-ci.org/dgopstein/atom-finder.svg?branch=master)](https://travis-ci.org/dgopstein/atom-finder)
 
-A Clojure library for finding [Atoms of Confusion](https://atomsofconfusion.com) in C projects.
+A Clojure library for finding [Atoms of Confusion](https://atomsofconfusion.com)
+in C projects.
 
-Facilities for:
+Contains facilities for:
 
  * Parsing C/C++ with Eclipse CDT library
  * Finding specific patterns in an AST
  * Traversing version histories through git
  * Parsing commit logs for bug/patch IDs
+
+Output from this work formed the basis of our paper at the Mining Software
+Repositories 2018 conference: [Prevalence of Confusing Code in Software Projects - Atoms of
+Confusion in the Wild](https://atomsofconfusion.com/papers/atom-finder-msr-2018.pdf).
 
 ## Project Structure Overview
 
