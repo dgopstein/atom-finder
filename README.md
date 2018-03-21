@@ -16,8 +16,25 @@ The majority of interesting files in this project are located in the top-level
 `resources`. Under `src` there are several important directories:
 
 * `atom_finder` - Clojure files for parsing C/C++ files and searching for atoms
-* `analysis` - R files for statistically analyzing the results of clojure
+* `analysis` - R files for statistically analyzing the results of the code mining
 * `conf` - Configuration variables to customize each runtime environment
+
+The most important, and complicated directory is `src/atom_finder` which
+contains all the code analyze source code and repositories. Within the top-level
+of `atom-finder` is code which is both specific to this project, but also
+reusable between different analyses. Below the top-level are several other
+useful directories:
+
+* `classifier` - Every file in this directory is used to determine whether an
+  individual AST node is a particular atom of confusion
+* `questions` - Every file in this directory corresponds to one of our
+  (published, or potential) research hypotheses. These files implicitly use the
+  classifier infrastructure to observe patterns.
+* `tree_diff` - Tree diffing was a difficult enough problem that took several
+  iterations to get working. Each evolution is it's own sub-namespace in this
+  directory. Ultimately only `difflib` ended up being used.
+* `util` - The most reusable and general functions. Most of these files are
+  potentially useful in other projects outside this one.
 
 ## Working with Clojure
 
