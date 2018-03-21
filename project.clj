@@ -1,8 +1,8 @@
 (defproject atom-finder "1.0.0"
   :description "Find atoms of confusion in source code"
   :url "atomsofconfusion.com"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :license {:name "The MIT License (MIT)"
+            :url "http://opensource.org/licenses/MIT"}
   :dependencies [
                  [org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/data.csv "0.1.3"]
