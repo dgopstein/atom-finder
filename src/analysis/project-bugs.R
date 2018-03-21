@@ -17,13 +17,19 @@ project.bug.atom.counts$domain <- factor(c("os", "os", "browser", "compiler", "b
                       levels=domain.levels,
                       ordered=TRUE)
 
+project.bug.atom.counts$offset.x <- project.bug.atom.counts$offset.y <- 0
+project.bug.atom.counts[X.project=="mongo", c("offset.x", "offset.y") := .(-2, 3)]
+project.bug.atom.counts[X.project=="mysql-server", c("offset.x", "offset.y") := .(0, 3)]
+project.bug.atom.counts[X.project=="httpd", c("offset.x", "offset.y") := .(-1, -3)]
+project.bug.atom.counts[X.project=="gecko-dev", c("offset.x", "offset.y") := .(0, -1)]
+
 project.bugs.plot <- ggplot(project.bug.atom.counts, aes(x=atom.rate, y=365*bug.rate/X.all.nodes, group=domain)) +
   theme_classic() +
   geom_path(aes(color = domain, linetype = domain %in% c('vcs')), size=1.2) +
   geom_point(size=2.0) + # aes(size=log(cve_rate))) +
-  geom_text(aes(label=paste(" ", X.project)), hjust=0, angle=0) +
+  geom_text(aes(label=paste(" ", X.project), x=atom.rate+.0001*offset.x, y=(365*bug.rate/X.all.nodes)+0.00001*offset.y), hjust=0, vjust=0.4, angle=0) +
   #geom_text(aes(label=project, hjust=ifelse(atom.rate>0.02, 1.7, 0)), vjust=0.4, nudge_x = 0.0005) +
-  scale_x_continuous(limits = c(0.006, 0.025), breaks=c(0.01, 0.02)) +
+  scale_x_continuous(limits = c(0.006, 0.025), breaks=c(0.001, 0.02)) +
   scale_y_log10(limits = c(1.7*10^-5, 1.1*10^-3)) +
   scale_colour_manual(values = domain.colors) +
   #ggtitle("Bugs") +

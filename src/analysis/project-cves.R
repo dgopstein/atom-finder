@@ -19,12 +19,19 @@ cves.atoms <- merge(project.cves, atom.counts[, .(project=X.project, fair.rate, 
 #projects.high.rate <- project.cves[project.cves, on="domain"][project != i.project & cve_rate > 1 & i.cve_rate > 1]
 cves.atoms[, domain := factor(as.character(domain), c("os", "browser", "compiler", "db", "vcs", "editor", "webserver"))]
 
+cves.atoms$offset.x <- cves.atoms$offset.y <- 0
+cves.atoms[project=="nginx", c("offset.x", "offset.y") := .(-1.14, 8)]
+cves.atoms[project=="subversion", c("offset.x", "offset.y") := .(1, 5)]
+cves.atoms[project=="webkit", c("offset.x", "offset.y") := .(-7.5, 3.5)]
+cves.atoms[project=="mysql-server", c("offset.x", "offset.y") := .(0, -3)]
+cves.atoms[project=="emacs", c("offset.x", "offset.y") := .(0, 1.5)]
+cves.atoms[project=="git", c("offset.x", "offset.y") := .(0, -1.5)]
 
 project.cves.plot <- ggplot(cves.atoms, aes(x=atom.rate, y=cves.per.year/all.nodes, group=domain)) +
   theme_classic() +
   geom_path(aes(color = domain, linetype=domain%in%c('vcs','browser','compiler')), size=1.2) +
   geom_point(size=2.0) + # aes(size=log(cve_rate))) +
-  geom_text(aes(label=paste(" ", project)), hjust=0, angle=25) +
+  geom_text(aes(label=paste(" ", project), x=atom.rate+0.00003*offset.x, y=(cves.per.year/all.nodes)+0.00000003*offset.y), hjust=0, vjust=0.4) + #, angle=25) +
   #geom_text(aes(label=project, hjust=ifelse(atom.rate>0.02, 1.7, 0)), vjust=0.4, nudge_x = 0.0005) +
   scale_x_continuous(limits = c(0.006, 0.025), breaks=c(.01,.02)) +
   scale_y_log10(limits = c(3*10^-9, 2*10^-5)) +
