@@ -6,7 +6,7 @@ That is, each file here uses heuristics to determine whether or not a piece of
 code is an example of one of those atoms of confusion.
 
 Each classifier is registered in a master list, `atom-finder.classifier/atoms`,
-contained in [classifier.clj](../../src/atom_finder/classifier.clj). From there,
+contained in [classifier.clj](../../atom_finder/classifier.clj). From there,
 atoms are referenced in `atom-lookup` a map from names to classifiers, and
 `find-all-atoms`, a function which given an AST node will find every instance of
 every type of atom below it. Together these functions are used extensively in
@@ -31,12 +31,12 @@ be created trivially from a classifier using only the `default-finder` function.
 A handful of atom types do, however, hand-roll their own finder for performance
 reasons.
 
-The simplest classifier is [Conditional Operator](classifier/conditional.clj),
+The simplest classifier is [Conditional Operator](../../atom_finder/classifier/conditional.clj),
 which simply looks at the _type_ of the parsed AST node. If the node represents
 a conditional operator (aka ternary, or `?:`), then its automatically an atom.
 
 The most complex classifier
-is [Macro Operator Precedence](classifier/macro-operator-precedence.clj), which
+is [Macro Operator Precedence](../../atom_finder/classifier/macro-operator-precedence.clj), which
 tries to parse the expansion of every macro in two ways. First it parses the
 macro as the C standard dictates. Then it looks at every name as if it weren't
 defined by the preprocessor, but instead by C identifiers, and checks whether or
