@@ -14,6 +14,10 @@
              ngram.JMModel mix.InverseMixModel mix.NestedModel]
             ))
 
+(time-mins
+ (do
+                                        ;
+;(def train (java.io.File. (expand-home "~/atom-finder/src/java")))
 (def train (java.io.File. (expand-home "~/opt/src/SLP-Core")))
 (def test train)
 
@@ -32,10 +36,17 @@
    (learn model train))
 
 (def model (NestedModel. test model))
+(pprn model)
 (def model (InverseMixModel. model (CacheModel.)))
 (.setDynamic model true)
 
 (def modeledFiles (ModelRunner/model model test))
+(pprn modeledFiles)
 (def statistics (ModelRunner/getStats modeledFiles))
+(pprn statistics)
 
-(System.out/printf "Modeled %d tokens, average entropy:\t%.4f\n" (.getCount statistics) (.getAverage statistics))
+(printf "Modeled %d tokens, average entropy:\t%.4f\n" (.getCount statistics) (.getAverage statistics))
+)
+)
+
+(slp.core.example.JavaRunner/main (into-array String [(expand-home "~/opt/src/SLP-Core")]))
