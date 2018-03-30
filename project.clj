@@ -19,14 +19,17 @@
                  [com.google.guava/guava "23.0"]
                  [clojail "1.0.6"]
                  [swiss-arrows "1.0.0"]
+                 ;[org.eclipse.jdt/org.eclipse.jdt.core "3.13.100" ; sub-depedency of SLP-core
+                 ; :exclusions [org.eclipse.core/org.eclipse.core.runtime]]
                  ]
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"
                    ;"resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
+                   "resources/uber-SLP_Core-0.2.jar"
                    "src/test/resources"
                    "src/conf"
                    ]
-  :java-source-paths ["src/java"]
+  :java-source-paths ["src/java"]; "/Users/dgopstein/opt/src/SLP-Core"]
   :profiles {:dev             {:dependencies [[org.clojure/test.check "0.9.0"]]}
              :instrumentation {:main atom-finder.instrumentation
                                :uberjar-name "instrumentation.jar"
