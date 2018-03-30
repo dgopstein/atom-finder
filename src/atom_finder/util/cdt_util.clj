@@ -287,6 +287,10 @@
 (defn all-macro-exps [node] (->> node root-ancestor .getMacroExpansions))
 (defn all-comments [node] (->> node root-ancestor .getComments (into [])))
 
+(defn all-nodes [root]
+  "Find all AST nodes as well as meta-nodes like Macro/Comment/etc"
+  (concat ((juxt all-preprocessor flatten-tree) root)))
+
 (defn parse-macro-def
   [macro-def]
   (let [[all name args body] (->> macro-def str (re-find #"^([^=(]*)(?:\(([^)]*)\))?=(.*)"))]
