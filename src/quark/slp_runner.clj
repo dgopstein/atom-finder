@@ -16,26 +16,25 @@
 
 (defn pair->vec [p] [(.left p) (.right p)])
 
-(time-mins
- (do
+(time-mins (do
 
 ;(def train-set (java.io.File. (expand-home "~/opt/src/SLP-Core")))
 (def train-set (java.io.File. (expand-home "~/atom-finder/src/java")))
 (def test-set train-set)
 
-(doto LexerRunner
-  (. setLexer (JavaLexer.))
-  (. setPerLine false)
-  (. addSentenceMarkers true)
-  (. useExtension "java"))
+(doto-class LexerRunner
+            (setLexer (JavaLexer.))
+            (setPerLine false)
+            (addSentenceMarkers true)
+            (useExtension "java"))
 
 (def model (JMModel. (GigaCounter.)))
 
-(doto ModelRunner
-  (. perLine false)
-  (. selfTesting (.equals train-set test-set))
-  (. setNGramOrder 6)
-  (. learn model train-set))
+(doto-class ModelRunner
+            (perLine false)
+            (selfTesting (.equals train-set test-set))
+            (setNGramOrder 6)
+            (learn model train-set))
 
 (def model (NestedModel. test-set model))
 (def model (InverseMixModel. model (CacheModel.)))
@@ -47,6 +46,5 @@
 (def statistics (ModelRunner/getStats modeledFiles))
 
 (printf "Modeled %d tokens, average entropy:\t%.4f\n" (.getCount statistics) (.getAverage statistics))
-)
-)
+))
 
