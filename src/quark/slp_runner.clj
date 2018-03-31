@@ -19,31 +19,40 @@
 (time-mins (do
 
 ;(def train-set (java.io.File. (expand-home "~/opt/src/SLP-Core")))
-(def train-set (java.io.File. (expand-home "~/atom-finder/src/java")))
-(def test-set train-set)
+(def train-set (java.io.File. (expand-home )))
 
-(doto-class LexerRunner
-            (setLexer (JavaLexer.))
-            (setPerLine false)
-            (addSentenceMarkers true)
-            (useExtension "java"))
+(defn ngram-java
+  ([train-path] (ngram-java train-path train-path))
+  ([train-path test-path]
+   (let [train-set (java.io.File. (expand-home train-path))
+         test-set (java.io.File. (expand-home test-path))]
 
-(def model (JMModel. (GigaCounter.)))
+     (doto-class LexerRunner
+                 (setLexer (JavaLexer.))
+                 (setPerLine false)
+                 (addSentenceMarkers true)
+                 (useExtension "java"))
 
-(doto-class ModelRunner
-            (perLine false)
-            (selfTesting (.equals train-set test-set))
-            (setNGramOrder 6)
-            (learn model train-set))
+     (let [jm-giga-model (JMModel. (GigaCounter.))]
 
-(def model (NestedModel. test-set model))
-(def model (InverseMixModel. model (CacheModel.)))
-(.setDynamic model true)
+     (doto-class ModelRunner
+                 (perLine false)
+                 (selfTesting (.equals train-set test-set))
+                 (setNGramOrder 6)
+                 (learn jm-giga-model train-set))
 
-(def modeledFiles (->> (ModelRunner/model model test-set)
-                       .iterator iterator-seq (map pair->vec) (into {})))
+     (let [nested-model (NestedModel. test-set jm-giga-model)
+           mix-model (doto (InverseMixModel. nested-model (CacheModel.))
+                           (.setDynamic true))]
 
-(def statistics (ModelRunner/getStats modeledFiles))
+       (let [modeled-files (->> (ModelRunner/model mix-model test-set)
+                            .iterator iterator-seq (map pair->vec) (into {}))]
+
+       {:model model :modeled-files modeled-files}))))))
+
+(def ngram-res (ngram-java "~/atom-finder/src/java"))
+
+(def statistics (->> ngram-res :modeled-files ModelRunner/getStats))
 
 (printf "Modeled %d tokens, average entropy:\t%.4f\n" (.getCount statistics) (.getAverage statistics))
 ))
