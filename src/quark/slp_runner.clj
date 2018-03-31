@@ -18,41 +18,35 @@
 
 (time-mins
  (do
-                                        ;
-;(def train (java.io.File. (expand-home "~/atom-finder/src/java")))
+
+;(def train-set (java.io.File. (expand-home "~/opt/src/SLP-Core")))
 (def train-set (java.io.File. (expand-home "~/atom-finder/src/java")))
 (def test-set train-set)
 
-(. LexerRunner (setLexer (JavaLexer.)))
-(. LexerRunner (setPerLine false))
-(. LexerRunner (addSentenceMarkers true))
-(. LexerRunner (useExtension "java"))
+(doto LexerRunner
+  (. setLexer (JavaLexer.))
+  (. setPerLine false)
+  (. addSentenceMarkers true)
+  (. useExtension "java"))
 
 (def model (JMModel. (GigaCounter.)))
 
-(. ModelRunner (perLine false))
-(. ModelRunner (selfTesting (.equals train-set test-set)))
-(. ModelRunner (setNGramOrder 6))
-(. ModelRunner (learn model train-set))
+(doto ModelRunner
+  (. perLine false)
+  (. selfTesting (.equals train-set test-set))
+  (. setNGramOrder 6)
+  (. learn model train-set))
 
 (def model (NestedModel. test-set model))
-(pprn model)
 (def model (InverseMixModel. model (CacheModel.)))
 (.setDynamic model true)
 
-(def modeledFiles (ModelRunner/model model test-set))
+(def modeledFiles (->> (ModelRunner/model model test-set)
+                       .iterator iterator-seq (map pair->vec) (into {})))
 
-(def mf (->> modeledFiles .iterator iterator-seq (map pair->vec) (into {})))
-;(def mf2 mf)
-
-(def statistics (ModelRunner/getStats mf))
-(pprn statistics)
+(def statistics (ModelRunner/getStats modeledFiles))
 
 (printf "Modeled %d tokens, average entropy:\t%.4f\n" (.getCount statistics) (.getAverage statistics))
 )
 )
 
-;(slp.core.example.JavaRunner/main (into-array String [(expand-home
-;                                                       ;"~/opt/src/SLP-Core"
-;                                                       "~/atom-finder/src/java"
-;                                                       )]))

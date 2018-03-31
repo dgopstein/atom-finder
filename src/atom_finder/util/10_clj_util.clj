@@ -174,3 +174,30 @@
          secs#  (* 60 (- mins-raw# mins#))]
      (prn (format "Elapse time: %d:%05.2f mins" mins# secs#))
           ret#))
+
+(defmacro doto-class
+  [klass & forms]
+  "Calls a series of static methods on a class"
+  (cons 'do
+        (for [f forms]
+          `(. ~klass ~f))))
+
+(pprint
+(macroexpand-1
+ '(doto-class LexerRunner
+              (setLexer (JavaLexer.))
+              (setPerLine false)
+              (addSentenceMarkers true)
+              (useExtension "java"))))
+
+(macroexpand-1
+ '(doto-class MyClass
+              (setA "a")
+              (setB "b")))
+
+(macroexpand-1
+ '(doto MyClass
+    (. setA "a")
+    (. setB "b")))
+
+(clojure.core/let [G__11727 MyClass] (. G__11727 setA "a") (. G__11727 setB "b") G__11727)
