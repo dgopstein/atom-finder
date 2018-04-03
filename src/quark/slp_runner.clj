@@ -16,13 +16,14 @@
             ))
 
 (defn pair->vec [p] [(.left p) (.right p)])
+(def pairlist->map (%->> .iterator iterator-seq (map pair->vec) (into {})))
 
 (defn init-java-lexer []
   (doto-class LexerRunner
               (setLexer (JavaLexer.))
               (setPerLine false)
               (addSentenceMarkers true)
-              (useExtension "java")))
+              (useExtension "c")))
 
 (defn init-modeler [& {:keys [self-test] :or {self-test false}}]
   (doto-class ModelRunner
@@ -46,11 +47,10 @@
                        (doto <> (.setDynamic true)))]
 
        {:model model
-        :modeled-files (->> (ModelRunner/model model test-set)
-                            .iterator iterator-seq (map pair->vec) (into {}))}
+        :modeled-files (->> (ModelRunner/model model test-set) pairlist->map)}
        ))))
 
-(def ngram-res (time-mins (ngram-java "~/atom-finder/src/java")))
+(def ngram-res (time-mins (ngram-java "~/opt/src/atom-finder/nginx")))
 
 (def statistics (->> ngram-res :modeled-files ModelRunner/getStats))
 
@@ -62,17 +62,23 @@
 
 (def nginx-c-files (->> "~/opt/src/atom-finder/nginx" expand-home c-files (random-split 0.9)))
 
-(defn model-files [train-files test-files]
-  (init-java-lexer)
-  (init-modeler :self-test false)
+(def nginx-dir (->> "~/opt/src/atom-finder/nginx" expand-home java.io.File.))
+;(def nginx-dir (->> "~/atom-finder/src/test/resources/comment-change-after.c" expand-home java.io.File.))
 
-  (let [model (-<>> (JMModel. (GigaCounter.))
-                    (doto <> (ModelRunner/learn train-set))
-                    (NestedModel. test-set)
-                    (InverseMixModel. <> (CacheModel.))
-                    (doto <> (.setDynamic true)))]
+(defn least-common-lines [model]
+  (->> nginx-dir
+       (ModelRunner/model model)
+       pairlist->map
+       (mapcat (fn [[file problist]]
+              (map-indexed (fn [idx probs] [(-<>> file .getPath (str/replace <> #".*/nginx/" "")) (inc idx) probs])
+                           problist)))
+       (min-n-by 20 (%->> last (apply *)))
+       (remove nil?)
+       ))
 
-    {:model model
-     :modeled-files (->> (ModelRunner/model model test-set)
-                         .iterator iterator-seq (map pair->vec) (into {}))}
-    ))
+(->> ngram-res :model
+     least-common-lines
+     (map (fn [[file line probs]] [(github-url "nginx" file line) probs]))
+     ;(take 6)
+     (map prn)
+     )
