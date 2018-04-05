@@ -19,10 +19,10 @@
                  [swiss-arrows "1.0.0"]
 
                  ;;;;;;;;;;;;;;;;;;;;;;;   SLP-core dependencies   ;;;;;;;;;;;;;;;;;;;;;;;
-                 ;[org.eclipse.jdt/org.eclipse.jdt.core "3.13.100"
-                 ; :exclusions [org.eclipse.platform/org.eclipse.core.runtime]]
-                 ;[org.jboss.marshalling/jboss-marshalling-river "1.4.11.Final"]
-                 ;[it.unimi.dsi/fastutil "7.2.0"]
+                 [org.eclipse.jdt/org.eclipse.jdt.core "3.13.100"
+                  :exclusions [org.eclipse.platform/org.eclipse.core.runtime]]
+                 [org.jboss.marshalling/jboss-marshalling-river "1.4.11.Final"]
+                 [it.unimi.dsi/fastutil "7.2.0"]
 
 
                  ;;;;;;;;;;;;;;;;;;;;;;   occasional dependencies   ;;;;;;;;;;;;;;;;;;;;;;
@@ -32,11 +32,11 @@
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"
                    ;"resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
-                   "resources/uber-SLP_Core-0.2.jar"
+                   ;"resources/uber-SLP_Core-0.2.jar"
                    "src/test/resources"
                    "src/conf"
                    ]
-  :java-source-paths ["src/java"] ; "/home/dgopstein/opt/src/SLP-Core"]
+  :java-source-paths ["src/java" "/home/dgopstein/opt/src/SLP-Core"]
   :profiles {:dev             {:dependencies [[org.clojure/test.check "0.9.0"]]}
              :instrumentation {:main atom-finder.instrumentation
                                :uberjar-name "instrumentation.jar"

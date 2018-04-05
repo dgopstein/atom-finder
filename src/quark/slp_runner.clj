@@ -10,49 +10,51 @@
             )
   (:import
             [slp.core.counting.giga GigaCounter]
-            [slp.core.lexing LexerRunner code.JavaLexer]
-            [slp.core.modeling ModelRunner CacheModel
-             ngram.JMModel mix.InverseMixModel mix.NestedModel]
+            [slp.core.lexing runners.LexerRunner code.JavaLexer]
+            [slp.core.modeling runners.ModelRunner CacheModel ngram.JMModel mix.InverseMixModel mix.NestedModel]
             ))
 
 (defn pair->vec [p] [(.left p) (.right p)])
 (def pairlist->map (%->> .iterator iterator-seq (map pair->vec) (into {})))
 
 (defn init-java-lexer []
-  (doto-class LexerRunner
-              (setLexer (JavaLexer.))
-              (setPerLine false)
-              (addSentenceMarkers true)
-              (useExtension "c")))
+  (doto (LexerRunner. (JavaLexer.))
+    (.setPerLine false)
+    (.setSentenceMarkers true)
+    (.setExtension "c")))
 
-(defn init-modeler [& {:keys [self-test] :or {self-test false}}]
-  (doto-class ModelRunner
-              (perLine false)
-              (setNGramOrder 6)
-              (selfTesting self-test)))
+(defn init-modeler [lexer-runner & {:keys [self-test] :or {self-test false}}]
+  (doto (ModelRunner. lexer-runner)
+    (.perLine false)
+    (.selfTesting self-test)))
 
 (defn ngram-java
   ([train-path] (ngram-java train-path train-path))
   ([train-path test-path]
    (let [train-set (java.io.File. (expand-home train-path))
-         test-set (java.io.File. (expand-home test-path))]
+         test-set (java.io.File. (expand-home test-path))
+         lexer (init-java-lexer)
+         model-runner (init-modeler lexer :self-test (= train-path test-path))]
 
-     (init-java-lexer)
-     (init-modeler :self-test (= train-path test-path))
-
-     (let [model (-<>> (JMModel. (GigaCounter.))
-                       (doto <> (ModelRunner/learn train-set))
-                       (NestedModel. test-set)
+     (let [model (-<>> (JMModel. 6 (GigaCounter.))
+                       (doto <> (#(.learn model-runner % train-set)))  ;;)] model))))
+                       (NestedModel. model-runner test-set <>)
                        (InverseMixModel. <> (CacheModel.))
                        (doto <> (.setDynamic true)))]
 
        {:model model
-        :modeled-files (->> (ModelRunner/model model test-set) pairlist->map)}
+        :model-runner model-runner
+        :modeled-files (-> model-runner (.model model test-set) pairlist->map)}
        ))))
 
-(def ngram-res (time-mins (ngram-java "~/opt/src/atom-finder/nginx")))
+;(def dir-path (expand-home "~/atom-finder/src/java"))
+;(def dir-path (expand-home "~/opt/src/atom-finder/nginx"))
+(def dir-path (expand-home "~/opt/src/atom-finder"))
+(def dir-file (->> dir-path java.io.File.))
 
-(def statistics (->> ngram-res :modeled-files ModelRunner/getStats))
+(def ngram-res (time-mins (ngram-java dir-path)))
+
+(def statistics (-> ngram-res :model-runner (.getStats (-> ngram-res :modeled-files))))
 
 (printf "Modeled %d tokens, average entropy:\t%.4f\n" (.getCount statistics) (.getAverage statistics))
 
@@ -60,25 +62,53 @@
   (let [shuffled-lst (shuffle lst)]
     (-> shuffled-lst count (* amount) double java.lang.Math/round (split-at shuffled-lst))))
 
-(def nginx-c-files (->> "~/opt/src/atom-finder/nginx" expand-home c-files (random-split 0.9)))
-
-(def nginx-dir (->> "~/opt/src/atom-finder/nginx" expand-home java.io.File.))
-;(def nginx-dir (->> "~/atom-finder/src/test/resources/comment-change-after.c" expand-home java.io.File.))
+(def dir-c-files (->> dir-path c-files (random-split 0.9)))
 
 (defn least-common-lines [model]
-  (->> nginx-dir
-       (ModelRunner/model model)
-       pairlist->map
-       (mapcat (fn [[file problist]]
-              (map-indexed (fn [idx probs] [(-<>> file .getPath (str/replace <> #".*/nginx/" "")) (inc idx) probs])
-                           problist)))
-       (min-n-by 20 (%->> last (apply *)))
-       (remove nil?)
-       ))
+   (let [lexer (init-java-lexer)
+         model-runner (init-modeler lexer :self-test true)]
+     (->> dir-file
+          (.model model-runner model)
+          pairlist->map
+          (mapcat (fn [[file problist]]
+                    (map-indexed (fn [idx probs] [(-<>> file .getPath (str/replace <> dir-path "")) (inc idx) probs])
+                                 problist)))
+          (min-n-by 200 (%->> last (apply *))) ;; least probable lines
+          ;(min-n-by 50 (%->> last (map #(/ 1 %)) (apply *))) ;; most probable lines
+          (remove nil?)
+          )))
+
+'((->> ngram-res :model
+     least-common-lines
+     (map (fn [[file line]]
+            ;(println (github-url "nginx" file line))
+            (print-line-context 0 (str dir-path "/" file) line :top-border false)
+            (println "\n")))
+     ;(map (fn [[file line probs]] [(github-url "nginx" file line) probs]))
+     ;(take 6)
+     ;(map first) (map prn)
+     time-mins
+     ))
+
+(defn model-all-lines [model]
+  (let [lexer (init-java-lexer)
+        model-runner (init-modeler lexer :self-test true)]
+    (->> dir-file
+         (.model model-runner model)
+         pairlist->map
+         (take 10)
+         (mapcat (fn [[file problist]]
+                   (map-indexed (fn [idx probs]
+                                  {:file (-<>> file .getPath (str/replace <> dir-path ""))
+                                   :line (inc idx)
+                                   :probability probs})
+                                problist)))
+         (maps-to-csv "atom-finder-token-probabilities.csv"))))
 
 (->> ngram-res :model
-     least-common-lines
-     (map (fn [[file line probs]] [(github-url "nginx" file line) probs]))
-     ;(take 6)
-     (map prn)
+     model-all-lines
+     (map (fn [[file line]]
+            (print-line-context 0 (str dir-path "/" file) line :top-border false)
+            (println "\n")))
+     time-mins
      )
