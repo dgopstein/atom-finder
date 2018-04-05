@@ -176,8 +176,8 @@
           ret#))
 
 (defmacro doto-class
-  [klass & forms]
   "Calls a series of static methods on a class"
+  [klass & forms]
   (cons 'do
         (for [f forms]
           `(. ~klass ~f))))
