@@ -7,19 +7,23 @@
 
 (import '(atom_finder SanitaryASTWriterVisitor))
 
+(defn print-line-context
+  "Print the line and the lines around it"
+  ([filename line-num] (print-line-context 2 filename line-num))
+  ([n-lines filename line-num & {:keys [top-border] :or {top-border true}}]
+   (with-open [rdr (clojure.java.io/reader filename)]
+     (let [file-seq (line-seq rdr)
+           first-line (max 0 (- line-num n-lines 1))
+           lines-to-print (->> file-seq (drop first-line) (take (+ n-lines 1 n-lines)))]
+       (when top-border (println "===" filename "==="))
+       (doseq-indexed [line lines-to-print idx]
+                      (println (str (+ idx first-line) (if (= (+ idx first-line 1) line-num) " >> " "    ") line)))))))
+
 (defn print-node-context
   "Print the line that contains the node and the lines around it"
   ([node] (print-node-context 2 node))
   ([n-lines node]
-   (with-open [rdr (clojure.java.io/reader (.getContainingFilename node))]
-     (let [line-num  (start-line node)
-           file-seq (line-seq rdr)
-           first-line (max 0 (- line-num n-lines 1))
-           lines-to-print (->> file-seq (drop first-line) (take (+ n-lines 1 n-lines)))]
-       (println "===================================================")
-       (doseq-indexed [line lines-to-print idx]
-         (println (str (+ idx first-line) (if (= (+ idx first-line 1) line-num) " >> " "    ") line)))
-       (println "===================================================")))))
+   (print-line-context n-lines (.getContainingFilename node) (start-line node))))
 
 ;; mostly for use programmatically, tries to provide an
 ;; accurate representation of the AST
