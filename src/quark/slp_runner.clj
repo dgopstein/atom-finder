@@ -15,7 +15,8 @@
             ))
 
 (defn pair->vec [p] [(.left p) (.right p)])
-(def pairlist->map (%->> .iterator iterator-seq (map pair->vec) (into {})))
+(def pairlist->seq (%->> .iterator iterator-seq (map pair->vec)))
+(def pairlist->map (%->> pairlist->seq (into {})))
 
 (defn init-java-lexer []
   (doto (LexerRunner. (JavaLexer.))
@@ -28,8 +29,8 @@
     (.perLine false)
     (.selfTesting self-test)))
 
-(defn ngram-java
-  ([train-path] (ngram-java train-path train-path))
+(defn ngram-dir
+  ([train-path] (ngram-dir train-path train-path))
   ([train-path test-path]
    (let [train-set (java.io.File. (expand-home train-path))
          test-set (java.io.File. (expand-home test-path))
@@ -44,7 +45,8 @@
 
        {:model model
         :model-runner model-runner
-        :modeled-files (-> model-runner (.model model test-set) pairlist->map)}
+        ;:modeled-files (-> model-runner (.model model test-set) pairlist->map)
+        }
        ))))
 
 ;(def dir-path (expand-home "~/atom-finder/src/java"))
@@ -52,11 +54,12 @@
 (def dir-path (expand-home "~/opt/src/atom-finder"))
 (def dir-file (->> dir-path java.io.File.))
 
-(def ngram-res (time-mins (ngram-java dir-path)))
+;; 5 mins on all of atom-finder corpus if modeled results are not calculated/returned
+(def ngram-res (time-mins (ngram-dir dir-path)))
 
-(def statistics (-> ngram-res :model-runner (.getStats (-> ngram-res :modeled-files))))
+;(def statistics (-> ngram-res :model-runner (.getStats (-> ngram-res :modeled-files))))
 
-(printf "Modeled %d tokens, average entropy:\t%.4f\n" (.getCount statistics) (.getAverage statistics))
+;(printf "Modeled %d tokens, average entropy:\t%.4f\n" (.getCount statistics) (.getAverage statistics))
 
 (defn random-split [amount lst]
   (let [shuffled-lst (shuffle lst)]
@@ -95,19 +98,27 @@
         model-runner (init-modeler lexer :self-test true)]
     (->> dir-file
          (.model model-runner model)
-         pairlist->map
-         (take 10)
+         pairlist->seq
          (mapcat (fn [[file problist]]
                    (map-indexed (fn [idx probs]
                                   {:file (-<>> file .getPath (str/replace <> dir-path ""))
                                    :line (inc idx)
                                    :probability probs})
                                 problist)))
-         (maps-to-csv "atom-finder-token-probabilities.csv"))))
+         )))
+
+(defmacro ignore-output
+  [& block]
+  `(with-open [w# (clojure.java.io/writer "/dev/null")]
+    (binding [*out* w#, *err* w#]
+      ~@block)))
 
 (->> ngram-res :model
      model-all-lines
-     (map (fn [[file line]]
+     (maps-to-csv "atom-finder-token-probabilities.csv")
+     ignore-output)
+
+     '((map (fn [[file line]]
             (print-line-context 0 (str dir-path "/" file) line :top-border false)
             (println "\n")))
      time-mins
