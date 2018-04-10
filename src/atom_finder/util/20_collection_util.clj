@@ -115,8 +115,13 @@
   [n f lst]
   (let [not-smallest (fn [acc x] (->> [(f x) x] (conj acc) (sort-by (juxt first (comp #(if (nil? %) 0 1) second))) rest))]
     (->> lst
-         (reduce not-smallest (repeat n [0 nil]))
+         (reduce not-smallest (repeat n [Double/NEGATIVE_INFINITY nil]))
          (map last))))
+
+(defn min-n-by
+  "Find the n smallest elements by f"
+  [n f lst]
+  (max-n-by n #(some-> % f -) lst))
 
 (defn group-dissoc
   "Group a list of maps by a key, then dissoc that key"
@@ -164,3 +169,8 @@
         (map (partial select-keys m) keyses)))
 
 (def sum (partial reduce +))
+
+(defn mean [coll]
+  (when (->> coll empty? not)
+    (let [[idxs vals] (->> coll (map-indexed vector) transpose)]
+      (/ (sum vals) (-> idxs last inc)))))

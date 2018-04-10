@@ -165,7 +165,7 @@
     (sequential? b) (conj b a)
     :default [a b]))
 
-(defn now [] (java.util.Date.))
+(defn now [] (java.time.LocalDateTime/now))
 
 ; https://github.com/clojure/clojure/blob/clojure-1.9.0-alpha14/src/clj/clojure/core.clj#L3836
 (defmacro time-mins
@@ -180,3 +180,10 @@
          secs#  (* 60 (- mins-raw# mins#))]
      (prn (format "Elapse time: %d:%05.2f mins" mins# secs#))
           ret#))
+
+(defmacro doto-class
+  "Calls a series of static methods on a class"
+  [klass & forms]
+  (cons 'do
+        (for [f forms]
+          `(. ~klass ~f))))
