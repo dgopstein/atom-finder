@@ -101,5 +101,5 @@
        (mapcat (fn [[[file committers]]]
                  (for [[{name :name email :email} atoms] committers]
                    (merge {:file file :name name :email email} atoms))))
-       (maps-to-csv "src/analysis/data/atom-touchers_2018-01-05_01.csv_partial" [:file :name :email :non-atoms :post-increment :preprocessor-in-statement :operator-precedence :literal-encoding :omitted-curly-braces :pre-increment :logic-as-control-flow :reversed-subscript :comma-operator :type-conversion :repurposed-variable :macro-operator-precedence :implicit-predicate :conditional :assignment-as-value])
+       (maps-to-csv "src/analysis/data/atom-touchers_2018-01-05_01.csv_partial" {:headers [:file :name :email :non-atoms :post-increment :preprocessor-in-statement :operator-precedence :literal-encoding :omitted-curly-braces :pre-increment :logic-as-control-flow :reversed-subscript :comma-operator :type-conversion :repurposed-variable :macro-operator-precedence :implicit-predicate :conditional :assignment-as-value]})
        ))

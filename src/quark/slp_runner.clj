@@ -52,6 +52,8 @@
 ;(def dir-path (expand-home "~/atom-finder/src/java"))
 ;(def dir-path (expand-home "~/opt/src/atom-finder/nginx"))
 (def dir-path (expand-home "~/opt/src/atom-finder"))
+;(def dir-path (expand-home "~/opt/src/atom-finder/gecko-dev/testing"))
+
 (def dir-file (->> dir-path java.io.File.))
 
 ;; 5 mins on all of atom-finder corpus if modeled results are not calculated/returned
@@ -93,7 +95,7 @@
      time-mins
      ))
 
-(defn model-all-lines [model]
+(defn model-all-lines [model dir-file]
   (let [lexer (init-java-lexer)
         model-runner (init-modeler lexer :self-test true)]
     (->> dir-file
@@ -113,10 +115,19 @@
     (binding [*out* w#, *err* w#]
       ~@block)))
 
-(->> ngram-res :model
-     model-all-lines
-     (maps-to-csv "atom-finder-token-probabilities.csv")
-     ignore-output)
+;(def local-dir "gecko-dev")
+;(def local-dir "gecko-dev/testing")
+;(def local-dir "web-platform/tests/resources/webidl2/test/widlproc/src")
+;(def local-dir "web-platform/tests/resources") ; no error
+(def local-dir "") ; yes error
+
+(prn (str (now)))
+(-<>> local-dir
+      (str dir-path "/")
+      java.io.File.
+      (model-all-lines (:model ngram-res))
+      (maps-to-csv "atom-finder-token-probabilities.csv" {:separator \|})
+      ignore-output)
 
      '((map (fn [[file line]]
             (print-line-context 0 (str dir-path "/" file) line :top-border false)

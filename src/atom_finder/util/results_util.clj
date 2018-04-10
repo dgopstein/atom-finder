@@ -109,9 +109,12 @@
   ([m] (merge-down nil m)))
 
 (defn maps-to-csv
-  ([filename headers maps]
-   (with-open [writer (clojure.java.io/writer filename)]
-     (clojure.data.csv/write-csv writer (cons (map name headers)
-                                              (map #(values-at % headers) maps)))))
+  ([filename opts maps]
+   (let [headers (or (:headers opts) (keys (first maps)))]
+     (with-open [writer (clojure.java.io/writer filename)]
+       (apply (partial clojure.data.csv/write-csv writer (cons (map name headers)
+                                                               (map #(values-at % headers) maps)))
+              (mapcat seq opts)))))
   ([filename maps]
-   (maps-to-csv filename (keys (first maps)) maps)))
+   (maps-to-csv filename {} maps)))
+
