@@ -289,7 +289,7 @@
 
 (defn all-nodes [root]
   "Find all AST nodes as well as meta-nodes like Macro/Comment/etc"
-  (concat ((juxt all-preprocessor flatten-tree) root)))
+  (apply concat ((juxt all-preprocessor all-comments flatten-tree) root)))
 
 (defn parse-macro-def
   [macro-def]

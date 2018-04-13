@@ -7,10 +7,14 @@
   #_x
   )
 
-(defn c-file?
-  [filename]
-  (let [exts #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"}]
-    (exts (nth (re-find #".*\.([^.]+)" filename) 1 nil))))
+(defn file-ext [file-str]
+  "Get the file extension from a filename"
+  (some->>
+   file-str
+   (re-find #"(.*/)?[^/]+\.([^.]+)")
+   last))
+
+(def c-file? (comp #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"} file-ext))
 
 (defn list-dirs
   [path]
@@ -61,13 +65,6 @@
        (log-err (format "pmap-dir-file: \"%s\"" filename) nil
                 (f filename))))
    (c-files dirname)))
-
-(defn file-ext [file-str]
-  "Get the file extension from a filename"
-  (some->>
-   file-str
-   (re-find #"(.*/)?[^/]+\.([^.]+)")
-   last))
 
 (defmacro log-to [filename & stuff]
   `(binding [*out* (clojure.java.io/writer ~filename)]
