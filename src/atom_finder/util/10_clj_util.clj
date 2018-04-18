@@ -43,6 +43,12 @@
             (with-meta `(~(first form) ~@(next form) ~x) (meta form))
             (list form x)))))
 
+(defmacro juxt-map
+  "Apply each function to some input, and assign the results of each to a map
+  named by the arguments to juxt"
+  [& args]
+  `(fn [& x#] (zipmap [~@(map keyword args)] (apply (juxt ~@args) x#))))
+
 ; print the name and value of an expression
 (defmacro pprn [x]
   `(let [y# ~x]

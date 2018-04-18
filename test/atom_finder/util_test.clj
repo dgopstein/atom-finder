@@ -173,6 +173,21 @@
         (is (= expected (file-ext filename)) (list "=" expected filename)))
     ))
 
+
+  (testing "c-file?"
+    (let [cases [[true  "abc.c"   ]
+                 [true  "abc.h"   ]
+                 [true  "abc.c++" ]
+                 [true  "abc.cc"  ]
+                 [false "abc.j"   ]
+                 [false "abc.c.j" ]
+                 [false "abc"     ]]]
+
+      (doseq [[expected filename] cases]
+        (is (= expected (boolean (c-file? filename))) (list "=" expected filename)))
+      )
+    )
+
   (testing "dissoc-by"
     (is (= (dissoc-by #(.contains (first %1) "bad")
                       {"good1" 1, "bad1" 1, "good2" 2, "bad2" 2})
