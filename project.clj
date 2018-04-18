@@ -36,7 +36,7 @@
                    "src/test/resources"
                    "src/conf"
                    ]
-  :java-source-paths ["src/java" "/home/dgopstein/opt/src/SLP-Core"]
+  :java-source-paths ["src/java" "/Users/dgopstein/opt/src/SLP-Core"]
   :profiles {:dev             {:dependencies [[org.clojure/test.check "0.9.0"]]}
              :instrumentation {:main atom-finder.instrumentation
                                :uberjar-name "instrumentation.jar"

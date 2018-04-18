@@ -27,8 +27,10 @@ ggplot(ast.probability) +
 atom.probability <- line.node.entropy[, .(prob = mean(probability, na.rm=TRUE)), by="atom"]
 
 ggplot(atom.probability) +
-  geom_bar(aes(reorder(atom, prob), prob), stat="identity") +
-  coord_flip()
+  geom_bar(aes(reorder(atom, prob), prob, fill=(atom=="non-atoms")), stat="identity") +
+  guides(fill=FALSE) +
+  coord_flip() +
+  labs(title = 'Entropy of Atoms', y="Entropy", x="Atom")
 
 file.node.entropy <- line.node.entropy[, .(atom=atom[1], probability = min(probability)), by=c("file","line")][, .(atom = mean(atom!="non-atoms", na.rm=TRUE), probability = mean(probability, na.rm=TRUE)), by=file]
 
@@ -36,19 +38,23 @@ ggplot(file.node.entropy, aes(atom, probability)) +
   geom_density_2d() +
   stat_density_2d(geom = "raster", aes(fill = ..density..), n = 500, contour = FALSE) +
   scale_fill_viridis(guide=FALSE) +
-  xlim(0,0.1)
+  xlim(0,0.1) +
+  labs(title = 'Atoms and Entropy by Files', y="Mean Entropy", x="Atom Density")
 
-ggplot(line.node.entropy[!is.na(atom) & !is.na(probability)], aes(x = probability, y = atom, group = atom, fill = ..x..)) + 
+ggplot(line.node.entropy[!is.na(atom) & !is.na(probability)], aes(x = probability, y = atom, group = atom, fill=..x..)) + 
+  #geom_density_ridges_gradient(scale = 3, rel_min_height = 0.01, data=line.node.entropy[!is.na(atom) & atom=='non-atoms' & !is.na(probability)], fill=1) +
   geom_density_ridges_gradient(scale = 1.5, rel_min_height = 0.01) +
   scale_fill_viridis(name = "Probability", option = "C", guide=FALSE) +
   scale_x_continuous(limits = c(-1, 12)) +
-  labs(title = 'Predictability of Files') +
-  theme_ridges(grid = FALSE, center_axis_labels = TRUE)
+  labs(title = 'Predictability of Lines') +
+  theme_ridges(grid = FALSE, center_axis_labels = TRUE) +
+  theme(axis.text.y = element_text(colour = ifelse(levels(line.node.entropy[!is.na(atom) & !is.na(probability)]$atom)=="non-atoms", "blue", "black"))) +
+  labs(title = 'Density of Entropy by Atom Type', y="Atom", x="Entropy Distribution")
 
-ggplot(line.node.entropy[!is.na(any.atom) & !is.na(probability)], aes(x=probability, fill=any.atom)) +
-  geom_density(alpha=0.25, bw=.5) +
-  scale_x_continuous(limits=c(-1,12))
-
+ggplot(line.node.entropy[!is.na(atom) & !is.na(probability)], aes(x = probability, fill=atom=="non-atoms")) +
+  geom_density(alpha=0.25) +
+  lims(x=c(-1, 12)) +
+  labs(title = 'Density of Entropy by Atom/Non-atom', y="Probability", x="Entropy")
 
 
 atom.rates.probability <- all.atom.rates
@@ -61,4 +67,15 @@ atom.rates.probability <- merge(atom.rates.probability, atom.effect.sizes[, .(at
 ggplot(atom.rates.probability, aes(log(rate), prob)) +  geom_point()
 ggplot(atom.rates.probability, aes(effect.size, prob)) +  geom_point()
 
-  
+########
+# Representative examples of high/low-probability with/without atoms
+########
+line.node.entropy[probability > 9 & atom=="literal-encoding",]
+line.node.entropy[probability < 1 & atom=="literal-encoding",]
+line.node.entropy[probability > 9 & atom=="non-atoms",]
+line.node.entropy[probability < 1 & atom=="non-atoms",]
+
+
+
+
+
