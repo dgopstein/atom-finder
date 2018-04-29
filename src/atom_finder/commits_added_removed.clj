@@ -14,6 +14,8 @@
    [clojure.string :as string]
    [swiss.arrows :refer :all]
    [schema.core :as s]
+   [clj-cdt.clj-cdt :refer :all]
+   [clj-cdt.writer-util :refer :all]
    )
   (:import [org.eclipse.cdt.core.dom.ast IASTNode]
            [org.eclipse.jgit.revwalk RevCommit RevCommitList RevWalk]

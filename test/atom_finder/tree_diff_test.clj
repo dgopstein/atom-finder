@@ -10,6 +10,7 @@
             [clj-jgit.querying :as gitq]
             [clj-jgit.internal :as giti]
             [clojure.pprint :refer :all]
+            [clj-cdt.clj-cdt :refer :all]
             ))
 
 ; Have lines that contain atoms been changed in a meaningful way?
@@ -54,11 +55,6 @@
                  ]]
       (doseq [[by expected a b] cases]
         (is (= expected (tree=by by (parse-frag a) (parse-frag b))) [a b]))))
-
-  (testing "prune-terminals"
-    (is (atom-finder.tree-diff/tree=by write-node
-                                       (->> "a + 1" parse-frag seq-tree prune-terminals)
-                                       (->> "c + d" parse-frag seq-tree prune-terminals))))
   )
 
 (deftest node=-test

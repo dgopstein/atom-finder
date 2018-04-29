@@ -31,30 +31,6 @@ IASTArrayModifier IASTBinaryExpression IASTCaseStatement IASTCastExpression IAST
         (map-values str/re-quote-replacement))
    target))
 
-(extend-protocol atom-finder.util/ASTTree clojure.lang.ISeq
-  (ast-node [lst] (first lst))
-  (children [lst] (rest lst)))
-
-(extend-protocol atom-finder.util/ASTTree nil
-  (ast-node [lst] nil)
-  (children [lst] '()))
-
-(defn seq-tree
-  "A tree of nested lists that represents the AST"
-  [node]
-  (cons node (map seq-tree (children node))))
-
-(defn prune-seq-tree
-  "Form new leaves at a given predicate"
-  [f any-tree]
-  (let [[x & xs] (if (seqable? any-tree) any-tree (seq-tree any-tree))]
-    (cons x
-          (->> xs (map #(if (f (ast-node %1)) '() %1))  (map #(if (= '() %1) '() (prune-seq-tree f %1)))))))
-
-(defn prune-terminals
-  [tree]
-  (prune-seq-tree (fn [node] (any-pred? #(instance? % node) [IASTIdExpression IASTLiteralExpression])) tree))
-
 (s/defn expansion-container
   "The AST node that fully encloses a macro expansion"
   [expansion :- IASTPreprocessorMacroExpansion]

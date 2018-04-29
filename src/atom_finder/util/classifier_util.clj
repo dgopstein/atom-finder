@@ -59,9 +59,6 @@
        (map (fn [[ctx node]] [node ctx]))
        (into {})))
 
-(defn flatten-tree [node]
-  (conj (mapcat flatten-tree (children node)) node))
-
 (defmacro operation-classifier
   "Identify unary/binary nodes by their operation"
   [expression-type field-name]

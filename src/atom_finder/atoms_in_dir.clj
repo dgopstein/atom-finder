@@ -4,6 +4,7 @@
             [atom-finder.constants :refer :all]
             [clojure.string :as str]
             [clojure.pprint :refer [pprint]]
+            [clj-cdt.clj-cdt :refer :all]
             ))
 
 ;; consider atom-finder.classifier/find-all-atoms instead,

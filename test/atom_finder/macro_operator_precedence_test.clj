@@ -3,6 +3,8 @@
             [schema.test]
             [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
+            [clj-cdt.clj-cdt :refer :all]
+            [clj-cdt.writer-util :refer :all]
             )
   (:use     [clojure.pprint :only [pprint print-table]]))
 

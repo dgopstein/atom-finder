@@ -3,6 +3,8 @@
             [atom-finder.tree-diff.difflib :refer :all]
             [clojure.string :as str]
             [schema.core :as s]
+            [clj-cdt.clj-cdt :refer :all]
+            [clj-cdt.writer-util :refer :all]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression
@@ -28,9 +30,9 @@
 
 (s/defn tree=by
   "apply a function to every node of multiple trees until a difference occurs"
-  [f & nodes] ; :- [atom-finder.util/ASTTree]]
-  (or (every? (comp nil? ast-node) nodes)
-      (and (apply = (map (comp f ast-node) nodes))
+  [f & nodes]
+  (or (every? nil? nodes)
+      (and (apply = (map f nodes))
            (let [kids (map children nodes)]
              (and (apply = (map count kids))
                   (every? identity (apply (partial map (partial tree=by f)) kids)))))))

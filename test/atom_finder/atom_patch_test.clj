@@ -11,6 +11,7 @@
             [clj-jgit.querying :as gitq]
             [clj-jgit.internal :as giti]
             [clojure.pprint :refer :all]
+            [clj-cdt.clj-cdt :refer :all]
             ))
 
 (deftest removed-lines-test

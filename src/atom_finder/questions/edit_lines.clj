@@ -14,6 +14,7 @@
    [clj-jgit.internal :as giti]
    [schema.core :as s]
    [swiss.arrows :refer :all]
+   [clj-cdt.clj-cdt :refer :all]
    )
   (:import
    [atom_finder.classifier Atom]

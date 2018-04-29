@@ -11,6 +11,8 @@
    [clj-jgit.porcelain :as gitp]
    [clj-jgit.querying :as gitq]
    [clj-jgit.internal :as giti]
+   [clj-cdt.clj-cdt :refer :all]
+   [clj-cdt.writer-util :refer :all]
    [schema.core :as s]
    [swiss.arrows :refer :all]
    )
@@ -70,8 +72,8 @@
 
 (s/defn build-srcs
   [file-name :- String source-before :- String source-after :- String]
-  (let [ast-before (mem-tu file-name source-before)
-        ast-after  (mem-tu file-name source-after)
+  (let [ast-before (parse-source source-before {:filename file-name})
+        ast-after  (parse-source source-after {:filename file-name})
         atoms-before (find-all-atoms ast-before)
         atoms-after (find-all-atoms ast-after)]
   {:ast-before       ast-before

@@ -3,6 +3,8 @@
             [atom-finder.classifier :refer :all]
             [clojure.string :as str]
             [schema.core :as s]
+            [clj-cdt.clj-cdt :refer :all]
+            [clj-cdt.writer-util :refer :all]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import [org.eclipse.cdt.core.dom.ast IASTNode IASTExpression IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression IASTExpressionList IASTForStatement IASTFunctionDefinition IASTComment]
@@ -13,16 +15,6 @@
 (def diff-types {Delta$TYPE/INSERT :insert
                  Delta$TYPE/DELETE :delete
                  Delta$TYPE/CHANGE :change})
-
-'(->>
-(DiffUtils/diff ["a" "b"] ["c" "d"])
-.getDeltas
-first
-.getOriginal
-.getPosition
-)
-
-; getLines getPosition last setLines size verify
 
 (s/defn diff-by :- [DiffMap]
   [f a :- [s/Any] b :- [s/Any]]

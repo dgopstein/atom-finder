@@ -7,6 +7,8 @@
    [clojure.pprint :refer [pprint]]
    [clojure.string :as str]
    [schema.core :as s]
+   [clj-cdt.clj-cdt :refer :all]
+   [clj-cdt.writer-util :refer :all]
    )
   (:use
    [clojure.pprint :only [pprint print-table]])

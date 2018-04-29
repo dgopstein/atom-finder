@@ -4,6 +4,7 @@
             [atom-finder.util :refer :all]
             [atom-finder.classifier :refer :all]
             [clojure.pprint :refer [pprint]]
+            [clj-cdt.clj-cdt :refer :all]
             ))
 
 (use-fixtures :once schema.test/validate-schemas)

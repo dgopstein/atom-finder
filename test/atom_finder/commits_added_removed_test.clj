@@ -10,6 +10,8 @@
             [clj-jgit.querying :as gitq]
             [clj-jgit.internal :as giti]
             [clojure.pprint :refer :all]
+            [clj-cdt.clj-cdt :refer :all]
+            [clj-cdt.writer-util :refer :all]
             ))
 
 (deftest atom-committers-test

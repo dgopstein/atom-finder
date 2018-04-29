@@ -2,6 +2,7 @@
   (:require [clojure.reflect :as rflct]
             [clojure.string :as str]
             [schema.core :as s]
+            [clj-cdt.clj-cdt :refer :all]
             )
   (:use     [clojure.pprint :only [pprint print-table]])
   (:import

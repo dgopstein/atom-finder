@@ -25,3 +25,8 @@
                       (map :line))]
 
     (is (empty? (sort (sym-diff (set expected#) (set lines#)))))))
+
+(defn parse-resource
+  "Parse a file in the resource directory"
+  [filename]
+  (->> filename resource-path parse-file))
