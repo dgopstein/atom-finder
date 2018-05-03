@@ -10,6 +10,8 @@
             [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [swiss.arrows :refer :all]
+            [clj-cdt.clj-cdt :refer :all]
+            [clj-cdt.writer-util :refer :all]
             )
   (:import
    [org.eclipse.cdt.core.dom.ast IASTNode IASTBinaryExpression
@@ -45,7 +47,9 @@
   "Serialize AST node into an edn list"
   [node]
   (let [poco (to-poco node)]
-    (cons poco (map to-edn (children node)))))
+    (if (leaf? node)
+      poco
+      (cons poco (map to-edn (children node))))))
 
 '((->> "x" pap parse-frag expr-typename pprint))
 '((->> "f(x)" pap parse-frag expr-typename pprint))
@@ -65,6 +69,74 @@
     (->> src-filename parse-file to-edn (spit out-filename))))
 
 '((time-mins (src-dir-to-edn linux-path "tmp/src-to-edn/linux4")))
+
+;(defn all-child-paths
+;  "given a directory path, find all relative paths under it"
+;  []
+;  (let [{true dirs false files}
+;        (->> "~/nyu/confusion/atom-finder/" expand-home files-in-dir
+;             (group-by (memfn isDirectory)))])
+
+(defn split-path [path] (str/split path #"/"))
+
+(defn all-child-paths
+  "given a directory path, find all relative paths under it"
+  [path]
+  (-<>> path files-in-dir (map (memfn getCanonicalPath))
+        ;(map #(str/replace % (re-pattern (str path "/?")) "")) ;; strip leading paths
+        ))
+
+(defn included-files
+  "extract the files included from this file"
+  [filename]
+  (->> filename
+       slurp-lines
+       (map (partial re-find #"#include *[\"<]([^\">]*)[\">]"))
+       (remove nil?)
+       (map last)))
+
+(def include-files (->> "~/opt/src/mongo/src/mongo/base/parse_number.cpp" expand-home included-files))
+
+(defn infer-include-paths
+  [all-paths include-paths]
+  (->> include-paths
+       (filter #(.contains % "/"))
+       (mapcat (fn [include-path]
+                 (->> all-paths
+                      (map (fn [child-path] [child-path (str/index-of child-path include-path)]))
+                      (remove (comp nil? last))
+                      (map (fn [[path idx]] (subs path 0 idx)))
+                      )))
+       distinct))
+
+(def stdlib-paths ["/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/4.2.1" "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"])
+
+(defn parent-dir [path] (->> path java.io.File. .getParent))
+
+(defn parse-file-with-proj-includes
+  "infer which project-level include paths might be useful then parse with them"
+  [all-paths file]
+  (let [include-paths (infer-include-paths all-paths include-files)]
+    (parse-file file {:include-dirs (concat [(parent-dir file)] stdlib-paths
+                                            include-paths
+                                            )})))
+
+(def mongo-files (->> "~/opt/src/mongo" expand-home all-child-paths))
+
+(->> "/Users/dgopstein/opt/src/mongo/src/mongo/base/secure_allocator.cpp"
+     expand-home
+     (parse-file-with-proj-includes mongo-files)
+     ;parse-file
+     flatten-tree
+     (remove from-include?)
+     (filter (partial instance? IASTExpression))
+     (map expr-typename)
+     frequencies
+     (group-by (comp not #(str/starts-with? % "problem-") first))
+     (map-values (%->> (map last) sum))
+     pprint
+     time-mins)
+
 
 (defn src-csv-to-edn
   [csv-path column-name]
