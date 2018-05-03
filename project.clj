@@ -17,7 +17,7 @@
                  [com.google.guava/guava "23.0"]
                  [clojail "1.0.6"]
                  [swiss-arrows "1.0.0"]
-                 [clj-cdt/clj-cdt "0.0.1"]
+                 ;[clj-cdt/clj-cdt "0.0.1"]
 
                  ;;;;;;;;;;;;;;;;;;;;;;   occasional dependencies   ;;;;;;;;;;;;;;;;;;;;;;
                  ;[org.clojure/math.combinatorics "0.1.4"] ; For calculating plot-ordering p-values in atom-finder paper
@@ -26,6 +26,7 @@
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"
                    ;"resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
+                   "resources/clj-cdt-0.0.1.jar"
                    "src/test/resources"
                    "src/conf"
                    ]
