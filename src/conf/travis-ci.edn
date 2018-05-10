@@ -1,5 +1,6 @@
 {
-  :gcc-path nil,
-  :ag-path nil,
+  :gcc-path nil
+  :ag-path nil
   :github-top-c nil
+  :system-include-paths []
 }

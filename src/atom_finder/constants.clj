@@ -16,7 +16,6 @@
 
 (def atom-finder-corpus-path (some->> :atom-finder-corpus-path cfg/get expand-home))
 
-(def root (parse-resource "logic-as-control-flow.c"))
-
-;(def big-root     (when gcc-path (->> "/gcc/config/i386/i386.c" (str gcc-path) parse-file)))
 (def github-top-c (some->> :github-top-c cfg/get expand-home))
+
+(def system-include-paths (some->> :system-include-paths cfg/get expand-home))

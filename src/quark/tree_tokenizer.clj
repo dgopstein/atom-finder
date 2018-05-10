@@ -3,7 +3,6 @@
 
 (ns quark.tree-tokenizer
   (:require [atom-finder.util :refer :all]
-            [atom-finder.constants :refer :all]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
@@ -109,24 +108,25 @@
                       )))
        distinct))
 
-(def stdlib-paths ["/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/4.2.1" "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"])
-
 (defn parent-dir [path] (->> path java.io.File. .getParent))
 
 (defn parse-file-with-proj-includes
   "infer which project-level include paths might be useful then parse with them"
   [all-paths file]
   (let [include-paths (infer-include-paths all-paths include-files)]
-    (parse-file file {:include-dirs (concat [(parent-dir file)] stdlib-paths
+    (parse-file file {:include-dirs (concat [(parent-dir file)]
+                                            atom-finder.constants/system-include-paths
                                             include-paths
                                             )})))
 
 (def mongo-files (->> "~/opt/src/mongo" expand-home all-child-paths))
 
-(->> "/Users/dgopstein/opt/src/mongo/src/mongo/base/secure_allocator.cpp"
+
+;; percentage of expressions with type information
+'((->> "/Users/dgopstein/opt/src/mongo/src/mongo/base/secure_allocator.cpp"
      expand-home
-     (parse-file-with-proj-includes mongo-files)
-     ;parse-file
+     ;(parse-file-with-proj-includes mongo-files)
+     parse-file
      flatten-tree
      (remove from-include?)
      (filter (partial instance? IASTExpression))
@@ -134,8 +134,21 @@
      frequencies
      (group-by (comp not #(str/starts-with? % "problem-") first))
      (map-values (%->> (map last) sum))
-     pprint
-     time-mins)
+     pap
+     ((fn [{t true f false}] (prn (float (/ t (+ t f))) " of " (+ t f))))
+     time-mins))
+
+;; which expressions don't have type information
+'((->> "/Users/dgopstein/opt/src/mongo/src/mongo/base/secure_allocator.cpp"
+     expand-home
+     (parse-file-with-proj-includes mongo-files)
+     flatten-tree
+     (remove from-include?)
+     (filter (partial instance? IASTExpression))
+     (map to-edn)
+     (map prn)
+     dorun
+     time-mins))
 
 
 (defn src-csv-to-edn

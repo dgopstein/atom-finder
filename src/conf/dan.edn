@@ -6,4 +6,7 @@
   :github-top-c "~/opt/src/github-top-c"
 
   :atom-finder-corpus-path "~/opt/src/atom-finder"
+
+  :system-include-paths ["/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/4.2.1"
+                        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"]
 }
