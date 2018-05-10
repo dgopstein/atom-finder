@@ -1,6 +1,6 @@
 language: clojure
 jdk:
-    - oraclejdk9
+    - oraclejdk10
 
 branches:
     only:
