@@ -150,6 +150,19 @@
      dorun
      time-mins))
 
+;; which expressions don't have type information
+(defn parse-dir-with-includes
+  [dir]
+  (let [dir-files (->> dir expand-home all-child-paths)]
+    (-<>> dir-files
+         (parse-file-with-proj-includes dir-files)
+         flatten-tree
+         (remove from-include?)
+         (filter (partial instance? IASTExpression))
+         (map to-edn)
+         (map prn)
+         dorun
+         time-mins)))
 
 (defn src-csv-to-edn
   [csv-path column-name]
@@ -163,3 +176,4 @@
 
 
 '((time-mins (src-csv-to-edn "tmp/context_study_code.csv" "Code")))
+
