@@ -2,9 +2,11 @@
 
 (in-ns 'atom-finder.util)
 
-(require '[clj-cdt.writer-util :refer [write-tree]])
+(require '[clj-cdt.writer-util :refer [write-tree write-node]])
 (defmethod write-tree clojure.lang.ISeq [node] (->> node first write-tree))
+(defmethod write-node clojure.lang.ISeq [node] (->> node first write-node))
 (defmethod children clojure.lang.ISeq [node] (rest node))
+(defmethod children nil [node] nil)
 
 (s/defn seq-tree? [node]
   (and (seqable? node)
@@ -35,3 +37,5 @@
     (when (and x (f x))
       (cons x
           (map (partial filter-seq-tree f) xs)))))
+
+(defn remove-seq-tree [f any-tree] (filter-seq-tree (complement f) any-tree))

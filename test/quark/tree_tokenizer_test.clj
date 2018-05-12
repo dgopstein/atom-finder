@@ -15,18 +15,20 @@
   (->> "f(x)" parse-frag expr-typename (= "problem-binding") is)
   (->> "1" parse-frag tree-to-edn (= ["LiteralExpression" "int"]))
   (->> "{int x; x;}" parse-frag tree-to-edn
-       (= '(["CompoundStatement"]
-            (["DeclarationStatement"] (["SimpleDeclaration"] ["SimpleDeclSpecifier"]
-                                       (["Declarator"] ["Name" "x"])))
-            (["ExpressionStatement"] (["IdExpression" "int"] ["Name" "x"])))) is)
+       (= '(["CompoundStatement" nil "{}"]
+           (["DeclarationStatement" nil "<DeclarationStatement>"]
+            (["SimpleDeclaration" nil ";"] ["SimpleDeclSpecifier" nil "int"]
+             (["Declarator" nil "<Declarator>"] ["Name" "x"])))
+           (["ExpressionStatement" nil ";"]
+            (["IdExpression" "int" "<IdExpression>"] ["Name" "x"])))
+          ) is)
   (->> "\"abc\" + 2" parse-frag tree-to-edn
-       (= '(["BinaryExpression" "const char *" :plus]
-            ["LiteralExpression" "const char [4]"]
-            ["LiteralExpression" "int"])) is)
+       (= '(["BinaryExpression" "const char *" "+"]
+            ["LiteralExpression" "const char [4]" "\"abc\""]
+            ["LiteralExpression" "int" "2"])) is)
   (->> "if(1) 'b';" parse-frag tree-to-edn
-       (= '(["IfStatement"]
-            ["LiteralExpression" "int"]
-            (["ExpressionStatement"] ["LiteralExpression" "char"]))) is)
+       (= '(["IfStatement" nil "if()"] ["LiteralExpression" "int" "1"]
+            (["ExpressionStatement" nil ";"] ["LiteralExpression" "char" "'b'"]))) is)
 
   ))
 

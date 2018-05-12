@@ -3,6 +3,7 @@
 
 (ns quark.tree-tokenizer
   (:require [atom-finder.util :refer :all]
+            [atom-finder.constants :as constants]
             [schema.core :as s]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
@@ -27,19 +28,21 @@
   [node]
   (log-err (str "Exception getting expression type for [file node] "
                 [(filename node) (tree-path node)]) "---exception---"
+        (if (instance? IASTExpression node)
            (let [expr-type (-> node .getExpressionType)]
              (condp instance? expr-type
                IProblemBinding "problem-binding"
                IProblemType "problem-type"
-               (str expr-type)))))
+               (str expr-type)))
+           nil)))
 
 (defmulti node-to-edn "Convert IASTNode node to plain-old-clojure-object's" class)
 
-(s/defmethod node-to-edn :default [node] [(typename node)])
+(s/defmethod node-to-edn clojure.lang.ISeq [node] (-> node first node-to-edn))
+(s/defmethod node-to-edn nil [node] [nil nil nil])
+(s/defmethod node-to-edn :default [node] [(typename node) (expr-typename node) (write-node node)])
 
-(s/defmethod node-to-edn IASTExpression [node] [(typename node) (expr-typename node)])
-(s/defmethod node-to-edn IASTUnaryExpression [node] [(typename node) (expr-typename node) (->> node expr-operator :name)])
-(s/defmethod node-to-edn IASTBinaryExpression [node] [(typename node) (expr-typename node) (->> node expr-operator :name)])
+(s/defmethod node-to-edn IASTExpression [node] [(typename node) (expr-typename node) (write-node node)])
 (s/defmethod node-to-edn IASTName [node] [(typename node) (->> node node-name)])
 
 (defn tree-to-edn
@@ -50,7 +53,7 @@
       edn
       (cons edn (map tree-to-edn (children node))))))
 
-(defn src-dir-tree-to-edn
+(defn src-dir-trees-to-edn
   [unexpanded-src-path unexpanded-out-path]
   (doseq [:let [src-path (expand-home unexpanded-src-path)
                 out-path (expand-home unexpanded-out-path)]
@@ -60,7 +63,7 @@
     (clojure.java.io/make-parents out-filename)
     (->> src-filename parse-file tree-to-edn (spit out-filename))))
 
-'((time-mins (src-dir-tree-to-edn linux-path "tmp/src-tree-to-edn/linux4")))
+'((time-mins (src-dir-trees-to-edn linux-path "tmp/src-tree-to-edn/linux4")))
 
 ;(defn all-child-paths
 ;  "given a directory path, find all relative paths under it"
@@ -108,7 +111,7 @@
   [all-paths file]
   (let [include-paths (infer-include-paths all-paths include-files)]
     (parse-file file {:include-dirs (concat [(parent-dir file)]
-                                            atom-finder.constants/system-include-paths
+                                            constants/system-include-paths
                                             include-paths
                                             )})))
 
@@ -143,20 +146,27 @@
      dorun
      time-mins))
 
-;; which expressions don't have type information
-(defn parse-dir-with-includes-filtered
-  [dir]
-  (let [dir-files (->> dir expand-home all-child-paths)]
-    (-<>> dir-files
-         (parse-file-with-proj-includes dir-files)
-         flatten-tree
-         (filter-seq-tree from-include?)
-         (map tree-to-edn)
-         (map prn)
-         dorun
-         time-mins)))
+(defn src-dir-trees-to-edn-with-includes-filtered
+  [unexpanded-src-path unexpanded-out-path]
+  (dorun (doseq [:let [src-path (expand-home unexpanded-src-path)
+                out-path (expand-home unexpanded-out-path)
+                src-files (c-files src-path)]
+          src-file (c-files src-path)
+          :let [src-filename (.getAbsolutePath src-file)
+                out-filename (str (str/replace src-filename src-path out-path) ".edn")]]
 
-'((->> "1 + 2" parse-frag seq-tree (take 1) (map tree-to-edn) prn))
+    (clojure.java.io/make-parents out-filename)
+
+    (->> src-filename
+         pprn
+         (parse-file-with-proj-includes src-files)
+         (remove-seq-tree from-include?)
+         tree-to-edn
+         (spit out-filename)
+         (with-timeout 200)
+         ))))
+
+'((time-mins (src-dir-trees-to-edn-with-includes-filtered "~/nyu/confusion/atom-finder/src/test/resources" "~/nyu/confusion/atom-finder/to-edn-atom-finder")))
 
 (defn src-csv-tree-to-edn
   [csv-path column-name]

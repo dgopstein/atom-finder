@@ -4,7 +4,6 @@
    [atom-finder.classifier :refer :all]
    [atom-finder.patch :refer :all]
    [atom-finder.atom-stats :refer :all]
-   [clojail.core :refer [thunk-timeout]]
    [clojure.pprint :refer [pprint]]
    [clojure.data.csv :as csv]
    [clojure.java.io :as io]
@@ -26,23 +25,6 @@
    [org.eclipse.cdt.internal.core.dom.parser ASTNode]
    )
   )
-
-(defmacro log-timeout [time msg & body]
-  `(try (thunk-timeout (fn [] ~@body) ~time :seconds)
-        (catch java.util.concurrent.TimeoutException e#
-          (do
-            (errln (str "[Timeout " ~time "s] " ~msg))
-            nil))))
-
-(defmacro with-timeout [time & body]
-  `(log-timeout ~time (str "body: " '~@body) ~@body))
-
-(defmacro with-timeout-ms [time & body]
-  `(try (thunk-timeout (fn [] ~@body) ~time :ms)
-        (catch java.util.concurrent.TimeoutException e#
-          (do
-            (errln (str "Killed operation when it exceded max duration of " ~time "ms, body: " '~@body))
-            nil))))
 
 (def AtomFinder (s/=> IASTTranslationUnit [IASTTranslationUnit]))
 (def AtomFinders [(s/one AtomFinder "atom-finder") AtomFinder])
