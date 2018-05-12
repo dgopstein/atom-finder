@@ -16,14 +16,14 @@
 
 (deftest atom-committers-test
   (testing "atom-map-diff"
-    (= (->>
-        (atom-map-diff (->> "int x = z = y++" parse-frag root-ancestor find-all-atoms)
-                       (->> "int x = z = w ? y : y++" parse-frag root-ancestor find-all-atoms))
-        :revised (map #(->> % :node class .getSimpleName)))
-       ;; one atom is the ?: itself, and the other is the parent of the y++, which moved out of the assignment
-       ["CPPASTConditionalExpression" "CPPASTConditionalExpression"]))
+    (is (= (->>
+            (atom-map-diff (->> "int x = z = y++" parse-frag root-ancestor find-all-atoms)
+                           (->> "int x = z = w ? y : y++" parse-frag root-ancestor find-all-atoms))
+            :revised (map #(->> % :node class .getSimpleName)))
+           ;; one atom is the ?: itself, and the other is the parent of the y++, which moved out of the assignment
+           ["CPPASTConditionalExpression" "CPPASTConditionalExpression"])))
 
-  (when gcc-repo
+  '(when gcc-repo
     (testing "gcc commit regression"
       (let [rev-commit (find-rev-commit gcc-repo "3bb22d5fa5f279e90cff387b5db4644a620b5576")
             snprintf_lite-src
@@ -57,5 +57,6 @@
                        "TEMPLATE_PARM_PARAMETER_PACK" "<IdExpression>" "newidx" "()"
                        "<IdExpression>" "TEMPLATE_PARM_PARAMETER_PACK" "<IdExpression>" "oldidx"])
                    is)
-      )))
+              )
+      ))
   )

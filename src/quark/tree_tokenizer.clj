@@ -33,31 +33,24 @@
                IProblemType "problem-type"
                (str expr-type)))))
 
-(defmulti to-poco "Convert IASTNode node to plain-old-clojure-object's" class)
+(defmulti node-to-edn "Convert IASTNode node to plain-old-clojure-object's" class)
 
-(s/defmethod to-poco :default [node] [(typename node)])
+(s/defmethod node-to-edn :default [node] [(typename node)])
 
-(s/defmethod to-poco IASTExpression [node] [(typename node) (expr-typename node)])
-(s/defmethod to-poco IASTUnaryExpression [node] [(typename node) (expr-typename node) (->> node expr-operator :name)])
-(s/defmethod to-poco IASTBinaryExpression [node] [(typename node) (expr-typename node) (->> node expr-operator :name)])
-(s/defmethod to-poco IASTName [node] [(typename node) (->> node node-name)])
+(s/defmethod node-to-edn IASTExpression [node] [(typename node) (expr-typename node)])
+(s/defmethod node-to-edn IASTUnaryExpression [node] [(typename node) (expr-typename node) (->> node expr-operator :name)])
+(s/defmethod node-to-edn IASTBinaryExpression [node] [(typename node) (expr-typename node) (->> node expr-operator :name)])
+(s/defmethod node-to-edn IASTName [node] [(typename node) (->> node node-name)])
 
-(defn to-edn
+(defn tree-to-edn
   "Serialize AST node into an edn list"
   [node]
-  (let [poco (to-poco node)]
+  (let [edn (node-to-edn node)]
     (if (leaf? node)
-      poco
-      (cons poco (map to-edn (children node))))))
+      edn
+      (cons edn (map tree-to-edn (children node))))))
 
-'((->> "x" pap parse-frag expr-typename pprint))
-'((->> "f(x)" pap parse-frag expr-typename pprint))
-'((->> "1" pap parse-frag to-edn pprint))
-'((->> "{int x; x;}" parse-frag to-edn pprint))
-'((->> "\"abc\" + 2" parse-frag to-edn pprint))
-'((->> "if(1) 'b';" parse-frag to-edn pprint))
-
-(defn src-dir-to-edn
+(defn src-dir-tree-to-edn
   [unexpanded-src-path unexpanded-out-path]
   (doseq [:let [src-path (expand-home unexpanded-src-path)
                 out-path (expand-home unexpanded-out-path)]
@@ -65,9 +58,9 @@
           :let [src-filename (.getAbsolutePath src-file)
                 out-filename (str (str/replace src-filename src-path out-path) ".edn")]]
     (clojure.java.io/make-parents out-filename)
-    (->> src-filename parse-file to-edn (spit out-filename))))
+    (->> src-filename parse-file tree-to-edn (spit out-filename))))
 
-'((time-mins (src-dir-to-edn linux-path "tmp/src-to-edn/linux4")))
+'((time-mins (src-dir-tree-to-edn linux-path "tmp/src-tree-to-edn/linux4")))
 
 ;(defn all-child-paths
 ;  "given a directory path, find all relative paths under it"
@@ -145,35 +138,36 @@
      flatten-tree
      (remove from-include?)
      (filter (partial instance? IASTExpression))
-     (map to-edn)
+     (map tree-to-edn)
      (map prn)
      dorun
      time-mins))
 
 ;; which expressions don't have type information
-(defn parse-dir-with-includes
+(defn parse-dir-with-includes-filtered
   [dir]
   (let [dir-files (->> dir expand-home all-child-paths)]
     (-<>> dir-files
          (parse-file-with-proj-includes dir-files)
          flatten-tree
-         (remove from-include?)
-         (filter (partial instance? IASTExpression))
-         (map to-edn)
+         (filter-seq-tree from-include?)
+         (map tree-to-edn)
          (map prn)
          dorun
          time-mins)))
 
-(defn src-csv-to-edn
+'((->> "1 + 2" parse-frag seq-tree (take 1) (map tree-to-edn) prn))
+
+(defn src-csv-tree-to-edn
   [csv-path column-name]
   (with-open [reader (io/reader csv-path)
               writer (io/writer (str csv-path ".edn"))]
     (let [[header & csv-data] (csv/read-csv reader)
           code-idx (.indexOf header column-name)
-          edn-data (map #(update-in % [code-idx] (comp to-edn parse-source)) csv-data)]
+          edn-data (map #(update-in % [code-idx] (comp tree-to-edn parse-source)) csv-data)]
      (csv/write-csv writer (cons header edn-data))
       )))
 
 
-'((time-mins (src-csv-to-edn "tmp/context_study_code.csv" "Code")))
+'((time-mins (src-csv-tree-to-edn "tmp/context_study_code.csv" "Code")))
 
