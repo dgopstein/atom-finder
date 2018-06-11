@@ -68,9 +68,9 @@ full code. `parse-frag` on the other hand can take any (read "many") partial
 program. For example:
 
 ```clj
-(parse-file "gcc/testsuite/c-c++-common/wdate-time.c") => CPPASTTranslationUnit
-(parse-source "int main() { 1 + 1; }") => CPPASTTranslationUnit
-(parse-frag "1 + 1") => CPPASTBinaryExpression
+(parse-file "gcc/testsuite/c-c++-common/wdate-time.c")  ;; => CPPASTTranslationUnit
+(parse-source "int main() { 1 + 1; }")                  ;; => CPPASTTranslationUnit
+(parse-frag "1 + 1")                                    ;; => CPPASTBinaryExpression
 ```
  
 After you've parsed some code, you might reasonable want to see what it looks like:
