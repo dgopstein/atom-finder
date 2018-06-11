@@ -207,14 +207,14 @@ atom.removed.rate.significant.plot <-
                              paste0(signif.stars(p.value), sprintf(" %0.2f                 ", 1/rate)))),
             color="black", size=3, vjust=0.4) +
   scale_color_manual(values=c(colors2, 'red')) +
-  scale_y_log10(position="top", labels=c("Non-bugs", "Bugs"), breaks=c(.47, 1.7)) +
+  scale_y_log10(position="top", labels=c("Non-bugs", "Bugs"), breaks=c(.67, 1.5)) +
   labs(x="Atom", y="Atoms removed more often in...") +
   theme(axis.ticks.y=element_blank(), axis.text.y=element_text(vjust=0.4),
         panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
-  coord_flip(ylim = c(0.23, 2.8))
+  coord_flip(ylim = c(0.51, 2.2))
 atom.removed.rate.significant.plot
 
-ggsave("img/atom_removed_rate_significant.pdf", atom.removed.rate.plot, width=(width<-110), height=width*0.7, units = "mm", device=cairo_pdf)
+ggsave("img/atom_removed_rate_significant.pdf", atom.removed.rate.significant.plot, width=(width<-110), height=width*0.5, units = "mm", device=cairo_pdf)
 
 
 

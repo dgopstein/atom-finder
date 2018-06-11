@@ -214,6 +214,6 @@ ggplot(atom.effect, aes(reorder(atom, effect.size), effect.size)) +
   theme(axis.text.x = element_blank()) +
   theme(axis.title = element_text(size=20)) +
   theme(axis.title.y = element_text(margin = margin(t=0, r=20, b=0, l=0))) +
-  labs(x = 'Atom of Confusion', y = 'Confusingness') +
+  labs(x = 'Atom of Confusion', y = 'Effect Size (Confusingness)') +
   coord_flip()
 
