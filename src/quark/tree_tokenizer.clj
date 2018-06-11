@@ -90,7 +90,7 @@
        (remove nil?)
        (map last)))
 
-(def include-files (->> "~/opt/src/mongo/src/mongo/base/parse_number.cpp" expand-home included-files))
+(def include-files []);(->> "~/opt/src/mongo/src/mongo/base/parse_number.cpp" expand-home included-files))
 
 (defn infer-include-paths
   [all-paths include-paths]
@@ -115,7 +115,7 @@
                                             include-paths
                                             )})))
 
-(def mongo-files (->> "~/opt/src/mongo" expand-home all-child-paths))
+(def mongo-files []) ;(->> "~/opt/src/mongo" expand-home all-child-paths))
 
 
 ;; percentage of expressions with type information
