@@ -30,16 +30,16 @@ of `atom-finder` is code which is both specific to this project, but also
 reusable between different analyses. Below the top-level are several other
 useful directories:
 
-* (`classifier`)[src/atom_finder/classifier] - Every file in this directory is
+* [`classifier`](src/atom_finder/classifier) - Every file in this directory is
   used to determine whether an individual AST node is a particular atom of
   confusion
-* (`questions`)[src/atom_finder/questions] - Every file in this directory
-  corresponds to one of our (published, or potential) research hypotheses. These
+* [`questions`](src/atom_finder/questions) - Every file in this directory
+  corresponds to one of our [published, or potential) research hypotheses. These
   files implicitly use the classifier infrastructure to observe patterns.
-* (`tree_diff`)[src/atom_finder/tree_diff] - Tree diffing was a difficult enough problem that took several
+* [`tree_diff`](src/atom_finder/tree_diff) - Tree diffing was a difficult enough problem that took several
   iterations to get working. Each evolution is it's own sub-namespace in this
   directory. Ultimately only `difflib` ended up being used.
-* (`util`)[src/atom_finder/util] - The most reusable and general functions. Most
+* [`util`](src/atom_finder/util) - The most reusable and general functions. Most
   of these files are potentially useful in other projects outside this one.
 
 ## Working with Clojure
@@ -126,7 +126,7 @@ adapted to find each example of an atom in a piece of code.
      parse-expr
      ((default-finder comma-operator-atom?))
      (map write-tree))
-     ;; => ("1, 2" "3, 4")
+;; => ("1, 2" "3, 4")
 ```
 
 If you would like to find every atom in a piece of code you can use the helper
@@ -140,7 +140,7 @@ function `find-all-atoms` in
      (map-values (partial map write-tree))
      (remove (comp empty? last))
      (into {}))
-     ;; => {:operator-precedence ("11 && 12 & 013"), :literal-encoding ("12 & 013")}
+;; => {:operator-precedence ("11 && 12 & 013"), :literal-encoding ("12 & 013")}
 ```
 
 ## Using the framework to answer questions
