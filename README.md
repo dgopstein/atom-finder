@@ -108,37 +108,45 @@ Some other useful functions are:
 You may also be interested in finding where in software projects atoms of
 confusion live.
 
-In the (`classifier`)[src/atom_finder/classifier/] namespace there
+In the [`classifier`](src/atom_finder/classifier/) namespace there
 are several functions for finding atoms. First, every type of atom has a
 classifier which can be applied to an AST node to determine whether it
 represents an atom of confusion.
 
-```
-    (->> "x++" parse-expr post-*crement-atom?)      ;; => false
-    (->> "y = x++" parse-expr post-*crement-atom?)  ;; => true
+```clj
+(->> "x++" parse-expr post-*crement-atom?)      ;; => false
+(->> "y = x++" parse-expr post-*crement-atom?)  ;; => true
 ```
 
 Further, by applying the `default-finder` function, each classifier can be
 adapted to find each example of an atom in a piece of code.
 
-```
-    (->> "x = (1, 2) && y = (3, 4)"
-         parse-expr
-         ((default-finder comma-operator-atom?))
-         (map write-tree))
-         ;; => ("1, 2" "3, 4")
+```clj
+(->> "x = (1, 2) && y = (3, 4)"
+     parse-expr
+     ((default-finder comma-operator-atom?))
+     (map write-tree))
+     ;; => ("1, 2" "3, 4")
 ```
 
 If you would like to find every atom in a piece of code you can use the helper
 function `find-all-atoms` in
-(`classifier.clj`)[src/atom_finder/classifier/classifier.clj].
+[`classifier.clj`](src/atom_finder/classifier/classifier.clj).
 
+```clj
+(->> "11 && 12 & 013"
+     parse-expr
+     find-all-atoms
+     (map-values (partial map write-tree))
+     (remove (comp empty? last))
+     (into {}))
+     ;; => {:operator-precedence ("11 && 12 & 013"), :literal-encoding ("12 & 013")}
 ```
-    (->> "11 && 12 & 013"
-         parse-expr
-         find-all-atoms
-         (map-values (partial map write-tree))
-         (remove (comp empty? last))
-         (into {}))
-         ;; => {:operator-precedence ("11 && 12 & 013"), :literal-encoding ("12 & 013")}
-```
+
+## Using the framework to answer questions
+
+Beyond simply finding atoms of confusion, there's a fair amount of code to
+answer specific questions about how atoms of confusion relate to a
+codebase. Much of this code lives in
+the [`questions`](src/atom_finder/questions/) directory, and is very poorly
+documented. Sorry in advance.
