@@ -74,7 +74,7 @@ program. For example:
 (parse-frag "1 + 1")                                    ;; => CPPASTBinaryExpression
 ```
  
-After you've parsed some code, you might reasonable want to see what it looks like:
+After you've parsed some code, you might reasonably want to see what it looks like:
  
 ```clj
 (->> "gcc/testsuite/c-c++-common/wdate-time.c"
