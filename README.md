@@ -38,7 +38,7 @@ useful directories:
   files implicitly use the classifier infrastructure to observe patterns.
 * [`tree_diff`](src/atom_finder/tree_diff) - Tree diffing was a difficult enough problem that took several
   iterations to get working. Each evolution is it's own sub-namespace in this
-  directory. Ultimately only `difflib` ended up being used.
+  directory. Ultimately only [`difflib`](src/atom_finder/tree_diff/difflib.clj) ended up being used.
 * [`util`](src/atom_finder/util) - The most reusable and general functions. Most
   of these files are potentially useful in other projects outside this one.
 
