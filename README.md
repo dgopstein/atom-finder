@@ -20,9 +20,9 @@ The majority of interesting files in this project are located in the top-level
 `src` directory. Secondarily, test files are in located `test` and jars in
 `resources`. Under `src` there are several important directories:
 
-* `atom_finder` - Clojure files for parsing C/C++ files and searching for atoms
-* `analysis` - R files for statistically analyzing the results of the code mining
-* `conf` - Configuration variables to customize each runtime environment
+* [`atom_finder`](src/atom_finder) - Clojure files for parsing C/C++ files and searching for atoms
+* [`analysis`](src/analysis) - R files for statistically analyzing the results of the code mining
+* [`conf`](src/conf) - Configuration variables to customize each runtime environment
 
 The most important, and complicated directory is `src/atom_finder` which
 contains all the code analyze source code and repositories. Within the top-level
