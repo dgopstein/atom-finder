@@ -30,16 +30,17 @@ of `atom-finder` is code which is both specific to this project, but also
 reusable between different analyses. Below the top-level are several other
 useful directories:
 
-* `classifier` - Every file in this directory is used to determine whether an
-  individual AST node is a particular atom of confusion
-* `questions` - Every file in this directory corresponds to one of our
-  (published, or potential) research hypotheses. These files implicitly use the
-  classifier infrastructure to observe patterns.
-* `tree_diff` - Tree diffing was a difficult enough problem that took several
+* (`classifier`)[src/atom_finder/classifier] - Every file in this directory is
+  used to determine whether an individual AST node is a particular atom of
+  confusion
+* (`questions`)[src/atom_finder/questions] - Every file in this directory
+  corresponds to one of our (published, or potential) research hypotheses. These
+  files implicitly use the classifier infrastructure to observe patterns.
+* (`tree_diff`)[src/atom_finder/tree_diff] - Tree diffing was a difficult enough problem that took several
   iterations to get working. Each evolution is it's own sub-namespace in this
   directory. Ultimately only `difflib` ended up being used.
-* `util` - The most reusable and general functions. Most of these files are
-  potentially useful in other projects outside this one.
+* (`util`)[src/atom_finder/util] - The most reusable and general functions. Most
+  of these files are potentially useful in other projects outside this one.
 
 ## Working with Clojure
 
@@ -55,7 +56,7 @@ In order to run this project you should install:
 After you've installed these tools, first run `lein test` to make sure everything is up and running.
 Then you should be able to develop in your editor, executing snippets of code as you go.
  
-## Using the framework
+## Using the framework to parse code
  
 The first thing you might want to do, is parse some C code. There are three
 main functions for doing this, `parse-file`, `parse-source` and
@@ -101,3 +102,43 @@ Some other useful functions are:
     write-tree     -> Takes an AST and returns the code that generated it (inverse parsing)
     get-in-tree    -> Digs down into an AST to get at nested children
     default-finder -> Take a function that returns true/false for a single AST node, and run it over an entire AST
+
+## Using the framework to find atoms of confusion
+
+You may also be interested in finding where in software projects atoms of
+confusion live.
+
+In the (`classifier`)[src/atom_finder/classifier/] namespace there
+are several functions for finding atoms. First, every type of atom has a
+classifier which can be applied to an AST node to determine whether it
+represents an atom of confusion.
+
+```
+    (->> "x++" parse-expr post-*crement-atom?)      ;; => false
+    (->> "y = x++" parse-expr post-*crement-atom?)  ;; => true
+```
+
+Further, by applying the `default-finder` function, each classifier can be
+adapted to find each example of an atom in a piece of code.
+
+```
+    (->> "x = (1, 2) && y = (3, 4)"
+         parse-expr
+         ((default-finder comma-operator-atom?))
+         (map write-tree))
+         ;; => ("1, 2" "3, 4")
+```
+
+If you would like to find every atom in a piece of code you can use the helper
+function `find-all-atoms` in
+(`classifier.clj`)[src/atom_finder/classifier/classifier.clj].
+
+```
+    (->> "11 && 12 & 013"
+         parse-expr
+         find-all-atoms
+         (map-values (partial map write-tree))
+         (remove (comp empty? last))
+         (into {}))
+         ;; => {:operator-precedence ("11 && 12 & 013"), :literal-encoding ("12 & 013")}
+```
