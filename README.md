@@ -131,7 +131,7 @@ adapted to find each example of an atom in a piece of code.
 
 If you would like to find every atom in a piece of code you can use the helper
 function `find-all-atoms` in
-[`classifier.clj`](src/atom_finder/classifier/classifier.clj).
+[`classifier.clj`](src/atom_finder/classifier.clj).
 
 ```clj
 (->> "11 && 12 & 013"
