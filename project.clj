@@ -45,7 +45,7 @@
                                :manifest {"Premain-Class" "atom_finder.instrumentation"
                                           "Agent-Class"   "atom_finder.instrumentation"}
                                }}
-  :jvm-opts ["-Xss8m" "-Xmx96g" "-XX:+HeapDumpOnOutOfMemoryError"]
+  :jvm-opts ["-Xss8m" "-Xmx12g" "-XX:+HeapDumpOnOutOfMemoryError"]
   :main atom-finder.core
   ;:aot [atom-finder.core]
   :plugins [[lein-codox "0.10.3"]

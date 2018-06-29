@@ -69,3 +69,9 @@
 (defmacro log-to [filename & stuff]
   `(binding [*out* (clojure.java.io/writer ~filename)]
      ~(cons 'do stuff)))
+
+(defn path-exists? [filename]
+  (->> filename java.io.File. .exists))
+(defn file-exists? [filename]
+  (let [file (java.io.File. filename)]
+    (and (.exists file) (not (.isDirectory file)))))

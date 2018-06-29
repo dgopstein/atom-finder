@@ -1,6 +1,8 @@
 (in-ns 'atom-finder.util)
 (import '(java.lang.instrument Instrumentation))
 
+(defn java-version [] (System/getProperty "java.version"))
+
 (defn heap-size [] (.totalMemory (Runtime/getRuntime)))
 (defn free-memory [] (.freeMemory (Runtime/getRuntime)))
 (defn used-memory [] (long (/ (- (heap-size) (free-memory)) (* 1024 1024))))

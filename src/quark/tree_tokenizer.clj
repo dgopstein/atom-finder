@@ -149,11 +149,12 @@
 (defn src-dir-trees-to-edn-with-includes-filtered
   [unexpanded-src-path unexpanded-out-path]
   (dorun (doseq [:let [src-path (expand-home unexpanded-src-path)
-                out-path (expand-home unexpanded-out-path)
-                src-files (c-files src-path)]
-          src-file (c-files src-path)
-          :let [src-filename (.getAbsolutePath src-file)
-                out-filename (str (str/replace src-filename src-path out-path) ".edn")]]
+                       out-path (expand-home unexpanded-out-path)
+                       src-files (c-files src-path)]
+                 src-file (c-files src-path)
+                 :let [src-filename (.getAbsolutePath src-file)
+                       out-filename (str (str/replace src-filename src-path out-path) ".edn")]
+                 :when (not (path-exists? out-filename))]
 
     (clojure.java.io/make-parents out-filename)
 
@@ -165,8 +166,8 @@
          (spit out-filename)
          (with-timeout 200)
          ))))
-
-'((time-mins (src-dir-trees-to-edn-with-includes-filtered "~/nyu/confusion/atom-finder/src/test/resources" "~/nyu/confusion/atom-finder/to-edn-atom-finder")))
+'((prn (now)))
+'((time-mins (src-dir-trees-to-edn-with-includes-filtered "~/opt/src/linux" "~/atom-finder/tmp/to-edn-linux")))
 
 (defn src-csv-tree-to-edn
   [csv-path column-name]
