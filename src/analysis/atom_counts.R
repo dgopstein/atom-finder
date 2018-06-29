@@ -201,3 +201,19 @@ all.atom.proj.rates.plot
 
 ggsave("img/all_atom_proj_rates.pdf", all.atom.proj.rates.plot, width=(width<-130), height=width*.3, units = "mm")
 
+########################################
+#   Plot of Atom Effect Size
+########################################
+atom.effect
+ggplot(atom.effect, aes(reorder(atom, effect.size), effect.size)) +
+  geom_bar(stat="identity", fill=colors2[1]) +
+  geom_text(aes(y=0.05, label=sprintf("%.02f", signif(effect.size, digits=2))), color="#FFFFFF", angle=0, hjust=0, fontface='bold') +
+  theme_classic() +
+  theme(axis.line=element_blank(), axis.ticks = element_blank()) +
+  theme(axis.text.y = element_text(hjust = 1, vjust=.4, size=16)) +
+  theme(axis.text.x = element_blank()) +
+  theme(axis.title = element_text(size=20)) +
+  theme(axis.title.y = element_text(margin = margin(t=0, r=20, b=0, l=0))) +
+  labs(x = 'Atom of Confusion', y = 'Effect Size (Confusingness)') +
+  coord_flip()
+
