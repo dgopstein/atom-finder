@@ -23,13 +23,13 @@
 
 (defn atoms-in-file
   [atoms filename]
-  [filename
-   (->> filename
-        expand-home
-        parse-file
-        (all-atoms-in-tree atoms)
-       (map-values (partial map (comp :line loc)))
-        )])
+  {:file filename
+   :atoms (->> filename
+               expand-home
+               parse-file
+               (all-atoms-in-tree atoms)
+               (map-values (partial map (comp :line loc)))
+               )})
 
 (defn atoms-in-dir
   [dirname atoms]

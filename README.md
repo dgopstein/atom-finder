@@ -14,6 +14,31 @@ Output from this work formed the basis of our paper at the Mining Software
 Repositories 2018 conference: [Prevalence of Confusing Code in Software Projects - Atoms of
 Confusion in the Wild](https://atomsofconfusion.com/papers/atom-finder-msr-2018.pdf).
 
+[](#comandline)
+## Running from the commandline
+
+If you would like to use this project as-is to find all occurrences of the 15
+atoms of confusion described in our 2018 MSR paper you can run our code form the
+commandline as:
+
+```sh
+lein find-atoms-in-dirs dir1 dir2 > atoms.edn
+```
+
+This command will loop over each of the directories provided (in the example
+above: `dir1 dir2`) and print an [edn](https://github.com/edn-format/edn) record
+for each file in the following shape:
+
+```clj
+{:file "src/test/resources/atom-comments.c",
+ :atoms {:post-increment (4 10 13 25 28 30),
+         :preprocessor-in-statement (),
+         :operator-precedence (),
+         ...}}
+```
+
+It is best to redirect this output to a file for further post-processing.
+
 ## Project Structure Overview
 
 The majority of interesting files in this project are located in the top-level
