@@ -14,8 +14,7 @@ Output from this work formed the basis of our paper at the Mining Software
 Repositories 2018 conference: [Prevalence of Confusing Code in Software Projects - Atoms of
 Confusion in the Wild](https://atomsofconfusion.com/papers/atom-finder-msr-2018.pdf).
 
-[](#comandline)
-## Running from the commandline
+## Running from the command-line
 
 If you would like to use this project as-is to find all occurrences of the 15
 atoms of confusion described in our 2018 MSR paper you can run our code form the
