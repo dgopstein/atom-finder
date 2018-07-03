@@ -36,6 +36,9 @@ for each file in the following shape:
          ...}}
 ```
 
+The output for each line indicates, for each atom of confusion, on which lines
+was it found.
+
 It is best to redirect this output to a file for further post-processing.
 
 ## Project Structure Overview
