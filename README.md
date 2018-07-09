@@ -17,8 +17,8 @@ Confusion in the Wild](https://atomsofconfusion.com/papers/atom-finder-msr-2018.
 ## Running from the command-line
 
 If you would like to use this project as-is to find all occurrences of the 15
-atoms of confusion described in our 2018 MSR paper you can run our code form the
-commandline as:
+atoms of confusion described in our 2018 MSR paper you can run our code from the
+command-line as:
 
 ```sh
 lein find-atoms-in-dirs dir1 dir2 > atoms.edn
