@@ -68,7 +68,9 @@
   "Ignore parts of the files not contained in the patch"
   [srcs]
   (let [patch-bounds (-<>> srcs :patch-str (patch-file <> (:file srcs))
-                           patch-change-bounds flatten1 (map change-bound-to-ranges))
+                           patch-change-bounds flatten1 (map change-bound-to-ranges))]
+    (when (not (empty? patch-bounds)) ;; e.g. changes in binary files
+      (let [
         [old-bounds new-bounds] (->> patch-bounds (map #(select-values % [:old :new]))
                                      transpose (map range-set-co))
         {atoms-removed :original atoms-added     :revised}
@@ -89,7 +91,8 @@
      :added-non-atoms non-atoms-added
      :author-name  (->> srcs :rev-commit author-name)
      :author-email (->> srcs :rev-commit author-email)
-     }))
+     }
+    ))))
 
 (s/defn count-added-removed-atoms
   [atoms-added :- {s/Keyword s/Any}]
@@ -98,4 +101,4 @@
                             [:removed-non-atoms] count
                             [:added-non-atoms]   count}))
 
-(s/defn added-removed-atoms-count [srcs] (-> srcs added-removed-atoms count-added-removed-atoms))
+(s/defn added-removed-atoms-count [srcs :- {:patch s/Any :rev-commit s/Any s/Any s/Any}] (some-> srcs added-removed-atoms count-added-removed-atoms))

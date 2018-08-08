@@ -2,8 +2,8 @@
 
 (defmacro log-err [msg ret & x]
   `(try ~@x
-      (catch Exception e# (do (errln (str "-- exception parsing commit: \"" ~msg "\"\n")) ~ret))
-      (catch Error e#     (do (errln (str "-- error parsing commit: \""  ~msg "\"\n")) ~ret)))
+      (catch Exception e# (do (errln (str "-- exception: \"" ~msg "\"\n")) ~ret))
+      (catch Error e#     (do (errln (str "-- error: \""  ~msg "\"\n")) ~ret)))
   #_x
   )
 
