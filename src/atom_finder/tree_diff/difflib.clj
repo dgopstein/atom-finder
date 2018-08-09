@@ -57,3 +57,6 @@
        rest
        (map str/split-lines)
        (map #(DiffUtils/parseUnifiedDiff %))))
+
+(defn diff-files [a b]
+  (DiffUtils/diff a b))

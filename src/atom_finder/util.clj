@@ -27,6 +27,7 @@
        sort
        (map (memfn getName))
        (filter #(str/ends-with? % ".clj"))
+       (remove #(str/starts-with? % "."))
        (map #(str/replace % #"\.clj$" ""))
        (map (partial str dir))
        (apply load)

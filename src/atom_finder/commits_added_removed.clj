@@ -44,10 +44,14 @@
     (map (partial-right select-keys [:original :revised]))
     (apply merge-with concat)))
 
-(s/defn author-name [rev-commit :- RevCommit]
+(defmulti author-name class)
+(defmethod author-name String [rev-commit] nil)
+(defmethod author-name RevCommit [rev-commit]
   (-> rev-commit .getAuthorIdent .getName))
 
-(s/defn author-email [rev-commit :- RevCommit]
+(defmulti author-email class)
+(defmethod author-email String [rev-commit] nil)
+(defmethod author-email RevCommit [rev-commit]
   (-> rev-commit .getAuthorIdent .getEmailAddress))
 
 (s/defn intersects-lines?
@@ -67,7 +71,7 @@
 (s/defn added-removed-atoms
   "Ignore parts of the files not contained in the patch"
   [srcs]
-  (let [patch-bounds (-<>> srcs :patch-str (patch-file <> (:file srcs))
+  (let [patch-bounds (-<>> (or (:patch srcs) (:patch-str srcs)) (patch-file <> (:file srcs))
                            patch-change-bounds flatten1 (map change-bound-to-ranges))]
     (when (not (empty? patch-bounds)) ;; e.g. changes in binary files
       (let [

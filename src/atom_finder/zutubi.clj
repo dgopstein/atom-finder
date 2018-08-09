@@ -9,12 +9,16 @@
     unified.UnifiedHunk unified.UnifiedHunk$LineType unified.UnifiedPatchParser]
    ))
 
-(def parser (PatchFileParser. (GitPatchParser.)))
-;(def parser (PatchFileParser. (UnifiedPatchParser.)))
+(def git-parser (PatchFileParser. (GitPatchParser.)))
+(def unified-parser (PatchFileParser. (UnifiedPatchParser.)))
 
-(defn parse-diff
-  [patch]
-  (.getPatches (.parse parser (StringReader. patch))))
+(defn parse-git-diff [patch]
+  (.getPatches (.parse git-parser (StringReader. patch))))
+
+(defn parse-unified-diff [patch]
+  (.getPatches (.parse unified-parser (StringReader. patch))))
+
+(def parse-diff parse-git-diff)
 
 (defn deleted? [line] (= UnifiedHunk$LineType/DELETED (.getType line)))
 (defn added? [line] (= UnifiedHunk$LineType/ADDED (.getType line)))

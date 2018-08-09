@@ -64,11 +64,70 @@
        (map (%-> (get "git_repo_hash")))
        distinct))
 
-;; Find all atoms in cve-patches
+(def c-files-in-dir (%->> clojure.java.io/file file-seq (filter c-file?)))
+
+(def cve-diff-path "src/cve_patches/patch_data_sharing/")
+(defn remove-cve-path-prefix [path]
+  (clojure.string/replace path (re-pattern (str ".*" cve-diff-path "[^/]*/")) ""))
+
+(defn before-after-data-cve
+  "analagous to before-after-data except doesn't need a repo"
+  [diff-file before-file after-file]
+  (let [file-name (->> after-file .getAbsolutePath remove-cve-path-prefix)
+        patch-str (slurp diff-file)
+        source-before (slurp before-file)
+        source-after (slurp after-file)]
+  (merge
+     {:file file-name
+      :patch-str patch-str
+      }
+
+     (build-srcs file-name source-before source-after))))
+
+(defn commit-files-before-after-cve
+  "analagous to commit-files-before-after except doesn't need a repo"
+  [diff-files before-files after-files]
+  (->> (map vector diff-files before-files after-files)
+       (map (partial apply before-after-data-cve))
+  ))
+
+;; Find all atoms in Franks zip of cve patches
+'((->> cve-patches
+     (drop-while #(not= (get % "cve_ids") "CVE-2012-3552")) rest
+     (map #(assoc % :patch-path (str cve-diff-path (get % "git_repo_hash") "_" (get % "git_commit_hash"))))
+     (map #(merge %
+             {:diff-files (-> % :patch-path (str "/diff") c-files-in-dir)
+              :before-files (-> % :patch-path (str "/parent") c-files-in-dir)
+              :after-files (-> % :patch-path (str "/commit") c-files-in-dir)
+             }))
+
+     (map #(map (fn [srcs] (merge % {:rev-commit (% "git_commit_hash")
+                                     :rev-str    (% "git_commit_hash")
+                                     :patch (atom-finder.zutubi/parse-unified-diff (srcs :patch-str))}
+                                  srcs))
+                  (commit-files-before-after-cve (% :diff-files) (% :before-files) (% :after-files))))
+     (mapcat (fn [files-srcs]
+               (log-err (str "cve-patches: " files-srcs) nil
+                        (for [srcs files-srcs
+                              :when (some? srcs)]
+                          (merge (added-removed-atoms-count srcs)
+                                 {:git-repo-hash (srcs "git_repo_hash")
+                                  :git-repo-url (srcs "git_repo_url")
+                                  :cve-ids (srcs "cve_ids")
+                                  }))))
+     )
+     (remove nil?)
+     (map prn)
+     dorun
+     (log-to "tmp/cve-patch-atoms-added-removed-from-patches_2018-08-08_3.edn")
+     time-mins
+     ))
+
+;; Find all atoms in cve-patches from manually gathered repos
 '((->> cve-patches
      (filter #(get cve-repos (get % "git_repo_hash"))) ; we couldn't clone some repos
      ;(drop-while #(not= (get % "cve_ids") "CVE-2013-1788")) rest
-     ;;(take 10)
+     (take 10)
      (mapcat (fn [patch-map]
             (log-err (str "cve-patches: " patch-map) nil
                      (let [repo (cve-repos (patch-map "git_repo_hash"))
@@ -85,11 +144,11 @@
      (remove nil?)
      (map prn)
      dorun
-     (log-to "tmp/cve-patch-atoms-added-removed_2018-07-27.edn")
+     ;;(log-to "tmp/cve-patch-atoms-added-removed_2018-07-27.edn")
      time-mins
      ))
 
-'((->> "tmp/cve-patch-atoms-added-removed_2018-07-27.edn"
+'((->> "tmp/cve-patch-atoms-added-removed-from-patches_2018-08-08_complete.edn"
        read-lines
        (filter :added-non-atoms)
        (map #(merge % {:n-added   (+ (:added-non-atoms %)   (sum (vals (:added-atoms %))))
@@ -98,8 +157,8 @@
        (map (fn [[common added removed]] [(merge common (:added-atoms added)) (merge common (:removed-atoms removed))]))
        transpose
        ((fn [[addeds removeds]]
-          (maps-to-csv "src/analysis/data/cve-patch-atoms_2018-07-27_added.csv" {:headers (-> addeds first keys (concat (map :name atoms)))} addeds)
-          (maps-to-csv "src/analysis/data/cve-patch-atoms_2018-07-27_removed.csv" {:headers (-> removeds first keys (concat (map :name atoms)))} removeds)
+          (maps-to-csv "src/analysis/data/cve-patch-atoms_2018-08-08_added.csv" {:headers (-> addeds first keys (concat (map :name atoms)))} addeds)
+          (maps-to-csv "src/analysis/data/cve-patch-atoms_2018-08-08_removed.csv" {:headers (-> removeds first keys (concat (map :name atoms)))} removeds)
                ))
        ))
 

@@ -14,7 +14,12 @@
    (re-find #"(.*/)?[^/]+\.([^.]+)")
    last))
 
-(def c-file? (comp #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"} file-ext))
+(defmulti c-file? class)
+(defmethod c-file? String [filename]
+  (->> filename file-ext #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"}))
+(defmethod c-file? java.io.File [file]
+  (and (.isFile file)
+       (c-file? (.getName file))))
 
 (defn list-dirs
   [path]

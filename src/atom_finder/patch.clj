@@ -26,12 +26,13 @@
 (defmulti deltas "Get deltas/hunks from a patch" class)
 (s/defmethod deltas difflib.Patch :- [difflib.Delta]
   [p] (.getDeltas p))
-(s/defmethod deltas com.zutubi.diff.git.GitUnifiedPatch :- [com.zutubi.diff.unified.UnifiedHunk]
+(s/defmethod deltas com.zutubi.diff.Patch :- [com.zutubi.diff.unified.UnifiedHunk]
   [p] (.getHunks p))
 ;; For e.g. a permissions-only change
 ;; - https://github.com/apache/subversion/commit/2eb9f779c54e948ed5edb5b9ae606fb7f87c3fb7
 (s/defmethod deltas com.zutubi.diff.git.GitTrivialPatch :- [com.zutubi.diff.unified.UnifiedHunk]
   [p] '())
+(s/defmethod deltas nil [p] '())
 
 ;(defmulti original "get the old file data" class)
 ;(s/defmethod original difflib.Delta :- [difflib.Chunk]
@@ -141,11 +142,14 @@
        set
        ))
 
-(defn patch-file
-  "select only the patch for this file"
-  [patch filename]
+(defmulti patch-file (fn [patch filename] (class patch))) ;; "select only the patch for this file"
+(defmethod patch-file String [patch filename]
   (->> patch
        zutubi/parse-diff
+       patch-file))
+
+(defmethod patch-file :default [patch filename] ;; Patch class from zutubi/difflib
+  (->> patch
        (filter #(or (= filename (.getOldFile %1)) (= filename (.getNewFile %1))))
        first))
 
