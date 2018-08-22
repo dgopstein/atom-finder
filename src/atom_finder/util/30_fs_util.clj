@@ -2,8 +2,8 @@
 
 (defmacro log-err [msg ret & x]
   `(try ~@x
-      (catch Exception e# (do (errln (str "-- exception parsing commit: \"" ~msg "\"\n")) ~ret))
-      (catch Error e#     (do (errln (str "-- error parsing commit: \""  ~msg "\"\n")) ~ret)))
+      (catch Exception e# (do (errln (str "-- exception: \"" ~msg "\"\n")) ~ret))
+      (catch Error e#     (do (errln (str "-- error: \""  ~msg "\"\n")) ~ret)))
   #_x
   )
 
@@ -14,7 +14,12 @@
    (re-find #"(.*/)?[^/]+\.([^.]+)")
    last))
 
-(def c-file? (comp #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"} file-ext))
+(defmulti c-file? class)
+(defmethod c-file? String [filename]
+  (->> filename file-ext #{"c" "cc" "cpp" "C" "c++" "h" "hh" "hpp" "h++" "H"}))
+(defmethod c-file? java.io.File [file]
+  (and (.isFile file)
+       (c-file? (.getName file))))
 
 (defn list-dirs
   [path]
