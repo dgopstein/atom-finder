@@ -58,9 +58,14 @@
 
 (def any-atom? (apply some-fn (map :classifier atoms)))
 
-(defn find-all-atoms
-  [root]
-  (map-values (fn [atom]
-                (log-err (str "finding " (:name atom) " in " (filename root)) nil
-                         ((:finder atom) root)))
-              atom-lookup))
+(s/defn find-atoms :- {s/Keyword [IASTNode]}
+  [atoms :- [Atom] root]
+  (->> atoms
+       (map (fn [atom]
+              (log-err (str "finding " (:name atom) " in " (filename root)) nil
+                       {(:name atom) ((:finder atom) root)}
+                       )))
+       (apply merge)
+       ))
+
+(defn find-all-atoms [root] (find-atoms atoms root))
