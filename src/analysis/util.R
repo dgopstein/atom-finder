@@ -72,3 +72,22 @@ atom.effect.sizes <- as.data.table(cbind.data.frame(atom = c("assignment.as.valu
                                                "repurposed.variable", "reversed.subscript", "type.conversion"),
                                       effect.size))
 
+signif.stars <- function(p.value) {
+  ifelse(p.value < 0.0001, "****",
+  ifelse(p.value < 0.001, "*** ",
+  ifelse(p.value < 0.01, "**  ",
+  ifelse(p.value < 0.05, "*   ", "    "))))
+}
+
+spot.theme <- list(
+  theme_classic(),
+  theme(axis.ticks.x=element_blank(), axis.text.x=element_text(size = 19, angle = 90, hjust = 0)),
+  theme(axis.ticks.y=element_blank(), axis.text.y=element_text(size = 19)),
+  theme(axis.line=element_blank()),
+  theme(text = element_text(size = 22)),
+  theme(legend.position = "none"),
+  theme(plot.margin = unit(c(10,10,10,10), "mm")),
+  scale_size_continuous(range = c(-0.3, 15)),
+  scale_x_discrete(position = "top"))
+
+range01 <- function(x, ...){(x - min(x, ...)) / (max(x, ...) - min(x, ...))}

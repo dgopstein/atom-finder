@@ -146,13 +146,6 @@ colnames(atoms.removed.chis) <- c('atom', 'p.value', 'X2', 'n')
 
 only.atoms.removed.rate.dt <- merge(only.atoms.removed.rate.dt, atoms.removed.chis, on='atom')
 
-signif.stars <- function(p.value) {
-  ifelse(p.value < 0.0001, "****",
-  ifelse(p.value < 0.001, "*** ",
-  ifelse(p.value < 0.01, "**  ",
-  ifelse(p.value < 0.05, "*   ", "    "))))
-}
-
 par(font.axis = 2)
 par(font.lab = 2)
 
