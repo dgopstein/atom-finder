@@ -11,6 +11,7 @@
             [clj-jgit.internal :as giti]
             [clojure.pprint :refer :all]
             [clj-cdt.clj-cdt :refer :all]
+            [clj-cdt.expr-operator :refer :all]
             ))
 
 ; Have lines that contain atoms been changed in a meaningful way?
