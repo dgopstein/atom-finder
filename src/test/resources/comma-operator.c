@@ -27,6 +27,17 @@ int max_int(int a, int b) {
 
 void main() {
    int V1 = max_int(1,2);
-   
+
    printf("%d\n", V1);
+}
+
+void false_positives() {
+  // templates are misparsed as less-than/greater-than
+  // https://github.com/freebsd/freebsd/blob/c2b6ea8fa56ce6aba773d820fbf64a4d3efac9f5/sys/net80211/ieee80211_output.c#L2262
+  f<T>(a, b) // <false>
+
+  // this doesn't get caught as an atom if the macro is defined
+  // #define M1(x) printf x
+  // https://github.com/freebsd/freebsd/blob/c2b6ea8fa56ce6aba773d820fbf64a4d3efac9f5/sys/net80211/ieee80211_output.c#L2262
+  M1((a, b)); // <false>
 }

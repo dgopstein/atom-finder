@@ -26,7 +26,7 @@
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"
                    ;"resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
-                   "resources/clj-cdt-0.0.1.jar"
+                   "resources/clj-cdt-0.0.2.jar"
                    "src/test/resources"
                    "src/conf"
                    ]
@@ -52,7 +52,8 @@
   :main atom-finder.core
   ;:aot [atom-finder.core]
   :plugins [[lein-codox "0.10.3"]
-            [lein-localrepo "0.5.4"]] ; needed until clj-cdt is published on clojars
+            ;[lein-localrepo "0.5.4"] ; needed until clj-cdt is published on clojars
+            ]
   ;:codox {:namespaces [#"^atom-finder\.(?!instrumentation|results-sandbox)"
   ;                     #"^atom-finder\.tree-diff\.(?!apted|change-distiller)"]}
 )
