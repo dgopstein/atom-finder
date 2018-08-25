@@ -10,8 +10,8 @@ source("util.R")
 
 stdize <- function(x, ...) {(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
 
-atom.counts <- data.table(read.csv("data/atom_counts.csv"))
-colnames(atom.counts) <- sapply(colnames(atom.counts), function(s) substr(s,3,99))
+atom.counts <- data.table(read.csv("data/atom-counts_2018-08-23_fixed_comma-operator.csv"))
+#colnames(atom.counts) <- sapply(colnames(atom.counts), function(s) substr(s,3,99))
 proj.order <- c("linux", "freebsd", "gecko-dev", "webkit",
   "gcc", "clang", "mongo", "mysql-server", "subversion", "git",
   "emacs", "vim", "httpd", "nginx")
@@ -95,16 +95,17 @@ ggsave("img/atom_rate_per_project_clustered.pdf", atom.rate.per.project.clustere
 library(dplyr)
 all.atom.counts <- atom.counts[, -c('project','domain')][, lapply(.SD, sum)]
 all.atom.rates.wide <- all.atom.counts[, -c('all.nodes', 'non.atoms')] / all.atom.counts$all.nodes
-all.atom.rates <- data.frame(atom = unlist(atom.name.conversion[names(all.atom.rates.wide)]), rate = t(all.atom.rates.wide))
+all.atom.rates <- data.table(data.frame(atom = unlist(atom.name.conversion[names(all.atom.rates.wide)]), rate = t(all.atom.rates.wide)))
 
 atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, rate), y = rate)) +
+  theme_classic() +
   geom_bar(stat="identity", fill=colors2[1]) +
-  geom_text(aes(y=0.0019, label=signif(rate, digits=2),
+  geom_text(aes(y=0.0019, label=formatC(signif(rate,digits=2), digits=2, flag="#"),
                 color=atom %in% c('Omitted Curly Brace','Operator Precedence')), angle=0, hjust=0) +
   theme(#axis.text.x=element_text(angle=90, hjust=1, vjust=.4), axis.text.y = element_blank(),
         axis.text.x=element_blank(),
         axis.ticks = element_blank(), axis.line = element_blank()) +
-  scale_y_continuous(limits = c(0.0,0.006)) +
+  scale_y_continuous(limits = c(0.0,0.0065)) +
   guides(color=FALSE) +
   coord_flip() +
   scale_color_manual(values=c('black', 'white')) +
@@ -112,6 +113,8 @@ atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, rate), y = 
 atom.occurrence.rate
 
 ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-140), height=width*0.7, units = "mm")
+
+?signif
 
 # overall atom rate for paper
 all.atom.ast.rate <- all.atom.counts[, (all.nodes - non.atoms) / all.nodes]
@@ -126,11 +129,12 @@ atom.effect <- data.table(merge(all.atom.rates, atom.effect.sizes[, .(atom = con
 confusingness.vs.prevalence.correlation <- with(atom.effect, cor(rate, effect.size)) # correlation: -0.45
 
 atom.effect$offset.x <- atom.effect$offset.y <- 0
-atom.effect[atom=="Preprocessor in Statement", c("offset.x", "offset.y") := .(0, 1)]
-atom.effect[atom=="Logic as Control Flow", c("offset.x", "offset.y") := .(0, -1)]
-atom.effect[atom=="Assignment as Value", c("offset.x", "offset.y") := .(0, -0)]
-atom.effect[atom=="Operator Precedence", c("offset.x", "offset.y") := .(0, 2)]
-atom.effect[atom=="Omitted Curly Brace", c("offset.x", "offset.y") := .(0, -4)]
+atom.effect[atom=="Preprocessor in Statement", c("offset.x", "offset.y") := .(0, .15)]
+atom.effect[atom=="Conditional Operator", c("offset.x", "offset.y") := .(-1, -1.5)]
+atom.effect[atom=="Comma Operator", c("offset.x", "offset.y") := .(-.5, .5)]
+atom.effect[atom=="Repurposed Variable", c("offset.x", "offset.y") := .(0, -.5)]
+atom.effect[atom=="Type Conversion", c("offset.x", "offset.y") := .(-3.5, -.17)]
+
 
 
 confusingness.vs.prevalence <-
@@ -140,7 +144,7 @@ confusingness.vs.prevalence <-
   geom_smooth(method="lm", se=FALSE, fullrange=TRUE, color=colors2dark[1], size=1) + #, aes(color="Exp Model"), formula= (y ~ x^2+1)) +
   scale_x_continuous(limits = c(0.2, 0.75)) +
   scale_y_log10(limits = c(5*10^-8, 9*10^-3)) +
-  geom_text(aes(label=atom, x=.009+effect.size+.003*offset.x, y=rate+0.0001*offset.y), hjust=0, vjust=.6, angle=-10, size=3) +
+  geom_text(aes(label=atom, x=.009+effect.size+.003*offset.x, y=rate+0.0001*offset.y), hjust=0, vjust=.6, angle=-15, size=3) +
   theme(axis.text.x=element_text(angle=90, hjust=1)) +
   annotate("text", x=0.35, y=3*10^-6, label=paste0("r = ", round(confusingness.vs.prevalence.correlation, 2))) +
   #ggtitle("Confusingness vs Prevalence", subtitle="Do less confusing patterns occur more often?") +
@@ -193,7 +197,7 @@ all.atom.proj.rates.plot <- ggplot(all.atom.proj.rates, aes(x = reorder(project,
                 color='black', angle=0, hjust=0, size=2.5) +
   theme(axis.text.x=element_blank(), axis.ticks = element_blank(), axis.line = element_blank(), axis.title.x = element_blank()) +
   theme(axis.text.y=element_text(margin=margin(r=-7,"pt"), vjust=0.4)) +
-  theme(legend.position = c(0.87, 0.33), legend.key.size = unit(0.58,"line")) +
+  theme(legend.position = c(0.87, 0.36), legend.key.size = unit(0.58,"line")) +
   guides(color=FALSE) +
   coord_flip() +
   labs(x="Project", fill="Domain")
