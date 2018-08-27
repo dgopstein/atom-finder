@@ -5,17 +5,13 @@
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
    [atom-finder.atom-patch :refer :all]
+   [atom-finder.questions.question-util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    [swiss.arrows :refer :all]
    [schema.core :as s]
    )
   )
-
-(defn atom-finder-relative-path
-  "Remove the ~/opt/src/atom-finder/ from the pathname"
-  [path]
-  (string/replace-first path (re-pattern (str atom-finder-corpus-path "/?")) ""))
 
 (defn opname-or-typename
   "If the node is an expression, print out which kind, otherwise print out its type"
