@@ -7,6 +7,7 @@
    [atom-finder.constants :refer :all]
    [atom-finder.atom-patch :refer :all]
    [atom-finder.classifier :refer :all]
+   [atom-finder.questions.question-util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.set :as set]
    [schema.core :as s]
@@ -75,8 +76,8 @@
        ))
 
 (defn main-atom-counts []
-  (let [edn-file "tmp/atom-counts_2018-08-23_fixed-comma-operator.edn"
-        csv-file "src/analysis/data/atom-counts_2018-08-23_fixed_comma-operator.csv"]
-    ;(count-atoms-in-files edn-file)
+  (let [edn-file "tmp/atom-counts_2018-08-27_filter-better-extensions.edn"
+        csv-file "src/analysis/data/atom-counts_2018-08-27_filter-better-extensions.csv"]
+    (count-atoms-in-files edn-file)
     (summarize-atom-counts-by-project edn-file csv-file)
     ))

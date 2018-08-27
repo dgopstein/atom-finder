@@ -32,3 +32,5 @@
   [root]
   (and (-> root flatten-tree count (> 5))
        (> 0.1 (problem-rate root))))
+
+(defn pmap-dir-trees [f dirname] (pmap-dir-files (comp f parse-file) dirname))
