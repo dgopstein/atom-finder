@@ -273,3 +273,5 @@
                          IASTBinaryExpression/op_logicalOr
                          IASTBinaryExpression/op_notequals
                          IASTUnaryExpression/op_not})
+
+(defn pmap-dir-trees [f dirname] (pmap-dir-files (comp f parse-file) dirname))

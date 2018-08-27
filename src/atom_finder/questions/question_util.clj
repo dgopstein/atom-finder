@@ -2,6 +2,7 @@
   (:require
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
+   [clj-cdt.clj-cdt :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    [schema.core :as s]

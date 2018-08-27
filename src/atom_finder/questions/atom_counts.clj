@@ -22,26 +22,22 @@
   [root]
   (map-values count (find-all-atoms-non-atoms root)))
 
-(defn count-atoms-in-linux
-  []
-(->> "~/opt/src/atom-finder"
-     ;(pap (constantly (now)))
-      expand-home
-      (pmap-dir-trees
-       (fn [root]
-         {:file (str/replace-first (.getFilePath root) #".*/atom-finder/" "")
-          :atom-counts (count-atoms-in-tree root)}))
-      (map prn)
-      ;(take 10)
-      dorun
-      (log-to "tmp/atom-counts_2017-11-12_01.edn")
-      time-mins
-      )
-  )
+(defn count-atoms-in-files [filename]
+  (->> "~/opt/src/atom-finder"
+       ;(pap (constantly (now)))
+       expand-home
+       (pmap-dir-trees
+        (fn [root]
+          {:file (str/replace-first (.getFilePath root) #".*/atom-finder/" "")
+           :atom-counts (count-atoms-in-tree root)}))
+       (map prn)
+       dorun
+       (log-to filename)
+       time-mins
+       ))
 
-(defn summarize-atom-counts
-  []
-  (->> "tmp/atom-counts_2017-11-12_01.edn"
+(defn summarize-atom-counts-totals [filename]
+  (->> filename
      read-lines
      (map :atom-counts)
      (reduce (partial merge-with +))
@@ -49,12 +45,38 @@
      time-mins)
   )
 
+(defn summarize-atom-counts-by-project [edn-file csv-file]
+  (->> edn-file
+     read-lines
+     (remove nil?)
+     (map #(assoc (:atom-counts %1) :project (-> %1 :file (str/split #"/") first)))
+     (group-dissoc :project)
+     (map-values (partial reduce (partial merge-with +)))
+     (map (fn [[proj counts]] (assoc counts :project proj)))
+     (sort-by (comp - :all-nodes))                        ;; order rows
+     ((fn [h] (maps-to-csv csv-file                       ;; order cols
+               {:headers (->> h first (remove (comp #{:project} first))
+                              (sort-by (comp - second))
+                              (map first) (cons :project))}
+               h)))
+     time-mins)
+  )
+
 ;; Generate a full CSV of the data, useful for by-module or by-directory analysis
 ;; See src/analysis/directory-counts.R
-'((->> "atom-counts_2017-10-25_1.edn"
-     read-data
-     rest
-     (remove nil?)
-     (map #(assoc (:atom-counts %1) :file (:file %1)))
-     (maps-to-csv "src/analysis/data/atom-counts_2017-10-25_1.csv")
-     ))
+(defn atom-counts-to-csv [edn-file csv-file]
+  (->> edn-file
+       read-lines
+       ;rest
+       (remove nil?)
+       (map #(assoc (:atom-counts %1) :file (:file %1)))
+       (maps-to-csv csv-file)
+       pprint
+       ))
+
+(defn main-atom-counts []
+  (let [edn-file "tmp/atom-counts_2018-08-23_fixed-comma-operator.edn"
+        csv-file "src/analysis/data/atom-counts_2018-08-23_fixed_comma-operator.csv"]
+    ;(count-atoms-in-files edn-file)
+    (summarize-atom-counts-by-project edn-file csv-file)
+    ))

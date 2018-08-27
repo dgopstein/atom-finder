@@ -148,9 +148,15 @@
        zutubi/parse-diff
        patch-file))
 
-(defmethod patch-file :default [patch filename] ;; Patch class from zutubi/difflib
+(defmethod patch-file com.zutubi.diff.Patch [patch filename]
+  (when (or (= filename (.getOldFile patch))
+            (= filename (.getNewFile patch)))
+    patch))
+
+(s/defmethod patch-file clojure.lang.Seqable
+  [patch :- [com.zutubi.diff.Patch] filename]
   (->> patch
-       (filter #(or (= filename (.getOldFile %1)) (= filename (.getNewFile %1))))
+       (filter #(patch-file % filename))
        first))
 
 ;===============================================
