@@ -2,15 +2,14 @@
 
 (ns atom-finder.questions.count-parse-failures
   (:require
+   [clj-cdt.clj-cdt :refer :all]
    [atom-finder.util :refer :all]
    [atom-finder.constants :refer :all]
+   [atom-finder.questions.question-util :refer :all]
    [clojure.pprint :refer [pprint]]
+   [clojure.string :as str]
    [schema.core :as s]
    [swiss.arrows :refer :all]
-   [clojure.string :as str]
-   )
-  (:import
-   [org.eclipse.cdt.core.dom.ast IASTNode]
    )
   )
 
@@ -150,3 +149,41 @@
          prn) ;; => 0.0057953335
     )
   )
+
+
+;; csv of all files and what ratio of problem nodes they contain
+;; used to identify a threshold for which files are "parsable" and
+;; which aren't. Useful for excluding things like ChangeLogs, etc.
+'((->> "~/opt/src/atom-finder/"
+       expand-home
+       files-in-dir
+       ;(take 100)
+       (drop-while #(not= "/home/dgopstein/opt/src/atom-finder/gcc/gcc/testsuite/gcc.c-torture/compile/limits-structnest.c" (.getPath %)))
+       (map (partial pap (memfn getPath)))
+       (map (fn [file]
+              (with-timeout 10
+              (log-err "couldn't parse" nil
+              (let [h (->> file
+                   parse-file
+                   flatten-tree
+                   (group-by problem?)
+                   (map-values count))
+
+                    total-nodes (+ (get h true 0) (get h false 0))
+                    problem-rate (float (/ (get h true 0)
+                                         total-nodes))
+                    file-path (str/replace (.getPath file) (re-pattern (expand-home "~/opt/src/atom-finder/")) "")
+                    file-name (.getName file)
+                    proj (-> file-path (str/split #"/") first)
+                    ]
+               {:problem-rate problem-rate
+                :total-nodes total-nodes
+                :file-name file-name
+                :file-ext (file-ext file-name)
+                :file-path file-path
+                :proj proj
+               })))))
+       (remove nil?)
+       (maps-to-csv "tmp/parse_problem_rate_2.csv")
+       ;(map prn)
+       ))
