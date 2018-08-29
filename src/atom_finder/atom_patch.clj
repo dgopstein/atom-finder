@@ -68,13 +68,17 @@
    :source-after     source-after
    }))
 
-(def empty-srcs
+(s/defn empty-srcs
+  [file-name :- String source-before :- String source-after :- String]
   {:ast-before       nil
    :ast-after        nil
    :atoms-before     (map-values (constantly nil) atom-lookup)
    :atoms-after      (map-values (constantly nil) atom-lookup)
    :non-atoms-before nil
-   :non-atoms-after  nil})
+   :non-atoms-after  nil
+   :source-before    source-before
+   :source-after     source-after
+   })
 
 (s/defn before-after-data
   "Return the ast of changed files before/after a commit"
@@ -89,8 +93,8 @@
       :patch-str  patch-str
       }
 
-     ;(if (not (c-file? file-name)) empty-srcs
-     (build-srcs file-name source-before source-after))))
+     ((if (c-file? file-name) build-srcs empty-srcs)
+        file-name source-before source-after))))
 
 (defn atom-specific-srcs
   [srcs atom]
