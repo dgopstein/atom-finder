@@ -153,7 +153,7 @@
             (= filename (.getNewFile patch)))
     patch))
 
-(s/defmethod patch-file clojure.lang.Seqable
+(s/defmethod patch-file java.util.List
   [patch :- [com.zutubi.diff.Patch] filename]
   (->> patch
        (filter #(patch-file % filename))

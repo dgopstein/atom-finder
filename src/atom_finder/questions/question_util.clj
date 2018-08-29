@@ -5,6 +5,8 @@
    [clj-cdt.clj-cdt :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
+   [clojure.data.csv :as csv]
+   [clojure.java.io :as io]
    [schema.core :as s]
    [swiss.arrows :refer :all]
    )
@@ -34,3 +36,12 @@
        (> 0.1 (problem-rate root))))
 
 (defn pmap-dir-trees [f dirname] (pmap-dir-files (comp f parse-file) dirname))
+
+(def c-files-in-dir (%->> clojure.java.io/file file-seq (filter c-file?)))
+
+(defn csv-to-maps [filename]
+  (with-open [reader (io/reader filename)]
+    (let [[header & csv-data] (csv/read-csv reader)]
+      (->> csv-data
+           (map (%->> (map vector header) (into {})))
+           doall))))
