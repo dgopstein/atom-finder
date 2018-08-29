@@ -11,6 +11,7 @@
    [atom-finder.commits-added-removed :refer :all]
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
+   [atom-finder.questions.edit-lines :refer :all]
    [atom-finder.questions.bug-densities :refer :all]
    [atom-finder.questions.question-util :refer :all]
    [clojure.pprint :refer [pprint]]
@@ -75,15 +76,15 @@
   (->>
    (commits-with
     gcc-repo
+    ;;1
     (fn [rev-commit]
       (doseq [commit (:srcs rev-commit)
-              :when (or (->> commit :ast-before likely-c-file)
-                        (->> commit :ast-after likely-c-file))]
+              :when (->> commit :ast-before)]
         (prn
-         ;(log-err (str "atoms-added-removed-in-bugs " (:rev-str commit)) {} ;todo rev-str isn't working here?
+         (log-err (str "atoms-added-removed-in-bugs " (:rev-str commit)) {} ;todo rev-str isn't working here?
                   (merge (with-timeout 400 (added-removed-atoms-count commit))
                          {:n-bugs (->> commit :rev-commit bugzilla-ids count)})))))
-   ;)
+   )
    (log-to edn-file)
    time-mins
     ))
