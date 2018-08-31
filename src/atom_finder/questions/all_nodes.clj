@@ -6,6 +6,9 @@
    [atom-finder.util :refer :all]
    [atom-finder.atom-patch :refer :all]
    [atom-finder.questions.question-util :refer :all]
+   [clj-cdt.clj-cdt :refer :all]
+   [clj-cdt.expr-operator :refer :all]
+   [clj-cdt.writer-util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    [swiss.arrows :refer :all]
@@ -19,8 +22,10 @@
   (-> node expr-operator :name (or (write-node-type node))))
 
 ;; List all node counts file-by-file
-'((prn (now)))
-'((->> atom-finder-corpus-path
+(defn count-all-nodes-in-project
+  [edn-file]
+  (prn (now))
+  (->> atom-finder-corpus-path
        (pmap-dir-c-files
         (fn [file]
           (assoc
@@ -28,21 +33,9 @@
            :file (atom-finder-relative-path file))))
        (map prn)
        dorun
-       (log-to "tmp/all-node-counts_2018-01-22_opname.edn")
+       (log-to edn-file)
        time-mins
        ))
-
-;; Total node counts in entire corpus
-'((->>
-   "tmp/all-node-counts_2018-01-22_opname.edn"
-   read-lines
-   (map (partial-right dissoc :file))
-   (apply merge-with +)
-   (sort-by (comp - last))
-   (map (partial zipmap [:node-type :count]))
-   (maps-to-csv "tmp/all-node-counts_2018-01-22_opname.csv")
-   time-mins
-   ))
 
 (defn c-files-no-cpp-or-h
   "Search directory structure for C-only files"
@@ -51,22 +44,22 @@
        files-in-dir
        (filter #(->> %1 .getName file-ext #{"c"} (and (.isFile %1))))))
 
-;; All node counts line-by-line - creates a big file
-'((->>
-   "~/opt/src/atom-finder/gecko-dev"
-   expand-home
-   c-files-no-cpp-or-h
-   (map parse-file)
-   (mapcat (%->> find-all-atoms-non-atoms ((flip dissoc) :all-nodes) (mapcat (fn [[k vs]] (map #(vector % k) vs)))))
-   (map (fn [[node atom-type]] (try
-                                 {:file (filename node)
-                                  :line (start-line node)
-                                  :ast (-> node opname-or-typename name)
-                                  :atom (-> atom-type name)}
-          (catch Exception e nil))
-          ))
-   (remove nil?)
-   (map (partial-right update-in [:file] #(.replaceAll % ".*gecko-dev/" "gecko-dev/")))
-   (maps-to-csv "gecko-node-lines.csv")
+(defn summarize-all-nodes [edn-file csv-file]
+  (->>
+   edn-file
+   read-lines
+   (map (partial-right dissoc :file))
+   (apply merge-with +)
+   (sort-by (comp - last))
+   (map (partial zipmap [:node-type :count]))
+   (maps-to-csv csv-file)
    time-mins
    ))
+
+(defn main-all-nodes
+  []
+  (let [edn-file "tmp/all-node-counts_2018-08-31_for-esem.edn"
+        csv-file "src/analysis/data/all-node-counts_2018-08-31_for-esem.csv"]
+    (count-all-nodes-in-project edn-file)
+    (summarize-all-nodes edn-file csv-file)
+  ))
