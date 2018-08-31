@@ -34,7 +34,7 @@
 (defn atoms-in-dir
   [dirname atoms]
   (->> dirname
-       (pmap-dir-files #(atoms-in-file atoms %))))
+       (pmap-dir-c-files #(atoms-in-file atoms %))))
 
 
 (defn print-atoms-in-dir

@@ -61,7 +61,7 @@
     (str/replace-first s home-dir "")
     s))
 
-(s/defn pmap-dir-files
+(s/defn pmap-dir-c-files
   "Apply a function to the filename of every c file in a directory"
   [f dirname]
   (pmap

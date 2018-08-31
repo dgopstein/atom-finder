@@ -21,7 +21,7 @@
 ;; List all node counts file-by-file
 '((prn (now)))
 '((->> atom-finder-corpus-path
-       (pmap-dir-files
+       (pmap-dir-c-files
         (fn [file]
           (assoc
            (->> file parse-file potential-atom-nodes (map opname-or-typename) frequencies)
