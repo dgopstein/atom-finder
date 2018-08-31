@@ -10,7 +10,7 @@ source("util.R")
 
 stdize <- function(x, ...) {(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
 
-atom.counts <- data.table(read.csv("data/atom-counts_2018-08-23_fixed_comma-operator.csv"))
+atom.counts <- data.table(read.csv("data/atom-counts_2018-08-27_filter-better-extensions.csv"))
 #colnames(atom.counts) <- sapply(colnames(atom.counts), function(s) substr(s,3,99))
 proj.order <- c("linux", "freebsd", "gecko-dev", "webkit",
   "gcc", "clang", "mongo", "mysql-server", "subversion", "git",
@@ -100,12 +100,12 @@ all.atom.rates <- data.table(data.frame(atom = unlist(atom.name.conversion[names
 atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, rate), y = rate)) +
   theme_classic() +
   geom_bar(stat="identity", fill=colors2[1]) +
-  geom_text(aes(y=0.0019, label=formatC(signif(rate,digits=2), digits=2, flag="#"),
+  geom_text(aes(y=0.0010, label=formatC(signif(rate,digits=2), digits=2, flag="#"),
                 color=atom %in% c('Omitted Curly Brace','Operator Precedence')), angle=0, hjust=0) +
   theme(#axis.text.x=element_text(angle=90, hjust=1, vjust=.4), axis.text.y = element_blank(),
         axis.text.x=element_blank(),
         axis.ticks = element_blank(), axis.line = element_blank()) +
-  scale_y_continuous(limits = c(0.0,0.0065)) +
+  scale_y_continuous(limits = c(0.0,0.0073)) +
   guides(color=FALSE) +
   coord_flip() +
   scale_color_manual(values=c('black', 'white')) +
@@ -206,7 +206,7 @@ all.atom.proj.rates.plot
 ggsave("img/all_atom_proj_rates.pdf", all.atom.proj.rates.plot, width=(width<-130), height=width*.3, units = "mm")
 
 ########################################
-#   Plot of Atom Effect Size
+#   Plot of Atom Effect Size (for slide deck)
 ########################################
 atom.effect
 ggplot(atom.effect, aes(reorder(atom, effect.size), effect.size)) +
