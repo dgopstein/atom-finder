@@ -126,8 +126,8 @@
 
 
 (defn main-atom-counts []
-  (let [edn-file "tmp/cve-patch-atoms-added-removed-from-patches_2018-08-29_fixed-omitted-curly-brace.edn"
-        csv-prefix "src/analysis/data/cve-patch-atoms_2018-08-29_fixed-omitted-curly-brace"]
+  (let [edn-file "tmp/cve-patch-atoms-added-removed-from-patches_2018-08-29_fixed-comma-operator.edn"
+        csv-prefix "src/analysis/data/cve-patch-atoms_2018-08-29_fixed-comma-operator"]
     (prn (str (now)))
     (extract-cve-diffs)
     (println "Searching for atoms in security patches...")
