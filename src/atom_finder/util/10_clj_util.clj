@@ -167,6 +167,26 @@
 
 (defn now [] (java.time.LocalDateTime/now))
 
+(defmacro time-ns-data
+  "Return time spent in nanoseconds"
+  [expr]
+  `(let [start# (. System (nanoTime))
+         ret#   ~expr
+         end#   (. System (nanoTime))
+         diff#  (- end# start#)]
+     diff#))
+
+(def ns-per-sec
+  (* 1000 1000000.0))
+
+(def ns-per-min
+  (* 60 ns-in-sec))
+
+(defmacro time-secs-data
+  "Return time spent in nanoseconds"
+  [expr]
+  `(/ (time-ns-data ~expr) ns-per-min))
+
 ; https://github.com/clojure/clojure/blob/clojure-1.9.0-alpha14/src/clj/clojure/core.clj#L3836
 (defmacro time-mins
   "Evaluates expr and prints the time it took.  Returns the value of expr."
@@ -175,7 +195,7 @@
          ret#   ~expr
          end#   (. System (nanoTime))
          diff#  (- end# start#)
-         mins-raw#   (/ (double diff#) (* 60 1000 1000000.0))
+         mins-raw#   (/ (double diff#) ns-per-min)
          mins#  (int mins-raw#)
          secs#  (* 60 (- mins-raw# mins#))]
      (prn (format "Elapse time: %d:%05.2f mins" mins# secs#))
