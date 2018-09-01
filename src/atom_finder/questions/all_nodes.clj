@@ -56,6 +56,18 @@
    time-mins
    ))
 
+;; some files are much better parsed as C,
+;; but unfortunately our classifiers are not bilingual
+'((-<>> "mysql-server/cmd-line-utils/libedit/el.c"
+     (str atom-finder-corpus-path "/")
+     slurp
+     (parse-source <> {:language :c})
+     (flatten-tree)
+     (group-by problem?)
+     (map-values count)
+     pprint
+     ))
+
 (defn main-all-nodes
   []
   (let [edn-file "tmp/all-node-counts_2018-08-31_for-esem.edn"
