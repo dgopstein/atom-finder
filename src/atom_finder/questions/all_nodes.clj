@@ -57,18 +57,21 @@
    ))
 
 ;; Compare pmap to upmap using atom-finding
-(->> [pmap (partial cp/upmap :builtin)]
+'((require '[com.climate.claypoole :as cp]))
+'((cp/with-shutdown! [pool (cp/threadpool (+ 2 (available-processors)))]
+  (->> [pmap (partial cp/upmap :builtin) (partial cp/upmap pool)]
      (map #(vector % (-<>> "~/opt/src/atom-finder"
                            expand-home
                            c-files-in-dir
-                           (take 10000)
+                           (take 500)
                            (% (fn [filename]
                                 (->> filename
                                      parse-file
                                      find-all-atoms-non-atoms)))
                            dorun
                           time-secs-data)))
-     (map prn))
+     (map prn)
+     dorun)))
 
 ;; Compare pmap to upmap using Thread/sleep jobs
 '((->> [pmap (partial cp/upmap :builtin)]

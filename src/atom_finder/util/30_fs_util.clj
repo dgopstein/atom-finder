@@ -61,10 +61,11 @@
     (str/replace-first s home-dir "")
     s))
 
+(require '[com.climate.claypoole :as cp])
 (s/defn pmap-dir-c-files
   "Apply a function to the filename of every c file in a directory"
   [f dirname]
-  (pmap
+  (cp/upmap :builtin
    (fn [file]
      (let [filename (.getPath file)]
        (log-err (format "pmap-dir-file: \"%s\"" filename) nil
