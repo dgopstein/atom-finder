@@ -56,6 +56,31 @@
    time-mins
    ))
 
+;; Compare pmap to upmap using atom-finding
+(->> [pmap (partial cp/upmap :builtin)]
+     (map #(vector % (-<>> "~/opt/src/atom-finder"
+                           expand-home
+                           c-files-in-dir
+                           (take 10000)
+                           (% (fn [filename]
+                                (->> filename
+                                     parse-file
+                                     find-all-atoms-non-atoms)))
+                           dorun
+                          time-secs-data)))
+     (map prn))
+
+;; Compare pmap to upmap using Thread/sleep jobs
+'((->> [pmap (partial cp/upmap :builtin)]
+     (map #(vector % (-<>> (range 300)
+                           (% (fn [i]
+                                (if (= 0 (mod i 23))
+                                  (Thread/sleep 5000))
+                                ))
+                           dorun
+                          time-secs-data)))
+     (map prn)))
+
 ;; some files are much better parsed as C,
 ;; but unfortunately our classifiers are not bilingual
 '((-<>> "mysql-server/cmd-line-utils/libedit/el.c"
