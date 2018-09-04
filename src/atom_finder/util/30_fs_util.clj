@@ -16,7 +16,11 @@
 
 (defmulti c-file? class)
 (defmethod c-file? String [filename]
-  (->> filename file-ext #{"c" "cc" "cpp" "cxx" "C" "c++" "h" "hh" "hpp" "h++" "H" "ipp"}))
+  ;; All extensions that are
+  ;; * Known to be C/C++ code - e.g. .c++/.h++, and not .vert/.frag
+  ;; * Are common - having more than 100k nodes in this corpus
+  ;; * Are parsable - having an average problem rate of <0.1
+  (->> filename file-ext #{"c" "cc" "cpp" "cxx" "c++" "C" "h" "hh" "hpp" "h++" "H" "ipp"}))
 (defmethod c-file? java.io.File [file]
   (and (.isFile file)
        (c-file? (.getName file))))
