@@ -221,3 +221,48 @@ ggplot(atom.effect, aes(reorder(atom, effect.size), effect.size)) +
   labs(x = 'Atom of Confusion', y = 'Effect Size (Confusingness)') +
   coord_flip()
 
+########################################
+#   Compare atom rates with regular node rates
+########################################
+all.node.counts <- data.table(read.csv('data/all-node-counts_2018-08-31_for-esem.csv'))
+all.node.total <- all.node.counts[, sum(count)]
+all.node.counts[, rate := count / all.node.total]
+print(all.node.counts, nrows=200)
+
+selected.node.counts <- all.node.counts[node.type %in% c('<IfStatement>', ':not', ':multiply', ':divide', ':multiplyAssign', ':divideAssign', ':throw')]
+
+node.occurrence.rate <- ggplot(selected.node.counts, aes(x = reorder(node.type, rate), y = rate)) +
+  theme_classic() +
+  geom_bar(stat="identity", fill=colors2[1]) +
+  geom_text(aes(y=0.0010, label=formatC(signif(rate,digits=2), digits=2, flag="#"),
+                color=node.type %in% c('Omitted Curly Brace','Operator Precedence')), angle=0, hjust=0) +
+  theme(#axis.text.x=element_text(angle=90, hjust=1, vjust=.4), axis.text.y = element_blank(),
+    axis.text.x=element_blank(),
+    axis.ticks = element_blank(), axis.line = element_blank()) +
+  scale_y_continuous(limits = c(0.0,0.013)) +
+  guides(color=FALSE) +
+  coord_flip() +
+  scale_color_manual(values=c('black', 'white')) +
+  labs(x="Node", y="Occurrence Rate")
+node.occurrence.rate
+
+ggsave("img/node_occurrence_rate.pdf", node.occurrence.rate, width=(width<-140), height=width*0.7, units = "mm")
+
+atom.node.rates <- rbind(selected.node.counts[, .(name = node.type, rate, type="node")],
+                         all.atom.rates[, .(name = atom, rate, type="atom")])
+
+atom.node.occurrence.rate <- ggplot(atom.node.rates, aes(x = reorder(name, rate), y = rate)) +
+  theme_classic() +
+  geom_bar(stat="identity", aes(fill=colors2[as.integer(as.factor(type))])) +
+  geom_text(aes(y=0.0010, label=formatC(signif(rate,digits=2), digits=2, flag="#"),
+                color=rate>0.001), angle=0, hjust=0) +
+  theme(#axis.text.x=element_text(angle=90, hjust=1, vjust=.4), axis.text.y = element_blank(),
+    axis.text.x=element_blank(),
+    axis.ticks = element_blank(), axis.line = element_blank()) +
+  scale_y_continuous(limits = c(0.0,0.013)) +
+  guides(color=FALSE, fill=FALSE) +
+  coord_flip() +
+  scale_color_manual(values=c('black', 'white')) +
+  labs(x="Node", y="Occurrence Rate")
+atom.node.occurrence.rate
+as.integer(factor(atom.node.rates$type))
