@@ -12,6 +12,7 @@
                  [org.slf4j/slf4j-nop "1.7.13"] ; suppress version-mismatch warning from jgit https://github.com/sbt/sbt-git/pull/105/files
                  [prismatic/schema "1.1.3"]
                  [com.grammarly/omniconf "0.2.5"] ;https://github.com/grammarly/omniconf
+                 [com.climate/claypoole "1.1.4"]
                  [org.clojure/data.csv "0.1.3"]
                  [com.googlecode.java-diff-utils/diffutils "1.3.0"]
                  [com.google.guava/guava "23.0"]

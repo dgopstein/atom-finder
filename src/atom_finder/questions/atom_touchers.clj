@@ -87,7 +87,7 @@
 
 '((->>
  (atom-finder-repos)
- (mapcat (fn [repo] (pmap-dir-files (partial atom-touchers repo) (repo-root-dir repo))))
+ (mapcat (fn [repo] (pmap-dir-c-files (partial atom-touchers repo) (repo-root-dir repo))))
  (map (partial map-keys relativize-filename))
  (map prn)
  dorun

@@ -35,7 +35,7 @@
   (and (-> root flatten-tree count (> 5))
        (> 0.1 (problem-rate root))))
 
-(defn pmap-dir-trees [f dirname] (pmap-dir-files (comp f parse-file) dirname))
+(defn pmap-dir-trees [f dirname] (pmap-dir-c-files (comp f parse-file) dirname))
 
 (def c-files-in-dir (%->> clojure.java.io/file file-seq (filter c-file?)))
 

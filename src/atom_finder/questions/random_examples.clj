@@ -7,6 +7,8 @@
    [atom-finder.constants :refer :all]
    [atom-finder.atom-patch :refer :all]
    [atom-finder.classifier :refer :all]
+   [clj-cdt.clj-cdt :refer :all]
+   [clj-cdt.writer-util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.set :as set]
    [schema.core :as s]
@@ -19,41 +21,40 @@
    )
   )
 
-'((->>
- "~/opt/src/atom-finder"
- expand-home
- c-files
- shuffle
- (def random-c-files)
- time-mins
- ))
+'((def random-c-files
+    (->>
+     "~/opt/src/atom-finder"
+     expand-home
+     c-files
+     shuffle
+     time-mins
+     )))
 
 ; 2:20 for 100k
 (quote
-(->>
- ;rare-atom-files (map (partial str "~/opt/src/atom-finder/"))
- random-c-files
- (take 4)
- (pap (constantly (now)))
- (pmapcat
-  (fn [filename]
-    (with-timeout 120
-      (log-err "parsing random example" nil
-               (for [[name atms] (->> filename parse-file find-all-atoms)
-                     atm atms]
-                 (log-err "serializing random example" nil
-                          {:file (.getFilePath atm)
-                           :line (start-line atm)
-                           :type name
-                           ;;:atom atm
-                           :github-url (github-url atm)
-                           :code-str (write-tree atm)}))))))
- (remove nil?)
- shuffle
- (def random-atoms)
- time-mins
- )
-)
+ (def random-atoms
+   (->>
+                                        ;rare-atom-files (map (partial str "~/opt/src/atom-finder/"))
+    random-c-files
+    (take 4)
+    (pap (constantly (now)))
+    (upmapcat
+     (fn [filename]
+       (with-timeout 120
+         (log-err "parsing random example" nil
+                  (for [[name atms] (->> filename parse-file find-all-atoms)
+                        atm atms]
+                    (log-err "serializing random example" nil
+                             {:file (.getFilePath atm)
+                              :line (start-line atm)
+                              :type name
+                              ;;:atom atm
+                              :github-url (github-url atm)
+                              :code-str (write-tree atm)}))))))
+    (remove nil?)
+    shuffle
+    time-mins
+    )))
 
 
 (quote
@@ -85,3 +86,8 @@
 
 ;; validate that each type of atom has good coverage accross files:
 ;; for i in `ls`; do echo "$i         "`grep -o 'https[^#]*' $i | sort | uniq -c | wc -l`; done
+
+
+;; My numbers claim something like 2/3rds of all if-statements omit their curly braces
+'((
+   ))
