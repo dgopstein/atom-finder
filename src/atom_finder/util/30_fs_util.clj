@@ -61,6 +61,8 @@
     (str/replace-first s home-dir "")
     s))
 
+;; Should we use claypoole.lazy instead?
+;; https://github.com/TheClimateCorporation/claypoole#lazy
 (require '[com.climate.claypoole :as cp])
 (s/defn pmap-dir-c-files
   "Apply a function to the filename of every c file in a directory"
