@@ -56,7 +56,7 @@
   [f & colls]
   (apply concat (apply pmap f colls)))
 
-(defn upmapcat
+'(defn upmapcat
   "Like pmapcat but with unordered pmap."
   [f & colls]
   (apply concat (apply cp/upmap :builtin f colls)))
