@@ -12,8 +12,8 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 source("util.R")
 
-atoms.removed.cve <- data.table(read.csv("data/cve-patch-atoms_2018-08-08_removed.csv", header=TRUE))
-atoms.added.cve   <- data.table(read.csv("data/cve-patch-atoms_2018-08-08_added.csv", header=TRUE))
+atoms.removed.cve <- data.table(read.csv("data/cve-patch-atoms_2018-08-29_fixed-comma-operator_removed.csv", header=TRUE))
+atoms.added.cve   <- data.table(read.csv("data/cve-patch-atoms_2018-08-29_fixed-comma-operator_added.csv", header=TRUE))
 
 nrow(atoms.removed.cve)
 length(unique(atoms.removed.cve$rev.str))
@@ -88,7 +88,7 @@ atoms.relative.cve.rate.plot <-
   labs(x="Atom", y="Atoms added/removed more often") +
   theme(axis.ticks.y=element_blank(), axis.text.y=element_text(vjust=0.4),
         panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
-  coord_flip(ylim = c(0.4, 6))
+  coord_flip(ylim = c(0.3, 6))
 atoms.relative.cve.rate.plot
 
 ggsave("img/atom_relative_cve_rate.pdf", atoms.relative.cve.rate.plot, width=(width<-150), height=width*0.7, units = "mm", device=cairo_pdf)
@@ -98,7 +98,7 @@ ggsave("img/atom_relative_cve_rate.pdf", atoms.relative.cve.rate.plot, width=(wi
 #        CWE heatmap
 ##############################
 
-cwe.cvss.csv <- data.table(read.csv("data/cve_details_complete_clean.csv", header=TRUE))[, -c('Description')]
+cwe.cvss.csv <- data.table(read.csv("data/cve_details.csv.xz", header=TRUE))[, -c('Description')]
 cwes <- data.table(read.csv("data/all_cwes.csv", header=TRUE))
 cwes <- cwes[order(CWE_ID)]
 
