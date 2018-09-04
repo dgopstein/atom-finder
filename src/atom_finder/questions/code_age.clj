@@ -6,6 +6,8 @@
    [clj-jgit.internal  :as giti]
    [clj-jgit.porcelain :as gitp]
    [clj-jgit.querying  :as gitq]
+   [clj-cdt.clj-cdt :refer :all]
+   [clj-cdt.writer-util :refer :all]
    [atom-finder.patch :refer :all]
    [atom-finder.atom-patch :refer :all]
    [atom-finder.atoms-in-dir :refer :all]
@@ -140,36 +142,38 @@
 '((def code-age-repo (->> "~/opt/src/atom-finder/gcc" expand-home gitp/load-repo)))
 ;(def code-age-repo linux-historical-repo)
 
-(->> "~/opt/src/atom-finder-histories"
-     expand-home
-     list-dirs
-     (map #(juxt->> % .getName gitp/load-repo))
-     (into {})
-     (def history-repos))
+(def history-repos
+  (->> "~/opt/src/atom-finder-histories"
+       expand-home
+       list-dirs
+       (map #(juxt->> % .getName gitp/load-repo))
+       (into {})))
 
-'((print (now)))
-'((-<>>
+(defn atoms-on-the-first-of-every-month
+  [edn-file]
+  (-<>>
    "first-commits-per-month.txt"
    read-data
    (partition-by (fn [line] (-> line :date year-month first)))
    (map first)
-   (drop-while #(not= "ba68e9715ac5e695f105cbb6a3a1cf4e9b5422d1" (:rev-str %))) rest
-   ;(map pap)
-   ;(take 2) (map prn))
+   ;(drop-while #(not= "ba68e9715ac5e695f105cbb6a3a1cf4e9b5422d1" (:rev-str %))) rest
+   ;(map pap) (take 2) (map prn))
    (map (fn [h]
           (let [repo (-> h :project history-repos)]
                 {:project (:project h) :repo repo :rev-commit (find-rev-commit repo (-> h :rev-str))})))
+   ;(map #(vector (:project %1) (-> %1 :rev-commit year-month))) (map prn))
    (mapcat (fn [h] (map (partial-right assoc :project (:project h)) (repo-files (:repo h) (:rev-commit h)))))
  (filter (comp c-file? :path))
+ ;;(take 10) (map (juxt :project :date :path)) (map prn))
  (pmap (fn [rev-file]
     (log-err (str "parsing/finding atoms in " (juxt->> rev-file :path :rev-str)) nil
              (with-timeout 120
-        (if-let [ast (mem-tu (:path rev-file) (:content rev-file))]
+        (when-let [ast (parse-source (:content rev-file) {:filename (:path rev-file)})]
           (assoc (dissoc rev-file :content)
                  :atoms (->> ast find-all-atoms-non-atoms (map-values count))))))))
  (map prn)
  dorun
- (log-to "tmp/code-age_all_2018-01-16_03_per-year_skipped-clang-emacs_continued.edn")
+ (log-to edn-file)
  time-mins
  ))
 
@@ -185,9 +189,11 @@
      (log-to "tmp/code-age_all_2018-01-16_00_clang-emacs.edn")
      ))
 
-'((->>
-   "tmp/code-age_all_2018-01-16_all_per-year_combined.edn"
+(defn summarize-code-age [edn-file csv-file]
+  (->>
+   edn-file
    read-lines
+   (take 20)
    (filter :path)
    ;(remove #(->> % :path (re-find #"test\/|\/test")))
    (group-by (juxt :date :project :rev-str))
@@ -197,7 +203,7 @@
    (filter :date)
    (sort-by (juxt :project :date))
    reverse
-   (maps-to-csv "tmp/code-age_all_2018-01-16_all_per-year_combined.csv")
+   (maps-to-csv csv-file)
    time-mins
    ))
 
@@ -224,11 +230,11 @@
    )
   )
 
-'((def emacs-repo (->> "~/opt/src/emacs" expand-home gitp/load-repo)))
-'((->> "src/atimer.c"
+;; try parsing emacs with C instead of C++
+'((def emacs-repo (->> "~/opt/src/atom-finder/emacs" expand-home gitp/load-repo)))
+'((-<>> "src/atimer.c"
        (rev-filestr emacs-repo "1c027a2427524def8a03ee4ad3e48fefa352a9b0")
-       ;parse-source
-       c-tu
+       (parse-source <> {:language :c})
        flatten-tree
        (map type)
        (pap count)
@@ -237,3 +243,12 @@
        (map prn)
        )
   )
+
+  (defn main-code-age
+    []
+    (let [edn-file "tmp/code-age_all_2018-08-30_parse-source-args.edn"
+          csv-file "tmp/code-age_all_2018-08-30_parse-source-args.csv"]
+      (println (str (now)))
+      (atoms-on-the-first-of-every-month edn-file)
+      (summarize-code-age edn-file csv-file)
+      ))
