@@ -89,6 +89,8 @@
    time-mins
     ))
 
+(def atom-names (map :name atoms))
+
 (defn summarize-atoms-added-removed-in-bugs
   [edn-file csv-prefix]
   (->> edn-file
@@ -97,21 +99,22 @@
        (map #(merge % {:n-added   (+ (:added-non-atoms %)   (sum (vals (:added-atoms %))))
                        :n-removed (+ (:removed-non-atoms %) (sum (vals (:removed-atoms %))))}))
        (map (partial-right split-map-by-keys [:added-atoms] [:removed-atoms]))
+       ;(pap first)
        (map (fn [[common added removed]] [(merge common (:added-atoms added)) (merge common (:removed-atoms removed))]))
        transpose
        ((fn [[addeds removeds]]
           (maps-to-csv (str csv-prefix "_added.csv")
-                       {:headers (-> addeds first keys (concat (map :name atoms)))}
+                       {:headers (-<> addeds first keys (remove (set atom-names) <>) (concat atom-names))}
                        addeds)
           (maps-to-csv (str csv-prefix "_removed.csv")
-                       {:headers (-> removeds first keys (concat (map :name atoms)))}
+                       {:headers (-<> removeds first keys (remove (set atom-names) <>) (concat atom-names))}
                        removeds)
                ))
        ))
 
 (defn main-atoms-added-removed []
-  (let [edn-file "tmp/atoms-added-removed-in-bugs_gcc_2018-08-27_filter-c-files.txt"
-        csv-prefix "src/analysis/data/atoms-in-bugs_gcc_2018-08-27_filter-c-files"]
-    (atoms-added-removed-in-bugs edn-file)
-    ;;(summarize-atoms-added-removed-in-bugs edn-file csv-prefix)
+  (let [edn-file "src/analysis/data/atoms-added-removed-in-bugs_gcc_2018-09-17_filter-c-files_complete.txt"
+        csv-prefix "src/analysis/data/atoms-in-bugs_gcc_2018-09-17_filter-c-files"]
+    ;;(atoms-added-removed-in-bugs edn-file)
+    (summarize-atoms-added-removed-in-bugs edn-file csv-prefix)
     ))

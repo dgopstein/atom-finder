@@ -8,8 +8,15 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 source("util.R")
 
-atoms.removed <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_removed.csv.bz2", header=TRUE))
-atoms.added   <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_added.csv.bz2", header=TRUE))
+atoms.removed <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-09-17_filter-c-files_removed.csv", header=TRUE))
+atoms.added   <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-09-17_filter-c-files_added.csv", header=TRUE))
+
+# atoms.removed.old <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_removed.csv.bz2", header=TRUE))
+# atoms.added.old <- data.table(read.csv("data/atoms-in-bugs_gcc_2018-01-11_added.csv.bz2", header=TRUE))
+
+#merge(atoms.removed, atoms.removed.old, by=c('rev.str', 'file'))[comma.operator.x != comma.operator.y, .(rev.str, file, comma.operator.x, comma.operator.y)]
+
+colnames(atoms.removed)
 
 nrow(atoms.removed)
 length(unique(atoms.removed$rev.str))
@@ -155,7 +162,7 @@ Sys.setenv(R_GSCMD = '/usr/local/bin/gs')
 
 intercept <- 1
 atom.removed.rate.plot <-
-ggplot(only.atoms.removed.rate.dt,
+ggplot(only.atoms.removed.rate.dt[!is.nan(rate)],
        aes(x = display.atom, y = rate)) +
   theme_minimal() +
 #  theme_classic() +
@@ -173,9 +180,9 @@ ggplot(only.atoms.removed.rate.dt,
   annotate('rect', xmin = .9, xmax = 1.1, ymin = 0.25, ymax = 0.36, fill="white", alpha=0.5) +
   annotate('text', x=1, y=0.3, label="** Inf", size=3) +
   annotate('label', x=2.5, y=1.01, size=2.8, hjust=0, label.size=NA,
-           family="DroidSansMono", label=" p<0.05   *\n p<0.01   **\n p<0.001  ***\n p<0.0001 ****") +
+           family="DroidSansMono", label=" p<0.1    *\n p<0.01   **\n p<0.001  ***\n p<0.0001 ****") +
   scale_color_manual(values=c(colors2, 'red')) +
-  scale_y_log10(position="top", labels=c("Non-bugs", "Bugs"), breaks=c(.47, 1.7)) +
+  scale_y_log10(position="right", labels=c("Non-bugs", "Bugs"), breaks=c(.47, 1.7)) +
   labs(x="Atom", y="Atoms removed more often in...") +
   theme(axis.ticks.y=element_blank(), axis.text.y=element_text(vjust=0.4),
         panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
@@ -200,7 +207,7 @@ atom.removed.rate.significant.plot <-
                              paste0(signif.stars(p.value), sprintf(" %0.2f                 ", 1/rate)))),
             color="black", size=3, vjust=0.4) +
   scale_color_manual(values=c(colors2, 'red')) +
-  scale_y_log10(position="top", labels=c("Non-bugs", "Bugs"), breaks=c(.67, 1.5)) +
+  scale_y_log10(position="right", labels=c("Non-bugs", "Bugs"), breaks=c(.67, 1.5)) +
   labs(x="Atom", y="Atoms removed more often in...") +
   theme(axis.ticks.y=element_blank(), axis.text.y=element_text(vjust=0.4),
         panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +

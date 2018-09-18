@@ -82,7 +82,7 @@ atoms.relative.cve.rate.plot <-
   #annotate('rect', xmin = 0.9, xmax = 1.1, ymin = 0.18, ymax = 0.22, fill="white", alpha=0.5) + annotate('text', x=1, y=0.2, label="Inf", size=3) +
   #annotate('rect', xmin = 1.9, xmax = 2.1, ymin = 0.18, ymax = 0.22, fill="white", alpha=0.5) + annotate('text', x=2, y=0.2, label="Inf", size=3) +
   annotate('label', x=2.1, y=2.1, size=3.5, hjust=0, label.size=NA,
-           family="DroidSansMono", label=" p<0.05   *\n p<0.01   **\n p<0.001  ***\n p<0.0001 ****") +
+           family="DroidSansMono", label=" p<0.1    *\n p<0.01   **\n p<0.001  ***\n p<0.0001 ****") +
   scale_color_manual(values=c(colors2, 'red')) +
   scale_y_log10(position="right", labels=c("Added", "Removed"), breaks=c(.47, 2.3)) +
   labs(x="Atom", y="Atoms added/removed more often in Security Patches") +

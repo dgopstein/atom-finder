@@ -76,7 +76,7 @@ signif.stars <- function(p.value) {
   ifelse(p.value < 0.0001, "****",
   ifelse(p.value < 0.001, "*** ",
   ifelse(p.value < 0.01, "**  ",
-  ifelse(p.value < 0.05, "*   ", "    "))))
+  ifelse(p.value < 0.1, "*   ", "    "))))
 }
 
 spot.theme <- list(
