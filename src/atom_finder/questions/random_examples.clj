@@ -31,30 +31,28 @@
      )))
 
 ; 2:20 for 100k
-(quote
- (def random-atoms
-   (->>
-                                        ;rare-atom-files (map (partial str "~/opt/src/atom-finder/"))
-    random-c-files
-    (take 4)
-    (pap (constantly (now)))
-    (upmapcat
-     (fn [filename]
-       (with-timeout 120
-         (log-err "parsing random example" nil
-                  (for [[name atms] (->> filename parse-file find-all-atoms)
-                        atm atms]
-                    (log-err "serializing random example" nil
-                             {:file (.getFilePath atm)
-                              :line (start-line atm)
-                              :type name
-                              ;;:atom atm
-                              :github-url (github-url atm)
-                              :code-str (write-tree atm)}))))))
-    (remove nil?)
-    shuffle
-    time-mins
-    )))
+(def random-atoms
+  (->>
+   random-c-files
+   (take 100000)
+   (pap (constantly (now)))
+   (upmapcat
+    (fn [filename]
+      (with-timeout 120
+        (log-err "parsing random example" nil
+                 (for [[name atms] (->> filename parse-file find-all-atoms)
+                       atm atms]
+                   (log-err "serializing random example" nil
+                            {:file (filename atm)
+                             :line (start-line atm)
+                             :type name
+                             ;;:atom atm
+                             :github-url (github-url atm)
+                             :code-str (write-tree atm)}))))))
+   (remove nil?)
+   shuffle
+   time-mins
+   ))
 
 
 (quote
