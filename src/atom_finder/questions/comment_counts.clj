@@ -126,7 +126,7 @@
        ;frequencies
        (map prn)
        dorun
-       (log-to "tmp/comment-counts_2018-01-30_01_potential-atom-nodes_memory.edn")
+       (log-to "tmp/comment-counts_2018-10-05_01_filter-better-extensions.edn")
        time-mins
    ))
 
