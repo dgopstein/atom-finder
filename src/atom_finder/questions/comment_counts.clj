@@ -10,6 +10,7 @@
    [schema.core :as s]
    [clojure.data.csv :as csv]
    [clojure.string :as str]
+   [clj-cdt.clj-cdt :refer :all]
    )
   (:import
    [org.eclipse.cdt.core.dom.ast IASTNode]
@@ -103,30 +104,20 @@
     ))
 
 ;; 33 hours
-'((->> "~/opt/src/atom-finder"
+(defn comment-counts-wrt-atoms [edn-file]
+  (->> "~/opt/src/atom-finder"
        expand-home
-       list-dirs
-       (map str)
-       (mapcat (fn [dir]
-                 (->> dir
-                    (pmap-dir-trees atoms-by-comments&function)
-                    (mapcat (fn [file-nodes]
-                           (->> file-nodes
-                                (map #(assoc %
-                                             ;:atom (or (:atom %) (->> % :node typename))
-                                             ;:proj (str/replace dir #".*\/" "")
-                                             :file (->> % :file atom-finder.questions.all-nodes/atom-finder-relative-path)
-                                             ;:line (->> % :node start-line)
-                                             ))
-                                     (map (partial-right dissoc :node))
-                                     frequencies
-                                     )))
-                    )))
-       ;(take 2)
-       ;frequencies
+       (pmap-dir-trees atoms-by-comments&function)
+       ;;(take 2)
+       (mapcat (fn [file-nodes]
+                 (->> file-nodes
+                      (map #(assoc % :file (->> % :file atom-finder-relative-path)))
+                      (map (partial-right dissoc :node))
+                      frequencies
+                      )))
        (map prn)
        dorun
-       (log-to "tmp/comment-counts_2018-01-30_01_potential-atom-nodes_memory.edn")
+       (log-to edn-file)
        time-mins
    ))
 
@@ -153,3 +144,8 @@
        (log-to "tmp/comment-counts_2018-01-26_01_proximity-1-line.edn")
        time-mins
    ))
+
+(defn main-comment-counts []
+  (let [edn-file "tmp/comment-counts_2018-10-05_01_filter-better-extensions.edn"]
+    (comment-counts-wrt-atoms edn-file)
+    ))

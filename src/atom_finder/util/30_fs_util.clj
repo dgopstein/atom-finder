@@ -67,11 +67,13 @@
 
 ;; Should we use claypoole.lazy instead?
 ;; https://github.com/TheClimateCorporation/claypoole#lazy
-(require '[com.climate.claypoole :as cp])
+;; (require '[com.climate.claypoole :as cp])
+;; Since the claypoole functions require the entire datastructure fit in memory
+;; we default to pmap
 (s/defn pmap-dir-c-files
   "Apply a function to the filename of every c file in a directory"
   [f dirname]
-  (cp/upmap :builtin
+  (pmap
    (fn [file]
      (let [filename (.getPath file)]
        (log-err (format "pmap-dir-file: \"%s\"" filename) nil
