@@ -30,30 +30,29 @@
      time-mins
      )))
 
-; 2:20 for 100k
-(def random-atoms
-  (->>
-   random-c-files
-   (take 100000)
-   (pap (constantly (now)))
-   (upmapcat
-    (fn [filename]
-      (with-timeout 120
-        (log-err "parsing random example" nil
-                 (for [[name atms] (->> filename parse-file find-all-atoms)
-                       atm atms]
-                   (log-err "serializing random example" nil
-                            {:file (filename atm)
-                             :line (start-line atm)
-                             :type name
-                             ;;:atom atm
-                             :github-url (github-url atm)
-                             :code-str (write-tree atm)}))))))
-   (remove nil?)
-   shuffle
-   time-mins
-   ))
-
+; 4hrs for 100k on Transformer
+'((def random-atoms
+    (->>
+     random-c-files
+     (take 10000)
+     (pap (constantly (now)))
+     (pmapcat
+      (fn [file]
+        (with-timeout 120
+          (log-err "parsing random example" nil
+                   (for [[name atms] (->> file parse-file find-all-atoms)
+                         atm atms]
+                     (log-err "serializing random example" nil
+                              {:file (filename atm)
+                               :line (start-line atm)
+                               :type name
+                               ;;:atom atm
+                               :github-url (github-url atm)
+                               :code-str (write-tree atm)}))))))
+     (remove nil?)
+     shuffle
+     time-mins
+     )))
 
 (quote
 (->>
@@ -61,7 +60,7 @@
  (group-by :type)
  ;;first last first :github-url)
  (map-values (partial distinct-by (%->> :github-url (re-find #"[^#]*"))))
- (map-values (partial take 40))
+ (map-values (partial take 50))
  (def grouped-examples)
  time-mins
  )
@@ -70,7 +69,7 @@
 (quote
  (->> grouped-examples
      (map-values (partial map #(str (:github-url %1) "\n\n" (:code-str %1) "\n\n--------------\n")))
-     (map (fn [[type atoms]] (spit (str "tmp/atom-examples_reversed_macro-op_literal-enc/" (name type) ".txt") (str/join "\n" atoms))))
+     (map (fn [[type atoms]] (spit (str "tmp/atom-examples_v" (name type) ".txt") (str/join "\n" atoms))))
      )
  )
 
