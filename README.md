@@ -26,7 +26,7 @@ lein find-atoms-in-dirs dir1 dir2 > atoms.edn
 
 This command will loop over each of the directories provided (in the example
 above: `dir1 dir2`) and print an [edn](https://github.com/edn-format/edn) record
-for each file in the following shape:
+to the file `atoms.edn` for each file in the following shape:
 
 ```clj
 {:file "src/test/resources/atom-comments.c",
