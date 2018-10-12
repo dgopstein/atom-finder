@@ -96,10 +96,32 @@
      pprint
      ))
 
+;; dump all atoms and their node type to a file
+(s/defn all-atoms-and-type []
+  (println (str (now)))
+  (-<>> atom-finder-corpus-path
+        (pmap-dir-trees atom-finder.classifier/find-all-atoms)
+        (remove nil?)
+        ;;(take 3)
+        (mapcat (s/fn [file-nodes :- {s/Keyword [org.eclipse.cdt.core.dom.ast.IASTNode]}]
+                  (for [[atom-type nodes] file-nodes
+                        node              nodes]
+                    {:file (atom-finder-relative-path (filename node))
+                     :line (start-line node)
+                     :offset (offset node)
+                     :atom atom-type
+                     :type (opname-or-typename node)})))
+        (map prn)
+        dorun
+        (log-to "tmp/all-atoms-and-type_2018-10-08_type-atom-comparison_error-handling.edn")
+        time-mins
+  ))
+
 (defn main-all-nodes
   []
-  (let [edn-file "tmp/all-node-counts_2018-08-31_for-esem.edn"
-        csv-file "src/analysis/data/all-node-counts_2018-08-31_for-esem.csv"]
+  (let [edn-file "tmp/all-node-counts_2018-09-05_for-debugging-esem.edn"
+        csv-file "src/analysis/data/all-node-counts_2018-09-05_for-debugging-esem.csv"
+        ]
     (count-all-nodes-in-project edn-file)
     (summarize-all-nodes edn-file csv-file)
   ))

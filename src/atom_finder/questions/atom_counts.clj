@@ -24,9 +24,7 @@
   (map-values count (find-all-atoms-non-atoms root)))
 
 (defn count-atoms-in-files [filename]
-  (->> "~/opt/src/atom-finder"
-       ;(pap (constantly (now)))
-       expand-home
+  (->> atom-finder-corpus-path
        (pmap-dir-trees
         (fn [root]
           {:file (str/replace-first (.getFilePath root) #".*/atom-finder/" "")
@@ -76,8 +74,8 @@
        ))
 
 (defn main-atom-counts []
-  (let [edn-file "tmp/atom-counts_2018-08-27_filter-better-extensions.edn"
-        csv-file "src/analysis/data/atom-counts_2018-08-27_filter-better-extensions.csv"]
+  (let [edn-file "tmp/atom-counts_2018-09-05_for-debugging-esem.edn"
+        csv-file "src/analysis/data/atom-counts_2018-09-05_for-debugging-esem.csv"]
     (count-atoms-in-files edn-file)
     (summarize-atom-counts-by-project edn-file csv-file)
     ))
