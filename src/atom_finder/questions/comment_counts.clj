@@ -105,9 +105,10 @@
 
 ;; 33 hours
 (defn comment-counts-wrt-atoms [edn-file]
+  (println (str (now)))
   (->> "~/opt/src/atom-finder"
        expand-home
-       (pmap-dir-trees atoms-by-comments&function)
+       (pmap-dir-trees #(with-timeout 300 (atoms-by-comments&function %)))
        ;;(take 2)
        (mapcat (fn [file-nodes]
                  (->> file-nodes
@@ -121,13 +122,22 @@
        time-mins
    ))
 
-'((->> "tmp/comment-counts_2018-01-27_01_proximity-1-line.edn"
-      read-lines
-      (map (fn [[[proj in-function comment atom] count]]
-             {:proj proj :in-function (boolean in-function)
-              :comment (boolean comment) :atom (some-> atom name) :count count}))
-      (maps-to-csv "tmp/comment-counts_2018-01-27_01_proximity-1-line.csv")
- ))
+(defn proj-from-file [filename]
+  (->> filename (re-find #"[^/]*")))
+
+(defn summarize-comment-counts [edn-file csv-file]
+  (->> edn-file
+      ;; "tmp/comment-counts_2018-10-08_01_filter-with-timeout.edn"
+       read-lines
+       ;;(take 20)
+       (map (fn [[{:keys [file in-function? comment atom]} count]]
+              {:proj (proj-from-file file) :in-function (boolean in-function?)
+               :comment (boolean comment) :atom (some-> atom name) :count count}))
+       (group-by #(select-keys % [:proj :in-function :comment :atom]))
+       (map (fn [[keys vals]] (assoc keys :count (->> vals (map :count) sum))))
+       (maps-to-csv csv-file)
+       time-mins
+       ))
 
 ;; Find only literal-encoding in mongo
 '((->>"~/opt/src/atom-finder/"
@@ -146,6 +156,8 @@
    ))
 
 (defn main-comment-counts []
-  (let [edn-file "tmp/comment-counts_2018-10-05_01_filter-better-extensions.edn"]
-    (comment-counts-wrt-atoms edn-file)
+  (let [edn-file "tmp/comment-counts_2018-10-08_01_filter-with-timeout.edn"
+        csv-file "src/analysis/data/comment-counts_2018-10-11_01_group-results.csv"]
+    ;(comment-counts-wrt-atoms edn-file)
+    (summarize-comment-counts edn-file csv-file)
     ))

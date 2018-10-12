@@ -5,8 +5,9 @@ library(RColorBrewer)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 source("util.R")
+source("project-age.R")
 
-code.age.wide <- data.table(read.csv("data/code-age_all_2018-01-16_all_per-year_combined.csv"))
+code.age.wide <- data.table(read.csv("data/code-age_all_2018-08-30_parse-source-args.csv"))
 code.age.wide[, date := as.Date(date)]
 code.age.wide <- code.age.wide[date > '1984-01-01' & date < '2018-01-01' & all.nodes > 1000]
 code.age.wide <- code.age.wide[order(date)]
