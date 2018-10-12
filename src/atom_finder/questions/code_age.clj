@@ -193,7 +193,7 @@
   (->>
    edn-file
    read-lines
-   (take 20)
+   ;(take 20)
    (filter :path)
    ;(remove #(->> % :path (re-find #"test\/|\/test")))
    (group-by (juxt :date :project :rev-str))
@@ -247,7 +247,7 @@
   (defn main-code-age
     []
     (let [edn-file "tmp/code-age_all_2018-08-30_parse-source-args.edn"
-          csv-file "tmp/code-age_all_2018-08-30_parse-source-args.csv"]
+          csv-file "src/analysis/data/code-age_all_2018-08-30_parse-source-args.csv"]
       (println (str (now)))
       (atoms-on-the-first-of-every-month edn-file)
       (summarize-code-age edn-file csv-file)
