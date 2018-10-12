@@ -22,7 +22,7 @@ chi.test <- function(a, b, c, d) {
 
 to.bool <- function(x) as.logical(ifelse(as.character(x) == 'true', TRUE, ifelse(as.character(x)=='false', FALSE, x)))
 
-individual.atom.comments <- data.table(read.csv("data/comment-counts_2018-01-08_01_in-function.csv", header=TRUE))
+individual.atom.comments <- data.table(read.csv("data/comment-counts_2018-10-11_01_group-results.csv", header=TRUE))
 #individual.atom.comments <- data.table(read.csv("data/comment-counts_2018-01-27_01_proximity-1-line.csv", header=TRUE))
 individual.atom.comments[, any.atom := atom != '', ]
 individual.atom.comments[, comment := to.bool(comment), ]
