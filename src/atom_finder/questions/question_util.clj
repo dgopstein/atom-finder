@@ -3,6 +3,8 @@
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
    [clj-cdt.clj-cdt :refer :all]
+   [clj-cdt.expr-operator :refer :all]
+   [clj-cdt.writer-util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    [clojure.data.csv :as csv]
@@ -45,3 +47,8 @@
       (->> csv-data
            (map (%->> (map vector header) (into {})))
            doall))))
+
+(defn opname-or-typename
+  "If the node is an expression, print out which kind, otherwise print out its type"
+  [node]
+  (-> node expr-operator :name (or (write-node-type node))))

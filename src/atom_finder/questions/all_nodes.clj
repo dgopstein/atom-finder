@@ -4,22 +4,14 @@
   (:require
    [atom-finder.constants :refer :all]
    [atom-finder.util :refer :all]
-   [atom-finder.atom-patch :refer :all]
    [atom-finder.questions.question-util :refer :all]
    [clj-cdt.clj-cdt :refer :all]
-   [clj-cdt.expr-operator :refer :all]
-   [clj-cdt.writer-util :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    [swiss.arrows :refer :all]
    [schema.core :as s]
    )
   )
-
-(defn opname-or-typename
-  "If the node is an expression, print out which kind, otherwise print out its type"
-  [node]
-  (-> node expr-operator :name (or (write-node-type node))))
 
 ;; List all node counts file-by-file
 (defn count-all-nodes-in-project
@@ -95,27 +87,6 @@
      (map-values count)
      pprint
      ))
-
-;; dump all atoms and their node type to a file
-(s/defn all-atoms-and-type []
-  (println (str (now)))
-  (-<>> atom-finder-corpus-path
-        (pmap-dir-trees atom-finder.classifier/find-all-atoms)
-        (remove nil?)
-        ;;(take 3)
-        (mapcat (s/fn [file-nodes :- {s/Keyword [org.eclipse.cdt.core.dom.ast.IASTNode]}]
-                  (for [[atom-type nodes] file-nodes
-                        node              nodes]
-                    {:file (atom-finder-relative-path (filename node))
-                     :line (start-line node)
-                     :offset (offset node)
-                     :atom atom-type
-                     :type (opname-or-typename node)})))
-        (map prn)
-        dorun
-        (log-to "tmp/all-atoms-and-type_2018-10-08_type-atom-comparison_error-handling.edn")
-        time-mins
-  ))
 
 (defn main-all-nodes
   []
