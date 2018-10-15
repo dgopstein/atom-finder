@@ -39,7 +39,7 @@
 (defn csv-atom-context [edn-file csv-file]
   (->> edn-file
        read-lines
-       (map (map-values #(if (keyword? %) (name %) %)))
+       (map (partial map-values #(if (keyword? %) (name %) %)))
        (maps-to-csv csv-file)
        ))
 
