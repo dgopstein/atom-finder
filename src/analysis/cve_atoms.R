@@ -34,8 +34,9 @@ atoms.added.cve[, any.atoms.added.cve := (all.atoms.added.cve > 0)]
 atoms.added.cve.sums$n.added - atoms.added.cve.sums$added.non.atoms
 atoms.removed.cve.sums$n.removed - atoms.removed.cve.sums$removed.non.atoms
 
-mean(atoms.added.cve$all.atoms.added.cve / atoms.added.cve$n.added, na.rm=TRUE)
-mean(atoms.removed.cve$all.atoms.removed.cve / atoms.removed.cve$n.removed, na.rm=TRUE)
+atoms.added.rate.in.cves <- mean(atoms.added.cve$all.atoms.added.cve / atoms.added.cve$n.added, na.rm=TRUE)
+atoms.removed.rate.in.cves <- mean(atoms.removed.cve$all.atoms.removed.cve / atoms.removed.cve$n.removed, na.rm=TRUE)
+atoms.removed.rate.in.cves / atoms.added.rate.in.cves
 
 chisq.test(matrix(c(atoms.removed.cve.sums$n.removed - atoms.removed.cve.sums$removed.non.atoms, atoms.removed.cve.sums$n.removed,
            atoms.added.cve.sums$n.added - atoms.added.cve.sums$added.non.atoms, atoms.added.cve.sums$n.added), nrow=2))
@@ -111,7 +112,7 @@ atoms.removed.unnested <- data.table(atoms.removed.cve %>%
 
 atoms.cwe.cvss <- merge(cwe.cvss.csv, atoms.removed.unnested, by.x = "CVE.ID", by.y="cve.id")
 
-atom.cwe.cvss.long <- melt(atoms.cwe.cvss[, c(1,3,8, 27:41)], id.vars=c('CVE.ID', 'CWE.ID', "Score"), variable.name = "atom")
+atom.cwe.cvss.long <- unique(melt(atoms.cwe.cvss[, c(1,3,8, 27:41)], id.vars=c('CVE.ID', 'CWE.ID', "Score"), variable.name = "atom"))
 atom.cwe.cvss.long$cwe.name <- cwes[match(atom.cwe.cvss.long$CWE.ID, as.character(cwes$CWE_ID))][, strtrim(paste0(CWE_TYPE, "-",CWE_ID,": ",CWE_NAME), 80)]
 
 
@@ -124,6 +125,7 @@ rownames(atom.cwe.sums.mat) <- atom.cwe.sums.wide$atom
 colnames(atom.cwe.sums.mat) <- c(cwes[which(as.character(cwes$CWE_ID) %in% colnames(atom.cwe.sums.mat))][, paste0(CWE_TYPE, "-",CWE_ID,": ",CWE_NAME)], "NA")
 
 atom.cwe.cvss.long <- atom.cwe.cvss.long[!is.na(value)]
+
 atom.cwe.cvss.long[, value.atom.norm := range01(value, na.rm=TRUE), by = atom]
 atom.cwe.cvss.long[, value.norm := range01(value.atom.norm, na.rm=TRUE), by = CWE.ID]
 
@@ -148,18 +150,67 @@ atom.cwe.spot.plot
 
 ggsave("img/atom_cwe_spot_plot.pdf", atom.cwe.spot.plot, width=(width<-570), height=width*0.62, units = "mm", device=cairo_pdf)
 
+
+atom.cwe.cvss.sum.long[is.nan(count.norm), count.norm := 0]
+
+# cluster the rows/columns of a long data.table by making a dendogrammed-heatmap out of it
+cluster.long <- function(dt, row, col, value) {
+  dt.sparse <- do.call(tidytext::cast_sparse, list(dt, row, col, value))
+  dt.mat <- as.matrix(dt.sparse)
+
+  row.ind <- cluster::agnes(dt.mat)
+  col.ind <- cluster::agnes(t(dt.mat))
+
+  list(rowInd = row.ind$order, colInd = col.ind$order, rowName = row.ind$order.lab, colName = col.ind$order.lab)
+}
+
+# remove the boring rows/cols
+
+atom.cwe.cvss.sum.long.trimmed <- atom.cwe.cvss.sum.long[, if(sum(count.norm, na.rm=TRUE)>=1 && sum(count) > 10) .SD, by=cwe.name][
+  , if(sum(count.norm, na.rm=TRUE)>=1) .SD, by=atom][, atom := droplevels(atom)]
+
+atom.cwe.cvss.sum.long.trimmed.clustered <- cluster.long(atom.cwe.cvss.sum.long.trimmed, 'atom', 'cwe.name', 'count.norm')
+
+atom.cwe.trimmed.spot.plot <- ggplot(atom.cwe.cvss.sum.long.trimmed, aes(cwe.name, atom)) + spot.theme +
+  geom_point(colour = "black",     aes(size = 1)) +
+  geom_point(colour = "white",     aes(size = 0.8)) +
+  geom_point(aes(size = 0.81*count.norm, colour=count)) +
+  theme(axis.ticks.y=element_blank(), axis.text.y=element_text(size = 15)) +
+  theme(axis.ticks.x=element_blank(), axis.text.x=element_text(size = 10)) +
+  theme(text = element_text(size = 12)) +
+  scale_x_discrete(limits = atom.cwe.cvss.sum.long.trimmed.clustered$colName, position="top") +
+  scale_y_discrete(limits = atom.cwe.cvss.sum.long.trimmed.clustered$rowName) +
+  scale_fill_viridis()
+atom.cwe.trimmed.spot.plot
   
 ##############################
 #        CVSS scores
 ##############################
 
+atom.cwe.cvss.long[, rounded.score := round(Score)]
+
 mean.atom.cvss <- atom.cwe.cvss.long[value != 0, .(score = mean(Score)), by=atom]
 atoms.relative.cve.rate <- merge(atoms.relative.cve.rate, mean.atom.cvss, by='atom')
 
 mean.cvss <- mean(cwe.cvss.csv$Score)
+mean.combined.atom.cvss <- atom.cwe.cvss.long[, mean(Score)]
 
 hist(cwe.cvss.csv$Score, breaks=0:10, freq=FALSE, ylim=c(0,.5))
 hist(atom.cwe.cvss.long$Score, breaks=0:10, freq=FALSE, ylim=c(0,.5))
+atom.cwe.cvss.long[Score == 5 & value != 0][, .(.N), by=atom]
+atoms.per.score <- atom.cwe.cvss.long[, .(count.by.score = sum(value)),by=rounded.score]
+counts.per.atom <- atom.cwe.cvss.long[, .(count.by.atom = sum(value)),by=atom]
+
+
+normalized.atom.scores <- atom.cwe.cvss.long[, .(count = sum(value)),by=c('atom', 'rounded.score')][
+  atoms.per.score, on='rounded.score'][
+    ,normalized.count.by.score := count/count.by.score][
+  counts.per.atom, on='atom'][
+    ,normalized.count.by.atom  := count/count.by.atom][
+    ,normalize.count.by.atom.score := normalized.count.by.atom/count.by.score]
+
+ggplot(normalized.atom.scores, aes(rounded.score, normalize.count.by.atom.score)) +
+  geom_line(aes(color=atom))
 
 ggplot(mean.atom.cvss, aes(reorder(atom, -score), score)) +
   geom_bar(stat="identity") +
@@ -173,5 +224,28 @@ ggplot(atoms.relative.cve.rate, aes(relative.rate, score)) +
   geom_text(aes(label=atom), vjust=-1) +
   scale_x_log10()
 
-
 with(atoms.relative.cve.rate, cor(log(relative.rate), score))
+
+ggplot(atoms.relative.cve.rate[atom.effect.sizes, on="atom"], aes(effect.size, score)) +
+  geom_point(size=4) +
+  geom_text(aes(label=atom), vjust=-1) +
+  scale_x_log10()
+
+
+################################################
+#     Looking for Individual Examples in Code
+################################################
+out.of.bounds.post <- data.table(merge(atom.cwe.cvss.long[(CWE.ID == 125 | CWE.ID == 787) & (value != 0)], atoms.removed.cve[, .(git.repo.url, rev.str, file, cve.ids)], by.x='CVE.ID', by.y='cve.ids'))
+atoms.removed.cve[grepl('CVE-2016-2064', as.character(cve.ids))]
+
+#github.url <- function(git.repo.url, rev.str) str_replace(str_extract(git.repo.url, '(https://github.com/.*).git'), '\\.git', paste0("/commit/", rev.str), )
+github.url <- function(git.repo.url, rev.str) str_replace(git.repo.url, '\\.git', paste0("/commit/", rev.str))
+out.of.bounds.post[, github.url := github.url(git.repo.url, rev.str)][, .(file, github.url)]
+
+
+### Examples where very few nodes were removed
+inaccessible.repos <- c('git://anongit.freedesktop.org/poppler/poppler')
+atoms.removed.cve.denoised <- atoms.removed.cve[!(git.repo.url %in% inaccessible.repos)][any.atoms.removed.cve == TRUE & n.removed < 10 & n.added < 10 &
+                                                                                           (n.removed - removed.non.atoms) > (n.added - added.non.atoms)]
+atoms.removed.cve.denoised[, github.url := github.url(git.repo.url, rev.str)]
+#View(atoms.removed.cve.denoised) # the results are very wide so it's easier to read them as a spreadsheet
