@@ -21,25 +21,34 @@ length(unique(atoms.removed.cve$rev.str))
 atoms.removed.cve[is.na(atoms.removed.cve)] <- 0
 atoms.added.cve[is.na(atoms.added.cve)] <- 0
 
+atom.dot.names <- unique(atom.names.key[!grepl('-', atom.names.key)])
+only.atoms.removed.cve <- subset(atoms.removed.cve, select=atom.dot.names)
+only.atoms.added.cve <- subset(atoms.added.cve, select=atom.dot.names)
+
+atoms.removed.cve$n.atoms.removed.cve <- rowSums(only.atoms.removed.cve)
+atoms.added.cve$n.atoms.added.cve <- rowSums(only.atoms.added.cve)
+
 atoms.removed.cve.sums <- atoms.removed.cve[, -c('author.name', 'author.email', 'file', 'rev.str', 'git.repo.hash', 'git.repo.url', 'cve.ids')][, lapply(.SD, sum)]
 atoms.added.cve.sums <- atoms.added.cve[, -c('author.name', 'author.email', 'file', 'rev.str', 'git.repo.hash', 'git.repo.url', 'cve.ids')][, lapply(.SD, sum)]
 
-atoms.removed.cve[, all.atoms.removed.cve := n.removed - removed.non.atoms] 
-atoms.added.cve[, all.atoms.added.cve := n.added - added.non.atoms] 
+#atoms.removed.cve[, n.atoms.removed.cve := n.removed - removed.non.atoms] 
+#atoms.added.cve[, n.atoms.added.cve := n.added - added.non.atoms] 
 
-atoms.removed.cve[, any.atoms.removed.cve := (all.atoms.removed.cve > 0)]
-atoms.added.cve[, any.atoms.added.cve := (all.atoms.added.cve > 0)]
+atoms.removed.cve[, any.atoms.removed.cve := (n.atoms.removed.cve > 0)]
+atoms.added.cve[, any.atoms.added.cve := (n.atoms.added.cve > 0)]
 
 ###### Summary Statistics #####
-atoms.added.cve.sums$n.added - atoms.added.cve.sums$added.non.atoms
-atoms.removed.cve.sums$n.removed - atoms.removed.cve.sums$removed.non.atoms
+#atoms.added.cve.sums$n.added - atoms.added.cve.sums$added.non.atoms
+atoms.added.cve.sums$n.atoms.added.cve
+#atoms.removed.cve.sums$n.removed - atoms.removed.cve.sums$removed.non.atoms
+atoms.removed.cve.sums$n.atoms.removed.cve
 
-atoms.added.rate.in.cves <- mean(atoms.added.cve$all.atoms.added.cve / atoms.added.cve$n.added, na.rm=TRUE)
-atoms.removed.rate.in.cves <- mean(atoms.removed.cve$all.atoms.removed.cve / atoms.removed.cve$n.removed, na.rm=TRUE)
+atoms.added.rate.in.cves <- mean(atoms.added.cve$n.atoms.added.cve / atoms.added.cve$n.added, na.rm=TRUE)
+atoms.removed.rate.in.cves <- mean(atoms.removed.cve$n.atoms.removed.cve / atoms.removed.cve$n.removed, na.rm=TRUE)
 atoms.removed.rate.in.cves / atoms.added.rate.in.cves
 
-chisq.test(matrix(c(atoms.removed.cve.sums$n.removed - atoms.removed.cve.sums$removed.non.atoms, atoms.removed.cve.sums$n.removed,
-           atoms.added.cve.sums$n.added - atoms.added.cve.sums$added.non.atoms, atoms.added.cve.sums$n.added), nrow=2))
+chisq.test(matrix(c(atoms.removed.cve.sums$n.atoms.removed.cve, atoms.removed.cve.sums$n.removed,
+                    atoms.added.cve.sums$n.atoms.added.cve,     atoms.added.cve.sums$n.added), nrow=2))
 
 #######################################################################
 
@@ -59,7 +68,7 @@ atoms.relative.cve.rate <- data.table(colnames(atoms.added.cve.rate),
 colnames(atoms.relative.cve.rate) <- c('atom', 'display.atom', 'added.sum', 'removed.sum', 'added.rate', 'removed.rate')
 
 atoms.relative.cve.rate[, relative.rate := removed.rate / added.rate]
-atoms.relative.cve.rate <- atoms.relative.cve.rate[!display.atom %in% c("Non-Atom") & !is.nan(relative.rate) & (added.sum + removed.sum > 1), ,]
+atoms.relative.cve.rate <- atoms.relative.cve.rate[!display.atom %in% c("Non-Atom") & !is.nan(relative.rate), ,]# & (added.sum + removed.sum > 1), ,]
 
 atoms.relative.cve.rate$p.value <- mapply(function(a,b,c,d) chisq.test(matrix(c(a,b,c,d), nrow=2))$p.value,
        atoms.added.cve.sums$n.added, atoms.added.cve.sums$n.removed, atoms.relative.cve.rate$added.sum, atoms.relative.cve.rate$removed.sum)
@@ -86,7 +95,7 @@ atoms.relative.cve.rate.plot <-
            family="DroidSansMono", label=" p<0.1    *\n p<0.01   **\n p<0.001  ***\n p<0.0001 ****") +
   scale_color_manual(values=c(colors2, 'red')) +
   scale_y_log10(position="right", labels=c("Added", "Removed"), breaks=c(.47, 2.3)) +
-  labs(x="Atom", y="Atoms added/removed more often in Security Patches") +
+  labs(x="Atom", y="Atoms added/removed more often in security patches") +
   theme(axis.ticks.y=element_blank(), axis.text.y=element_text(vjust=0.4),
         panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
   coord_flip(ylim = c(0.3, 6))
@@ -109,6 +118,13 @@ colnames(cwe.cvss.csv)[4] <- "n.exploits"
 atoms.removed.unnested <- data.table(atoms.removed.cve %>% 
   mutate(cve.id = strsplit(as.character(cve.ids), ";")) %>% 
   unnest(cve.id))
+
+# Number of unique CVEs, commits, projects
+NROW(unique(atoms.removed.unnested$cve.id))
+NROW(unique(atoms.removed.unnested$rev.str))
+NROW(unique(atoms.removed.unnested$git.repo.url))
+
+
 
 atoms.cwe.cvss <- merge(cwe.cvss.csv, atoms.removed.unnested, by.x = "CVE.ID", by.y="cve.id")
 
@@ -166,23 +182,63 @@ cluster.long <- function(dt, row, col, value) {
 
 # remove the boring rows/cols
 
-atom.cwe.cvss.sum.long.trimmed <- atom.cwe.cvss.sum.long[, if(sum(count.norm, na.rm=TRUE)>=1 && sum(count) > 10) .SD, by=cwe.name][
+atom.cwe.cvss.sum.long.trimmed <- atom.cwe.cvss.sum.long[cwe.name != "NA-NA: NA", ][,if(sum(count.norm, na.rm=TRUE)>=1 && sum(count) > 20) .SD, by=cwe.name][
   , if(sum(count.norm, na.rm=TRUE)>=1) .SD, by=atom][, atom := droplevels(atom)]
 
 atom.cwe.cvss.sum.long.trimmed.clustered <- cluster.long(atom.cwe.cvss.sum.long.trimmed, 'atom', 'cwe.name', 'count.norm')
 
-atom.cwe.trimmed.spot.plot <- ggplot(atom.cwe.cvss.sum.long.trimmed, aes(cwe.name, atom)) + spot.theme +
+atom.cwe.cvss.sum.long.trimmed[, sum(count), by=cwe.name][order(V1)]
+atom.cwe.cvss.sum.long.trimmed[, cwe.group.count := sum(.SD$count), by='cwe.name']
+
+atom.cwe.cvss.sum.long.trimmed[, display.atom := convert.atom.names(atom)]
+
+atom.cwe.spot.w.bar.plot <- ggplot(atom.cwe.cvss.sum.long.trimmed, aes(cwe.name, display.atom)) + spot.theme +
   geom_point(colour = "black",     aes(size = 1)) +
   geom_point(colour = "white",     aes(size = 0.8)) +
-  geom_point(aes(size = 0.81*count.norm, colour=count)) +
-  theme(axis.ticks.y=element_blank(), axis.text.y=element_text(size = 15)) +
-  theme(axis.ticks.x=element_blank(), axis.text.x=element_text(size = 10)) +
+  geom_point(aes(size = 0.81*count.norm, colour=-count.norm^2)) +
+  geom_segment(aes(x=cwe.name, xend = cwe.name, y = 11.7, yend=11.7+cwe.group.count/200), size=10) +
+  theme(axis.ticks.y=element_blank(), axis.text.y=element_text(size = 18), axis.title.y=element_text(size=20, vjust=8)) +
+  theme(axis.ticks.x=element_blank(), axis.text.x=element_text(size = 14, vjust=2), axis.title.x=element_text(size=20, vjust=8)) +
   theme(text = element_text(size = 12)) +
+  scale_size_continuous(range = c(-1,15)) + # minimum point size
   scale_x_discrete(limits = atom.cwe.cvss.sum.long.trimmed.clustered$colName, position="top") +
-  scale_y_discrete(limits = atom.cwe.cvss.sum.long.trimmed.clustered$rowName) +
-  scale_fill_viridis()
-atom.cwe.trimmed.spot.plot
-  
+  scale_y_discrete(limits = c(convert.atom.names(atom.cwe.cvss.sum.long.trimmed.clustered$rowName), 'Total Size')) +
+  labs(x="Weakness (CWE)", y="Atom")+
+  scale_fill_viridis() 
+atom.cwe.spot.w.bar.plot
+
+ggsave("img/atom_cwe_spot_bar_plot.pdf", atom.cwe.spot.w.bar.plot, width=(width<-210), height=width*1.50, units = "mm", device=cairo_pdf)
+
+
+
+
+atom.cwe.cvss.sum.long.trimmed[grepl("CWE-362", cwe.name), cwe.name := 'CWE-362: Concurrent Execution using Shared Resource\n                  with Improper Synchronization']
+atom.cwe.cvss.sum.long.trimmed[grepl("CWE-119", cwe.name), cwe.name := 'CWE-119: Improper Restriction of Operations\n                  within the Bounds of a Memory Buffer']
+
+atom.cwe.cvss.sum.long.trimmed.clustered <- cluster.long(atom.cwe.cvss.sum.long.trimmed, 'atom', 'cwe.name', 'count.norm')
+
+atom.cwe.spot.w.bar.flipped.plot <- ggplot(atom.cwe.cvss.sum.long.trimmed, aes(cwe.name, display.atom)) + spot.theme +
+  geom_point(colour = "black",     aes(size = 1)) +
+  geom_point(colour = "white",     aes(size = 0.8)) +
+  geom_point(aes(size = 0.81*count.norm, colour=-count.norm^2)) +
+  geom_segment(aes(x=cwe.name, xend = cwe.name, y = 11.7, yend=11.7+cwe.group.count/200), size=10) +
+  theme(axis.ticks.y=element_blank(), axis.text.y=element_text(size = 14, hjust=0), axis.title.y=element_text(size=20, vjust=8)) +
+  theme(axis.ticks.x=element_blank(), axis.text.x=element_text(size = 18), axis.title.x=element_text(size=20, vjust=9999)) +axis.text.x.top = element_text(vjust = 0.5)
+  theme(text = element_text(size = 12)) +
+  scale_size_continuous(range = c(-1,15)) + # minimum point size
+  scale_x_discrete(limits = atom.cwe.cvss.sum.long.trimmed.clustered$colName, position="bottom") +
+  scale_y_discrete(limits = c(convert.atom.names(atom.cwe.cvss.sum.long.trimmed.clustered$rowName), 'Total Size                       '), position="right") + # axis title height
+  labs(x="Weakness (CWE)", y="Atom") +
+  coord_flip() +
+  scale_fill_viridis() 
+atom.cwe.spot.w.bar.flipped.plot
+
+ggsave("img/atom_cwe_spot_bar_flipped_plot.pdf", atom.cwe.spot.w.bar.flipped.plot, width=(width<-315), height=width*0.7, units = "mm", device=cairo_pdf)
+
+
+
+
+
 ##############################
 #        CVSS scores
 ##############################
@@ -249,3 +305,6 @@ atoms.removed.cve.denoised <- atoms.removed.cve[!(git.repo.url %in% inaccessible
                                                                                            (n.removed - removed.non.atoms) > (n.added - added.non.atoms)]
 atoms.removed.cve.denoised[, github.url := github.url(git.repo.url, rev.str)]
 #View(atoms.removed.cve.denoised) # the results are very wide so it's easier to read them as a spreadsheet
+
+atoms.removed.cve.denoised[]
+atoms.removed.cve[conditional > 0, .(git.repo.url, rev.str, file, cve.ids, n.removed, n.added, removed.non.atoms, added.non.atoms)]
