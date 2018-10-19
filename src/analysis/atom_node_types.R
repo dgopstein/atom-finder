@@ -6,7 +6,18 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 source("util.R")
 
-atom.node.type <- data.table(read.csv("data/atom-context_2018-10-12_parent-type.csv"))
+atom.node.type <- data.table(read.csv("data/atom-context_2018-10-12_parent-type.csv.xz"))
+all.node.type <- data.table(read.csv("data/all-node-counts_2018-08-31_for-esem.csv"))
+
+atom.node.type.by.offset <- atom.node.type[, .(count = .N, atoms = toString(.SD$atom)), by=c('file', 'line', 'offset')]
+#atom.node.type.by.offset[, atoms.str := toString(atoms)]
+atom.node.type.by.offset[1:100]
+
+atom.node.type.by.offset$atoms
+
+cooccurring.atoms <- atom.node.type.by.offset[, .(count=.N), by=atoms]
+
+n.lines.with.atoms
 
 atom.node.type.sums <- atom.node.type[, .(sum=.N), by=atom]
 atom.node.type.counts <- atom.node.type[, .(count=.N), by=c('atom', 'node.type')]
