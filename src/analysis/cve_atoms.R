@@ -45,7 +45,8 @@ atoms.removed.cve.sums$n.atoms.removed.cve
 
 atoms.added.rate.in.cves <- mean(atoms.added.cve$n.atoms.added.cve / atoms.added.cve$n.added, na.rm=TRUE)
 atoms.removed.rate.in.cves <- mean(atoms.removed.cve$n.atoms.removed.cve / atoms.removed.cve$n.removed, na.rm=TRUE)
-atoms.removed.rate.in.cves / atoms.added.rate.in.cves
+cve.removal.rate.paper <- atoms.removed.rate.in.cves / atoms.added.rate.in.cves
+cve.removal.rate.paper
 
 chisq.test(matrix(c(atoms.removed.cve.sums$n.atoms.removed.cve, atoms.removed.cve.sums$n.removed,
                     atoms.added.cve.sums$n.atoms.added.cve,     atoms.added.cve.sums$n.added), nrow=2))
@@ -209,34 +210,47 @@ atom.cwe.spot.w.bar.plot
 
 ggsave("img/atom_cwe_spot_bar_plot.pdf", atom.cwe.spot.w.bar.plot, width=(width<-210), height=width*1.50, units = "mm", device=cairo_pdf)
 
-
-
-
-atom.cwe.cvss.sum.long.trimmed[grepl("CWE-362", cwe.name), cwe.name := 'CWE-362: Concurrent Execution using Shared Resource\n                  with Improper Synchronization']
+atom.cwe.cvss.sum.long.trimmed[grepl("CWE-362", cwe.name), cwe.name := 'CWE-362: Race Condition']
 atom.cwe.cvss.sum.long.trimmed[grepl("CWE-119", cwe.name), cwe.name := 'CWE-119: Improper Restriction of Operations\n                  within the Bounds of a Memory Buffer']
 
 atom.cwe.cvss.sum.long.trimmed.clustered <- cluster.long(atom.cwe.cvss.sum.long.trimmed, 'atom', 'cwe.name', 'count.norm')
 
-atom.cwe.spot.w.bar.flipped.plot <- ggplot(atom.cwe.cvss.sum.long.trimmed, aes(cwe.name, display.atom)) + spot.theme +
-  geom_point(colour = "black",     aes(size = 1)) +
-  geom_point(colour = "white",     aes(size = 0.8)) +
-  geom_point(aes(size = 0.81*count.norm, colour=-count.norm^2)) +
-  geom_segment(aes(x=cwe.name, xend = cwe.name, y = 11.7, yend=11.7+cwe.group.count/200), size=10) +
-  theme(axis.ticks.y=element_blank(), axis.text.y=element_text(size = 14, hjust=0), axis.title.y=element_text(size=20, vjust=8)) +
-  theme(axis.ticks.x=element_blank(), axis.text.x=element_text(size = 18), axis.title.x=element_text(size=20, vjust=9999)) +axis.text.x.top = element_text(vjust = 0.5)
-  theme(text = element_text(size = 12)) +
-  scale_size_continuous(range = c(-1,15)) + # minimum point size
-  scale_x_discrete(limits = atom.cwe.cvss.sum.long.trimmed.clustered$colName, position="bottom") +
-  scale_y_discrete(limits = c(convert.atom.names(atom.cwe.cvss.sum.long.trimmed.clustered$rowName), 'Total Size                       '), position="right") + # axis title height
-  labs(x="Weakness (CWE)", y="Atom") +
-  coord_flip() +
-  scale_fill_viridis() 
+flipped.cwe.spot <- list(spot.theme,
+  geom_point(colour = "black",     aes(size = 1)),
+  geom_point(colour = "white",     aes(size = 0.8)),
+  geom_point(aes(size = 0.81*count.norm, colour=-count.norm^2)),
+  geom_segment(aes(x=cwe.name, xend = cwe.name, y = 11.7, yend=11.7+cwe.group.count/200), size=10),
+  theme(axis.ticks.y=element_blank(), axis.text.y=element_text(size = 14, hjust=0), axis.title.y=element_text(size=20, vjust=8)),
+  theme(axis.ticks.x=element_blank(), axis.text.x=element_text(size = 18), axis.title.x=element_text(size=20, vjust=9999)), #axis.text.x.top = element_text(vjust = 0.5)
+  theme(text = element_text(size = 12)),
+  scale_size_continuous(range = c(-1,15)), # minimum point size
+  scale_x_discrete(limits = atom.cwe.cvss.sum.long.trimmed.clustered$colName, position="bottom"),
+  scale_y_discrete(limits = c(convert.atom.names(atom.cwe.cvss.sum.long.trimmed.clustered$rowName), 'Total Size                       '), position="right"), # axis title height
+  labs(x="Weakness (CWE)", y="Atom"),
+  coord_flip(),
+  scale_fill_viridis())
+
+atom.cwe.spot.w.bar.flipped.plot <- ggplot(atom.cwe.cvss.sum.long.trimmed, aes(cwe.name, display.atom)) + flipped.cwe.spot
 atom.cwe.spot.w.bar.flipped.plot
 
 ggsave("img/atom_cwe_spot_bar_flipped_plot.pdf", atom.cwe.spot.w.bar.flipped.plot, width=(width<-315), height=width*0.7, units = "mm", device=cairo_pdf)
 
 
+atom.cwe.cats <- atom.cwe.cvss.sum.long.trimmed[grepl("Category-", cwe.name)][,if(sum(count)>=1).SD,by=atom][, atom:=droplevels(atom)]
+atom.cwe.non.cats <- atom.cwe.cvss.sum.long.trimmed[!grepl("Category-", cwe.name)][,if(sum(count)>=1).SD,by=atom][, atom:=droplevels(atom)]
 
+atom.cwe.cats.clustered <- cluster.long(atom.cwe.cats, 'atom', 'cwe.name', 'count.norm')
+atom.cwe.non.cats.clustered <- cluster.long(atom.cwe.non.cats, 'atom', 'cwe.name', 'count.norm')
+
+atom.cwe.non.cats.plot <- ggplot(atom.cwe.non.cats, aes(cwe.name, display.atom)) + flipped.cwe.spot +
+  scale_x_discrete(limits = atom.cwe.non.cats.clustered$colName) +
+  scale_y_discrete(limits = c(convert.atom.names(atom.cwe.non.cats.clustered$rowName), "", "Total"), position="right")
+atom.cwe.non.cats.plot
+
+atom.cwe.cats.plot <- ggplot(atom.cwe.cats, aes(cwe.name, display.atom)) + flipped.cwe.spot +
+  scale_x_discrete(limits = atom.cwe.cats.clustered$colName) +
+  scale_y_discrete(limits = c(convert.atom.names(atom.cwe.cats.clustered$rowName), "Total"), position="right")
+atom.cwe.cats.plot
 
 
 ##############################

@@ -34,7 +34,7 @@ all.atom.comments <- individual.atom.comments[, .(count = sum(count)), by=c("com
 all.atom.comments.widths <- all.atom.comments[, .(width=sum(count)), by=comment][, .(comment, width = width/sum(width))]
 all.atom.comments <- merge(all.atom.comments, all.atom.comments.widths, by="comment")
 
-
+atom.comment.rate.in.function <-
 (all.atom.comments[in.function == TRUE & comment==TRUE & any.atom==TRUE, count] / all.atom.comments[in.function == TRUE & any.atom==TRUE, sum(count)]) /
 (all.atom.comments[in.function == TRUE & comment==TRUE & any.atom==FALSE, count] / all.atom.comments[in.function == TRUE & any.atom==FALSE, sum(count)])
 

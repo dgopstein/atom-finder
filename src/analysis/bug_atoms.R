@@ -140,9 +140,11 @@ atoms.removed.rate.dt[, display.atom := convert.atom.names(atom)]
 only.atoms.removed.rate.dt <- atoms.removed.rate.dt[!(atom %in% c("bug","n.bugs","any.atoms.removed","n.removed",'added.non.atoms','n.added', 'removed.non.atoms', 'all.atoms.removed'))]
 only.atoms.removed.rate.dt[, display.atom := reorder(display.atom, rate)]
 
-atoms.removed.rate[bug==TRUE, all.atoms.removed] / atoms.removed.rate[bug==FALSE, all.atoms.removed]
-chisq.test(c(atoms.removed.sums[bug==TRUE, all.atoms.removed], atoms.removed.sums[bug==FALSE, all.atoms.removed],
+bug.fix.atom.rate.paper <- atoms.removed.rate[bug==TRUE, all.atoms.removed] / atoms.removed.rate[bug==FALSE, all.atoms.removed]
+bug.fix.atom.rate.paper
+bug.fix.atom.chisq.paper <- chisq.test(c(atoms.removed.sums[bug==TRUE, all.atoms.removed], atoms.removed.sums[bug==FALSE, all.atoms.removed],
            atoms.removed.sums[bug==TRUE, n.removed], atoms.removed.sums[bug==FALSE, n.removed]))
+bug.fix.atom.chisq.paper
 
 atoms.removed.chis <-
   data.table(t(atoms.removed.sums[, lapply(.SD, function(x)

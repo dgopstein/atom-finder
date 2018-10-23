@@ -114,8 +114,6 @@ atom.occurrence.rate
 
 ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-140), height=width*0.7, units = "mm")
 
-?signif
-
 # overall atom rate for paper
 all.atom.ast.rate <- all.atom.counts[, (all.nodes - non.atoms) / all.nodes]
 1/all.atom.ast.rate
@@ -178,10 +176,30 @@ ggplot(atom.correct.C, aes(rate, correct.rate.C)) + geom_point() +
 proj.loc <- data.table(proj=c("clang", "freebsd", "gcc", "gecko-dev", "linux", "mongo", "webkit", "emacs", "git", "subversion", "vim", "mysql-server", "nginx", "httpd"),
   loc=c(1969346, 20252205, 5450514, 11380215, 22626962, 3864455, 4954408, 480268, 253422, 707786, 451820, 2979215, 186760, 317717))
 
-loc.rate <- merge(proj.loc, atom.counts, by.x="proj", by.y="X.project")
+loc.rate <- merge(proj.loc, atom.counts, by.x="proj", by.y="project")
 ggplot(loc.rate, aes(loc, atom.rate)) +
   geom_point() +
   scale_x_log10()
+
+################################################
+# average atoms per line, and lines per atom
+################################################
+
+# github.com/AlDanial/cloc v 1.80  T=801.49 s (640.5 files/s, 141127.1 lines/s)
+# ----------------------------------------------------------------------------------------
+# Language                              files          blank        comment           code
+# ----------------------------------------------------------------------------------------
+# C                                     85648        5324180        5970700       29452420
+# C++                                   53421        2226119        2239534       12034944
+# C/C++ Header                          74057        2152838        4175043       11390728
+
+atom.finder.corpus.sloc <- 29452420 + 12034944 + 11390728
+total.n.atoms <- sum(all.atom.counts[, -c('all.nodes', 'non.atoms')])
+total.n.atoms
+
+# line rates for paper
+atoms.per.line <- total.n.atoms/atom.finder.corpus.sloc
+lines.per.atom <- 1/atoms.per.line
 
 ################################################
 #     combined atom counts per project
