@@ -7,7 +7,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 source("util.R")
 
-parse.problems <- data.table(read.csv('../../tmp/parse_problem_rate_full.csv.bz2', header=TRUE))
+parse.problems <- data.table(read.csv('data/parse_problem_rate_full.csv.xz', header=TRUE))
 
 plot(density(parse.problems[total.nodes > 10]$problem.rate))
 hist(parse.problems[total.nodes > 10]$problem.rate)
