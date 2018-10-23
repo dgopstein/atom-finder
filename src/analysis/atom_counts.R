@@ -10,7 +10,8 @@ source("util.R")
 
 stdize <- function(x, ...) {(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
 
-atom.counts <- data.table(read.csv("data/atom-counts_2018-08-27_filter-better-extensions.csv"))
+atom.counts <- data.table(read.csv("data/atom-counts_2018-09-05_for-debugging-esem.csv"))
+
 #colnames(atom.counts) <- sapply(colnames(atom.counts), function(s) substr(s,3,99))
 proj.order <- c("linux", "freebsd", "gecko-dev", "webkit",
   "gcc", "clang", "mongo", "mysql-server", "subversion", "git",
@@ -93,6 +94,8 @@ ggsave("img/atom_rate_per_project_clustered.pdf", atom.rate.per.project.clustere
 #  all projects combined
 ############################
 library(dplyr)
+all.atom.counts.by.project <- atom.counts[, .(project, all.atoms = Reduce(`+`, .SD)),.SDcols=atom.names.dot]
+
 all.atom.counts <- atom.counts[, -c('project','domain')][, lapply(.SD, sum)]
 all.atom.rates.wide <- all.atom.counts[, -c('all.nodes', 'non.atoms')] / all.atom.counts$all.nodes
 all.atom.rates <- data.table(data.frame(atom = unlist(atom.name.conversion[names(all.atom.rates.wide)]), rate = t(all.atom.rates.wide)))
@@ -284,3 +287,5 @@ atom.node.occurrence.rate <- ggplot(atom.node.rates, aes(x = reorder(name, rate)
   labs(x="Node", y="Occurrence Rate")
 atom.node.occurrence.rate
 as.integer(factor(atom.node.rates$type))
+
+

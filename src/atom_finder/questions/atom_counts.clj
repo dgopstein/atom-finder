@@ -76,6 +76,6 @@
 (defn main-atom-counts []
   (let [edn-file "tmp/atom-counts_2018-09-05_for-debugging-esem.edn"
         csv-file "src/analysis/data/atom-counts_2018-09-05_for-debugging-esem.csv"]
-    (count-atoms-in-files edn-file)
+    ;(count-atoms-in-files edn-file)
     (summarize-atom-counts-by-project edn-file csv-file)
     ))

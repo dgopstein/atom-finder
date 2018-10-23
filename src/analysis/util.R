@@ -1,8 +1,10 @@
-atom.names.key     <- c("assignment.as.value", "comma.operator", "conditional",
+atom.names.dot     <- c("assignment.as.value", "comma.operator", "conditional",
                         "implicit.predicate", "literal.encoding", "logic.as.control.flow",
                         "macro.operator.precedence", "omitted.curly.braces", "operator.precedence",
                         "post.increment", "pre.increment", "preprocessor.in.statement",
-                        "repurposed.variable", "reversed.subscript", "type.conversion",
+                        "repurposed.variable", "reversed.subscript", "type.conversion")
+
+atom.names.key     <- c(atom.names.dot,
                         #--------------------------------------------------------------
                         "assignment-as-value", "comma-operator",
                         "implicit-predicate", "literal-encoding", "logic-as-control-flow",
