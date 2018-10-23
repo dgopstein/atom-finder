@@ -8,7 +8,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("util.R")
 
 atom.node.type <- data.table(read.csv("data/atom-context_2018-10-12_parent-type.csv.xz"))
-all.node.type <- data.table(read.csv("data/all-node-counts_2018-08-31_for-esem.csv"))
+all.node.type <- data.table(read.csv("data/all-node-counts_2018-08-31_for-emse.csv"))
 
 atom.node.type.by.offset <- atom.node.type[, .(count = .N, atoms = toString(.SD$atom)), by=c('file', 'line', 'offset')]
 

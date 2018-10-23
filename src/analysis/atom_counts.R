@@ -10,7 +10,7 @@ source("util.R")
 
 stdize <- function(x, ...) {(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
 
-atom.counts <- data.table(read.csv("data/atom-counts_2018-09-05_for-debugging-esem.csv"))
+atom.counts <- data.table(read.csv("data/atom-counts_2018-09-05_for-debugging-emse.csv"))
 
 #colnames(atom.counts) <- sapply(colnames(atom.counts), function(s) substr(s,3,99))
 proj.order <- c("linux", "freebsd", "gecko-dev", "webkit",
@@ -245,7 +245,7 @@ ggplot(atom.effect, aes(reorder(atom, effect.size), effect.size)) +
 ########################################
 #   Compare atom rates with regular node rates
 ########################################
-all.node.counts <- data.table(read.csv('data/all-node-counts_2018-08-31_for-esem.csv'))
+all.node.counts <- data.table(read.csv('data/all-node-counts_2018-08-31_for-emse.csv'))
 all.node.total <- all.node.counts[, sum(count)]
 all.node.counts[, rate := count / all.node.total]
 print(all.node.counts, nrows=200)
