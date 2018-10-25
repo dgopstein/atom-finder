@@ -9,10 +9,12 @@ source("util.R")
 
 atom.node.type <- data.table(read.csv("data/atom-context_2018-10-12_parent-type.csv.xz"))
 all.node.type <- data.table(read.csv("data/all-node-counts_2018-08-31_for-emse.csv"))
+all.node.type[, node.type := str_replace(node.type, "^:", "")] # remove leading : from expression symbols' names
 
 atom.node.type.by.offset <- atom.node.type[, .(count = .N, atoms = toString(.SD$atom)), by=c('file', 'line', 'offset')]
 
 cooccurring.atoms <- atom.node.type.by.offset[, .(count=.N), by=atoms]
+cooccurring.atoms[order(-count)][1:20]
 
 atom.node.type.sums <- atom.node.type[, .(sum=.N), by=atom]
 atom.node.type.counts <- atom.node.type[, .(count=.N), by=c('atom', 'node.type')]
@@ -63,3 +65,19 @@ omitted.context.plot <- ggplot(omitted.context.long, aes(reorder(display.node.ty
 omitted.context.plot
 
 ggsave("img/omitted_context_plot.pdf", omitted.context.plot, width=(width<-150), height=width*0.35, units = "mm", device=cairo_pdf)
+
+
+#######  What nodes are Implicit Predicates ########
+implicit.predicate.nodes <- atom.node.type.rates[atom=='implicit-predicate'][, .(node.type, atom, count)]
+
+################################################################
+#         What nodes are Operator Precedence
+################################################################
+operator.precedence.nodes <- atom.node.type.rates[atom=='operator-precedence'][, .(node.type, atom, count)]
+operator.precedence.nodes[order(-count)]
+operator.context <- merge(operator.precedence.nodes, all.node.type, by='node.type', suffixes = c('.atom', '.node'))
+binary.ops <- c("binaryAnd", "binaryOr", "binaryXor", "divide", "equals", "greaterEqual", "greaterThan", 
+                "lessEqual", "lessThan", "logicalAnd", "logicalOr", "minus", 
+                "modulo", "multiply", "notequals", "plus", "shiftLeft", "shiftRight")
+dput(operator.context$node.type)
+
