@@ -14,9 +14,9 @@
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    [swiss.arrows :refer :all]
-   [schema.core :as s]
-   ))
-
+   [schema.core :as s])
+  (:import [atom_finder.classifier Atom])
+   )
 
 (s/defn superfluous-parens? [node :- (s/pred paren-node?)]
   (let [mom (parent node)
@@ -25,5 +25,39 @@
         reparsed-parenless-mom (->> parenless-mom write-ast parse-expr)
         ]
 
-    (tree=by (juxt class expr-operator) (pap print-tree parenless-mom) (pap print-tree reparsed-parenless-mom))
+    (tree=by (juxt class expr-operator) parenless-mom reparsed-parenless-mom)
+  ))
+
+(defn find-parens
+  [root]
+  (let [paren-types
+        [(Atom. :parens paren-node? (default-finder paren-node?))
+         (Atom. :superfluous-parens superfluous-parens?
+                (default-finder #(when (paren-node? %) (superfluous-parens? %))))
+         (atom-lookup :operator-precedence)]]
+  (find-atoms paren-types root)))
+
+(defn find-all-parens-in-project
+  [edn-file]
+  (println (str (now)))
+  (->> atom-finder-corpus-path
+       (pmap-dir-c-files
+        (fn [file]
+          (merge
+           {:file (atom-finder-relative-path file)}
+           (->> file parse-file find-parens (map-values (partial map #(dissoc (loc %) :length :start-line))))
+           )))
+       (map prn)
+       dorun
+       (log-to edn-file)
+       time-mins
+       ))
+
+(defn main-superfluous-parens
+  []
+  (let [edn-file "tmp/all-parens_2018-10-28_superfluous-parens.edn"
+        csv-file "src/analysis/data/all-parens_2018-10-28_superfluous-parens.csv"
+        ]
+    (find-all-parens-in-project edn-file)
+    ;(summarize-all-nodes edn-file csv-file)
   ))
