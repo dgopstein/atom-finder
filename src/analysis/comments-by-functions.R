@@ -152,7 +152,7 @@ individual.comment.rates.all.proj.in.fun[, c("X2", "p.value", "es", "odds") :=
                                          by=1:nrow(individual.comment.rates.all.proj.in.fun)]
 individual.comment.rates.all.proj.in.fun[atom=="Non-Atom", odds := NA]
 
-
+View(individual.comment.rates.all.proj.in.fun)
 individual.comment.rates.all.proj.in.fun[, median(odds, na.rm=TRUE)]
 
 individual.comment.rates.all.proj.in.fun.plot <-

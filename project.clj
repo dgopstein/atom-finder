@@ -27,7 +27,7 @@
   :resource-paths ["resources/org.eclipse.cdt.core_6.2.0.201612061315.jar"
                    "resources/com.zutubi.diff-3.1.dev.dgopstein.jar"
                    ;"resources/changedistiller-0.0.1-SNAPSHOT-jar-with-dependencies.jar"
-                   "resources/clj-cdt-0.0.2.jar"
+                   "resources/clj-cdt-0.0.4.jar"
                    "src/test/resources"
                    "src/conf"
                    ]
@@ -49,7 +49,7 @@
              :find-atoms-in-dirs {:main atom-finder.find-atoms-in-dirs} ; https://stackoverflow.com/questions/11023762/leiningen-with-multiple-main-classes
              }
   :aliases {"find-atoms-in-dirs" ["with-profile" "find-atoms-in-dirs" "run"]}
-  :jvm-opts ["-Xss8m" "-Xmx8g" "-XX:+HeapDumpOnOutOfMemoryError"]
+  :jvm-opts ["-Xss8m" "-Xmx8g"]
   :main atom-finder.core
   ;:aot [atom-finder.core]
   :plugins [[lein-codox "0.10.3"]

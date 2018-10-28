@@ -2,6 +2,7 @@
   (:require
    [clj-cdt.clj-cdt :refer :all]
    [clj-cdt.writer-util :refer :all]
+   [clj-cdt.expr-operator :refer :all]
    [atom-finder.util :refer :all]
    [atom-finder.classifier :refer :all])
   (:gen-class))

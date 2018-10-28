@@ -10,7 +10,8 @@ source("util.R")
 
 stdize <- function(x, ...) {(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
 
-atom.counts <- data.table(read.csv("data/atom-counts_2018-08-27_filter-better-extensions.csv"))
+atom.counts <- data.table(read.csv("data/atom-counts_2018-09-05_for-debugging-emse.csv"))
+
 #colnames(atom.counts) <- sapply(colnames(atom.counts), function(s) substr(s,3,99))
 proj.order <- c("linux", "freebsd", "gecko-dev", "webkit",
   "gcc", "clang", "mongo", "mysql-server", "subversion", "git",
@@ -54,20 +55,10 @@ ggsave("img/atom_rate_per_project.pdf", atom.rate.per.project, width=(width<-132
 ##################################
 #     Clustered Spot Matrix
 ##################################
-atom.rates.mat <- as.matrix(atom.rates.wide[,-c("project","domain", "non.atoms")])
-rownames(atom.rates.mat) <- atom.rates.wide$project
-
-h <- heatmap(atom.rates.mat)
-
 proj.to.domain <- as.list(as.character(proj.domain))
 names(proj.to.domain) <- proj.order
 
-atom.rates.clustered <- data.table(melt(atom.rates.mat[h$rowInd,h$colInd], varnames=c("project", "atom"), value.name = "rate"))
-atom.rates.clustered$domain <- factor(unlist(proj.to.domain[as.character(atom.rates.clustered$project)]), domain.levels)
-atom.rates.clustered[, atom := convert.atom.names(atom)]
-
-clustered.project.order <- rev(rownames(atom.rates.mat[h$rowInd,]))
-clustered.atom.order <- rev(convert.atom.names(colnames(atom.rates.mat[,h$colInd])))
+project.atoms.order <- cluster.long(atom.rates, 'atom', 'project', 'rate')
 
 atom.rate.per.project.clustered <-
   ggplot(data=atom.rates.clustered, aes(project, atom)) +
@@ -81,8 +72,8 @@ atom.rate.per.project.clustered <-
   theme(axis.ticks.y=element_blank(), axis.title.y=element_blank()) +
   theme(axis.line=element_blank()) +
   theme(legend.position="none") +
-  scale_y_discrete(limits=clustered.atom.order) +
-  scale_x_discrete(limits=clustered.project.order) +
+  scale_y_discrete(limits=project.atoms.order$rowName) +
+  scale_x_discrete(limits=project.atoms.order$colName) +
                    #, labels=paste(clustered.project.order, substring(proj.to.domain[clustered.project.order],1,3), sep=' - ')) +
   labs(x="Project")
 atom.rate.per.project.clustered
@@ -93,6 +84,8 @@ ggsave("img/atom_rate_per_project_clustered.pdf", atom.rate.per.project.clustere
 #  all projects combined
 ############################
 library(dplyr)
+all.atom.counts.by.project <- atom.counts[, .(project, all.atoms = Reduce(`+`, .SD)),.SDcols=atom.names.dot]
+
 all.atom.counts <- atom.counts[, -c('project','domain')][, lapply(.SD, sum)]
 all.atom.rates.wide <- all.atom.counts[, -c('all.nodes', 'non.atoms')] / all.atom.counts$all.nodes
 all.atom.rates <- data.table(data.frame(atom = unlist(atom.name.conversion[names(all.atom.rates.wide)]), rate = t(all.atom.rates.wide)))
@@ -100,7 +93,7 @@ all.atom.rates <- data.table(data.frame(atom = unlist(atom.name.conversion[names
 atom.occurrence.rate <- ggplot(all.atom.rates, aes(x = reorder(atom, rate), y = rate)) +
   theme_classic() +
   geom_bar(stat="identity", fill=colors2[1]) +
-  geom_text(aes(y=0.0010, label=formatC(signif(rate,digits=2), digits=2, flag="#"),
+  geom_text(aes(y=0.0015, label=formatC(signif(rate,digits=2), digits=2, flag="#"),
                 color=atom %in% c('Omitted Curly Brace','Operator Precedence')), angle=0, hjust=0) +
   theme(#axis.text.x=element_text(angle=90, hjust=1, vjust=.4), axis.text.y = element_blank(),
         axis.text.x=element_blank(),
@@ -117,6 +110,8 @@ ggsave("img/atom_occurrence_rate.pdf", atom.occurrence.rate, width=(width<-140),
 # overall atom rate for paper
 all.atom.ast.rate <- all.atom.counts[, (all.nodes - non.atoms) / all.nodes]
 1/all.atom.ast.rate
+
+nodes.per.omitted.curly <- 1/all.atom.counts[, omitted.curly.braces / all.nodes]
 
 #################################
 #  all atoms by effect size
@@ -242,7 +237,7 @@ ggplot(atom.effect, aes(reorder(atom, effect.size), effect.size)) +
 ########################################
 #   Compare atom rates with regular node rates
 ########################################
-all.node.counts <- data.table(read.csv('data/all-node-counts_2018-08-31_for-esem.csv'))
+all.node.counts <- data.table(read.csv('data/all-node-counts_2018-08-31_for-emse.csv'))
 all.node.total <- all.node.counts[, sum(count)]
 all.node.counts[, rate := count / all.node.total]
 print(all.node.counts, nrows=200)
@@ -284,3 +279,5 @@ atom.node.occurrence.rate <- ggplot(atom.node.rates, aes(x = reorder(name, rate)
   labs(x="Node", y="Occurrence Rate")
 atom.node.occurrence.rate
 as.integer(factor(atom.node.rates$type))
+
+

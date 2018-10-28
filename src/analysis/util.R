@@ -1,8 +1,10 @@
-atom.names.key     <- c("assignment.as.value", "comma.operator", "conditional",
+atom.names.dot     <- c("assignment.as.value", "comma.operator", "conditional",
                         "implicit.predicate", "literal.encoding", "logic.as.control.flow",
                         "macro.operator.precedence", "omitted.curly.braces", "operator.precedence",
                         "post.increment", "pre.increment", "preprocessor.in.statement",
-                        "repurposed.variable", "reversed.subscript", "type.conversion",
+                        "repurposed.variable", "reversed.subscript", "type.conversion")
+
+atom.names.key     <- c(atom.names.dot,
                         #--------------------------------------------------------------
                         "assignment-as-value", "comma-operator",
                         "implicit-predicate", "literal-encoding", "logic-as-control-flow",
@@ -91,3 +93,15 @@ spot.theme <- list(
   scale_x_discrete(position = "top"))
 
 range01 <- function(x, ...){(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
+
+
+# cluster the rows/columns of a long data.table by making a dendogrammed-heatmap out of it
+cluster.long <- function(dt, row, col, value) {
+  dt.sparse <- do.call(tidytext::cast_sparse, list(dt, row, col, value))
+  dt.mat <- as.matrix(dt.sparse)
+  
+  row.ind <- cluster::agnes(dt.mat)
+  col.ind <- cluster::agnes(t(dt.mat))
+  
+  list(rowInd = row.ind$order, colInd = col.ind$order, rowName = row.ind$order.lab, colName = col.ind$order.lab)
+}

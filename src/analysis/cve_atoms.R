@@ -92,7 +92,7 @@ atoms.relative.cve.rate.plot <-
            color="black", size=3, vjust=0.4) +
   #annotate('rect', xmin = 0.9, xmax = 1.1, ymin = 0.18, ymax = 0.22, fill="white", alpha=0.5) + annotate('text', x=1, y=0.2, label="Inf", size=3) +
   #annotate('rect', xmin = 1.9, xmax = 2.1, ymin = 0.18, ymax = 0.22, fill="white", alpha=0.5) + annotate('text', x=2, y=0.2, label="Inf", size=3) +
-  annotate('label', x=2.1, y=2.1, size=3.5, hjust=0, label.size=NA,
+  annotate('label', x=2.5, y=2.1, size=3.5, hjust=0, label.size=NA,
            family="DroidSansMono", label=" p<0.1    *\n p<0.01   **\n p<0.001  ***\n p<0.0001 ****") +
   scale_color_manual(values=c(colors2, 'red')) +
   scale_y_log10(position="right", labels=c("Added", "Removed"), breaks=c(.47, 2.3)) +
@@ -169,17 +169,6 @@ ggsave("img/atom_cwe_spot_plot.pdf", atom.cwe.spot.plot, width=(width<-570), hei
 
 
 atom.cwe.cvss.sum.long[is.nan(count.norm), count.norm := 0]
-
-# cluster the rows/columns of a long data.table by making a dendogrammed-heatmap out of it
-cluster.long <- function(dt, row, col, value) {
-  dt.sparse <- do.call(tidytext::cast_sparse, list(dt, row, col, value))
-  dt.mat <- as.matrix(dt.sparse)
-
-  row.ind <- cluster::agnes(dt.mat)
-  col.ind <- cluster::agnes(t(dt.mat))
-
-  list(rowInd = row.ind$order, colInd = col.ind$order, rowName = row.ind$order.lab, colName = col.ind$order.lab)
-}
 
 # remove the boring rows/cols
 
