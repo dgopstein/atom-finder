@@ -10,6 +10,7 @@
    [clj-cdt.clj-cdt :refer :all]
    [clj-cdt.expr-operator :refer :all]
    [clj-cdt.writer-util :refer :all]
+   [clj-cdt.modify-ast :refer :all]
    [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
    [swiss.arrows :refer :all]

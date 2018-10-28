@@ -11,6 +11,7 @@
             [clj-jgit.internal :as giti]
             [clojure.pprint :refer :all]
             [clj-cdt.clj-cdt :refer :all]
+            [clj-cdt.modify-ast :refer :all]
             [clj-cdt.expr-operator :refer :all]
             ))
 
