@@ -31,19 +31,12 @@
       ))))
 
 (deftest tree-diff-test
-  (testing "tree= - Which ASTs are equal"
-    (let [cases [
-                 [true "b = 1 + a++" "b = 1 + a++"]
-                 [true " b  =  1 /*z*/  +  a++" "b = 1 + a++"]
-                 [false "b = 1 + a++" "b = 2 + a++"]
-                 [false "b = 1 + a++" "b = 1 * a++"]
-                 [false  "b = 1 + a++" "b = 1 + (a++)"]
-                 ]]
+  (testing "tree=by - in which nodes have been artificially rearranged"
+    (let [parenless  (parse-expr "1 + 2 * 3")
+          node       (parse-expr "(1 + 2) * 3")
+          rearranged (replace-expr node (get-in-tree [0] node) (get-in-tree [0 0] node))]
 
-      (doseq [[expected a b] cases]
-        (is (= expected (tree= (parse-frag a) (parse-frag b)))
-            [expected (str "'" a "' '" b"'")])
-        )))
+        (is (not (tree=by (juxt class expr-operator) parenless rearranged)))))
 
   (testing "tree=by"
     (let [cases [
