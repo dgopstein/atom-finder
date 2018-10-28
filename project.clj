@@ -49,7 +49,7 @@
              :find-atoms-in-dirs {:main atom-finder.find-atoms-in-dirs} ; https://stackoverflow.com/questions/11023762/leiningen-with-multiple-main-classes
              }
   :aliases {"find-atoms-in-dirs" ["with-profile" "find-atoms-in-dirs" "run"]}
-  :jvm-opts ["-Xss8m" "-Xmx8g" "-XX:+HeapDumpOnOutOfMemoryError"]
+  :jvm-opts ["-Xss8m" "-Xmx8g"]
   :main atom-finder.core
   ;:aot [atom-finder.core]
   :plugins [[lein-codox "0.10.3"]
