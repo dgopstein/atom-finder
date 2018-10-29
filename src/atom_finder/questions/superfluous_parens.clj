@@ -45,7 +45,12 @@
         (fn [file]
           (merge
            {:file (atom-finder-relative-path file)}
-           (->> file parse-file find-parens (map-values (partial map #(dissoc (loc %) :length :start-line))))
+           (->> file parse-file find-parens
+                (map-values (partial map (fn [node]
+                                           (merge {:parent-type (opname-or-typename (parent node))
+                                                   :node-type (opname-or-typename node)}
+                                                  (dissoc (loc node) :length :start-line)
+                                                  )))))
            )))
        (map prn)
        dorun
@@ -55,8 +60,8 @@
 
 (defn main-superfluous-parens
   []
-  (let [edn-file "tmp/all-parens_2018-10-28_superfluous-parens.edn"
-        csv-file "src/analysis/data/all-parens_2018-10-28_superfluous-parens.csv"
+  (let [edn-file "tmp/all-parens_2018-10-28_context.edn"
+        csv-file "src/analysis/data/all-parens_2018-10-28_context.csv"
         ]
     (find-all-parens-in-project edn-file)
     ;(summarize-all-nodes edn-file csv-file)
