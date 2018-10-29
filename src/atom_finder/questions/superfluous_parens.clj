@@ -58,11 +58,36 @@
        time-mins
        ))
 
+(defn summarize-all-parens
+  [edn-file csv-file]
+  (->>
+   ;edn-file
+   "tmp/all-parens_2018-10-28_context.edn"
+   read-lines
+   (take 10)
+   ;(maps-to-csv csv-file)
+   (mapcat (fn [file-map]
+             (->> [:parens :superfluous-parens :operator-precedence]
+                  (select-keys file-map)
+                  (map-values-kv (fn [k v] (map #(assoc % :selection k) v)))
+                  vals
+                  (apply concat)
+                  (map (partial into {}))
+                  (map (fn [node-map]
+                         (select-keys node-map [:selection :node-type :parent-type :child-type]))))
+          ))
+   (map prn)
+   time-mins
+   )
+  )
+
+   (select-keys {:a 1 :b 2} [:a :b])
+
 (defn main-superfluous-parens
   []
   (let [edn-file "tmp/all-parens_2018-10-28_context.edn"
         csv-file "src/analysis/data/all-parens_2018-10-28_context.csv"
         ]
-    (find-all-parens-in-project edn-file)
+    ;(find-all-parens-in-project edn-file)
     ;(summarize-all-nodes edn-file csv-file)
   ))
