@@ -44,8 +44,8 @@
        ))
 
 (defn main-atom-context []
-  (let [edn-file "tmp/atom-context_2018-10-12_parent-type.edn"
-        csv-file "src/analysis/data/atom-context_2018-10-12_parent-type.csv"]
+  (let [edn-file "tmp/atom-context_2018-10-25_disambiguate-minus-arity.edn"
+        csv-file "src/analysis/data/atom-context_2018-10-25_disambiguate-minus-arity.csv"]
     (atom-context edn-file)
     (csv-atom-context edn-file csv-file)
     ))
