@@ -37,6 +37,13 @@
          (atom-lookup :operator-precedence)]]
   (find-atoms paren-types root)))
 
+(defn child-or-nil
+  "If this node has one child return it, otherwise return nil"
+  [node]
+  (let [[kid & others] (children node)]
+    (when (empty? others)
+      kid)))
+
 (defn find-all-parens-in-project
   [edn-file]
   (println (str (now)))
@@ -47,8 +54,9 @@
            {:file (atom-finder-relative-path file)}
            (->> file parse-file find-parens
                 (map-values (partial map (fn [node]
-                                           (merge {:parent-type (opname-or-typename (parent node))
-                                                   :node-type (opname-or-typename node)}
+                                           (merge {:parent-type (-> node parent opname-or-typename)
+                                                   :node-type (-> node opname-or-typename)
+                                                   :child-type (some-> node child-or-nil opname-or-typename)}
                                                   (dissoc (loc node) :length :start-line)
                                                   )))))
            )))
@@ -60,8 +68,8 @@
 
 (defn main-superfluous-parens
   []
-  (let [edn-file "tmp/all-parens_2018-10-28_context.edn"
-        csv-file "src/analysis/data/all-parens_2018-10-28_context.csv"
+  (let [edn-file "tmp/all-parens_2018-10-29_02_child.edn"
+        csv-file "src/analysis/data/all-parens_2018-10-29_02_child.csv"
         ]
     (find-all-parens-in-project edn-file)
     ;(summarize-all-nodes edn-file csv-file)
