@@ -43,6 +43,7 @@
                                              (-> node parent misparsed-template? not)
                                              (-> node paren-node?))
                                    (superfluous-parens? node)))))
+         (Atom. :multi-op-expr multi-op-expr? (default-finder multi-op-expr?))
          (Atom. :operator-precedence operator-precedence-child? (default-finder operator-precedence-child?))]]
   (find-atoms paren-types root)))
 
@@ -109,6 +110,13 @@
    time-mins
    )
   )
+
+(defn multi-op-expr?
+  "Return all nodes (recursively) that represent an expression which uses more
+  than one operator"
+  [root]
+  (and (expr-operator root)
+       (exists? expr-operator (children root))))
 
 (defn --test-parse-file-for-superfluous-parens []
   "Just a place for sandbox code to live"
