@@ -37,7 +37,7 @@
                                   (when (and (not (= "anonymously-parsed-code.c" (filename node)))
                                             (paren-node? node))
                                    (superfluous-parens? node)))))
-         (atom-lookup :operator-precedence)]]
+         (Atom. :operator-precedence operator-precedence-child? (default-finder operator-precedence-child?))]]
   (find-atoms paren-types root)))
 
 (defn child-or-nil
@@ -63,6 +63,7 @@
                                                   (dissoc (loc node) :length :start-line)
                                                   )))))
            )))
+       ;(take 1000)
        (map prn)
        dorun
        (log-to edn-file)
@@ -105,9 +106,9 @@
 
 (defn main-superfluous-parens
   []
-  (let [edn-file "tmp/all-parens_2018-10-29_02_child.edn"
-        csv-file "src/analysis/data/all-parens_2018-10-29_02_child.csv"
+  (let [edn-file "tmp/all-parens_2018-10-29_03_operator-precedence-child.edn"
+        csv-file "src/analysis/data/all-parens_2018-10-29_03_operator-precedence-child.csv"
         ]
-    ;(find-all-parens-in-project edn-file)
+    (find-all-parens-in-project edn-file)
     (summarize-all-parens edn-file csv-file)
   ))

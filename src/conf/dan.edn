@@ -1,10 +1,4 @@
 {
-  :ag-path "~/opt/src/the_silver_searcher",
-  :gcc-path "~/opt/src/atom-finder/gcc",
-  :linux-path "~/opt/src/atom-finder/linux",
-
-  :github-top-c "~/opt/src/github-top-c"
-
   :atom-finder-corpus-path "~/opt/src/atom-finder"
 
   :system-include-paths ["/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/4.2.1"
