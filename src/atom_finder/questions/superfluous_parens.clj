@@ -28,14 +28,20 @@
     (tree=by (juxt class expr-operator) parenless-mom reparsed-parenless-mom)
   ))
 
+(defn macro-def-node?
+  "Was this AST node parsed from inside the defintion of a macro?"
+  [node]
+  (->> node filename (= "anonymously-parsed-code.c")))
+
 (defn find-parens
   [root]
   (let [paren-types
         [(Atom. :parens paren-node? (default-finder paren-node?))
          (Atom. :superfluous-parens superfluous-parens?
                 (default-finder (fn [node]
-                                  (when (and (not (= "anonymously-parsed-code.c" (filename node)))
-                                            (paren-node? node))
+                                  (when (and (-> node macro-def-node? not)
+                                             (-> node parent misparsed-template? not)
+                                             (-> node paren-node?))
                                    (superfluous-parens? node)))))
          (Atom. :operator-precedence operator-precedence-child? (default-finder operator-precedence-child?))]]
   (find-atoms paren-types root)))
@@ -103,6 +109,20 @@
    time-mins
    )
   )
+
+(defn --test-parse-file-for-superfluous-parens []
+  "Just a place for sandbox code to live"
+  (->> "sql/item_geofunc.cc"
+     (str "~/opt/src/atom-finder/mysql-server/")
+     expand-home
+     parse-file
+     ((default-finder #(when (paren-node? %) (superfluous-parens? %))))
+     (take 4)
+     last
+     parent
+     misparsed-template?
+     prn
+     ))
 
 (defn main-superfluous-parens
   []
