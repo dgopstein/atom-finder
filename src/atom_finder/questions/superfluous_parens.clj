@@ -33,7 +33,10 @@
   (let [paren-types
         [(Atom. :parens paren-node? (default-finder paren-node?))
          (Atom. :superfluous-parens superfluous-parens?
-                (default-finder #(when (paren-node? %) (superfluous-parens? %))))
+                (default-finder (fn [node]
+                                  (when (and (not (= "anonymously-parsed-code.c" (filename node)))
+                                            (paren-node? node))
+                                   (superfluous-parens? node)))))
          (atom-lookup :operator-precedence)]]
   (find-atoms paren-types root)))
 
@@ -66,14 +69,10 @@
        time-mins
        ))
 
-(defn summarize-all-parens
-  [edn-file csv-file]
-  (->>
-   ;edn-file
-   "tmp/all-parens_2018-10-28_context.edn"
-   read-lines
-   (take 10)
-   ;(maps-to-csv csv-file)
+(s/defn flatten-all-parens
+  [all-paren-lines] ; :- [{:file s/Str :parens s/Any :superfluous-parens s/Any :operator-precedence s/Any}]]
+  (->> all-paren-lines
+   ;(take 10)
    (mapcat (fn [file-map]
              (->> [:parens :superfluous-parens :operator-precedence]
                   (select-keys file-map)
@@ -82,14 +81,27 @@
                   (apply concat)
                   (map (partial into {}))
                   (map (fn [node-map]
-                         (select-keys node-map [:selection :node-type :parent-type :child-type]))))
+                         (->> [:selection :parent-type :node-type :child-type]
+                              (select-keys node-map)))))
           ))
-   (map prn)
+  )
+  )
+
+(defn summarize-all-parens
+  [edn-file csv-file]
+  (->>
+   edn-file
+   read-lines
+   ;(take 10)
+   flatten-all-parens
+   frequencies
+   (map (partial-right update-in [0] (partial map-values #(some-> % name))))
+   (map (fn [[m count]] (assoc m :count count)))
+   ;(map prn)
+   (maps-to-csv csv-file)
    time-mins
    )
   )
-
-   (select-keys {:a 1 :b 2} [:a :b])
 
 (defn main-superfluous-parens
   []
@@ -97,5 +109,5 @@
         csv-file "src/analysis/data/all-parens_2018-10-29_02_child.csv"
         ]
     ;(find-all-parens-in-project edn-file)
-    ;(summarize-all-nodes edn-file csv-file)
+    (summarize-all-parens edn-file csv-file)
   ))
