@@ -143,8 +143,20 @@
 (defn operator-precedence-atom?
   "Is this node an operator-precedence-atom?"
   [node]
-  (and (operator-group-pair? node)
+  (and (operator-group-pair? node) ; is this node an expression containing an expression
 
        (not (= :assign (operator-group node)))
 
        (some confusing-operator-combination? (group-pair node))))
+
+(defn operator-precedence-child?
+  "Is this node and it's parent an operator precedence atom"
+  [node]
+  (let [mom (parent node)]
+    (and (operator-group node)
+         (operator-group mom)
+
+         (not (= :assign (operator-group mom)))
+
+         (some confusing-operator-combination? (group-pair mom [node])))))
+
