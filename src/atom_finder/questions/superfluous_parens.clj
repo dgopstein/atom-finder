@@ -89,8 +89,7 @@
   (->> all-paren-lines
    ;(take 10)
    (mapcat (fn [file-map]
-             (->> [:parens :superfluous-parens :operator-precedence]
-                  (select-keys file-map)
+             (->> (dissoc file-map :file)
                   (map-values-kv (fn [k v] (map #(assoc % :selection k) v)))
                   vals
                   (apply concat)
