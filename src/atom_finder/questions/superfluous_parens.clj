@@ -69,7 +69,7 @@
         (fn [file]
           (merge
            {:file (atom-finder-relative-path file)}
-           (->> file parse-file find-parens
+           (->> file parse-file find-parens (with-timeout 60)
                 (map-values (partial map (fn [node]
                                            (merge {:parent-type (-> node parent opname-or-typename)
                                                    :node-type (-> node opname-or-typename)
@@ -134,8 +134,8 @@
 
 (defn main-superfluous-parens
   []
-  (let [edn-file "tmp/all-parens_2018-10-30_02_multi-op-expr.edn"
-        csv-file "src/analysis/data/all-parens_2018-10-30_02_multi-op-expr.csv"
+  (let [edn-file "tmp/all-parens_2018-10-30_03_with-timeout-60.edn"
+        csv-file "src/analysis/data/all-parens_2018-10-30_03_with-timeout-60.csv"
         ]
     (find-all-parens-in-project edn-file)
     (summarize-all-parens edn-file csv-file)
