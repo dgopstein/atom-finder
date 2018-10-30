@@ -134,8 +134,8 @@
 
 (defn main-superfluous-parens
   []
-  (let [edn-file "tmp/all-parens_2018-10-30_01_exclude-template-misparses.edn"
-        csv-file "src/analysis/data/all-parens_2018-10-30_01_exclude-template-misparses.csv"
+  (let [edn-file "tmp/all-parens_2018-10-30_02_multi-op-expr.edn"
+        csv-file "src/analysis/data/all-parens_2018-10-30_02_multi-op-expr.csv"
         ]
     (find-all-parens-in-project edn-file)
     (summarize-all-parens edn-file csv-file)
