@@ -31,9 +31,12 @@ all.expr.types <- all.node.type[!grepl("^<.*>$", node.type)]
 total.n.exprs <- all.expr.types[, sum(count)]
 n.multi.op.expr <- multi.op.expr[, sum(count)]
 
-parens[, sum(count)] / n.multi.op.expr # rate of parens
-superfluous.parens[, sum(count)] / n.multi.op.expr # rate of superfluous parens
+paren.multi.op.rate <- parens[, sum(count)] / n.multi.op.expr # rate of parens
+sup.paren.multi.op.rate <- superfluous.parens[, sum(count)] / n.multi.op.expr # rate of superfluous parens
 op.prec.multi.op.rate <- operator.precedence[, sum(count)] / n.multi.op.expr # rate of operator precedence
+
+paren.multi.op.rate
+sup.paren.multi.op.rate
 op.prec.multi.op.rate
 
 all.node.type[node.type=='bracketedPrimary']
@@ -67,8 +70,8 @@ asymmetric.superfluous.parens.flat.by.position[, rate := count/sum(count)]
 
 asymmetric.superfluous.parens.flat.summary <- asymmetric.superfluous.parens.flat.by.position[, .(count = sum(count)), by=c('node.type')]
 
-operators <-      c("sizeof", "binaryAnd", "shiftLeft", "binaryOr", "logicalAnd", "<IdExpression>", "logicalOr", "function-call", "star",    "equals", "conditional", "field-reference", "shiftRight",    "plus2",      "minus2",     "assign", "multiply",   "notequals", "cast", "lessThan", "divide",     "binaryOrAssign", "greaterThan", "modulo",     "pmarrow", "binaryXor",   "lessEqual", "pmdot",   "plus1",      "minus1")
-operator.types <- c("Unique", "Bitwise",   "Bitwise",   "Bitwise",  "Logic",      "Unique",         "Logic",     "function-call", "Pointer", "Logic",  "Unique",      "Pointer",         "Bitwise",       "Arithmetic", "Arithmetic", "Unique", "Arithmetic", "Logic",     "Unique", "Logic",  "Arithmetic", "Bitwise",        "Logic",       "Arithmetic", "Pointer", "Bitwise",     "Logic",     "Pointer", "Arithmetic", "Arithmetic")
+operators <-      c("sizeof", "binaryAnd", "shiftLeft", "binaryOr", "logicalAnd", "<IdExpression>", "logicalOr", "function-call", "star",    "equals", "conditional", "field-reference", "shiftRight",    "plus2",      "minus2",     "assign", "multiply",   "notequals", "cast", "lessThan", "divide",     "binaryOrAssign", "greaterThan", "modulo",     "pmarrow", "binaryXor",   "lessEqual", "pmdot",   "plus1",      "minus1",     "greaterEqual")
+operator.types <- c("Unique", "Bitwise",   "Bitwise",   "Bitwise",  "Logic",      "Unique",         "Logic",     "Unique",        "Pointer", "Logic",  "Unique",      "Pointer",         "Bitwise",       "Arithmetic", "Arithmetic", "Unique", "Arithmetic", "Logic",     "Unique", "Logic",  "Arithmetic", "Bitwise",        "Logic",       "Arithmetic", "Pointer", "Bitwise",     "Logic",     "Pointer", "Arithmetic", "Arithmetic", "Logic")
 operator.type.conversion <- data.table(cbind(operators, operator.types))
 
 asymmetric.superfluous.parens.flat.summary <- merge(asymmetric.superfluous.parens.flat.summary, operator.type.conversion, by.x='node.type', by.y='operators', all.x=TRUE)
@@ -97,13 +100,13 @@ superfluous.parens.by.operator.type <- asymmetric.superfluous.parens.flat.summar
 superfluous.parens.by.operator.type.plot <-
 ggplot(superfluous.parens.by.operator.type, aes(reorder(operator.types, rate), rate)) +
   theme_minimal() +
-  geom_bar(stat="identity", aes(fill=reorder(operator.types, -rate), width=(log(multi.op.count-45000)-9)/4)) +
+  geom_bar(stat="identity", aes(fill=reorder(operator.types, -rate), width=(log(multi.op.count-45000)-10)/4)) +
   theme(axis.text.x = element_text(angle=0, hjust=1, vjust=.4)) +
   scale_fill_manual(values=set2[c(3,6,8,5,4)]) +
-  ylab(label="\nRate relative to\nMulti-Operator Expressions") +
+  ylab(label="\nSuperfluous Paren Rate \n relative to Multi-Operator Expressions") +
   xlab(label="Operator Type\n") +
   guides(fill=FALSE) +
   coord_flip()
 
 superfluous.parens.by.operator.type.plot
-ggsave("img/superfluous_parens_by_operator_type_plot.pdf", superfluous.parens.by.operator.type.plot, width=(width<-110), height=width*.6, units = "mm", device=cairo_pdf)
+ggsave("img/superfluous_parens_by_operator_type_plot.pdf", superfluous.parens.by.operator.type.plot, width=(width<-110), height=width*.5, units = "mm", device=cairo_pdf)
