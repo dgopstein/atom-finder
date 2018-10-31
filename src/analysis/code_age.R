@@ -153,7 +153,7 @@ project.age.linear <- ggplot(code.age.all.atoms[project!='emacs']) +
   geom_point(aes(date, linear.rate), color=colors2dark[2], data=first.points[project!='emacs'], size=3) +
   geom_text(aes(date, linear.rate, label=paste0("  ", project), angle=(1.3*(10^7)*angle)),
             data=first.points[project!='emacs'], hjust=0, vjust=-0.4, size=3.0) +
-  scale_y_continuous(limits = c(.00, .026)) +
+  #scale_y_continuous(limits = c(.00, .026)) +
   labs(x = "Date", y = "Linearized Atom Rate") +
   guides(colour=FALSE)
 
