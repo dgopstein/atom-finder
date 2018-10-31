@@ -80,7 +80,7 @@ mean.atoms.by.project.age <-
   geom_text(aes(label=paste(" ", project), x=date+20*offset.x, y=rate+.0001*offset.y), size = 3, angle=-17, hjust=0, vjust=0.4) +
   #geom_text_repel(aes(label=project), size = 4, angle=-20, force=0.1, direction="x") +
   scale_x_date(limits = as.Date(c("1985-01-01", "2017-01-01"))) +
-  #scale_y_continuous(limits = c(.005, .024)) +
+  scale_y_continuous(limits = c(.00, .026)) +
   scale_colour_manual(values = domain.colors) +
   annotate("text", x=as.Date('2002-01-01'), y=0.019, label="r==-0.65", parse=TRUE, hjust=0.0, size=4.0) +
   theme(legend.position = c(0.9, 0.6)) +
@@ -153,6 +153,7 @@ project.age.linear <- ggplot(code.age.all.atoms[project!='emacs']) +
   geom_point(aes(date, linear.rate), color=colors2dark[2], data=first.points[project!='emacs'], size=3) +
   geom_text(aes(date, linear.rate, label=paste0("  ", project), angle=(1.3*(10^7)*angle)),
             data=first.points[project!='emacs'], hjust=0, vjust=-0.4, size=3.0) +
+  scale_y_continuous(limits = c(.00, .026)) +
   labs(x = "Date", y = "Linearized Atom Rate") +
   guides(colour=FALSE)
 
