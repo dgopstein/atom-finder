@@ -136,6 +136,6 @@
   (let [edn-file "tmp/all-parens_2018-10-30_03_with-timeout-60.edn"
         csv-file "src/analysis/data/all-parens_2018-10-30_03_with-timeout-60.csv"
         ]
-    (find-all-parens-in-project edn-file)
+    ;(find-all-parens-in-project edn-file)
     (summarize-all-parens edn-file csv-file)
   ))

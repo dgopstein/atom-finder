@@ -105,3 +105,6 @@ cluster.long <- function(dt, row, col, value) {
   
   list(rowInd = row.ind$order, colInd = col.ind$order, rowName = row.ind$order.lab, colName = col.ind$order.lab)
 }
+
+# https://vitalflux.com/data-science-scale-normalize-numeric-data-using-r/
+normalize <- function(x) { (x - min(x)) / (max(x) - min(x)) }
