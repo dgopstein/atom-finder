@@ -109,4 +109,4 @@ ggplot(superfluous.parens.by.operator.type, aes(reorder(operator.types, rate), r
   coord_flip()
 
 superfluous.parens.by.operator.type.plot
-ggsave("img/superfluous_parens_by_operator_type_plot.pdf", superfluous.parens.by.operator.type.plot, width=(width<-110), height=width*.5, units = "mm", device=cairo_pdf)
+ggsave("img/superfluous_parens_by_operator_type_plot.pdf", superfluous.parens.by.operator.type.plot, width=(width<-130), height=width*.5, units = "mm", device=cairo_pdf)
