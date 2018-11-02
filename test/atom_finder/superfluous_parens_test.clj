@@ -22,8 +22,8 @@
     )
 
   (testing "multi-op-expr?"
-    (-> "1 * 2 * 3" parse-frag multi-operator-expression? is)
-    (-> "1 * 2" parse-frag multi-operator-expression? not is)
+    (-> "1 * 2 * 3" parse-frag multi-op-expr? is)
+    (-> "1 * 2" parse-frag multi-op-expr? not is)
     )
   )
 
