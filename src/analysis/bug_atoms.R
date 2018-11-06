@@ -176,7 +176,7 @@ ggplot(only.atoms.removed.rate.dt[!is.nan(rate)],
   geom_segment(aes(xend=display.atom, y=rate*ifelse(rate >= intercept, 1.05, 1/1.05), yend=rate*ifelse(rate >= intercept, 1.45, 1/1.45)),
                size=2, color="white") +
   geom_text(aes(label=ifelse(rate >= intercept, paste0(sprintf("                 %0.2fx ", rate), signif.stars(p.value)),
-                                                paste0(signif.stars(p.value), sprintf(" %0.2fx                 ", 1/rate)))),
+                                                paste0(stringi::stri_reverse(signif.stars(p.value)), sprintf(" %0.2fx                 ", 1/rate)))),
                 #,y=ifelse(rate > 0.001, rate, 0.35)),
             color="black", size=3, vjust=0.4) +
   annotate('rect', xmin = .9, xmax = 1.1, ymin = 0.25, ymax = 0.36, fill="white", alpha=0.5) +
@@ -206,7 +206,7 @@ atom.removed.rate.significant.plot <-
   geom_segment(aes(xend=display.atom, y=rate*ifelse(rate >= intercept, 1.05, 1/1.05), yend=rate*ifelse(rate >= intercept, 1.45, 1/1.45)),
                size=2, color="white") +
   geom_text(aes(label=ifelse(rate >= intercept, paste0(sprintf("                 %0.2fx ", rate), signif.stars(p.value)),
-                             paste0(signif.stars(p.value), sprintf(" %0.2fx                 ", 1/rate)))),
+                             paste0(stringi::stri_reverse(signif.stars(p.value)), sprintf(" %0.2fx                 ", 1/rate)))),
             color="black", size=3, vjust=0.4) +
   scale_color_manual(values=c(colors2, 'red')) +
   scale_y_log10(position="right", labels=c("Non-bugs", "Bugs"), breaks=c(.67, 1.5)) +

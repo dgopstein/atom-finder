@@ -88,7 +88,13 @@
 
 (deftest test-operator-precedence-atom?
   (testing "operator-precedence-atom? finds all atoms in snippet study code"
-    (test-atom-lines "operator-precedence.c" "<true>" (default-finder operator-precedence-atom?))))
+    (test-atom-lines "operator-precedence.c" "<true>" (default-finder operator-precedence-atom?)))
+
+  (testing "operator-precedence-child?"
+    (->> "a + b * c" parse-expr operator-precedence-atom? is)
+    (->> "a + b * c" parse-expr operator-precedence-child? not is)
+    (->> "a + b * c" parse-expr (get-in-tree [1]) operator-precedence-child? is)
+    ))
 
 (deftest test-implicit-predicate-atom?
   (testing "implicit-predicate-atom? finds all atoms in sample code"

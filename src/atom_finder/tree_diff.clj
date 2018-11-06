@@ -11,9 +11,6 @@
             IASTUnaryExpression IASTBinaryExpression IASTLiteralExpression
             IASTExpressionList IASTForStatement IASTFunctionDefinition]))
 
-(defn tree= [& nodes]
-  (->> nodes (map write-ast) (apply =)))
-
 (defn node= [a b]
   (when (and a b)
     (=by (and-then flatten-tree (partial map write-node-valueless)) a b)))
@@ -36,8 +33,3 @@
            (let [kids (map children nodes)]
              (and (apply = (map count kids))
                   (every? identity (apply (partial map (partial tree=by f)) kids)))))))
-
-;; two files
-;; corresponding diffs
-;; contains atom?
-;; meaningful diffs?

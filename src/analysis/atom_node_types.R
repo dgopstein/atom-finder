@@ -7,7 +7,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 source("util.R")
 
-atom.node.type <- data.table(read.csv("data/atom-context_2018-10-12_parent-type.csv.xz"))
+atom.node.type <- data.table(read.csv("data/atom-context_2018-10-12_parent-type.csv.xz")) # This dataset conflates unary and binary plus/minus
 all.node.type <- data.table(read.csv("data/all-node-counts_2018-08-31_for-emse.csv"))
 all.node.type[, node.type := str_replace(node.type, "^:", "")] # remove leading : from expression symbols' names
 
@@ -60,7 +60,7 @@ omitted.context.plot <- ggplot(omitted.context.long, aes(reorder(display.node.ty
   #geom_text(aes(y = 0.8, label= total.node), color="white", size=3, vjust=0.4) +
   scale_fill_manual(values=colors2, labels=c("Included", "Omitted")) +
   labs(x="Statement Type", y="Curly Brace Omission Rate") +
-  guides(fill=guide_legend(title="Curly Braces")) +
+  guides(fill=guide_legend(title="Curly Braces", reverse=TRUE)) +
   coord_flip()
 omitted.context.plot
 
@@ -75,9 +75,57 @@ implicit.predicate.nodes <- atom.node.type.rates[atom=='implicit-predicate'][, .
 ################################################################
 operator.precedence.nodes <- atom.node.type.rates[atom=='operator-precedence'][, .(node.type, atom, count)]
 operator.precedence.nodes[order(-count)]
-operator.context <- merge(operator.precedence.nodes, all.node.type, by='node.type', suffixes = c('.atom', '.node'))
+operator.type <- merge(operator.precedence.nodes, all.node.type, by='node.type', suffixes = c('.atom', '.node'))
+operator.type[, rate := count.atom / count.node]
+
 binary.ops <- c("binaryAnd", "binaryOr", "binaryXor", "divide", "equals", "greaterEqual", "greaterThan", 
-                "lessEqual", "lessThan", "logicalAnd", "logicalOr", "minus", 
-                "modulo", "multiply", "notequals", "plus", "shiftLeft", "shiftRight")
-dput(operator.context$node.type)
+                "lessEqual", "lessThan", "logicalAnd", "logicalOr", "minus2", 
+                "modulo", "multiply", "notequals", "plus2", "shiftLeft", "shiftRight")
+
+binary.operator.type <- operator.type[node.type %in% binary.ops]
+binary.operator.type[, total.node := count.node]
+binary.operator.type[, total.rate := count.atom / count.node]
+binary.operator.type.long <- data.table(tidyr::gather(binary.operator.type, count.type, count.value, count.atom:count.node, factor_key=TRUE))
+binary.operator.type.long[count.type=='count.node', rate := 1 - rate]
+
+binary.operator.type.plot <- ggplot(binary.operator.type.long, aes(reorder(node.type, total.rate), rate)) +
+  theme_minimal() +
+  geom_bar(aes(fill = reorder(count.type, -count.value), width=0.199*log(0.0001*total.node)), stat="identity") +
+  #geom_text(aes(y = 0.8, label= total.node), color="white", size=3, vjust=0.4) +
+  scale_fill_manual(values=colors2, labels=c("Clear", "Ambiguous")) +
+  labs(x="Operator Type", y="Ambiguous Operator Precedence Rate") +
+  guides(fill=guide_legend(title="Perception of\nOperator Precedence", reverse=TRUE)) +
+  coord_flip()
+binary.operator.type.plot
+
+View(atom.node.type[atom=='operator-precedence' & parent.type=='bracketedPrimary'][60000:61100])
+
+ggsave("img/binary_operator_type_plot.pdf", omitted.context.plot, width=(width<-150), height=width*0.35, units = "mm", device=cairo_pdf)
+
+################################################################
+#         What are the parents of Operator Precedence
+################################################################
+
+operator.precedence.parents <- atom.parent.type.rates[atom=='operator-precedence'][, .(parent.type, atom, count)]
+total.n.operator.parents <- operator.precedence.parents[, sum(count)]
+operator.precedence.parents[, rate := count / total.n.operator.parents]
+operator.precedence.parents[, binary.parent := parent.type %in% binary.ops]
+
+operator.precedence.parents[!binary.parent & parent.type != 'bracketedPrimary'][order(-rate)]
+
+# rate of parents which are in themselves also contributing to the confusion
+operator.precedence.parents[, sum(rate), by=binary.parent]
+
+# rate of parents which are parens
+operator.precedence.parents[parent.type=='bracketedPrimary']
+
+operator.precedence.parents[, better.worse := ifelse(binary.parent==TRUE, 'More Ambiguity', ifelse(parent.type=='bracketedPrimary', 'Paren-Wrapped', 'Consumed'))]
+operator.precedence.parents[order(-rate)]
+
+ggplot(operator.precedence.parents[, .(rate=sum(rate)), by=better.worse], aes(reorder(better.worse, -rate), rate)) +
+  geom_bar(aes(fill=better.worse), stat='identity') +
+  geom_text(aes(label = paste0(round(rate*100), "%"), y = rate+.07),
+            size = 4, color = "black") +
+  xlab("AST Parent of Ambiguity") +
+  guides(fill=FALSE)
 
