@@ -16,7 +16,7 @@
 ;; List all node counts file-by-file
 (defn count-all-nodes-in-project
   [edn-file]
-  (prn (now))
+  (println (str (now)))
   (->> atom-finder-corpus-path
        (pmap-dir-c-files
         (fn [file]
@@ -90,8 +90,8 @@
 
 (defn main-all-nodes
   []
-  (let [edn-file "tmp/all-node-counts_2018-09-05_for-debugging-esem.edn"
-        csv-file "src/analysis/data/all-node-counts_2018-09-05_for-debugging-esem.csv"
+  (let [edn-file "tmp/all-node-counts_2018-10-25_disambiguate-minus-arity.edn"
+        csv-file "src/analysis/data/all-node-counts_2018-10-25_disambiguate-minus-arity.csv"
         ]
     (count-all-nodes-in-project edn-file)
     (summarize-all-nodes edn-file csv-file)
