@@ -76,8 +76,8 @@
   (pmap
    (fn [file]
      (let [filename (.getPath file)]
-       (log-err (format "pmap-dir-file: \"%s\"" filename) nil
-                (f filename))))
+       ;(log-err (format "pmap-dir-file: \"%s\"" filename) nil
+                (f filename)));)
    (c-files dirname)))
 
 (defmacro log-to [filename & stuff]
