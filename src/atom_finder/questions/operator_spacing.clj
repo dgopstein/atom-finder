@@ -44,14 +44,15 @@
        parse-expr))
 
 (defn remove-all-parens [node]
-  (let [new-kids (into [] (map remove-all-parens (children node)))
-        new-mom (replace-all-exprs node new-kids)]
-    (->> new-mom
-         children
-         (filter paren-node?)
-         (reduce
-          (fn [mom paren-child] (replace-expr mom paren-child (child paren-child)))
-          new-mom))))
+  (let [old-kids (children node)
+        new-kids (into [] (map remove-all-parens old-kids))
+        new-mom (if (= old-kids new-kids) node (replace-all-exprs node new-kids))]
+
+    (loop [mom new-mom]
+      (let [paren-child (->> mom children (filter paren-node?) first)]
+           (if (nil? paren-child)
+             mom
+             (recur (replace-expr mom paren-child (child paren-child))))))))
 
 (defn operator-spacing-confusing? [node]
   (not (tree=by (juxt class expr-operator)
@@ -88,20 +89,3 @@
     (count-all-spaced-operators edn-file)
     ;(summarize-all-nodes edn-file csv-file)
   ))
-
-(s/defn replace-exprs2 :- IASTNode
-  "Update multiple children inside a parent node.
-   Returns an updated copy of the parent."
-  [parent :- IASTNode
-   old-kids ;;:- [IASTExpression] - These don't play nicely with java arrays
-   new-kids ;;:- [IASTExpression]
-   ]
-
-  (assert (=by count old-kids new-kids) (str "Old expressions must be replaced by the same number of new expressions. You tried to replace " (count old-kids) " with " (count new-kids)))
-
-  (let [{getters :getters setters :setters} (expr-getters-setters parent)
-        old-idxs (map (fn [old-child] (.indexOf (map #(%) getters) old-child)) old-kids)]
-
-    (reduce (fn [mom [old-idx new-kid]]
-              (let [setter (nth setters old-idx)]
-                (setter new-kid))) parent (map vector old-idxs new-kids))))
