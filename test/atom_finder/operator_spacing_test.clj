@@ -66,10 +66,11 @@
 
   (testing "remove-all-parens"
     (let [cases [["a + (b)"     "a + b"]
-                 ;["(a*b)"       "a * b"] ;; doesn't check the top node
-                 ["1+(a*b)"       "1 + a * b"]
-                 ["1 + (-(a))"         "1 + -a"]
+                 ;["(a*b)"      "a * b"] ;; doesn't check the top node
+                 ["1+(a*b)"     "1 + a * b"]
+                 ["1 + (-(a))"  "1 + -a"]
                  ["(1) + (2)"   "1 + 2"]
+                 ["(f)(x)"      "f(x)"]
                  ]]
 
       (for [[node-str expected] cases]

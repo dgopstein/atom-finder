@@ -46,7 +46,7 @@
 (defn remove-all-parens [node]
   (let [old-kids (children node)
         new-kids (into [] (map remove-all-parens old-kids))
-        new-mom (if (= old-kids new-kids) node (replace-all-exprs node new-kids))]
+        new-mom (replace-all-exprs node new-kids)]
 
     (loop [mom new-mom]
       (let [paren-child (->> mom children (filter paren-node?) first)]
@@ -57,7 +57,7 @@
 (defn operator-spacing-confusing? [node]
   (not (tree=by (juxt class expr-operator)
                 (remove-all-parens node)
-                (->> node .getRawSignature parse-by-spacing remove-all-parens))))
+                (some->> node .getRawSignature parse-by-spacing remove-all-parens))))
 
 (defn binary-expr? [node]
   (boolean (some->> node expr-operator :arity (= 2))))
@@ -66,25 +66,26 @@
   [edn-file]
   (println (str (now)))
   (->> atom-finder-corpus-path
-       (pmap-dir-c-files
-        (fn [file]
-          (let [binaries (->> file parse-file (filter-tree binary-expr?))]
-            (assoc
-             :mixed-spacing (->> binaries (filter mixed-spacing?) count)
-             :confusing-spacing (->> binaries (filter operator-spacing-confusing?) count)
-             :all-binary (->> binaries count)
-             :file (atom-finder-relative-path file)))))
-       (map prn)
-       (take 10)
-       dorun
-       ;(log-to edn-file)
-       time-mins
-       ))
+   expand-home
+   (pmap-dir-c-files
+    (fn [file]
+      (let [binaries (->> file parse-file (filter-tree binary-expr?) (remove (%->> flatten-tree (some contained-by-macro-exp?))) (remove nil?))]
+    ;(dorun (map (fn [node] (prn [(contained-by-macro-exp? (get-in-tree [0] node)) (write-tree node)])) binaries))
+        {:mixed-spacing (->> binaries (filter mixed-spacing?) count)
+         :confusing-spacing (->> binaries (filter operator-spacing-confusing?) count)
+         :all-binary (->> binaries count)
+         :file (atom-finder-relative-path file)}))
+    )
+   (map prn)
+   dorun
+   (log-to edn-file)
+   time-mins
+   ))
 
 (defn main-operator-spacing
   []
-  (let [edn-file "tmp/operator-spacing_2018-11-20.edn"
-        csv-file "src/analysis/data/operator-spacing_2018-11-20.csv"
+  (let [edn-file "tmp/operator-spacing_2018-11-25_01.edn"
+        csv-file "src/analysis/data/operator-spacing_2018-11-25_01.csv"
         ]
     (count-all-spaced-operators edn-file)
     ;(summarize-all-nodes edn-file csv-file)

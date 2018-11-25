@@ -73,7 +73,7 @@
 (s/defn pmap-dir-c-files
   "Apply a function to the filename of every c file in a directory"
   [f dirname]
-  (pmap
+  (map
    (fn [file]
      (let [filename (.getPath file)]
        ;(log-err (format "pmap-dir-file: \"%s\"" filename) nil
