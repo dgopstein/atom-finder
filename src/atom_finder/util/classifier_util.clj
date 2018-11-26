@@ -6,6 +6,7 @@
           IASTFunctionCallExpression IASTFieldReference IASTFunctionDefinition))
 
 (require '[clj-cdt.expr-operator :refer :all])
+(require '[clj-cdt.modify-ast :refer :all])
 
 (defn greatest-trivial-parent
   "find the highest parent that has the same offset/length as this node"
@@ -280,3 +281,20 @@
   (and
    (some->> node expr-operator :name (= :greaterThan))
    (some (%->> expr-operator :name (= :lessThan)) (children node))))
+
+(defn remove-all-parens [node]
+  (let [old-kids (children node)
+        new-kids (into [] (map remove-all-parens old-kids))
+        new-mom (replace-all-exprs node new-kids)]
+
+    (loop [mom new-mom]
+      (let [paren-child (->> mom children (filter paren-node?) first)]
+           (if (nil? paren-child)
+             mom
+             (recur (replace-expr mom paren-child (child paren-child))))))))
+
+(defn arithmetic-expr? [node]
+  (->> node expr-operator :name
+       (#{:miltiply :divide :modulo :plus2 :minus2}) boolean))
+
+(s/defn arity [node] (some->> node expr-operator :arity))
