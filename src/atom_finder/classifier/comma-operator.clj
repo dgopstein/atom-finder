@@ -4,13 +4,6 @@
 
 (require '[clj-cdt.expr-operator :refer :all])
 
-(defn misparsed-template?
-  "Templates are often parsed as less-than/greater-than, catch that occasion"
-  [node]
-  (and
-   (some->> node expr-operator :name (= :greaterThan))
-   (some (%->> expr-operator :name (= :lessThan)) (children node))))
-
 (defn misparsed-nested-macro-arg?
   "When eclipse doesn't know a function is a macro, it doesn't know to pass printf arguments along for the ride"
   [node]

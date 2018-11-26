@@ -9,18 +9,21 @@
 
 (deftest operator-spacing-test
   (testing "parse-by-spacing"
-    (let [cases [["a+b*c + d*3" "(a+b*c) + (d*3)"]
+    (let [cases [["(a+b*c) + (d*3)" "a+b*c + d*3"]
                   ;["a*b+c * b+c" "(a*b+c) * (b+c)"] FAIL
+                 ["a::b" "a::b"]
+                 ["a->b" "a->b"]
+                 ["1 + f(x)" "1+f(x)"]
                   ]]
 
-      (for [[node-str expected] cases]
+      (for [[expected node-str] cases]
         (is (tree=by write-tree
-                     (pap write-tree (parse-by-spacing node-str))
-                     (pap write-tree (parse-expr expected)))
+                     (parse-by-spacing node-str)
+                     (parse-expr expected))
             (str node-str " -> " expected)
             ))))
 
-  (testing "operator-spacing-confusing?"
+  (testing "confusing-operator-spacing?"
     (let [cases [["a + b*c" false]
                  ["a*b + c"  false]
                  ["a+b * c"  true]
@@ -28,12 +31,24 @@
                  ["a&&b && c"  false]
                  ["a->b && c"  false]
                  ["a.b && c"  false]
+                 ["a::b<c>" false]
+                 ["a::b::c" false]
+                 ["y = a::b<c>(d)" false]
+                 ["a->b" false]
+                 ["(a)b * c" false]
+                 ["(a)b.c * d" false]
+                 ["a + sizeof(b)" false]
+                 ["a + -b" false]
+                 ["a + sizeof(struct b)" false]
+                 ["a->b.c->d == e->f" false]
+                 ["1+f(x)" false]
+                 ["1+sizeof(x)*2" false]
                  ;;["a . b&&c"  true] ;; the rearrangement can't compile
                  ]]
 
       (for [[node-str expected] cases]
         (let [node (parse-expr node-str)]
-          (is (= (operator-spacing-confusing? node) expected)
+          (is (= (confusing-operator-spacing? node) expected)
             (str node-str " -> " expected)
             ))))
   )

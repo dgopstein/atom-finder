@@ -273,3 +273,10 @@
                          IASTBinaryExpression/op_logicalOr
                          IASTBinaryExpression/op_notequals
                          IASTUnaryExpression/op_not})
+
+(defn misparsed-template?
+  "Templates are often parsed as less-than/greater-than, catch that occasion"
+  [node]
+  (and
+   (some->> node expr-operator :name (= :greaterThan))
+   (some (%->> expr-operator :name (= :lessThan)) (children node))))
