@@ -33,6 +33,7 @@
                    ]
   :java-source-paths ["src/java"]
   :profiles {:dev             {:dependencies [[org.clojure/test.check "0.9.0"]]}
+             :test            {:dependencies [[org.clojure/test.check "0.9.0"]]}
              :slp             {:dependencies [[org.eclipse.jdt/org.eclipse.jdt.core "3.13.100"
                                                :exclusions [org.eclipse.platform/org.eclipse.core.runtime]]
                                               [org.jboss.marshalling/jboss-marshalling-river "1.4.11.Final"]
@@ -47,7 +48,7 @@
                                           "Agent-Class"   "atom_finder.instrumentation"}
                                }
              :find-atoms-in-dirs {:main atom-finder.find-atoms-in-dirs} ; https://stackoverflow.com/questions/11023762/leiningen-with-multiple-main-classes
-             :default            {:main atom-finder.all_atoms_csv}
+             :default          {:main atom-finder.all_atoms_csv}
              }
   :aliases {"find-atoms-in-dirs" ["with-profile" "find-atoms-in-dirs" "run"]}
   :jvm-opts ["-Xss8m" "-Xmx8g"]
