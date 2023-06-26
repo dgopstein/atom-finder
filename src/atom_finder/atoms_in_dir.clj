@@ -27,25 +27,43 @@
    :atoms (->> filename
                expand-home
                parse-file
-               (all-atoms-in-tree atoms)
-               (map-values (partial map (comp :line loc)))
-               )})
+               (all-atoms-in-tree atoms))})
 
 (defn atoms-in-dir
   [dirname atoms]
   (->> dirname
        (pmap-dir-c-files #(atoms-in-file atoms %))))
 
+(defn atom-lines-in-file
+  [atoms filename]
+  {:file filename
+   :atoms (->> filename
+               expand-home
+               parse-file
+               (all-atoms-in-tree atoms)
+               (map-values (partial map (comp :line loc)))
+               )})
+
+(defn atom-lines-in-dir
+  [dirname atoms]
+  (->> dirname
+       (pmap-dir-c-files #(atom-lines-in-file atoms %))))
 
 (defn print-atoms-in-dir
   [dirname atoms]
   (->> atoms
-       (atoms-in-dir dirname)
+       (atom-lines-in-dir dirname)
        (map prn)
        count
        println
        time-mins
        ))
+
+(defn normalize-path [path]
+  (->> path
+       expand-home
+       clojure.java.io/file
+       .getCanonicalPath))
 
 ; (print-atoms-in-dir (expand-home "~/opt/src/redis") (map atom-lookup [:preprocessor-in-statement :reversed-subscript]))
 ; (print-atoms-in-dir (expand-home "~/opt/src/linux") (map atom-lookup [:macro-operator-precedence]))

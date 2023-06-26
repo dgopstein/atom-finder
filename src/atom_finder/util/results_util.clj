@@ -118,3 +118,11 @@
   ([filename maps]
    (maps-to-csv filename {} maps)))
 
+(defn map-to-csv
+  ([m] (map-to-csv (keys m) m))
+  ([headers m]
+   (with-open [writer (java.io.StringWriter.)]
+     (clojure.data.csv/write-csv writer [(values-at m headers)])
+     (.toString writer)
+     ))
+  )

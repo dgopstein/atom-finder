@@ -10,10 +10,8 @@
 
   (doseq [dir args]
     (-<>> dir
-         expand-home
-         clojure.java.io/file
-         .getCanonicalPath
-         (atoms-in-dir <> atoms)
+          normalize-path
+         (atom-lines-in-dir <> atoms)
          (map prn)
          dorun))
 

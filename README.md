@@ -21,23 +21,19 @@ atoms of confusion described in our 2018 MSR paper you can run our code from the
 command-line as:
 
 ```sh
-lein find-atoms-in-dirs dir1 dir2 > atoms.edn
+lein run dir1 dir2 > atoms.csv
 ```
 
 This command will loop over each of the directories provided (in the example
-above: `dir1 dir2`) and print an [edn](https://github.com/edn-format/edn) record
-to the file `atoms.edn` for each file in the following shape:
+above: `dir1 dir2`) and print a csv to the file `atoms.csv` with one row for
+each atom in the following shape:
 
-```clj
-{:file "src/test/resources/atom-comments.c",
- :atoms {:post-increment (4 10 13 25 28 30),
-         :preprocessor-in-statement (),
-         :operator-precedence (),
-         ...}}
+```csv
+atom,file,line,offset,code
+operator-precedence,nginx/src/misc/ngx_google_perftools_module.c,109,2669,&gptcf->profiles
+post-increment,nginx/src/core/ngx_thread_pool.c,254,6422,task->id = ngx_thread_pool_task_id++
+operator-precedence,nginx/src/core/ngx_thread_pool.c,122,3452,&tp->mtx
 ```
-
-The output for each line indicates, for each atom of confusion, on which lines
-was it found.
 
 It is best to redirect this output to a file for further post-processing.
 
