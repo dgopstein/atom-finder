@@ -15,7 +15,6 @@
         (map parse-file)
         (mapcat flatten-tree)
         (remove nil?)
-        (take 200)
         (map #(merge  {:filename (filename %)} (dissoc (loc %) :line) {:typename (typename %)} {:code (write-node %)}))
         maps-to-csv
        ))

@@ -37,6 +37,10 @@ operator-precedence,nginx/src/core/ngx_thread_pool.c,122,3452,&tp->mtx
 
 It is best to redirect this output to a file for further post-processing.
 
+To dump every AST node (independent of atom of confusion or not) run:
+
+`lein with-profile dump-asts run`
+
 ## Project Structure Overview
 
 The majority of interesting files in this project are located in the top-level
