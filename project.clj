@@ -48,6 +48,7 @@
                                           "Agent-Class"   "atom_finder.instrumentation"}
                                }
              :find-atoms-in-dirs {:main atom-finder.find-atoms-in-dirs} ; https://stackoverflow.com/questions/11023762/leiningen-with-multiple-main-classes
+             :dump-asts {:main atom-finder.dump-asts}
              :default          {:main atom-finder.all_atoms_csv}
              }
   :aliases {"find-atoms-in-dirs" ["with-profile" "find-atoms-in-dirs" "run"]}

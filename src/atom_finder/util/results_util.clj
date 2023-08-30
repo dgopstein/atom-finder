@@ -116,7 +116,13 @@
                                                                (map #(values-at % headers) maps)))
               (mapcat seq opts)))))
   ([filename maps]
-   (maps-to-csv filename {} maps)))
+   (maps-to-csv filename {} maps))
+  ([maps]
+   (let [headers (keys (first maps))]
+       (apply (partial clojure.data.csv/write-csv *out* (cons (map name headers)
+                                                              (map #(values-at % headers) maps)))
+              (mapcat seq {}))))
+  )
 
 (defn map-to-csv
   ([m] (map-to-csv (keys m) m))
