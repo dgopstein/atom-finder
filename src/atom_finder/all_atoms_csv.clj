@@ -18,7 +18,7 @@
             (mapcat (fn [[k v]] (map #(vector k %) v)))
             (map (fn [[atom-type node]]
                    {:atom (name atom-type)
-                    :file (subs (filename node) dir-len)
+                    :file (filename node)
                     :line (start-line node)
                     :offset (offset node)
                     :code (write-tree node)}))
