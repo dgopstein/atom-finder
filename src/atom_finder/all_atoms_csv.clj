@@ -8,10 +8,13 @@
    [clj-cdt.writer-util :refer :all]
   ))
 
+
+(def path-separator java.io.File/separator)
+
 (defn -main [& args]
   (println "atom,file,line,offset,code")
   (doseq [dir (map normalize-path args)]
-    (let [dir-len (inc (clojure.string/last-index-of dir "/"))]
+    (let [dir-len (inc (clojure.string/last-index-of dir path-separator))]
       (-<>> dir
             (pmap-dir-c-files #(all-atoms-in-tree atoms (parse-file %)))
             (apply concat)

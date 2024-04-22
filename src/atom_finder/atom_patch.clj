@@ -195,10 +195,10 @@
     ))
 
 ;(def filename "gcc-bugs-atoms_2017-03-28_200.edn")
-(def filename2 "gcc-bugs-atoms_2017-03-29.edn")
-(def gcc-bugs-atoms (->> filename2 read-data))
-(def gcc-bugs (->> gcc-bugs-atoms first (mapcat identity) (filter :revstr)))
-(->> gcc-bugs add-convenience-columns (write-res-csv "gcc-bugs_2017-03-29.csv"))
+;(def filename2 "gcc-bugs-atoms_2017-03-29.edn")
+;(def gcc-bugs-atoms (->> filename2 read-data))
+;(def gcc-bugs (->> gcc-bugs-atoms first (mapcat identity) (filter :revstr)))
+;(->> gcc-bugs add-convenience-columns (write-res-csv "gcc-bugs_2017-03-29.csv"))
 
 (defn add-convenience-columns
   [flat-res]
